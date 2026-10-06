@@ -1,0 +1,32 @@
+import { test, expect } from './fixtures';
+
+test('scoped task list filters and pages actual data without unrelated or foreign tasks', async ({ page }, testInfo) => {
+  await page.goto('/login');
+  await page.getByLabel('Employee code', { exact: true }).fill('EMP001');
+  await page.getByLabel('Password', { exact: true }).fill(process.env.BIZFLOW_E2E_PASSWORD!);
+  await page.getByLabel('Workspace key', { exact: true }).fill(process.env.BIZFLOW_E2E_TENANT_KEY!);
+  await page.getByRole('button', { name: 'Sign in', exact: true }).click();
+  await expect(page).toHaveURL(/\/workspace$/);
+  await page.getByRole('link', { name: 'View tasks', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Tasks', exact: true })).toBeVisible();
+  await expect(page.getByText('26 tasks · Page 1', { exact: true })).toBeVisible();
+  await expect(page.locator('tbody tr')).toHaveCount(25);
+  await expect(page.locator('tbody')).not.toContainText('sentinel');
+  await page.getByRole('button', { name: 'Next', exact: true }).click();
+  await expect(page.getByText('26 tasks · Page 2', { exact: true })).toBeVisible();
+  await expect(page.locator('tbody tr')).toHaveCount(1);
+  await page.getByLabel('Task status', { exact: true }).click();
+  await page.getByRole('option', { name: 'Assigned', exact: true }).click();
+  await page.getByLabel('Priority', { exact: true }).click();
+  await page.getByRole('option', { name: 'Critical', exact: true }).click();
+  await page.getByRole('button', { name: 'Apply filters', exact: true }).click();
+  await expect(page.getByText('1 task · Page 1', { exact: true })).toBeVisible();
+  await expect(page.locator('tbody')).toContainText('Review operational work 26');
+  await expect(page.locator('tbody')).toContainText('Test Employee');
+  await expect(page.locator('time')).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.screenshot({ path: testInfo.outputPath('task-list.png'), fullPage: true });
+  await page.getByLabel('Search task title', { exact: true }).fill('sentinel');
+  await page.getByRole('button', { name: 'Apply filters', exact: true }).click();
+  await expect(page.getByText('No tasks match your access scope and filters.', { exact: true })).toBeVisible();
+});

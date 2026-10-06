@@ -1,0 +1,22 @@
+.task-title {
+  display: block;
+}
+.task-meta {
+  display: block;
+  font-weight: normal;
+  font-size: var(--tp-small-size);
+  color: var(--tp-mute);
+  margin-top: var(--tp-space-2);
+}
+thead th:last-child {
+  width: 16rem;
+}
+.overdue {
+  font-weight: 700;
+  border-width: 2px;
+}
+@media (max-width: 40rem) {
+  thead th:last-child {
+    width: 8rem;
+  }
+}

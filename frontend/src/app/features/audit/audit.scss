@@ -1,0 +1,38 @@
+.audit-meta {
+  display: block;
+  font-size: var(--tp-small-size);
+  color: var(--tp-mute);
+  font-weight: normal;
+  margin-top: var(--tp-space-1);
+}
+.advanced-filters {
+  border-top: var(--tp-bw) solid var(--tp-line);
+  border-bottom: var(--tp-bw) solid var(--tp-line);
+  padding: var(--tp-space-4) var(--tp-space-6);
+}
+.advanced-filters summary {
+  cursor: pointer;
+  min-height: var(--tp-control-height);
+  align-content: center;
+}
+.advanced-filters .filters {
+  padding-inline: 0;
+}
+.advanced-filters mat-form-field {
+  flex: 1;
+  min-width: 12rem;
+}
+td button {
+  white-space: nowrap;
+}
+@media (max-width: 40rem) {
+  td {
+    padding-inline: var(--tp-space-2);
+  }
+  .advanced-filters {
+    padding-inline: var(--tp-space-4);
+  }
+  .advanced-filters mat-form-field {
+    min-width: 0;
+  }
+}

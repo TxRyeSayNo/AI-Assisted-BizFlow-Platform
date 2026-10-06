@@ -1,0 +1,47 @@
+import { test, expect } from './fixtures';
+
+test('administrator creates a timing snapshot without changing historical configuration', async ({ page }, testInfo) => {
+  await page.goto('/login');
+  await page.getByLabel('Employee code', { exact: true }).fill('EMP001');
+  await page.getByLabel('Password', { exact: true }).fill(process.env.BIZFLOW_E2E_PASSWORD!);
+  await page.getByLabel('Workspace key', { exact: true }).fill(process.env[`BIZFLOW_E2E_SLA_EDIT_KEY_${testInfo.project.name.toUpperCase()}`]!);
+  await page.getByRole('button', { name: 'Sign in', exact: true }).click();
+  await page.getByRole('link', { name: 'Settings', exact: true }).click();
+  await page.getByRole('link', { name: 'SLA profiles', exact: true }).click();
+  await page.getByRole('link', { name: 'Timing configuration', exact: true }).click();
+  await page.getByRole('button', { name: 'Create timing version from version 1', exact: true }).click();
+  const dialog = page.getByRole('dialog');
+  await expect(dialog).toContainText('calendar and escalation policy are copied unchanged');
+  await expect(dialog).toContainText('1 · Unchanged');
+  await dialog.getByLabel('Warning working minutes from start', { exact: true }).fill('60');
+  await expect(dialog.getByRole('button', { name: 'Create new version', exact: true })).toBeDisabled();
+  await dialog.getByLabel('Target working minutes', { exact: true }).fill('90');
+  await expect(dialog.getByRole('button', { name: 'Create new version', exact: true })).toBeEnabled();
+  await expect(page.locator('.mat-mdc-dialog-inner-container')).toHaveCSS('opacity', '1');
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.screenshot({ path: testInfo.outputPath('sla-timing-editor.png'), animations: 'disabled' });
+  await dialog.getByRole('button', { name: 'Create new version', exact: true }).click();
+  await expect(page.getByRole('status').filter({ hasText: 'SLA version 2 created' })).toBeVisible();
+  await expect(page.getByRole('navigation', { name: 'SLA version pages' })).toContainText('2 versions');
+  await page.getByRole('button', { name: 'Inspect version 1', exact: true }).click();
+  await expect(dialog).toContainText('60 working minutes');
+  await expect(dialog).toContainText('45 working minutes');
+  const oldCalendar = await dialog.locator('dt').filter({ hasText: /^Calendar ID$/ }).locator('+ dd').innerText();
+  const oldRecipients = await dialog.locator('ul').last().innerText();
+  await dialog.getByRole('button', { name: 'Close details', exact: true }).click();
+  // Re-enter through the router to read persisted state, not local form state.
+  await page.getByRole('link', { name: 'SLA profiles', exact: true }).click();
+  await page.getByRole('link', { name: 'Timing configuration', exact: true }).click();
+  await page.getByRole('button', { name: 'Inspect version 2', exact: true }).click();
+  await expect(dialog).toContainText('90 working minutes');
+  await expect(dialog).toContainText('60 working minutes');
+  await expect(dialog.locator('dt').filter({ hasText: /^Calendar ID$/ }).locator('+ dd')).toHaveText(oldCalendar);
+  await expect(dialog.locator('ul').last()).toHaveText(oldRecipients);
+  await expect(dialog).toContainText('08:00–17:30');
+  await expect(dialog).toContainText('2026-10-03');
+  await expect(dialog).toContainText('0 working minutes after breach');
+  await dialog.getByRole('button', { name: 'Close details', exact: true }).click();
+  await expect(dialog).toHaveCount(0);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.screenshot({ path: testInfo.outputPath('sla-timing-history.png'), fullPage: true });
+});

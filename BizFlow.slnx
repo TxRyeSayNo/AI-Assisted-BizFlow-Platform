@@ -1,0 +1,13 @@
+<Solution>
+  <Folder Name="/backend/">
+    <Project Path="backend/BizFlow.Api/BizFlow.Api.csproj" />
+    <Project Path="backend/BizFlow.Application/BizFlow.Application.csproj" />
+    <Project Path="backend/BizFlow.Domain/BizFlow.Domain.csproj" />
+    <Project Path="backend/BizFlow.Infrastructure/BizFlow.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/BizFlow.BrowserHarness/BizFlow.BrowserHarness.csproj" />
+    <Project Path="tests/BizFlow.IntegrationTests/BizFlow.IntegrationTests.csproj" />
+    <Project Path="tests/BizFlow.UnitTests/BizFlow.UnitTests.csproj" />
+  </Folder>
+</Solution>

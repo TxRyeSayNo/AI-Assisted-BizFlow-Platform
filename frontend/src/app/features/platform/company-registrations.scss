@@ -1,0 +1,128 @@
+:host {
+  display: block;
+}
+.platform-header {
+  flex-wrap: wrap;
+  gap: var(--tp-space-4);
+}
+.platform-header nav {
+  display: flex;
+  gap: var(--tp-space-6);
+}
+.platform-header a {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tp-control-height);
+}
+.registry-panel {
+  background: var(--tp-surf);
+  border: var(--tp-bw) solid var(--tp-line);
+  border-radius: var(--tp-r);
+  overflow: hidden;
+}
+.filters {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--tp-space-4);
+  padding: var(--tp-space-6);
+}
+.filters mat-form-field:first-child {
+  flex: 1;
+  min-width: 14rem;
+}
+.filters button {
+  min-height: var(--tp-control-height);
+}
+.feedback {
+  padding: var(--tp-space-6);
+  background: var(--tp-surf-2);
+  margin: 0;
+}
+.table-scroll {
+  overflow-x: auto;
+}
+table {
+  width: 100%;
+  min-width: 52rem;
+  border-collapse: collapse;
+  text-align: left;
+}
+caption {
+  text-align: left;
+  padding: var(--tp-space-3) var(--tp-space-6);
+  color: var(--tp-mute);
+  font-size: var(--tp-small-size);
+}
+th,
+td {
+  padding: var(--tp-space-4) var(--tp-space-6);
+  border-bottom: var(--tp-bw) solid var(--tp-line);
+  vertical-align: top;
+}
+thead {
+  background: var(--tp-surf-2);
+}
+tbody th {
+  min-width: 14rem;
+}
+td {
+  overflow-wrap: anywhere;
+}
+td:nth-child(2) {
+  min-width: 18rem;
+}
+.scroll-hint {
+  display: none;
+  padding-inline: var(--tp-space-4);
+  color: var(--tp-mute);
+  font-size: var(--tp-small-size);
+}
+.company-code {
+  display: block;
+  font-family: var(--tp-font-mono);
+  font-size: var(--tp-small-size);
+  color: var(--tp-mute);
+  font-weight: normal;
+  overflow-wrap: anywhere;
+}
+.status-label {
+  display: inline-block;
+  border: var(--tp-bw) solid var(--tp-line);
+  border-radius: var(--tp-r-sm);
+  padding: var(--tp-space-1) var(--tp-space-2);
+}
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: var(--tp-space-3);
+  padding: var(--tp-space-4) var(--tp-space-6);
+}
+.pagination span {
+  margin-right: auto;
+}
+@media (max-width: 40rem) {
+  .scroll-hint {
+    display: block;
+  }
+  .filters {
+    align-items: stretch;
+    flex-direction: column;
+    padding: var(--tp-space-4);
+  }
+  .filters mat-form-field:first-child {
+    min-width: 0;
+  }
+  .platform-header > span {
+    width: 100%;
+    font-size: var(--tp-small-size);
+  }
+  .pagination {
+    padding: var(--tp-space-4);
+  }
+  .pagination span {
+    width: 100%;
+  }
+}

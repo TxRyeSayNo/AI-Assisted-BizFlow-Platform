@@ -1,0 +1,91 @@
+<div class="auth-page">
+  <header class="public-header">
+    <a class="wordmark" href="/login" aria-label="BizFlow sign in"
+      ><span class="brand-mark" aria-hidden="true">B</span> BizFlow</a
+    >
+    <span class="eyebrow">Company workspace</span>
+  </header>
+  <main id="main-content" class="auth-content" tabindex="-1">
+    <section class="auth-intro" aria-labelledby="intro-title">
+      <span class="eyebrow">Your work, connected</span>
+      <h1 id="intro-title">A clear place<br />to move work forward.</h1>
+      <p>
+        Tasks, internal requests, and approvals.<br />One workspace for your team's everyday work.
+      </p>
+      <div class="intro-rule"></div>
+      <p class="small-copy">Sign in with the credentials provided by your company administrator.</p>
+    </section>
+    <section class="auth-card" aria-labelledby="login-title">
+      <span class="eyebrow">Welcome back</span>
+      <h2 id="login-title">Sign in to your workspace</h2>
+      <p class="supporting-copy">Use your employee code or company email.</p>
+      <mat-button-toggle-group
+        aria-label="Sign-in method"
+        [value]="mode()"
+        (change)="changeMode($event.value)"
+        [disabled]="busy()"
+      >
+        <mat-button-toggle value="code">Employee code</mat-button-toggle>
+        <mat-button-toggle value="email">Company email</mat-button-toggle>
+      </mat-button-toggle-group>
+      <form [formGroup]="form" (ngSubmit)="submit()" [attr.aria-busy]="busy()">
+        <mat-form-field appearance="outline">
+          <mat-label>{{ mode() === 'email' ? 'Company email' : 'Employee code' }}</mat-label>
+          <input
+            matInput
+            formControlName="identifier"
+            autocomplete="username"
+            [type]="mode() === 'email' ? 'email' : 'text'"
+            [readonly]="busy()"
+          />
+          <mat-error>{{
+            mode() === 'email'
+              ? 'Enter a valid company email.'
+              : 'Enter your employee code (up to 50 characters).'
+          }}</mat-error>
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Password</mat-label>
+          <input
+            matInput
+            formControlName="password"
+            autocomplete="current-password"
+            [type]="showPassword() ? 'text' : 'password'"
+            [readonly]="busy()"
+          />
+          <button
+            mat-button
+            matSuffix
+            type="button"
+            [attr.aria-label]="showPassword() ? 'Hide password' : 'Show password'"
+            [attr.aria-pressed]="showPassword()"
+            (click)="showPassword.set(!showPassword())"
+          >
+            {{ showPassword() ? 'Hide' : 'Show' }}
+          </button>
+          <mat-error>Enter your password.</mat-error>
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Workspace key</mat-label>
+          <input
+            matInput
+            formControlName="tenantKey"
+            autocomplete="organization"
+            [readonly]="busy()"
+          />
+          <mat-hint>Optional unless your company requires it.</mat-hint>
+          <mat-error>Use your company key: lowercase letters, numbers, and hyphens.</mat-error>
+        </mat-form-field>
+        @if (error()) {
+          <p class="inline-alert" role="alert">{{ error() }}</p>
+        }
+        <button mat-flat-button class="sign-in-button" type="submit" [disabled]="busy()">
+          {{ busy() ? 'Signing in…' : 'Sign in' }}
+        </button>
+      </form>
+      <p class="auth-help"><a routerLink="/forgot-password">Forgot your password?</a></p>
+      <p class="small-copy auth-help">Need access? Contact your company administrator.</p>
+    </section>
+  </main>
+  <footer class="public-footer">BizFlow <span>Internal work, with accountability.</span></footer>
+</div>

@@ -1,0 +1,92 @@
+<header class="public-header"><a class="wordmark" routerLink="/workspace">BizFlow</a></header>
+<main id="main-content" class="page-content" tabindex="-1" [attr.aria-busy]="busy()">
+  <nav aria-label="Breadcrumb"><a routerLink="/tasks">Tasks</a> / Task details</nav>
+  @if (busy()) {
+    <p role="status">Loading task…</p>
+  }
+  @if (error()) {
+    <p role="alert">{{ error() }}</p>
+    <button mat-stroked-button (click)="load()">Retry</button>
+  }
+  @if (data(); as detail) {
+    <span class="eyebrow">Work management</span>
+    <h1>{{ detail.task.title }}</h1>
+    @if (canAccept()) {
+      <button mat-flat-button type="button" (click)="accept()">Accept task</button>
+    }
+    @if (
+      session.hasPermission('tasks.assign') &&
+      (detail.task.status === 'DRAFT' || detail.task.status === 'REJECTED')
+    ) {
+      <button mat-flat-button type="button" (click)="assign()">Assign task</button>
+    }
+    <section class="directory-panel detail-section" aria-label="Task summary">
+      <dl>
+        <dt>Status</dt>
+        <dd>{{ detail.task.status }}</dd>
+        <dt>Priority</dt>
+        <dd>{{ detail.task.priority }}</dd>
+        <dt>Created by</dt>
+        <dd>{{ detail.creatorName ?? 'Unavailable' }}</dd>
+        <dt>Responsibility</dt>
+        <dd>
+          {{ detail.task.assignedUserName ?? detail.task.assignedDepartmentName ?? 'Unassigned' }}
+        </dd>
+        <dt>Deadline</dt>
+        <dd>
+          {{ detail.task.deadline ? (detail.task.deadline | date: 'medium') : 'No deadline' }}
+        </dd>
+        <dt>Created</dt>
+        <dd>{{ detail.task.createdAt | date: 'medium' }}</dd>
+      </dl>
+      <p>Dates shown in your local time.</p>
+      <p>{{ detail.description ?? 'No description' }}</p>
+      @if (detail.task.requestId) {
+        <p>Linked request: {{ detail.task.requestId }}</p>
+      }
+    </section>
+    @for (section of sections; track section.key) {
+      <section class="directory-panel detail-section" [attr.aria-label]="section.name">
+        <h2>{{ section.name }}</h2>
+        @for (item of detail[section.key].items; track item.id) {
+          @if (section.key === 'checklist') {
+            <p>{{ item.isCompleted ? 'Completed' : 'Open' }} · {{ item.title }}</p>
+          } @else {
+            <article>
+              <p>
+                {{
+                  item.percent !== undefined
+                    ? item.percent + '% progress'
+                    : 'Revision ' + item.revisionNo
+                }}
+                · {{ item.submittedAt | date: 'medium' }}
+              </p>
+              <p>{{ item.content ?? 'No text content' }}</p>
+            </article>
+          }
+        } @empty {
+          <p>No {{ section.name.toLowerCase() }} on this page.</p>
+        }
+        <nav class="pagination" [attr.aria-label]="section.name + ' pages'">
+          <span>{{ detail[section.key].total }} items · Page {{ detail[section.key].page }}</span>
+          <button
+            mat-stroked-button
+            [disabled]="detail[section.key].page <= 1"
+            (click)="page(section.key, detail[section.key].page - 1)"
+          >
+            Previous
+          </button>
+          <button
+            mat-stroked-button
+            [disabled]="
+              detail[section.key].page * detail[section.key].pageSize >= detail[section.key].total
+            "
+            (click)="page(section.key, detail[section.key].page + 1)"
+          >
+            Next
+          </button>
+        </nav>
+      </section>
+    }
+  }
+</main>

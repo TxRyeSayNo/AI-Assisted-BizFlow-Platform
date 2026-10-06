@@ -1,0 +1,52 @@
+.directory-panel {
+  margin-top: var(--tp-space-6);
+}
+.role-meta {
+  display: block;
+  font-size: var(--tp-small-size);
+  color: var(--tp-mute);
+  font-weight: normal;
+}
+.role-form {
+  border-top: var(--tp-bw) solid var(--tp-line);
+  padding: var(--tp-space-6);
+}
+.role-form h2 {
+  overflow-wrap: anywhere;
+}
+.role-form form {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--tp-space-4);
+}
+.role-form mat-form-field {
+  flex: 1;
+  min-width: 12rem;
+}
+.role-form mat-checkbox {
+  display: block;
+  margin-bottom: var(--tp-space-4);
+  overflow-wrap: anywhere;
+}
+.scope-label {
+  color: var(--tp-mute);
+}
+thead th:last-child {
+  width: 10rem;
+}
+@media (max-width: 40rem) {
+  .role-form {
+    padding: var(--tp-space-4);
+  }
+  .role-form form {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  thead th:last-child {
+    width: 8rem;
+  }
+  td {
+    padding-inline: var(--tp-space-2);
+  }
+}

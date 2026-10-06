@@ -1,0 +1,60 @@
+# Optional loopback-only demo overlay. Apply migrations explicitly before starting api/web.
+services:
+  api:
+    image: ${BIZFLOW_IMAGE_PREFIX:-bizflow}/api:local
+    build:
+      context: ..
+      dockerfile: deploy/api.Dockerfile
+      target: api
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__BizFlow: ${BIZFLOW_DATABASE_CONNECTION:?Set BIZFLOW_DATABASE_CONNECTION with Host=postgres}
+      Jwt__Issuer: ${JWT_ISSUER:-BizFlow}
+      Jwt__Audience: ${JWT_AUDIENCE:-BizFlow.Web}
+      Jwt__SigningKeyBase64: ${JWT_SIGNING_KEY_BASE64:?Set a cryptographically random base64 signing key}
+      ResetEmail__Enabled: "false"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    restart: unless-stopped
+
+  web:
+    image: ${BIZFLOW_IMAGE_PREFIX:-bizflow}/web:local
+    build:
+      context: ..
+      dockerfile: deploy/web.Dockerfile
+    ports:
+      - "127.0.0.1:${WEB_PORT:-8080}:8080"
+    depends_on:
+      api:
+        condition: service_started
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    restart: unless-stopped
+
+  migrate:
+    image: ${BIZFLOW_IMAGE_PREFIX:-bizflow}/migrate:local
+    profiles: [tools]
+    build:
+      context: ..
+      dockerfile: deploy/api.Dockerfile
+      target: migrate
+    environment:
+      ConnectionStrings__BizFlow: ${BIZFLOW_DATABASE_CONNECTION:?Set BIZFLOW_DATABASE_CONNECTION with Host=postgres}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    restart: "no"

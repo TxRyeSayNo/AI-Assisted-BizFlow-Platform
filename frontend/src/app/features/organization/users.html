@@ -1,0 +1,98 @@
+<header class="public-header directory-header">
+  <a class="wordmark" routerLink="/workspace">BizFlow</a>
+  <span>{{ identity()?.tenantName }}</span>
+</header>
+<main id="main-content" class="page-content" tabindex="-1">
+  <nav aria-label="Breadcrumb">
+    <a routerLink="/workspace">Workspace</a><span aria-hidden="true"> / </span
+    ><span>Organization</span>
+  </nav>
+  <h1>People</h1>
+  <p>Find colleagues and their departments in your workspace. This directory is read-only.</p>
+  <section aria-label="People directory" class="directory-panel" [attr.aria-busy]="busy()">
+    <form [formGroup]="filters" (ngSubmit)="apply()" class="filters">
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
+        <mat-label>Name, employee code or email</mat-label>
+        <input matInput formControlName="search" maxlength="200" [readonly]="busy()" />
+      </mat-form-field>
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
+        <mat-label>Account status</mat-label>
+        <mat-select formControlName="status">
+          <mat-option value="">All statuses</mat-option
+          ><mat-option value="ACTIVE">Active</mat-option>
+          <mat-option value="INACTIVE">Inactive</mat-option
+          ><mat-option value="LOCKED">Locked</mat-option>
+        </mat-select>
+      </mat-form-field>
+      <button mat-flat-button type="submit" [disabled]="busy()">Apply filters</button>
+    </form>
+    @if (busy()) {
+      <p role="status" class="directory-feedback">Loading people…</p>
+    } @else if (denied()) {
+      <p role="alert" class="directory-feedback">
+        You no longer have access to this people directory.
+      </p>
+    } @else if (error()) {
+      <div class="directory-feedback">
+        <p role="alert">People could not be loaded. Please try again.</p>
+        <button mat-stroked-button type="button" (click)="load(page())">Retry</button>
+      </div>
+    } @else if (result(); as data) {
+      @if (data.items.length === 0) {
+        <p role="status" class="directory-feedback">
+          No people match these filters. Try another name, employee code, email or status.
+        </p>
+      } @else {
+        <table>
+          <caption>
+            Workspace people directory
+          </caption>
+          <thead>
+            <tr>
+              <th scope="col">Person</th>
+              <th scope="col">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (item of data.items; track item.userId) {
+              <tr>
+                <th scope="row">
+                  {{ item.fullName }}
+                  <span class="department-code"
+                    >{{ item.employeeCode }} · {{ item.departmentName ?? 'No department' }}</span
+                  >
+                  <span class="person-email">{{ item.email }}</span>
+                </th>
+                <td>
+                  <span class="status-label">{{ labels[item.status] }}</span>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+      <nav aria-label="People pages" class="pagination">
+        <span role="status"
+          >{{ data.total }} {{ data.total === 1 ? 'person' : 'people' }} · Page
+          {{ data.page }}</span
+        >
+        <button
+          mat-stroked-button
+          type="button"
+          [disabled]="data.page <= 1"
+          (click)="load(data.page - 1)"
+        >
+          Previous
+        </button>
+        <button
+          mat-stroked-button
+          type="button"
+          [disabled]="data.page * data.pageSize >= data.total"
+          (click)="load(data.page + 1)"
+        >
+          Next
+        </button>
+      </nav>
+    }
+  </section>
+</main>

@@ -1,0 +1,26 @@
+.profile-form {
+  padding: var(--tp-space-6);
+  border-top: var(--tp-bw) solid var(--tp-line);
+}
+.profile-form form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--tp-space-4);
+}
+.profile-form mat-form-field {
+  flex: 1;
+  min-width: 12rem;
+}
+@media (max-width: 40rem) {
+  .profile-form {
+    padding: var(--tp-space-4);
+  }
+  .profile-form form {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .profile-form mat-form-field {
+    min-width: 0;
+  }
+}

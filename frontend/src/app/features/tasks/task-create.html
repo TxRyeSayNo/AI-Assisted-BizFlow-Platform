@@ -1,0 +1,51 @@
+<header class="public-header"><a class="wordmark" routerLink="/workspace">BizFlow</a></header>
+<main id="main-content" class="page-content" tabindex="-1">
+  <nav aria-label="Breadcrumb"><a routerLink="/tasks">Tasks</a> / New task</nav>
+  <span class="eyebrow">Work management</span>
+  <h1>New task</h1>
+  <p>Create an independent draft. Assignment and execution are separate steps.</p>
+  <form
+    class="directory-panel task-form"
+    [formGroup]="form"
+    (ngSubmit)="save()"
+    [attr.aria-busy]="busy()"
+  >
+    <mat-form-field appearance="outline"
+      ><mat-label>Task title</mat-label
+      ><input matInput formControlName="title" maxlength="300" required
+    /></mat-form-field>
+    <mat-form-field appearance="outline"
+      ><mat-label>Description</mat-label
+      ><textarea matInput formControlName="description" rows="4"></textarea>
+    </mat-form-field>
+    <mat-form-field appearance="outline"
+      ><mat-label>Priority</mat-label
+      ><mat-select formControlName="priority">
+        <mat-option value="LOW">Low</mat-option><mat-option value="MEDIUM">Medium</mat-option
+        ><mat-option value="HIGH">High</mat-option
+        ><mat-option value="CRITICAL">Critical</mat-option>
+      </mat-select></mat-form-field
+    >
+    <mat-form-field appearance="outline"
+      ><mat-label>Deadline (local time, optional)</mat-label
+      ><input matInput type="datetime-local" formControlName="deadline" /><mat-hint
+        >Saved as an absolute UTC time.</mat-hint
+      ></mat-form-field
+    >
+    <mat-form-field appearance="outline"
+      ><mat-label>Checklist (one item per line)</mat-label
+      ><textarea matInput formControlName="checklist" rows="4"></textarea>
+    </mat-form-field>
+    @if (error()) {
+      <p role="alert">{{ error() }}</p>
+    }
+    @if (done()) {
+      <p role="status">Submission finished. Open your task list if navigation did not complete.</p>
+    }
+    <div class="actions">
+      <button mat-flat-button type="submit" [disabled]="busy() || done()">
+        {{ busy() ? 'Saving…' : uncertain() ? 'Retry same submission' : 'Create draft' }}</button
+      ><a mat-stroked-button routerLink="/tasks">Back to tasks</a>
+    </div>
+  </form>
+</main>

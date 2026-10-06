@@ -1,0 +1,25 @@
+.notification-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.notification-list article {
+  padding: var(--tp-space-6);
+  border-top: var(--tp-bw) solid var(--tp-line);
+  overflow-wrap: anywhere;
+}
+.notification-list h2 {
+  margin-block: var(--tp-space-3);
+}
+.notification-content {
+  white-space: pre-wrap;
+}
+.notification-meta {
+  font-size: var(--tp-small-size);
+  color: var(--tp-mute);
+}
+@media (max-width: 40rem) {
+  .notification-list article {
+    padding: var(--tp-space-4);
+  }
+}

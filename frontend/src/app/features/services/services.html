@@ -1,0 +1,328 @@
+<header class="public-header directory-header">
+  <a class="wordmark" routerLink="/workspace">BizFlow</a
+  ><span>{{ session.identity()?.tenantName }}</span>
+</header>
+<main id="main-content" class="page-content" tabindex="-1">
+  <nav aria-label="Breadcrumb">
+    <a routerLink="/workspace">Workspace</a> / <span>Services</span>
+  </nav>
+  <h1>Service catalog</h1>
+  <p>
+    Browse internal services and their categories. Request submission and routing are not available
+    here yet.
+  </p>
+  @if (created(); as row) {
+    <p class="inline-alert" role="status">Service created: {{ row.code }} — {{ row.name }}.</p>
+  }
+  @if (mutationError()) {
+    <p class="inline-alert" role="alert">{{ mutationError() }}</p>
+  }
+  @if (uncertain()) {
+    <button mat-stroked-button type="button" (click)="load(1)">Reload catalog</button>
+  }
+  @if (categoryCreated()) {
+    <p class="inline-alert" role="status">{{ categoryCreated() }}</p>
+  }
+  @if (categoryError()) {
+    <p class="inline-alert" role="alert">{{ categoryError() }}</p>
+  }
+  @if (categoryNeedsReload()) {
+    <button mat-stroked-button type="button" (click)="load(page())" [disabled]="busy() || saving()">
+      Reload catalog
+    </button>
+  }
+  @if (metadataSaved()) {
+    <p class="inline-alert" role="status">{{ metadataSaved() }}</p>
+  }
+  @if (metadataError()) {
+    <p class="inline-alert" role="alert">{{ metadataError() }}</p>
+  }
+  @if (metadataNeedsReload()) {
+    <button
+      mat-stroked-button
+      type="button"
+      (click)="load(page())"
+      [disabled]="busy() || mutating()"
+    >
+      Reload catalog
+    </button>
+  }
+  <section
+    class="directory-panel"
+    aria-label="Service catalog"
+    [attr.aria-busy]="busy() || mutating()"
+  >
+    <form class="filters" [formGroup]="filters" (ngSubmit)="apply()">
+      <mat-form-field appearance="outline" subscriptSizing="dynamic"
+        ><mat-label>Service name or code</mat-label
+        ><input matInput formControlName="search" maxlength="200" [readonly]="busy() || mutating()"
+      /></mat-form-field>
+      <mat-form-field appearance="outline" subscriptSizing="dynamic"
+        ><mat-label>Service status</mat-label
+        ><mat-select formControlName="status"
+          ><mat-option value="">All statuses</mat-option
+          ><mat-option value="ACTIVE">Active</mat-option
+          ><mat-option value="INACTIVE">Inactive</mat-option
+          ><mat-option value="DRAFT">Draft</mat-option></mat-select
+        ></mat-form-field
+      >
+      <button mat-flat-button type="submit" [disabled]="busy() || mutating()">Apply filters</button>
+    </form>
+    @if (busy()) {
+      <p class="directory-feedback" role="status">Loading services…</p>
+    } @else if (denied()) {
+      <p class="directory-feedback" role="alert">
+        You no longer have access to this service catalog.
+      </p>
+    } @else if (error()) {
+      <div class="directory-feedback">
+        <p role="alert">Services could not be loaded. Please try again.</p>
+        <button mat-stroked-button type="button" (click)="load(page())">Retry</button>
+      </div>
+    } @else if (result(); as data) {
+      @if (!data.items.length) {
+        <p class="directory-feedback" role="status">No services match these filters.</p>
+      } @else {
+        <table>
+          <caption>
+            Workspace services
+          </caption>
+          <thead>
+            <tr>
+              <th scope="col">Service and categories</th>
+              <th scope="col">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of data.items; track row.serviceId) {
+              <tr>
+                <td>
+                  <strong>{{ row.name }}</strong
+                  ><span class="department-code">{{ row.code }}</span>
+                  <details>
+                    <summary [attr.aria-label]="'Details for ' + row.code">Details</summary>
+                    <p class="description">{{ row.description || 'No description provided.' }}</p>
+                    <h3>Categories</h3>
+                    <ul>
+                      @for (category of row.categories; track category.serviceCategoryId) {
+                        <li>
+                          {{ category.code }} — {{ category.name }} · {{ labels[category.status] }}
+                        </li>
+                      } @empty {
+                        <li>No categories configured.</li>
+                      }
+                    </ul>
+                    <p>Workflow version: {{ row.activeWorkflowVersionId || 'Not configured' }}</p>
+                    <p>SLA version: {{ row.activeSlaVersionId || 'Not configured' }}</p>
+                    @if (session.hasPermission('service.create')) {
+                      <button
+                        mat-stroked-button
+                        type="button"
+                        (click)="beginCategory(row)"
+                        [disabled]="mutating() || needsReconciliation()"
+                        [attr.aria-label]="'Add category to ' + row.code"
+                      >
+                        Add category to service
+                      </button>
+                    }
+                    @if (session.hasPermission('service.update')) {
+                      <button
+                        mat-stroked-button
+                        type="button"
+                        (click)="beginMetadata(row)"
+                        [disabled]="mutating() || needsReconciliation()"
+                        [attr.aria-label]="'Edit service ' + row.code"
+                      >
+                        Edit service
+                      </button>
+                    }
+                  </details>
+                </td>
+                <td>{{ labels[row.status] }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+      <nav class="pagination" aria-label="Service pages">
+        <span role="status"
+          >{{ data.total }} {{ data.total === 1 ? 'service' : 'services' }} · Page
+          {{ data.page }}</span
+        ><button
+          mat-stroked-button
+          type="button"
+          [disabled]="data.page <= 1 || mutating()"
+          (click)="load(data.page - 1)"
+        >
+          Previous</button
+        ><button
+          mat-stroked-button
+          type="button"
+          [disabled]="data.page * data.pageSize >= data.total || mutating()"
+          (click)="load(data.page + 1)"
+        >
+          Next
+        </button>
+      </nav>
+      @if (session.hasPermission('service.update')) {
+        @if (editingService(); as editing) {
+          <section class="metadata-editor" aria-labelledby="edit-service-title">
+            <h2 id="edit-service-title">Edit service {{ editing.code }}</h2>
+            <p>Categories and workflow/SLA configuration will be preserved.</p>
+            @if (editing.status === 'DRAFT') {
+              <p>Saving will set this draft to the selected Active or Inactive status.</p>
+            }
+            <form [formGroup]="metadataForm" (ngSubmit)="saveMetadata()">
+              <fieldset [disabled]="mutating() || needsReconciliation()">
+                <legend class="visually-hidden">Service metadata changes</legend>
+                <div class="fields">
+                  <mat-form-field appearance="outline"
+                    ><mat-label>Service code</mat-label
+                    ><input matInput formControlName="code" maxlength="80" /><mat-error
+                      >Enter a code up to 80 characters.</mat-error
+                    ></mat-form-field
+                  >
+                  <mat-form-field appearance="outline"
+                    ><mat-label>Service name</mat-label
+                    ><input matInput formControlName="name" maxlength="200" /><mat-error
+                      >Enter a name up to 200 characters.</mat-error
+                    ></mat-form-field
+                  >
+                </div>
+                <mat-form-field appearance="outline" class="description-input"
+                  ><mat-label>Service description</mat-label
+                  ><textarea matInput formControlName="description" rows="3"></textarea>
+                </mat-form-field>
+                <mat-checkbox formControlName="active">Edited service active</mat-checkbox>
+                <div class="actions">
+                  <button
+                    mat-flat-button
+                    type="submit"
+                    [disabled]="mutating() || needsReconciliation()"
+                  >
+                    {{ metadataSaving() ? 'Saving…' : 'Save service' }}
+                  </button>
+                  <button mat-button type="button" (click)="cancelMetadata()">
+                    Cancel changes
+                  </button>
+                </div>
+              </fieldset>
+            </form>
+          </section>
+        }
+      }
+      @if (session.hasPermission('service.create')) {
+        @if (selectedService(); as selected) {
+          <section class="category-editor" aria-labelledby="add-category-title">
+            <h2 id="add-category-title">Add category to {{ selected.code }}</h2>
+            <p>Existing categories and service configuration will be preserved.</p>
+            <form [formGroup]="existingCategoryForm" (ngSubmit)="saveCategory()">
+              <fieldset [disabled]="mutating() || needsReconciliation()">
+                <legend class="visually-hidden">New category</legend>
+                <div class="fields">
+                  <mat-form-field appearance="outline"
+                    ><mat-label>Category code</mat-label>
+                    <input matInput formControlName="code" maxlength="80" />
+                    <mat-error>Enter a code up to 80 characters.</mat-error>
+                  </mat-form-field>
+                  <mat-form-field appearance="outline"
+                    ><mat-label>Category name</mat-label>
+                    <input matInput formControlName="name" maxlength="200" />
+                    <mat-error>Enter a name up to 200 characters.</mat-error>
+                  </mat-form-field>
+                </div>
+                <mat-checkbox formControlName="active">Category active</mat-checkbox>
+                <div class="actions">
+                  <button
+                    mat-flat-button
+                    type="submit"
+                    [disabled]="mutating() || needsReconciliation()"
+                  >
+                    {{ categorySaving() ? 'Saving…' : 'Save category' }}
+                  </button>
+                  <button mat-button type="button" (click)="cancelCategory()">
+                    Cancel category
+                  </button>
+                </div>
+              </fieldset>
+            </form>
+          </section>
+        }
+        <section class="creation" aria-labelledby="create-service-title">
+          <h2 id="create-service-title">Create service</h2>
+          <p>
+            Save the service and its initial categories together. This does not configure routing or
+            start a workflow.
+          </p>
+          <form [formGroup]="form" (ngSubmit)="create()">
+            <fieldset [disabled]="mutating()">
+              <legend class="visually-hidden">Service metadata</legend>
+              <div class="fields">
+                <mat-form-field appearance="outline"
+                  ><mat-label>New service code</mat-label
+                  ><input matInput formControlName="code" maxlength="80" /><mat-error
+                    >Enter a code up to 80 characters.</mat-error
+                  ></mat-form-field
+                >
+                <mat-form-field appearance="outline"
+                  ><mat-label>New service name</mat-label
+                  ><input matInput formControlName="name" maxlength="200" /><mat-error
+                    >Enter a name up to 200 characters.</mat-error
+                  ></mat-form-field
+                >
+              </div>
+              <mat-form-field appearance="outline" class="description-input"
+                ><mat-label>Description</mat-label
+                ><textarea matInput formControlName="description" rows="3"></textarea>
+              </mat-form-field>
+              <mat-checkbox formControlName="active">Service active</mat-checkbox>
+              <h3>Initial categories</h3>
+              <p>Category codes must be unique within this service.</p>
+              <div formArrayName="categories">
+                @for (category of categories.controls; track category; let i = $index) {
+                  <fieldset class="category" [formGroupName]="i">
+                    <legend>Category {{ i + 1 }}</legend>
+                    <div class="fields">
+                      <mat-form-field appearance="outline"
+                        ><mat-label>Category {{ i + 1 }} code</mat-label
+                        ><input matInput formControlName="code" maxlength="80" /><mat-error
+                          >Enter a code up to 80 characters.</mat-error
+                        ></mat-form-field
+                      >
+                      <mat-form-field appearance="outline"
+                        ><mat-label>Category {{ i + 1 }} name</mat-label
+                        ><input matInput formControlName="name" maxlength="200" /><mat-error
+                          >Enter a name up to 200 characters.</mat-error
+                        ></mat-form-field
+                      >
+                    </div>
+                    <mat-checkbox formControlName="active">Category {{ i + 1 }} active</mat-checkbox
+                    ><button
+                      mat-button
+                      type="button"
+                      (click)="removeCategory(i)"
+                      [attr.aria-label]="'Remove category ' + (i + 1)"
+                    >
+                      Remove category
+                    </button>
+                  </fieldset>
+                }
+              </div>
+              <div class="actions">
+                <button mat-stroked-button type="button" (click)="addCategory()">
+                  Add category</button
+                ><button
+                  mat-flat-button
+                  type="submit"
+                  [disabled]="mutating() || needsReconciliation()"
+                >
+                  {{ saving() ? 'Creating…' : 'Create service' }}
+                </button>
+              </div>
+            </fieldset>
+          </form>
+        </section>
+      }
+    }
+  </section>
+</main>

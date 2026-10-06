@@ -1,0 +1,56 @@
+.workflow-meta {
+  display: block;
+  font-size: var(--tp-small-size);
+  color: var(--tp-mute);
+  font-weight: normal;
+}
+.draft-form {
+  padding: var(--tp-space-6);
+  border-top: var(--tp-bw) solid var(--tp-line);
+}
+.draft-form form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--tp-space-4);
+}
+.draft-form mat-form-field {
+  flex: 1;
+  min-width: 12rem;
+}
+.version-section {
+  padding: var(--tp-space-6);
+  border-bottom: var(--tp-bw) solid var(--tp-line);
+}
+.version-section h2,
+.version-section h3 {
+  overflow-wrap: anywhere;
+}
+.version-section pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-family: var(--tp-font-mono);
+  font-size: var(--tp-small-size);
+  background: var(--tp-surf-2);
+  padding: var(--tp-space-3);
+}
+.version-section ol {
+  padding-left: var(--tp-space-6);
+}
+.version-section li {
+  margin-bottom: var(--tp-space-4);
+  overflow-wrap: anywhere;
+}
+@media (max-width: 40rem) {
+  .draft-form,
+  .version-section {
+    padding: var(--tp-space-4);
+  }
+  .draft-form form {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .draft-form mat-form-field {
+    min-width: 0;
+  }
+}

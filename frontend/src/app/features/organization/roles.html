@@ -1,0 +1,157 @@
+<header class="public-header directory-header">
+  <a class="wordmark" routerLink="/workspace">BizFlow</a><span>{{ identity()?.tenantName }}</span>
+</header>
+<main id="main-content" class="page-content" tabindex="-1">
+  <nav aria-label="Breadcrumb">
+    <a routerLink="/workspace">Workspace</a> / <a routerLink="/settings">Settings</a> /
+    <span>Roles</span>
+  </nav>
+  <h1>Roles and permissions</h1>
+  <p>Configure custom roles using the allowed workspace permissions. System roles are protected.</p>
+  @if (notice()) {
+    <p class="inline-alert" role="status">{{ notice() }}</p>
+  }
+  @if (mutationError()) {
+    <p class="inline-alert" role="alert">{{ mutationError() }}</p>
+  }
+  @if (conflict()) {
+    <button mat-stroked-button type="button" (click)="load(page())">Reload directory</button>
+  }
+  <section
+    class="directory-panel"
+    aria-label="Workspace roles"
+    [attr.aria-busy]="busy() || saving()"
+  >
+    <form class="filters" [formGroup]="filters" (ngSubmit)="apply()">
+      <mat-form-field appearance="outline" subscriptSizing="dynamic"
+        ><mat-label>Role name</mat-label
+        ><input matInput formControlName="search" maxlength="100" [readonly]="busy() || saving()"
+      /></mat-form-field>
+      <button mat-flat-button type="submit" [disabled]="busy() || saving()">Search roles</button>
+    </form>
+    @if (busy()) {
+      <p class="directory-feedback" role="status">Loading roles and permissions…</p>
+    } @else if (denied()) {
+      <p class="directory-feedback" role="alert">
+        You no longer have permission to configure roles.
+      </p>
+    } @else if (error()) {
+      <div class="directory-feedback">
+        <p role="alert">Roles could not be loaded. Please try again.</p>
+        <button mat-stroked-button type="button" (click)="load(page())">Retry</button>
+      </div>
+    } @else if (result(); as data) {
+      @if (data.items.length === 0) {
+        <p class="directory-feedback" role="status">
+          No roles match your search. Try another name or create a custom role.
+        </p>
+      } @else {
+        <table>
+          <caption>
+            Workspace role configurations
+          </caption>
+          <thead>
+            <tr>
+              <th scope="col">Role</th>
+              <th scope="col">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (role of data.items; track role.roleId) {
+              <tr>
+                <th scope="row">
+                  {{ role.name
+                  }}<span class="role-meta"
+                    >{{ role.isSystem ? 'System' : 'Custom' }} ·
+                    {{ role.status === 'ACTIVE' ? 'Active' : 'Inactive' }} ·
+                    {{ role.permissionIds.length }}
+                    {{ role.permissionIds.length === 1 ? 'permission' : 'permissions' }}</span
+                  >
+                </th>
+                <td>
+                  @if (role.isSystem) {
+                    <span class="status-label">Protected</span>
+                  } @else {
+                    <button
+                      mat-stroked-button
+                      type="button"
+                      [attr.aria-label]="'Configure ' + role.name"
+                      [disabled]="saving()"
+                      (click)="select(role)"
+                    >
+                      Configure
+                    </button>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+      <nav class="pagination" aria-label="Role pages">
+        <span role="status"
+          >{{ data.total }} {{ data.total === 1 ? 'role' : 'roles' }} · Page {{ data.page }}</span
+        ><button
+          mat-stroked-button
+          type="button"
+          [disabled]="saving() || data.page <= 1"
+          (click)="load(data.page - 1)"
+        >
+          Previous</button
+        ><button
+          mat-stroked-button
+          type="button"
+          [disabled]="saving() || data.page * data.pageSize >= data.total"
+          (click)="load(data.page + 1)"
+        >
+          Next
+        </button>
+      </nav>
+      <section class="role-form" aria-labelledby="create-role-title">
+        <h2 id="create-role-title">Create custom role</h2>
+        <p>New roles start without permissions. Creating a role does not assign it to any user.</p>
+        <form [formGroup]="createForm" (ngSubmit)="create()">
+          <mat-form-field appearance="outline" subscriptSizing="dynamic"
+            ><mat-label>New role name</mat-label
+            ><input
+              matInput
+              formControlName="name"
+              maxlength="100"
+              [readonly]="saving()"
+            /><mat-error>Enter a name up to 100 characters.</mat-error></mat-form-field
+          >
+          <button mat-flat-button type="submit" [disabled]="saving()">Create role</button>
+        </form>
+      </section>
+      @if (selected(); as role) {
+        <section class="role-form" aria-labelledby="permission-title">
+          <h2 id="permission-title">Permissions for {{ role.name }}</h2>
+          <p>
+            Only selected actions are granted. Removing a grant changes access for users assigned to
+            this role.
+          </p>
+          @if (data.availablePermissions.length === 0) {
+            <p>No assignable permissions are available.</p>
+          }
+          @for (permission of data.availablePermissions; track permission.permissionId) {
+            <mat-checkbox
+              [checked]="selection().includes(permission.permissionId)"
+              [disabled]="saving() || conflict()"
+              (change)="toggle(permission.permissionId, $event.checked)"
+              >{{ permission.code }}
+              <span class="scope-label">({{ scopeLabels[permission.scope] }})</span></mat-checkbox
+            >
+          }
+          <button
+            mat-flat-button
+            type="button"
+            [disabled]="saving() || conflict()"
+            (click)="save()"
+          >
+            {{ saving() ? 'Saving…' : 'Save permissions' }}
+          </button>
+        </section>
+      }
+    }
+  </section>
+</main>

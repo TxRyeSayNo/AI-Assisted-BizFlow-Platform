@@ -1,0 +1,6 @@
+{
+  "name": "bizflow-browser-tests",
+  "private": true,
+  "scripts": { "test": "playwright test", "test:real": "dotnet run --project ../BizFlow.BrowserHarness/BizFlow.BrowserHarness.csproj" },
+  "devDependencies": { "@playwright/test": "1.63.0" }
+}

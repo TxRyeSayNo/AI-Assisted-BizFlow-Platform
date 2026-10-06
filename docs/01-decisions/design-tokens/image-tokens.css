@@ -1,0 +1,87 @@
+/*
+ * Image treatment component classes — GRID theme (Theme Pack 164).
+ * AI-Assisted BizFlow Platform. See docs/01-decisions/ADR-0001-design-system.md
+ *
+ * Why this file exists instead of Tailwind theme keys:
+ * the Design Studio snippet expresses image treatment through `borderRadius_img`, `opacity.img`,
+ * `mixBlendMode.img` and `rotate.img`. Those are not valid Tailwind theme keys, and overriding
+ * Tailwind's `opacity`, `mixBlendMode` or `rotate` scales would break utilities such as `opacity-50`
+ * and `rotate-45` across the whole application. The treatment is therefore delivered once, here,
+ * as component classes that consume var(--tp-img-*) exactly as the pack specifies.
+ *
+ * Application in this product:
+ *   - .tp-img is used ONLY for user-uploaded evidence thumbnails (Attachment records), rendered in
+ *     task/request timelines. It is never used behind text and never for decorative imagery — the
+ *     SSS defines no photographic content, and GRID's art direction calls for none.
+ */
+
+/* Photo container. Per the pack: round, frame, shadow, filter, tilt, aspect ratio. */
+.tp-img {
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: var(--tp-img-ar);
+  border-radius: var(--tp-img-r);
+  border: var(--tp-img-frame);
+  box-shadow: var(--tp-img-sh);
+  filter: var(--tp-img-filter);
+  transform: rotate(var(--tp-img-tilt));
+  background: var(--tp-surf-2); /* placeholder fill until the object loads — never a grey box in the layout */
+}
+
+.tp-img > img,
+.tp-img > video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Accent overlay layer — required on every treated image by the pack. */
+.tp-img::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: var(--tp-grad);
+  opacity: var(--tp-img-overlay-op);
+  mix-blend-mode: var(--tp-img-blend);
+}
+
+/* Compact variant for evidence thumbnails inside a timeline row. Square, no tilt. */
+.tp-img--thumb {
+  --tp-img-ar: 1 / 1;
+  --tp-img-tilt: 0deg;
+  width: 56px;
+  flex: 0 0 auto;
+}
+
+/* Documents have no meaningful preview: render a file-type plate instead of a broken image. */
+.tp-file-plate {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  aspect-ratio: var(--tp-img-ar);
+  border-radius: var(--tp-img-r);
+  border: var(--tp-img-frame);
+  box-shadow: var(--tp-img-sh);
+  background: var(--tp-surf-2);
+  color: var(--tp-mute);
+  font-family: var(--tp-font-mono);
+  font-size: 11px;
+  letter-spacing: var(--tp-track-display);
+  text-transform: uppercase;
+}
+
+/* Fallback when no image is available — pack rule 5: use --tp-grad and --tp-tex, never a grey box. */
+.tp-img--fallback {
+  background: var(--tp-grad);
+  background-image: var(--tp-grad), var(--tp-tex);
+  opacity: 1;
+}
+
+/* Progress ring used by SLA indicators; consumes the accent token so a hue change re-skins it. */
+.tp-ring {
+  border-radius: 50%;
+  background: conic-gradient(var(--tp-acc) calc(var(--tp-ring-value, 0) * 1%), var(--tp-surf-2) 0);
+}

@@ -1,0 +1,76 @@
+<h2 mat-dialog-title id="task-assignment-title">Assign task</h2>
+<form [formGroup]="form" (ngSubmit)="save()" [attr.aria-busy]="busy()">
+  <mat-dialog-content>
+    <p>{{ data.title }}</p>
+    <p>
+      Choose an active target within your configured management scope. Department assignment remains
+      an unclaimed team queue.
+    </p>
+    <mat-form-field appearance="outline"
+      ><mat-label>Target type</mat-label
+      ><mat-select formControlName="targetType" (selectionChange)="load(1)"
+        ><mat-option value="USER">Employee</mat-option
+        ><mat-option value="DEPARTMENT">Department</mat-option></mat-select
+      ></mat-form-field
+    >
+    <mat-form-field appearance="outline"
+      ><mat-label>Search target directory</mat-label
+      ><input matInput formControlName="search" maxlength="200"
+    /></mat-form-field>
+    <button
+      mat-stroked-button
+      type="button"
+      (click)="load(1)"
+      [disabled]="busy() || uncertain() || terminal()"
+    >
+      Search targets
+    </button>
+    @if (loading()) {
+      <p role="status">Loading targets…</p>
+    }
+    <mat-form-field appearance="outline" floatLabel="always"
+      ><mat-label>Assignment target</mat-label
+      ><mat-select formControlName="targetId" placeholder="Select a target">
+        @for (option of options(); track option.id) {
+          <mat-option [value]="option.id">{{ option.label }}</mat-option>
+        }</mat-select
+      ><mat-error>Select a target.</mat-error></mat-form-field
+    >
+    <div class="target-pages">
+      <span>{{ total() }} directory entries · Page {{ page() }}</span>
+      <button
+        mat-stroked-button
+        type="button"
+        (click)="load(page() - 1)"
+        [disabled]="page() <= 1 || loading() || busy() || uncertain() || terminal()"
+      >
+        Previous targets
+      </button>
+      <button
+        mat-stroked-button
+        type="button"
+        (click)="load(page() + 1)"
+        [disabled]="page() * 25 >= total() || loading() || busy() || uncertain() || terminal()"
+      >
+        Next targets
+      </button>
+    </div>
+    <p>
+      Directory visibility does not grant assignment authority. The server checks scope when you
+      assign.
+    </p>
+    <mat-form-field appearance="outline"
+      ><mat-label>Assignment note (optional)</mat-label
+      ><textarea matInput formControlName="note" rows="3"></textarea>
+    </mat-form-field>
+    @if (error()) {
+      <p role="alert">{{ error() }}</p>
+    }
+  </mat-dialog-content>
+  <mat-dialog-actions
+    ><button mat-stroked-button type="button" [disabled]="busy()" (click)="close()">Close</button
+    ><button mat-flat-button type="submit" [disabled]="busy() || loading() || terminal()">
+      {{ busy() ? 'Assigning…' : uncertain() ? 'Retry same assignment' : 'Confirm assignment' }}
+    </button></mat-dialog-actions
+  >
+</form>

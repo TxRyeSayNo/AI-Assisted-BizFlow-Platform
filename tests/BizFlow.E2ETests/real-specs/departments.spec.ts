@@ -1,0 +1,38 @@
+import { test, expect } from './fixtures';
+
+test('tenant member browses, pages and filters only their real department directory', async ({ page }, testInfo) => {
+  await page.goto('/login');
+  await page.getByLabel('Employee code', { exact: true }).fill('EMP001');
+  await page.getByLabel('Password', { exact: true }).fill(process.env.BIZFLOW_E2E_PASSWORD!);
+  await page.getByLabel('Workspace key', { exact: true }).fill(process.env.BIZFLOW_E2E_TENANT_KEY!);
+  await page.getByRole('button', { name: 'Sign in', exact: true }).click();
+  await expect(page).toHaveURL(/\/workspace$/);
+  await page.getByRole('link', { name: 'Browse department directory' }).click();
+  await expect(page).toHaveURL(/\/settings\/organization\/departments$/);
+  await expect(page.getByRole('heading', { name: 'Departments', exact: true })).toBeVisible();
+  await expect(page.getByRole('rowheader', { name: /Operations 01/ })).toBeVisible();
+  await expect(page.getByText('26 departments · Page 1', { exact: true })).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.screenshot({ path: testInfo.outputPath('department-directory.png'), fullPage: true });
+  await page.getByRole('button', { name: 'Next', exact: true }).click();
+  await expect(page.getByRole('rowheader', { name: /Operations 26/ })).toBeVisible();
+  await expect(page.getByText('26 departments · Page 2', { exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Next', exact: true })).toBeDisabled();
+  await page.getByRole('button', { name: 'Previous', exact: true }).click();
+  await expect(page.getByRole('rowheader', { name: /Operations 01/ })).toBeVisible();
+  await page.getByLabel('Department status').click();
+  await page.getByRole('option', { name: 'Inactive', exact: true }).click();
+  await page.getByRole('button', { name: 'Apply filters', exact: true }).click();
+  await expect(page.getByText('1 department · Page 1', { exact: true })).toBeVisible();
+  await expect(page.getByRole('rowheader', { name: /Operations 26/ })).toBeVisible();
+  await page.getByLabel('Department status').click();
+  await page.getByRole('option', { name: 'All statuses', exact: true }).click();
+  await page.getByLabel('Department name or code').fill('OPS-02');
+  await page.getByRole('button', { name: 'Apply filters', exact: true }).click();
+  await expect(page.getByRole('rowheader', { name: /Operations 02/ })).toBeVisible();
+  await expect(page.getByRole('rowheader')).toHaveCount(1);
+  await page.getByLabel('Department name or code').fill('OTHER-TENANT');
+  await page.getByRole('button', { name: 'Apply filters', exact: true }).click();
+  await expect(page.getByText('No departments match these filters.', { exact: false })).toBeVisible();
+  await expect(page.getByText('Other tenant confidential department', { exact: true })).toHaveCount(0);
+});

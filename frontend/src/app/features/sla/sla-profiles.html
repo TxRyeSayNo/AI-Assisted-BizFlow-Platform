@@ -1,0 +1,132 @@
+<header class="public-header directory-header">
+  <a class="wordmark" routerLink="/workspace">BizFlow</a
+  ><span>{{ session.identity()?.tenantName }}</span>
+</header>
+<main id="main-content" class="page-content" tabindex="-1">
+  <nav aria-label="Breadcrumb">
+    <a routerLink="/workspace">Workspace</a> / <a routerLink="/settings">Settings</a> /
+    <span>SLA profiles</span>
+  </nav>
+  <h1>SLA profiles</h1>
+  <p>
+    Organize service-level configurations. Creating a draft profile does not start a clock or
+    activate an SLA.
+  </p>
+  @if (created(); as row) {
+    <p class="inline-alert" role="status">Draft profile created: {{ row.name }}.</p>
+  }
+  @if (mutationError()) {
+    <p class="inline-alert" role="alert">{{ mutationError() }}</p>
+  }
+  @if (uncertain()) {
+    <button mat-stroked-button type="button" (click)="load(1)">Reload profiles</button>
+  }
+  <section
+    class="directory-panel"
+    aria-label="SLA profile catalog"
+    [attr.aria-busy]="busy() || saving()"
+  >
+    <form class="filters" [formGroup]="filters" (ngSubmit)="apply()">
+      <mat-form-field appearance="outline" subscriptSizing="dynamic"
+        ><mat-label>Profile name</mat-label
+        ><input matInput formControlName="search" maxlength="200" [readonly]="busy() || saving()"
+      /></mat-form-field>
+      <mat-form-field appearance="outline" subscriptSizing="dynamic"
+        ><mat-label>Profile status</mat-label
+        ><mat-select formControlName="status"
+          ><mat-option value="">All statuses</mat-option><mat-option value="DRAFT">Draft</mat-option
+          ><mat-option value="ACTIVE">Active</mat-option
+          ><mat-option value="INACTIVE">Inactive</mat-option></mat-select
+        ></mat-form-field
+      >
+      <button mat-flat-button type="submit" [disabled]="busy() || saving()">Apply filters</button>
+    </form>
+    @if (busy()) {
+      <p role="status" class="directory-feedback">Loading SLA profiles…</p>
+    } @else if (denied()) {
+      <p role="alert" class="directory-feedback">
+        You no longer have access to this SLA profile catalog.
+      </p>
+    } @else if (error()) {
+      <div class="directory-feedback">
+        <p role="alert">SLA profiles could not be loaded. Please try again.</p>
+        <button mat-stroked-button type="button" (click)="load(page())">Retry</button>
+      </div>
+    } @else if (result(); as data) {
+      @if (data.items.length === 0) {
+        <p role="status" class="directory-feedback">No SLA profiles match these filters.</p>
+      } @else {
+        <table>
+          <caption>
+            Workspace SLA profiles
+          </caption>
+          <thead>
+            <tr>
+              <th scope="col">Profile</th>
+              <th scope="col">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of data.items; track row.slaProfileId) {
+              <tr>
+                <th scope="row">
+                  <a
+                    [routerLink]="['/settings/sla-profiles', row.slaProfileId, 'versions']"
+                    title="View version history"
+                    >{{ row.name }}</a
+                  >
+                </th>
+                <td>{{ labels[row.status] }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+      <nav class="pagination" aria-label="SLA profile pages">
+        <span role="status"
+          >{{ data.total }} {{ data.total === 1 ? 'profile' : 'profiles' }} · Page
+          {{ data.page }}</span
+        >
+        <button
+          mat-stroked-button
+          type="button"
+          [disabled]="saving() || data.page <= 1"
+          (click)="load(data.page - 1)"
+        >
+          Previous
+        </button>
+        <button
+          mat-stroked-button
+          type="button"
+          [disabled]="saving() || data.page * data.pageSize >= data.total"
+          (click)="load(data.page + 1)"
+        >
+          Next
+        </button>
+      </nav>
+      @if (session.hasPermission('sla.configure')) {
+        <section class="profile-form" aria-labelledby="create-profile-title">
+          <h2 id="create-profile-title">Create SLA profile</h2>
+          <p>
+            This saves a named draft only. Open a profile to inspect its saved version history.
+            Calendar and version editing are not available in this screen yet.
+          </p>
+          <form [formGroup]="createForm" (ngSubmit)="create()">
+            <mat-form-field appearance="outline" subscriptSizing="dynamic"
+              ><mat-label>New profile name</mat-label
+              ><input
+                matInput
+                formControlName="name"
+                maxlength="200"
+                [readonly]="saving()"
+              /><mat-error>Enter a name up to 200 characters.</mat-error></mat-form-field
+            >
+            <button mat-flat-button type="submit" [disabled]="saving() || uncertain()">
+              {{ saving() ? 'Creating…' : 'Create draft profile' }}
+            </button>
+          </form>
+        </section>
+      }
+    }
+  </section>
+</main>

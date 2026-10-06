@@ -1,0 +1,106 @@
+<header class="public-header directory-header">
+  <a class="wordmark" routerLink="/workspace">BizFlow</a
+  ><span>{{ session.identity()?.tenantName }}</span>
+</header>
+<main id="main-content" class="page-content" tabindex="-1">
+  <nav aria-label="Breadcrumb">
+    <a routerLink="/workspace">Workspace</a> / <a routerLink="/settings">Settings</a> /
+    <a routerLink="/settings/sla-profiles">SLA profiles</a> / <span>Version history</span>
+  </nav>
+  <h1>SLA version history</h1>
+  <p>
+    Saved versions are immutable snapshots. Inspect a version to see its frozen calendar and
+    escalation policy.
+  </p>
+  @if (notice()) {
+    <p role="status">{{ notice() }}</p>
+  }
+  <section class="directory-panel" aria-label="SLA version history" [attr.aria-busy]="busy()">
+    @if (busy()) {
+      <p class="directory-feedback" role="status">Loading saved versions…</p>
+    } @else if (error() === 'denied') {
+      <p class="directory-feedback" role="alert">You no longer have access to this SLA history.</p>
+    } @else if (error() === 'missing') {
+      <p class="directory-feedback" role="alert">SLA profile not found.</p>
+    } @else if (error() === 'failed') {
+      <div class="directory-feedback">
+        <p role="alert">SLA history could not be loaded. Please try again.</p>
+        <button mat-stroked-button type="button" (click)="load(page())">Retry</button>
+      </div>
+    } @else if (result(); as data) {
+      <h2 class="profile-name">{{ data.profileName }}</h2>
+      @if (!data.items.length) {
+        <p class="directory-feedback" role="status">
+          {{
+            data.total === 0
+              ? 'This profile has no saved versions.'
+              : 'No saved versions on this page.'
+          }}
+        </p>
+      } @else {
+        <table>
+          <caption>
+            Newest first · All timing values are working minutes
+          </caption>
+          <thead>
+            <tr>
+              <th scope="col">Version</th>
+              <th scope="col">Target</th>
+              <th scope="col">Warning from start</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of data.items; track row.slaVersionId) {
+              <tr>
+                <th scope="row">
+                  <button
+                    mat-button
+                    type="button"
+                    (click)="inspect(row)"
+                    [attr.aria-label]="'Inspect version ' + row.versionNo"
+                  >
+                    Version {{ row.versionNo }}
+                  </button>
+                  @if (session.hasPermission('sla.configure')) {
+                    <button
+                      mat-stroked-button
+                      type="button"
+                      (click)="createTimingVersion(row)"
+                      [attr.aria-label]="'Create timing version from version ' + row.versionNo"
+                    >
+                      Adjust timing
+                    </button>
+                  }
+                </th>
+                <td>{{ row.targetMinutes }} min</td>
+                <td>{{ row.warningMinutes }} min</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+      <nav class="pagination" aria-label="SLA version pages">
+        <span role="status"
+          >{{ data.total }} {{ data.total === 1 ? 'version' : 'versions' }} · Page
+          {{ data.page }}</span
+        >
+        <button
+          mat-stroked-button
+          type="button"
+          [disabled]="data.page <= 1"
+          (click)="load(data.page - 1)"
+        >
+          Previous
+        </button>
+        <button
+          mat-stroked-button
+          type="button"
+          [disabled]="data.page * data.pageSize >= data.total"
+          (click)="load(data.page + 1)"
+        >
+          Next
+        </button>
+      </nav>
+    }
+  </section>
+</main>

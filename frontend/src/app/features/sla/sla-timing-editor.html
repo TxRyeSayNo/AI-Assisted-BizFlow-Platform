@@ -1,0 +1,77 @@
+<h2 mat-dialog-title id="sla-timing-title">Create SLA timing version</h2>
+<form [formGroup]="form" (ngSubmit)="save()" [attr.aria-busy]="busy()">
+  <mat-dialog-content>
+    <p>{{ data.profileName }} · Based on version {{ data.source.versionNo }}</p>
+    <p>
+      This creates a new immutable snapshot. No saved version or currently pinned work will be
+      changed.
+    </p>
+    <mat-form-field appearance="outline">
+      <mat-label>Target working minutes</mat-label>
+      <input
+        matInput
+        type="number"
+        min="1"
+        max="2147483647"
+        step="1"
+        formControlName="targetMinutes"
+        [readonly]="busy() || uncertain() || terminal()"
+      />
+      <mat-error>Enter a positive whole number of working minutes.</mat-error>
+    </mat-form-field>
+    <mat-form-field appearance="outline">
+      <mat-label>Warning working minutes from start</mat-label>
+      <input
+        matInput
+        type="number"
+        min="0"
+        max="2147483646"
+        step="1"
+        formControlName="warningMinutes"
+        [readonly]="busy() || uncertain() || terminal()"
+      />
+      <mat-error>Enter a nonnegative whole number of working minutes.</mat-error>
+    </mat-form-field>
+    <p class="hint">
+      Warning time is elapsed working time from SLA start, and must be less than the target.
+    </p>
+    @if (form.hasError('timing') && form.touched) {
+      <p role="alert">Use whole minutes with 0 ≤ warning &lt; target.</p>
+    }
+    <h3>Preserved configuration</h3>
+    <dl>
+      <dt>Frozen calendar</dt>
+      <dd>{{ data.source.calendar.timeZone }} · {{ data.source.calendar.calendarId }}</dd>
+      <dt>Escalation levels</dt>
+      <dd>{{ data.source.escalationConfig?.levels?.length ?? 0 }} · Unchanged</dd>
+    </dl>
+    <p>
+      Only timing values are edited here. The selected version's frozen calendar and escalation
+      policy are copied unchanged.
+    </p>
+    @if (error()) {
+      <p class="feedback" role="alert">{{ error() }}</p>
+    }
+    @if (busy()) {
+      <p role="status">Creating immutable version…</p>
+    }
+  </mat-dialog-content>
+  <mat-dialog-actions>
+    <button mat-stroked-button type="button" [disabled]="busy()" (click)="close()">
+      {{ uncertain() ? 'Close and review history' : 'Cancel' }}
+    </button>
+    <button
+      mat-flat-button
+      type="submit"
+      [disabled]="
+        busy() ||
+        uncertain() ||
+        terminal() ||
+        form.invalid ||
+        !session.hasPermission('sla.configure')
+      "
+    >
+      Create new version
+    </button>
+  </mat-dialog-actions>
+</form>

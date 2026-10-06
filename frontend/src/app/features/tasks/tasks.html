@@ -1,0 +1,130 @@
+<header class="public-header directory-header">
+  <a class="wordmark" routerLink="/workspace">BizFlow</a><span>{{ identity()?.tenantName }}</span>
+</header>
+<main id="main-content" class="page-content" tabindex="-1">
+  <nav aria-label="Breadcrumb">
+    <a routerLink="/workspace">Workspace</a><span aria-hidden="true"> / </span><span>Tasks</span>
+  </nav>
+  <span class="eyebrow">Work management</span>
+  <h1>Tasks</h1>
+  @if (session.hasPermission('tasks.create')) {
+    <a mat-flat-button routerLink="/tasks/new">New task</a>
+  }
+  <p>
+    Track work, current responsibility and deadlines. Only tasks within your access scope appear
+    here.
+  </p>
+  <section aria-label="Task list" class="directory-panel" [attr.aria-busy]="busy()">
+    <form [formGroup]="filters" (ngSubmit)="apply()" class="filters">
+      <mat-form-field appearance="outline" subscriptSizing="dynamic"
+        ><mat-label>Search task title</mat-label
+        ><input matInput formControlName="search" maxlength="200" [readonly]="busy()"
+      /></mat-form-field>
+      <mat-form-field appearance="outline" subscriptSizing="dynamic"
+        ><mat-label>Task status</mat-label
+        ><mat-select formControlName="status"
+          ><mat-option value="">All statuses</mat-option>
+          @for (option of stateOptions; track option[0]) {
+            <mat-option [value]="option[0]">{{ option[1] }}</mat-option>
+          }
+        </mat-select></mat-form-field
+      >
+      <mat-form-field appearance="outline" subscriptSizing="dynamic"
+        ><mat-label>Priority</mat-label
+        ><mat-select formControlName="priority"
+          ><mat-option value="">All priorities</mat-option>
+          @for (option of priorityOptions; track option[0]) {
+            <mat-option [value]="option[0]">{{ option[1] }}</mat-option>
+          }
+        </mat-select></mat-form-field
+      >
+      <button mat-flat-button type="submit" [disabled]="busy()">Apply filters</button>
+    </form>
+    @if (busy()) {
+      <p role="status" class="directory-feedback">Loading tasks…</p>
+    } @else if (denied()) {
+      <p role="alert" class="directory-feedback">You no longer have access to this task list.</p>
+    } @else if (error()) {
+      <div class="directory-feedback">
+        <p role="alert">Tasks could not be loaded. Please try again.</p>
+        <button mat-stroked-button type="button" (click)="load(page())">Retry</button>
+      </div>
+    } @else if (result(); as data) {
+      @if (data.items.length === 0) {
+        <p role="status" class="directory-feedback">
+          No tasks match your access scope and filters.
+        </p>
+      } @else {
+        <table>
+          <caption>
+            Accessible tasks · Newest first · Dates shown in your local time
+          </caption>
+          <thead>
+            <tr>
+              <th scope="col">Task and responsibility</th>
+              <th scope="col">Status and deadline</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (item of data.items; track item.taskId) {
+              <tr>
+                <th scope="row">
+                  <a class="task-title" [routerLink]="['/tasks', item.taskId]">{{ item.title }}</a>
+                  <span class="task-meta"
+                    >{{ priorities[item.priority] }} priority ·
+                    {{ item.requestId ? 'Linked to a request' : 'Independent task' }}</span
+                  >
+                  <span class="task-meta">
+                    @if (item.assignedUserId) {
+                      {{ item.assignedUserName ?? 'Assigned user unavailable' }}
+                    } @else if (item.assignedDepartmentId) {
+                      Department queue
+                    } @else {
+                      Unassigned
+                    }
+                    @if (item.assignedDepartmentId) {
+                      · {{ item.assignedDepartmentName ?? 'Department unavailable' }}
+                    }
+                  </span>
+                </th>
+                <td>
+                  <span class="status-label" [class.overdue]="item.status === 'OVERDUE'">{{
+                    states[item.status]
+                  }}</span>
+                  @if (item.deadline) {
+                    <time class="task-meta" [attr.datetime]="item.deadline">{{
+                      item.deadline | date: 'medium'
+                    }}</time>
+                  } @else {
+                    <span class="task-meta">No deadline</span>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+      <nav aria-label="Task pages" class="pagination">
+        <span role="status"
+          >{{ data.total }} {{ data.total === 1 ? 'task' : 'tasks' }} · Page {{ data.page }}</span
+        >
+        <button
+          mat-stroked-button
+          type="button"
+          [disabled]="data.page <= 1"
+          (click)="load(data.page - 1)"
+        >
+          Previous
+        </button>
+        <button
+          mat-stroked-button
+          type="button"
+          [disabled]="data.page * data.pageSize >= data.total"
+          (click)="load(data.page + 1)"
+        >
+          Next
+        </button>
+      </nav>
+    }
+  </section>
+</main>

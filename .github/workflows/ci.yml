@@ -1,0 +1,109 @@
+name: BizFlow CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+# Tests need no repository writes, deployment credentials, provider keys or external mail.
+permissions:
+  contents: read
+
+concurrency:
+  group: bizflow-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CI: 'true'
+  DOTNET_CLI_TELEMETRY_OPTOUT: '1'
+  DOTNET_NOLOGO: '1'
+
+jobs:
+  verification:
+    name: Build, migrations and tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Validate workflow syntax and expressions
+        run: >-
+          docker run --rm --network none --read-only --cap-drop ALL
+          --security-opt no-new-privileges --tmpfs /tmp
+          -v "$GITHUB_WORKSPACE:/repo:ro" -w /repo
+          rhysd/actionlint:1.7.12@sha256:b1934ee5f1c509618f2508e6eb47ee0d3520686341fec936f3b79331f9315667
+          -color .github/workflows/ci.yml
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          global-json-file: global.json
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22.22.3'
+          package-manager-cache: false
+      - name: Pin npm
+        run: npm install --global npm@11.6.2
+      - name: Restore locked .NET dependencies
+        run: dotnet restore BizFlow.slnx --locked-mode
+      - name: Build backend and test harness
+        run: dotnet build BizFlow.slnx --configuration Release --no-restore
+      - name: Unit and PostgreSQL integration tests
+        run: dotnet test BizFlow.slnx --configuration Release --no-build --no-restore
+      - name: Restore pinned EF tool
+        run: dotnet tool restore
+      - name: Reject uncommitted model changes
+        run: >-
+          dotnet ef migrations has-pending-model-changes
+          --project backend/BizFlow.Infrastructure
+          --startup-project backend/BizFlow.Infrastructure
+          --configuration Release --no-build
+      - name: Install locked frontend dependencies
+        working-directory: frontend
+        run: npm ci
+      - name: Check frontend formatting
+        working-directory: frontend
+        run: npm run format:check
+      - name: Build production frontend
+        working-directory: frontend
+        run: npm run build
+      - name: Frontend unit tests
+        working-directory: frontend
+        run: npm test
+      - name: Install locked browser-test dependencies
+        working-directory: tests/BizFlow.E2ETests
+        run: npm ci
+      - name: Install Chromium and system dependencies
+        working-directory: tests/BizFlow.E2ETests
+        run: npx --no-install playwright install --with-deps chromium
+      - name: Mocked browser failure and guard tests
+        working-directory: tests/BizFlow.E2ETests
+        run: npm test
+      - name: Real API and PostgreSQL browser flows
+        run: dotnet run --project tests/BizFlow.BrowserHarness --configuration Release --no-build --no-restore
+      # Do not upload real-auth network traces, environment dumps, test databases or credentials.
+
+  packaged-app:
+    name: Packaged application smoke test
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22.22.3'
+          package-manager-cache: false
+      - name: Pin npm
+        run: npm install --global npm@11.6.2
+      - name: Install locked browser-test dependencies
+        working-directory: tests/BizFlow.E2ETests
+        run: npm ci
+      - name: Install Chromium and system dependencies
+        working-directory: tests/BizFlow.E2ETests
+        run: npx --no-install playwright install --with-deps chromium
+      - name: Build images and validate isolated packaged application
+        shell: pwsh
+        run: ./deploy/Test-Containers.ps1 -Build -Browser
+      # The smoke script deletes only its uniquely named disposable test project.
+      # Runner disposal also bounds resource lifetime if a job is cancelled or times out.

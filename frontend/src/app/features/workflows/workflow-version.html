@@ -1,0 +1,128 @@
+<header class="public-header directory-header">
+  <a class="wordmark" routerLink="/workspace">BizFlow</a
+  ><span>{{ session.identity()?.tenantName }}</span>
+</header>
+<main id="main-content" class="page-content" tabindex="-1">
+  <nav aria-label="Breadcrumb">
+    <a routerLink="/workspace">Workspace</a> / <a routerLink="/settings">Settings</a> /
+    <a routerLink="/settings/workflows">Workflows</a> / <span>Version</span>
+  </nav>
+  <h1>Workflow version</h1>
+  <section class="directory-panel" aria-label="Workflow version details" [attr.aria-busy]="busy()">
+    @if (busy()) {
+      <p class="directory-feedback" role="status">Loading workflow version…</p>
+    } @else if (failure()) {
+      <div class="directory-feedback">
+        <p role="alert">{{ failure() }}</p>
+        @if (retryable()) {
+          <button mat-stroked-button type="button" (click)="load()">Retry</button>
+        }
+      </div>
+    } @else if (version(); as data) {
+      <section class="version-section">
+        <h2>{{ data.name }}</h2>
+        <p>
+          {{ data.businessType === 'TASK' ? 'Task' : 'Request' }} · Version {{ data.versionNo }} ·
+          <span class="status-label">{{ data.status }}</span>
+        </p>
+        @if (data.status === 'DRAFT') {
+          <p>
+            This draft is not published and cannot run. Step editing, validation and publishing are
+            not available yet.
+          </p>
+        } @else {
+          <p>
+            Published configuration is immutable. This view is read-only; runtime execution is not
+            available yet.
+          </p>
+        }
+        @if (data.publishedAt) {
+          <p>Published {{ data.publishedAt | date: 'medium' }}</p>
+        }
+      </section>
+      @if (session.hasPermission('workflows.configure')) {
+        <section
+          class="version-section"
+          aria-label="New workflow version"
+          [attr.aria-busy]="creating()"
+        >
+          <h2>New version</h2>
+          <p>
+            Create an empty draft with the next version number. Existing configuration is not copied
+            or changed.
+          </p>
+          @if (created(); as draft) {
+            <p role="status">Draft version {{ draft.latestVersionNo }} created.</p>
+            <a
+              mat-stroked-button
+              [routerLink]="[
+                '/settings/workflows',
+                draft.workflowId,
+                'versions',
+                draft.latestVersionId,
+              ]"
+              >Open new draft</a
+            >
+          } @else {
+            <button
+              mat-stroked-button
+              type="button"
+              [disabled]="creating()"
+              (click)="createNextVersion()"
+            >
+              {{ creating() ? 'Creating draft…' : 'Create empty version' }}
+            </button>
+          }
+          @if (createFailure()) {
+            <p role="alert">{{ createFailure() }}</p>
+          }
+        </section>
+      }
+      <section class="version-section">
+        <h2>Steps</h2>
+        @if (data.steps.length === 0) {
+          <p>No steps have been configured.</p>
+        } @else {
+          <ol>
+            @for (step of data.steps; track step.stepId) {
+              <li>
+                <h3>{{ step.name }}</h3>
+                <p>{{ step.stepCode }} · {{ step.type }} · Order {{ step.orderNo }}</p>
+                <details>
+                  <summary>Stored step configuration</summary>
+                  <pre>{{ step.config | json }}</pre>
+                </details>
+              </li>
+            }
+          </ol>
+        }
+      </section>
+      <section class="version-section">
+        <h2>Transitions</h2>
+        @if (data.transitions.length === 0) {
+          <p>No transitions have been configured.</p>
+        } @else {
+          <ul>
+            @for (transition of data.transitions; track transition.transitionId) {
+              <li>
+                {{ transition.fromState }} → {{ transition.toState }}
+                @if (transition.guard) {
+                  <details>
+                    <summary>Stored guard configuration</summary>
+                    <pre>{{ transition.guard | json }}</pre>
+                  </details>
+                }
+              </li>
+            }
+          </ul>
+        }
+      </section>
+      <section class="version-section">
+        <details>
+          <summary>Stored definition snapshot</summary>
+          <pre>{{ data.definition | json }}</pre>
+        </details>
+      </section>
+    }
+  </section>
+</main>

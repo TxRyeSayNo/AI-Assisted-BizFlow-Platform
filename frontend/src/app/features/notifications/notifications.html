@@ -1,0 +1,120 @@
+<header class="public-header directory-header">
+  <a class="wordmark" routerLink="/workspace">BizFlow</a
+  ><span>{{ session.identity()?.tenantName }}</span>
+</header>
+<main id="main-content" class="page-content" tabindex="-1">
+  <nav aria-label="Breadcrumb">
+    <a routerLink="/workspace">Workspace</a> / <span>Notifications</span>
+  </nav>
+  <h1>Notifications</h1>
+  <p>
+    Updates addressed to you in this workspace. Reading a notification does not change the related
+    work.
+  </p>
+  <section class="directory-panel" aria-label="Your notifications" [attr.aria-busy]="busy()">
+    <div class="filters">
+      <mat-checkbox
+        [checked]="unreadOnly()"
+        [disabled]="reading() !== null"
+        (change)="filter($event.checked)"
+        >Unread only</mat-checkbox
+      >
+      <button
+        mat-stroked-button
+        type="button"
+        [disabled]="busy() || reading() !== null"
+        (click)="load(page())"
+      >
+        Refresh inbox
+      </button>
+    </div>
+    @if (receiptMessage()) {
+      <p class="directory-feedback" role="status">{{ receiptMessage() }}</p>
+    }
+    @if (receiptError()) {
+      <p class="directory-feedback" role="alert">{{ receiptError() }}</p>
+    }
+    @if (busy()) {
+      <p class="directory-feedback" role="status">Loading notifications…</p>
+    } @else if (denied()) {
+      <p class="directory-feedback" role="alert">
+        You no longer have access to this workspace inbox.
+      </p>
+    } @else if (error()) {
+      <p class="directory-feedback" role="alert">
+        Notifications could not be loaded. Refresh the inbox to try again.
+      </p>
+    } @else if (result(); as data) {
+      <p class="directory-feedback" role="status">
+        {{ data.unreadCount }} unread
+        {{ data.unreadCount === 1 ? 'notification' : 'notifications' }}
+      </p>
+      @if (data.items.length === 0) {
+        <p class="directory-feedback">
+          {{ unreadOnly() ? 'You have no unread notifications.' : 'No notifications yet.' }}
+        </p>
+      } @else {
+        <ol class="notification-list" aria-label="Notification list">
+          @for (row of data.items; track row.notificationId) {
+            <li>
+              <article [attr.aria-label]="row.title">
+                <span class="status-label">{{ row.readAt ? 'Read' : 'Unread' }}</span>
+                <h2>{{ row.title }}</h2>
+                <p class="notification-content">{{ row.content }}</p>
+                <p class="notification-meta">{{ row.type }}</p>
+                @if (row.objectType) {
+                  <p class="notification-meta">
+                    Related: {{ row.objectType }}
+                    @if (row.objectId) {
+                      · {{ row.objectId }}
+                    }
+                  </p>
+                }
+                @if (row.objectType === 'Task' && row.objectId) {
+                  <a mat-stroked-button [routerLink]="['/tasks', row.objectId]">Open task</a>
+                }
+                @if (row.readAt) {
+                  <p class="notification-meta">
+                    Read {{ row.readAt | date: 'yyyy-MM-dd HH:mm:ss' : 'UTC' }} UTC
+                  </p>
+                } @else {
+                  <button
+                    mat-stroked-button
+                    type="button"
+                    [disabled]="reading() !== null"
+                    (click)="markRead(row)"
+                    [attr.aria-label]="'Mark read: ' + row.title"
+                  >
+                    {{ reading() === row.notificationId ? 'Saving…' : 'Mark read' }}
+                  </button>
+                }
+              </article>
+            </li>
+          }
+        </ol>
+      }
+      <nav class="pagination" aria-label="Notification pages">
+        <span
+          >{{ data.total }} {{ data.total === 1 ? 'notification' : 'notifications' }} · Page
+          {{ data.page }}</span
+        >
+        <button
+          mat-stroked-button
+          type="button"
+          [disabled]="data.page <= 1 || reading() !== null"
+          (click)="load(data.page - 1)"
+        >
+          Previous
+        </button>
+        <button
+          mat-stroked-button
+          type="button"
+          [disabled]="data.page * data.pageSize >= data.total || reading() !== null"
+          (click)="load(data.page + 1)"
+        >
+          Next
+        </button>
+      </nav>
+    }
+  </section>
+</main>

@@ -1,0 +1,28 @@
+:host,
+form {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+}
+mat-dialog-content {
+  flex: 1;
+  max-height: none;
+}
+mat-form-field {
+  display: block;
+  width: 100%;
+  margin-block: var(--tp-space-3);
+}
+.target-pages,
+mat-dialog-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--tp-space-2);
+}
+.target-pages span {
+  flex-basis: 100%;
+}
+p {
+  overflow-wrap: anywhere;
+}

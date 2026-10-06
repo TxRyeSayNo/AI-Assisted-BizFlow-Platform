@@ -1,0 +1,153 @@
+<header class="public-header directory-header">
+  <a class="wordmark" routerLink="/workspace">BizFlow</a>
+  <span>{{ platform ? 'Platform administration' : session.identity()?.tenantName }}</span>
+</header>
+<main id="main-content" class="page-content" tabindex="-1">
+  <nav aria-label="Breadcrumb">
+    <a routerLink="/workspace">{{ platform ? 'Platform home' : 'Workspace' }}</a> /
+    <span>Audit</span>
+  </nav>
+  <h1>{{ platform ? 'Platform audit' : 'Workspace audit' }}</h1>
+  <p>
+    {{
+      platform
+        ? 'Platform-level events only. Company audit streams are not included.'
+        : 'Security and configuration events in this workspace only.'
+    }}
+    Events are read-only. All dates and times are UTC.
+  </p>
+  <section class="directory-panel" aria-label="Audit events" [attr.aria-busy]="busy()">
+    <form [formGroup]="filters" (ngSubmit)="apply()">
+      <div class="filters">
+        <mat-form-field appearance="outline" subscriptSizing="dynamic"
+          ><mat-label>Action code</mat-label
+          ><input
+            matInput
+            formControlName="action"
+            maxlength="100"
+            placeholder="e.g. ROLE.CREATED"
+            [readonly]="busy()"
+        /></mat-form-field>
+        <mat-form-field appearance="outline" subscriptSizing="dynamic"
+          ><mat-label>Actor type</mat-label
+          ><mat-select formControlName="actorType"
+            ><mat-option value="">All actor types</mat-option
+            ><mat-option value="USER">User</mat-option><mat-option value="SYSTEM">System</mat-option
+            ><mat-option value="AI_AGENT">AI agent</mat-option></mat-select
+          ></mat-form-field
+        >
+        <button mat-flat-button type="submit" [disabled]="busy()">Apply filters</button>
+      </div>
+      <details class="advanced-filters">
+        <summary>Actor, object and date filters</summary>
+        <div class="filters">
+          <mat-form-field appearance="outline" subscriptSizing="dynamic"
+            ><mat-label>Actor ID</mat-label
+            ><input matInput formControlName="actorId" maxlength="36"
+          /></mat-form-field>
+          <mat-form-field appearance="outline" subscriptSizing="dynamic"
+            ><mat-label>Object type</mat-label
+            ><input matInput formControlName="objectType" maxlength="60" placeholder="e.g. Role"
+          /></mat-form-field>
+          <mat-form-field appearance="outline" subscriptSizing="dynamic"
+            ><mat-label>Object ID</mat-label
+            ><input matInput formControlName="objectId" maxlength="36"
+          /></mat-form-field>
+          <mat-form-field appearance="outline" subscriptSizing="dynamic"
+            ><mat-label>From date (UTC)</mat-label
+            ><input matInput type="date" formControlName="fromDate"
+          /></mat-form-field>
+          <mat-form-field appearance="outline" subscriptSizing="dynamic"
+            ><mat-label>Through date (UTC)</mat-label
+            ><input matInput type="date" formControlName="throughDate"
+          /></mat-form-field>
+        </div>
+        <p>
+          IDs must be complete UUIDs. Action and object type match exact codes. The through date
+          includes the whole UTC day.
+        </p>
+      </details>
+      @if (validation()) {
+        <p class="directory-feedback" role="alert">{{ validation() }}</p>
+      }
+    </form>
+    @if (busy()) {
+      <p class="directory-feedback" role="status">Loading audit events…</p>
+    } @else if (denied()) {
+      <p class="directory-feedback" role="alert">
+        You no longer have permission to read these audit events.
+      </p>
+    } @else if (error()) {
+      <div class="directory-feedback">
+        <p role="alert">Audit events could not be loaded. Check the filters and try again.</p>
+        <button mat-stroked-button type="button" (click)="load(page())">Retry</button>
+      </div>
+    } @else if (result(); as data) {
+      @if (data.items.length === 0) {
+        <p class="directory-feedback" role="status">No audit events match these filters.</p>
+      } @else {
+        <table>
+          <caption>
+            {{
+              platform ? 'Platform-level' : 'Workspace'
+            }}
+            audit history
+          </caption>
+          <thead>
+            <tr>
+              <th scope="col">Event</th>
+              <th scope="col">Details</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of data.items; track row.auditLogId) {
+              <tr>
+                <th scope="row">
+                  {{ row.action
+                  }}<span class="audit-meta"
+                    >{{ row.createdAt | date: 'yyyy-MM-dd HH:mm:ss' : 'UTC' }} UTC ·
+                    {{ actorLabels[row.actorType] }}</span
+                  ><span class="audit-meta"
+                    >{{ row.objectType ?? 'No object' }}
+                    @if (row.objectId) {
+                      · {{ row.objectId }}
+                    }
+                  </span>
+                </th>
+                <td>
+                  <button
+                    mat-stroked-button
+                    type="button"
+                    (click)="open(row)"
+                    [attr.aria-label]="'View audit event ' + row.auditLogId"
+                  >
+                    View
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+      <nav class="pagination" aria-label="Audit pages">
+        <span role="status"
+          >{{ data.total }} {{ data.total === 1 ? 'event' : 'events' }} · Page {{ data.page }}</span
+        ><button
+          mat-stroked-button
+          type="button"
+          [disabled]="data.page <= 1"
+          (click)="load(data.page - 1)"
+        >
+          Previous</button
+        ><button
+          mat-stroked-button
+          type="button"
+          [disabled]="data.page * data.pageSize >= data.total"
+          (click)="load(data.page + 1)"
+        >
+          Next
+        </button>
+      </nav>
+    }
+  </section>
+</main>

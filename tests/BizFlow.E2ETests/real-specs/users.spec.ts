@@ -1,0 +1,35 @@
+import { test, expect } from './fixtures';
+
+test('authorized people directory reads, filters and pages the actual tenant API', async ({ page }, testInfo) => {
+  await page.goto('/login');
+  await page.getByLabel('Employee code', { exact: true }).fill('EMP001');
+  await page.getByLabel('Password', { exact: true }).fill(process.env.BIZFLOW_E2E_PASSWORD!);
+  await page.getByLabel('Workspace key', { exact: true }).fill(process.env.BIZFLOW_E2E_ADMIN_KEY!);
+  await page.getByRole('button', { name: 'Sign in', exact: true }).click();
+  await expect(page).toHaveURL(/\/workspace$/);
+  await page.getByRole('link', { name: 'Browse people directory', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'People', exact: true })).toBeVisible();
+  await expect(page.getByText('27 people · Page 1', { exact: true })).toBeVisible();
+  await expect(page.locator('tbody tr')).toHaveCount(25);
+  await page.getByRole('button', { name: 'Next', exact: true }).click();
+  await expect(page.getByText('27 people · Page 2', { exact: true })).toBeVisible();
+  await expect(page.locator('tbody tr')).toHaveCount(2);
+  await expect(page.getByRole('rowheader', { name: /Workspace colleague 26/ })).toContainText('People operations');
+  await page.getByLabel('Account status', { exact: true }).click();
+  await page.getByRole('option', { name: 'Inactive', exact: true }).click();
+  await page.getByRole('button', { name: 'Apply filters', exact: true }).click();
+  await expect(page.getByText('1 person · Page 1', { exact: true })).toBeVisible();
+  await expect(page.getByRole('rowheader', { name: /Workspace colleague 26/ })).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await page.screenshot({ path: testInfo.outputPath('people-directory.png'), fullPage: true });
+  await page.getByLabel('Name, employee code or email', { exact: true }).fill('not-in-this-workspace');
+  await page.getByRole('button', { name: 'Apply filters', exact: true }).click();
+  await expect(page.getByText('No people match these filters.', { exact: false })).toBeVisible();
+  await page.getByLabel('Account status', { exact: true }).click();
+  await page.getByRole('option', { name: 'All statuses', exact: true }).click();
+  await page.getByLabel('Name, employee code or email', { exact: true }).fill('person-25@example.test');
+  await page.getByRole('button', { name: 'Apply filters', exact: true }).click();
+  await expect(page.locator('tbody tr')).toHaveCount(1);
+  await expect(page.locator('tbody')).toContainText('Locked');
+});

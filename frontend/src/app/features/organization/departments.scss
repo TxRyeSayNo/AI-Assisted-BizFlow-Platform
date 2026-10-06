@@ -1,0 +1,106 @@
+:host {
+  display: block;
+}
+.directory-header {
+  flex-wrap: wrap;
+}
+.directory-header span {
+  overflow-wrap: anywhere;
+}
+.directory-panel {
+  background: var(--tp-surf);
+  border: var(--tp-bw) solid var(--tp-line);
+  border-radius: var(--tp-r);
+  overflow: hidden;
+}
+.filters {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--tp-space-4);
+  padding: var(--tp-space-6);
+}
+.filters mat-form-field:first-child {
+  flex: 1;
+  min-width: 14rem;
+}
+.filters button {
+  min-height: var(--tp-control-height);
+}
+.directory-feedback {
+  padding: var(--tp-space-6);
+  background: var(--tp-surf-2);
+  margin: 0;
+}
+table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+  text-align: left;
+}
+caption {
+  text-align: left;
+  padding: var(--tp-space-3) var(--tp-space-6);
+  color: var(--tp-mute);
+  font-size: var(--tp-small-size);
+}
+th,
+td {
+  padding: var(--tp-space-4) var(--tp-space-6);
+  border-bottom: var(--tp-bw) solid var(--tp-line);
+  vertical-align: top;
+  overflow-wrap: anywhere;
+}
+thead {
+  background: var(--tp-surf-2);
+}
+thead th:last-child {
+  width: 9rem;
+}
+.department-code {
+  display: block;
+  font-family: var(--tp-font-mono);
+  font-size: var(--tp-small-size);
+  color: var(--tp-mute);
+  font-weight: normal;
+}
+.status-label {
+  display: inline-block;
+  border: var(--tp-bw) solid var(--tp-line);
+  border-radius: var(--tp-r-sm);
+  padding: var(--tp-space-1) var(--tp-space-2);
+}
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: var(--tp-space-3);
+  padding: var(--tp-space-4) var(--tp-space-6);
+}
+.pagination span {
+  margin-right: auto;
+}
+@media (max-width: 40rem) {
+  .filters {
+    align-items: stretch;
+    flex-direction: column;
+    padding: var(--tp-space-4);
+  }
+  .filters mat-form-field:first-child {
+    min-width: 0;
+  }
+  th,
+  td {
+    padding: var(--tp-space-4);
+  }
+  thead th:last-child {
+    width: 7rem;
+  }
+  .pagination {
+    padding: var(--tp-space-4);
+  }
+  .pagination span {
+    width: 100%;
+  }
+}

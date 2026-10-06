@@ -1,0 +1,39 @@
+.task-form {
+  display: grid;
+  gap: var(--tp-space-4);
+  padding: var(--tp-space-6);
+  max-width: 48rem;
+}
+.task-form mat-form-field {
+  width: 100%;
+  min-width: 0;
+}
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--tp-space-3);
+}
+.detail-section {
+  margin-block: var(--tp-space-6);
+  padding: var(--tp-space-6);
+}
+.detail-section p,
+.detail-section li {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+dl {
+  display: grid;
+  grid-template-columns: minmax(7rem, 1fr) 2fr;
+  gap: var(--tp-space-3);
+}
+dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+@media (max-width: 40rem) {
+  .task-form,
+  .detail-section {
+    padding: var(--tp-space-4);
+  }
+}
