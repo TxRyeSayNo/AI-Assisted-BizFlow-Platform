@@ -16,12 +16,30 @@ import { SessionService } from '../../core/auth/session';
       <p>You are signed in to {{ identity()?.tenantName ?? 'the platform console' }}.</p>
       @if (identity()?.tenantId) {
         @if (
+          session.hasPermission('requests.read.tenant') ||
+          session.hasPermission('requests.read.managed') ||
+          session.hasPermission('requests.read.own')
+        ) {
+          <p><a routerLink="/requests">View requests</a></p>
+        }
+        @if (
           session.hasPermission('tasks.read.tenant') ||
           session.hasPermission('tasks.read.managed') ||
           session.hasPermission('tasks.read.own') ||
           session.hasPermission('tasks.read.assigned')
         ) {
           <p><a routerLink="/tasks">View tasks</a></p>
+        }
+        @if (session.hasPermission('records.search')) {
+          <p><a routerLink="/records/search">Search records</a></p>
+        }
+        @if (
+          session.hasPermission('reports.manager') ||
+          session.hasPermission('reports.company') ||
+          session.hasPermission('reports.workload') ||
+          session.hasPermission('reports.sla')
+        ) {
+          <p><a routerLink="/reports">Dashboard & Reports</a></p>
         }
         <p><a routerLink="/notifications">Notifications</a></p>
         <p><a routerLink="/settings/services">Browse service catalog</a></p>

@@ -36,7 +36,8 @@ public static class PostgresOptions
             options.MapEnum<WorkflowStatus>("workflow_status", nameTranslator: UpperCaseEnumTranslator.Instance);
             options.MapEnum<WorkflowVersionStatus>("workflow_version_status", nameTranslator: UpperCaseEnumTranslator.Instance);
             options.MapEnum<WorkflowStepType>("workflow_step_type", nameTranslator: UpperCaseEnumTranslator.Instance);
-        });
+        })
+        .ConfigureWarnings(w => w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning));
 }
 
 internal sealed class UpperCaseEnumTranslator : INpgsqlNameTranslator

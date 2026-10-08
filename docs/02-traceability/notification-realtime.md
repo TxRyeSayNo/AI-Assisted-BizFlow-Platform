@@ -1,0 +1,14 @@
+# Recipient notification realtime
+
+Scope: SSS §22/§23, M09, UI-14, BR-001/002 and architecture § realtime. SignalR is a delivery optimization for the persisted recipient inbox, not a replacement for it.
+
+- `/api/v1/realtime/notifications` is a bearer-authenticated SignalR transport endpoint, with no public business mutation or client-selected recipient/group method. Platform accounts remain outside the tenant inbox pending the existing owner decision.
+- JWT query tokens are accepted only on this exact transport path for browser WebSocket/SSE support, never on business APIs. Headers remain supported. Logs must omit query strings and tokens. Expired access tokens close connections; reconnect obtains current credentials through the existing rotating-refresh flow.
+- Connections are bound to server-validated tenant/user/session identities. Each delivery revalidates the recipient session/account/tenant. Revoked or inactive sessions receive no hint. Isolation is by exact tenant and recipient, not role or tenant-wide broadcasting. Membership groups are server-selected; delivery targets only revalidated connections.
+- `InboxChanged` and the post-registration `InboxReady` acknowledgment have no arguments: no content, IDs, counts or resource data cross the realtime channel. UI refetches through the existing live-authorized inbox API. The ready acknowledgment closes the subscribe-versus-initial-read race; reconnect also refetches to recover missed events. Manual refresh remains available during outages. Session changes and leaving the screen stop the connection and discard late callbacks.
+- Existing assignment, acceptance and first-read producers publish only after the database transaction commits. Transport failure cannot roll back or fail an already committed business action. Keyed mutation replay does not produce another event. No new table/column, business event, recipient policy or delivery guarantee is introduced.
+- Delivery is best effort within the current API process. Durable email dispatch, scheduler idempotency, all remaining producers, multi-node backplane and full-shell badge integration are separate remaining work. Persisted inbox/reconnect recovery protects against lost hints, but this is not an exactly-once realtime guarantee.
+
+Required evidence: anonymous/forged/query-token boundaries, platform denial, same/foreign-tenant recipient isolation, revoked-session suppression, post-commit-only producer calls and rollback silence, failure isolation, reconnect/refetch and session cleanup, real desktop/mobile arrival without manual refresh.
+
+Framework references: [SignalR authentication](https://learn.microsoft.com/en-us/aspnet/core/signalr/authn-and-authz?view=aspnetcore-10.0) and [JavaScript reconnect behavior](https://learn.microsoft.com/en-us/aspnet/core/signalr/javascript-client?view=aspnetcore-10.0).

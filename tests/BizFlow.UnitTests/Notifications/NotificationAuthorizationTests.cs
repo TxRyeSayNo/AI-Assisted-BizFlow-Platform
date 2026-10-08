@@ -22,7 +22,7 @@ public sealed class NotificationAuthorizationTests
         var context = new Context(); var snapshots = new Snapshots(deniedCall, tenantInactive);
         var audit = new Audit(); var store = new Store();
         var membership = new TenantMembershipAuthorizer(context, snapshots, audit);
-        var service = new NotificationInbox(context, membership, audit, store, TimeProvider.System);
+        var service = new NotificationInbox(context, membership, audit, store, TimeProvider.System, new NoUpdates());
 
         var error = await Assert.ThrowsAsync<ApplicationFault>(() => service.MarkReadAsync(store.Transaction.Notification.Id, default));
 
@@ -35,6 +35,11 @@ public sealed class NotificationAuthorizationTests
         Assert.Equal(tenantInactive ? AccessDenial.InactiveTenant : AccessDenial.InactiveAccount, audit.Denial);
     }
 
+    private sealed class NoUpdates : INotificationUpdates
+    {
+        public Task PublishAsync(Guid tenantId, IReadOnlyCollection<Guid> recipients, CancellationToken cancellationToken) =>
+            throw new InvalidOperationException("Denied receipt must never publish.");
+    }
     private sealed class Context : ITenantContext { public Guid? UserId => User; public Guid? TenantId => Tenant; }
     private sealed class Snapshots(int deniedCall, bool tenantInactive) : IAccessSnapshotProvider
     {

@@ -2,6 +2,8 @@
 
 Task queue rejection authority (2026-10-06): ADR-0010 approves one-time department acceptance claims but does not say whether any unclaimed queue member may reject the whole assignment. Asked whether rejection must be limited to specifically assigned users or may be exercised by any active department member with `tasks.accept`. Acceptance implementation proceeds under the approved contract; no department rejection authority is inferred.
 
+Task progress/report semantics (2026-10-07): FR-TASK-005/006 say “Task active” without enumerating eligible states. Asked whether both operations should require IN_PROGRESS (start/resume first), or whether OVERDUE reporting may preserve OVERDUE. Also asked whether formal reports, whose input has no percent but whose stored record requires it, should carry the latest percent (0 if none) or require explicit percent input. Neither choice is inferred; these questions do not block the specified start/resume command.
+
 The remaining requests below are unanswered as of 2026-10-06 and are **not approved amendments**. The owner explicitly approved the four Task decisions as TD-01–04, now recorded in ADR-0012. No unrelated approval is inferred from the time limit.
 
 | Decision | Conflicting/missing requirement | Proposed resolution awaiting confirmation |

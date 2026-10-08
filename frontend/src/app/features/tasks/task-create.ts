@@ -1,17 +1,18 @@
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { SessionService } from '../../core/auth/session';
 
 @Component({
   selector: 'bf-task-create',
   imports: [
+    FormsModule,
     ReactiveFormsModule,
     MatButtonModule,
     MatFormFieldModule,
@@ -26,13 +27,27 @@ export class TaskCreate {
   readonly session = inject(SessionService);
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   private readonly destroy = inject(DestroyRef);
   readonly busy = signal(false);
   readonly uncertain = signal(false);
   readonly done = signal(false);
   readonly error = signal('');
+  readonly requestId = signal<string | null>(null);
+  readonly aiPrompt = signal('');
+  readonly aiBusy = signal(false);
+  readonly aiMessage = signal('');
   private key = crypto.randomUUID();
   private submitted?: object;
+
+  constructor() {
+    this.route.queryParams.pipe(takeUntilDestroyed(this.destroy)).subscribe((params) => {
+      if (params['requestId']) {
+        this.requestId.set(params['requestId']);
+      }
+    });
+  }
+
   readonly form = inject(FormBuilder).nonNullable.group({
     title: ['', [Validators.required, Validators.maxLength(300)]],
     description: [''],
@@ -40,6 +55,55 @@ export class TaskCreate {
     deadline: [''],
     checklist: [''],
   });
+
+  assistWithAi() {
+    const prompt = this.aiPrompt().trim();
+    if (!prompt || this.aiBusy()) return;
+    this.aiBusy.set(true);
+    this.aiMessage.set('');
+    this.http.post<any>('/api/v1/ai/task-assistance', { prompt })
+      .pipe(takeUntilDestroyed(this.destroy))
+      .subscribe({
+        next: (draft) => {
+          this.aiBusy.set(false);
+          if (draft) {
+            this.form.patchValue({
+              title: draft.title || '',
+              description: draft.description || '',
+              priority: draft.priority || 'MEDIUM',
+              checklist: (draft.checklistItems || []).join('\n'),
+            });
+            this.aiMessage.set(`AI đã tạo bản thảo (Độ tin cậy: ${(draft.confidence * 100).toFixed(0)}%): ${draft.reasoning}`);
+          }
+        },
+        error: () => {
+          this.aiBusy.set(false);
+          this.aiMessage.set('Không thể kết nối trợ lý AI. Vui lòng thử lại.');
+        }
+      });
+  }
+
+  breakdownWithAi() {
+    const title = this.form.controls.title.value.trim();
+    if (!title || this.aiBusy()) return;
+    this.aiBusy.set(true);
+    this.http.post<any>('/api/v1/ai/task-breakdown', { title, description: this.form.controls.description.value, targetSubtaskCount: 4 })
+      .pipe(takeUntilDestroyed(this.destroy))
+      .subscribe({
+        next: (res) => {
+          this.aiBusy.set(false);
+          if (res?.subtasks?.length) {
+            const list = res.subtasks.map((s: any) => `${s.orderIndex}. ${s.title}: ${s.description}`).join('\n');
+            this.form.patchValue({ checklist: list });
+            this.aiMessage.set(`AI đã phân rã thành ${res.subtasks.length} nhiệm vụ con: ${res.strategy}`);
+          }
+        },
+        error: () => {
+          this.aiBusy.set(false);
+          this.aiMessage.set('Phân rã thất bại. Vui lòng kiểm tra tiêu đề.');
+        }
+      });
+  }
   save() {
     if (this.busy() || this.done() || !this.session.hasPermission('tasks.create')) return;
     if (!this.uncertain()) {
@@ -62,6 +126,7 @@ export class TaskCreate {
           .split('\n')
           .map((v) => v.trim())
           .filter(Boolean),
+        ...(this.requestId() ? { requestId: this.requestId() } : {}),
       };
     }
     this.busy.set(true);

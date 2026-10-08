@@ -4,6 +4,28 @@ import { permissionGuard, sessionGuard, tenantGuard } from './core/auth/session.
 
 export const routes: Routes = [
   {
+    path: 'requests/new',
+    canActivate: [tenantGuard, permissionGuard],
+    data: { permission: 'requests.create' },
+    loadComponent: () => import('./features/requests/request-create').then((m) => m.RequestCreate),
+  },
+  {
+    path: 'requests/:id',
+    canActivate: [tenantGuard, permissionGuard],
+    data: {
+      anyPermissions: ['requests.read.tenant', 'requests.read.managed', 'requests.read.own'],
+    },
+    loadComponent: () => import('./features/requests/request-detail').then((m) => m.RequestDetail),
+  },
+  {
+    path: 'requests',
+    canActivate: [tenantGuard, permissionGuard],
+    data: {
+      anyPermissions: ['requests.read.tenant', 'requests.read.managed', 'requests.read.own'],
+    },
+    loadComponent: () => import('./features/requests/requests').then((m) => m.Requests),
+  },
+  {
     path: 'tasks/new',
     canActivate: [tenantGuard, permissionGuard],
     data: { permission: 'tasks.create' },
@@ -34,6 +56,26 @@ export const routes: Routes = [
       ],
     },
     loadComponent: () => import('./features/tasks/tasks').then((m) => m.Tasks),
+  },
+  {
+    path: 'records/search',
+    canActivate: [tenantGuard, permissionGuard],
+    data: { permission: 'records.search' },
+    loadComponent: () =>
+      import('./features/collaboration/record-search').then((m) => m.RecordSearch),
+  },
+  {
+    path: 'reports',
+    canActivate: [tenantGuard, permissionGuard],
+    data: {
+      anyPermissions: ['reports.manager', 'reports.company', 'reports.workload', 'reports.sla'],
+    },
+    loadComponent: () => import('./features/reports/reports').then((m) => m.Reports),
+  },
+  {
+    path: 'dashboard',
+    redirectTo: 'reports',
+    pathMatch: 'full',
   },
   {
     path: 'settings/services',

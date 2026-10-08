@@ -4,6 +4,30 @@
   <span class="eyebrow">Work management</span>
   <h1>New task</h1>
   <p>Create an independent draft. Assignment and execution are separate steps.</p>
+  
+  <section class="ai-assistant-card" aria-label="AI Task Assistant">
+    <div class="ai-header">
+      <span class="ai-badge">AI Assistant</span>
+      <strong>Khởi tạo nhanh bằng AI (FR-AI-001)</strong>
+    </div>
+    <p class="ai-meta">Nhập yêu cầu bằng ngôn ngữ tự nhiên để AI tự động điền tiêu đề, mô tả, mức ưu tiên và danh sách việc cần làm.</p>
+    <mat-form-field appearance="outline">
+      <mat-label>Yêu cầu công việc tự nhiên</mat-label>
+      <textarea matInput [ngModel]="aiPrompt()" (ngModelChange)="aiPrompt.set($event)" rows="2" placeholder="Ví dụ: Cần kiểm tra bảo trì hệ thống máy chủ và backup dữ liệu gấp trong 2 ngày..."></textarea>
+    </mat-form-field>
+    <div class="ai-actions">
+      <button mat-flat-button color="primary" type="button" (click)="assistWithAi()" [disabled]="aiBusy() || !aiPrompt().trim()">
+        {{ aiBusy() ? 'AI đang suy nghĩ…' : 'Nhờ AI điền bản thảo' }}
+      </button>
+      <button mat-stroked-button type="button" (click)="breakdownWithAi()" [disabled]="aiBusy() || !form.controls.title.value.trim()">
+        Phân rã việc con (AI Breakdown)
+      </button>
+    </div>
+    @if (aiMessage()) {
+      <p class="ai-meta" role="status"><strong>Gợi ý AI:</strong> {{ aiMessage() }}</p>
+    }
+  </section>
+
   <form
     class="directory-panel task-form"
     [formGroup]="form"

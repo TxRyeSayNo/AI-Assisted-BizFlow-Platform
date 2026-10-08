@@ -2,13 +2,13 @@ import { test, expect } from './fixtures';
 
 test('manager assigns real work and recipient opens its in-app notification', async ({ page }, info) => {
   const key = process.env['BIZFLOW_E2E_TASK_CREATE_KEY_ASSIGNMENT_' + info.project.name.toUpperCase()]!;
-  async function login(code: string) {
-    await page.goto('/login');
-    await page.getByLabel('Employee code', { exact: true }).fill(code);
-    await page.getByLabel('Password', { exact: true }).fill(process.env.BIZFLOW_E2E_PASSWORD!);
-    await page.getByLabel('Workspace key', { exact: true }).fill(key);
-    await page.getByRole('button', { name: 'Sign in', exact: true }).click();
-    await expect(page).toHaveURL(/\/workspace$/);
+  async function login(code: string, target = page) {
+    await target.goto('/login');
+    await target.getByLabel('Employee code', { exact: true }).fill(code);
+    await target.getByLabel('Password', { exact: true }).fill(process.env.BIZFLOW_E2E_PASSWORD!);
+    await target.getByLabel('Workspace key', { exact: true }).fill(key);
+    await target.getByRole('button', { name: 'Sign in', exact: true }).click();
+    await expect(target).toHaveURL(/\/workspace$/);
   }
   await login('EMP001'); await page.getByRole('link', { name: 'View tasks', exact: true }).click();
   await page.getByRole('link', { name: 'New task', exact: true }).click();
@@ -19,7 +19,16 @@ test('manager assigns real work and recipient opens its in-app notification', as
   await page.getByRole('option', { name: 'Assignment recipient · ASSIGNEE', exact: true }).click();
   await page.getByLabel('Assignment note (optional)', { exact: true }).fill('Please review the operational evidence.');
   await page.screenshot({ path: info.outputPath('assignment-dialog.png'), fullPage: true });
+  const recipientPage = await page.context().newPage();
+  await login('ASSIGNEE', recipientPage);
+  await recipientPage.getByRole('link', { name: 'Notifications', exact: true }).click();
+  await expect(recipientPage.getByRole('status', { name: 'Live notification connection' })).toHaveText('Live updates connected.');
+  await expect(recipientPage.getByRole('article', { name: 'Task assigned', exact: true })).toHaveCount(0);
   await page.getByRole('button', { name: 'Confirm assignment', exact: true }).click();
+  // A different actor commits while the recipient inbox is already open: no navigation or manual refresh.
+  await expect(recipientPage.getByRole('article', { name: 'Task assigned', exact: true })).toContainText('Assigned operational review');
+  await recipientPage.screenshot({ path: info.outputPath('live-notification.png'), fullPage: true });
+  await recipientPage.close();
   await expect(page.getByRole('dialog')).toHaveCount(0);
   await expect(page.getByRole('region', { name: 'Task summary' })).toContainText('ASSIGNED');
   await expect(page.getByRole('region', { name: 'Task summary' })).toContainText('Assignment recipient');
@@ -33,11 +42,40 @@ test('manager assigns real work and recipient opens its in-app notification', as
   await page.screenshot({ path: info.outputPath('recipient-task.png'), fullPage: true });
   await page.getByRole('button', { name: 'Accept task', exact: true }).click();
   await page.getByLabel('Acceptance note (optional)', { exact: true }).fill('Ready to undertake the review.');
+  await expect(page.locator('.mat-mdc-dialog-inner-container')).toHaveCSS('opacity', '1');
+  await expect(page.locator('.mat-mdc-dialog-surface')).toHaveCSS('transform', 'none');
+  await expect(page.getByRole('button', { name: 'Confirm acceptance', exact: true })).toBeInViewport();
   await page.screenshot({ path: info.outputPath('acceptance-dialog.png'), fullPage: true });
   await page.getByRole('button', { name: 'Confirm acceptance', exact: true }).click();
   await expect(page.getByRole('dialog')).toHaveCount(0);
   await expect(page.getByRole('region', { name: 'Task summary' })).toContainText('ACCEPTED');
   await expect(page.getByRole('button', { name: 'Accept task', exact: true })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Start work', exact: true }).click();
+  await expect(page.locator('.mat-mdc-dialog-inner-container')).toHaveCSS('opacity', '1');
+  await expect(page.locator('.mat-mdc-dialog-surface')).toHaveCSS('transform', 'none');
+  await expect(page.getByRole('button', { name: 'Confirm start', exact: true })).toBeInViewport();
+  await page.screenshot({ path: info.outputPath('execution-dialog.png'), fullPage: true });
+  await page.getByRole('button', { name: 'Confirm start', exact: true }).click();
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await expect(page.getByRole('region', { name: 'Task summary' })).toContainText('IN_PROGRESS');
+  await expect(page.getByRole('button', { name: 'Start work', exact: true })).toHaveCount(0);
+  await page.getByRole('link', { name: 'Tasks', exact: true }).click();
+  await page.getByRole('link', { name: 'Assigned operational review', exact: true }).click();
+  await expect(page.getByRole('region', { name: 'Task summary' })).toContainText('IN_PROGRESS');
+  await page.getByRole('link', { name: 'Tasks', exact: true }).click();
+  await page.getByRole('link', { name: 'Overdue operational follow-up', exact: true }).click();
+  const summary = page.getByRole('region', { name: 'Task summary' });
+  await expect(summary).toContainText('OVERDUE');
+  const deadline = await summary.locator('dd').nth(4).innerText();
+  await page.getByRole('button', { name: 'Resume work', exact: true }).click();
+  await expect(page.locator('.mat-mdc-dialog-inner-container')).toHaveCSS('opacity', '1');
+  await expect(page.locator('.mat-mdc-dialog-surface')).toHaveCSS('transform', 'none');
+  await expect(page.getByRole('button', { name: 'Confirm resume', exact: true })).toBeInViewport();
+  await page.screenshot({ path: info.outputPath('resume-dialog.png'), fullPage: true });
+  await page.getByRole('button', { name: 'Confirm resume', exact: true }).click();
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await expect(summary).toContainText('IN_PROGRESS');
+  await expect(summary.locator('dd').nth(4)).toHaveText(deadline);
   await login('EMP001');
   await page.getByRole('link', { name: 'Notifications', exact: true }).click();
   await expect(page.getByRole('article', { name: 'Task accepted', exact: true })).toContainText('Assigned operational review');

@@ -37,3 +37,43 @@ dd {
     padding: var(--tp-space-4);
   }
 }
+
+.ai-assistant-card {
+  border: 1px solid #7c3aed;
+  background: rgba(124, 58, 237, 0.04);
+  border-radius: 8px;
+  padding: var(--tp-space-4);
+  margin-bottom: var(--tp-space-4);
+
+  .ai-header {
+    display: flex;
+    align-items: center;
+    gap: var(--tp-space-2);
+    margin-bottom: var(--tp-space-2);
+  }
+
+  .ai-badge {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 2px 8px;
+    border-radius: 9999px;
+    background: #7c3aed;
+    color: white;
+  }
+
+  .ai-meta {
+    font-size: 0.875rem;
+    color: #4b5563;
+    margin-top: var(--tp-space-2);
+    line-height: 1.4;
+  }
+
+  .ai-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--tp-space-2);
+    margin-top: var(--tp-space-3);
+  }
+}

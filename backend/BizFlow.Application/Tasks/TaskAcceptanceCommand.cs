@@ -26,7 +26,7 @@ public interface ITaskAcceptanceTransaction : IAsyncDisposable
 }
 
 public sealed class TaskAcceptanceCommand(ITenantContext context, IResourceAuthorizer authorizer, IAccessSnapshotProvider snapshots,
-    ISecurityAuditWriter securityAudit, ITaskAcceptanceStore store, IWorkflowEngine workflow, TimeProvider clock)
+    ISecurityAuditWriter securityAudit, ITaskAcceptanceStore store, IWorkflowEngine workflow, TimeProvider clock, BizFlow.Application.Notifications.INotificationUpdates updates)
 {
     public async Task<TaskAcceptedView> AcceptAsync(Guid taskId, string? inputNote, string? key, CancellationToken cancellationToken)
     {
@@ -65,6 +65,7 @@ public sealed class TaskAcceptanceCommand(ITenantContext context, IResourceAutho
         var notification = Notification.Create(tenantId, assignment.AssignedBy, NotificationEvent.TaskAccepted, "Task accepted", task.Title,
             $"task-accepted/{assignment.Id:N}/{assignment.AssignedBy:N}", "Task", task.Id);
         await transaction.CommitAsync(confirmation, audit, notification, cancellationToken);
+        await updates.PublishAsync(tenantId, [notification.RecipientId], cancellationToken);
         return new(task.Id, assignment.Id, confirmation.Id, "ACCEPTED", now);
     }
 }

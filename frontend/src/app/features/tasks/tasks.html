@@ -7,9 +7,14 @@
   </nav>
   <span class="eyebrow">Work management</span>
   <h1>Tasks</h1>
-  @if (session.hasPermission('tasks.create')) {
-    <a mat-flat-button routerLink="/tasks/new">New task</a>
-  }
+  <div class="tasks-actions-bar" style="display: flex; gap: 0.5rem; margin-bottom: 1rem;">
+    @if (session.hasPermission('tasks.create')) {
+      <a mat-flat-button routerLink="/tasks/new">New task</a>
+    }
+    @if (session.hasPermission('records.search')) {
+      <a mat-stroked-button routerLink="/records/search">Search records</a>
+    }
+  </div>
   <p>
     Track work, current responsibility and deadlines. Only tasks within your access scope appear
     here.

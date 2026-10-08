@@ -1,6 +1,15 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
-import { Observable, catchError, defer, finalize, shareReplay, tap, throwError } from 'rxjs';
+import {
+  Observable,
+  catchError,
+  defer,
+  finalize,
+  firstValueFrom,
+  shareReplay,
+  tap,
+  throwError,
+} from 'rxjs';
 
 export interface LoginRequest {
   identifier: string;
@@ -50,6 +59,14 @@ export class SessionService {
 
   sessionGeneration(): number {
     return this.generation;
+  }
+
+  async realtimeAccessToken(): Promise<string> {
+    const current = this.response();
+    if (!current) throw new Error('No active session.');
+    if (Date.parse(current.expiresAt) > Date.now() + 30_000) return current.accessToken;
+    // Shares the single-use refresh rotation used by ordinary HTTP requests.
+    return (await firstValueFrom(this.refresh())).accessToken;
   }
 
   clear(): void {

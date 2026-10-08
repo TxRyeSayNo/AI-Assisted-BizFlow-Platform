@@ -1,0 +1,355 @@
+<div class="reports-container">
+  <div class="page-header">
+    <div class="header-titles">
+      <h2>Dashboard & Reports</h2>
+      <p class="subtitle">Operational metrics, workload allocation, and SLA compliance analytics</p>
+    </div>
+  </div>
+
+  <!-- Navigation Tabs -->
+  <div class="tabs-bar">
+    <button
+      *ngIf="canViewManager()"
+      type="button"
+      class="tab-btn"
+      [class.active]="activeTab() === 'manager'"
+      (click)="selectTab('manager')"
+    >
+      Manager Dashboard
+    </button>
+    <button
+      *ngIf="canViewCompany()"
+      type="button"
+      class="tab-btn"
+      [class.active]="activeTab() === 'company'"
+      (click)="selectTab('company')"
+    >
+      Company Report
+    </button>
+    <button
+      *ngIf="canViewWorkload()"
+      type="button"
+      class="tab-btn"
+      [class.active]="activeTab() === 'workload'"
+      (click)="selectTab('workload')"
+    >
+      Workload Analysis
+    </button>
+    <button
+      *ngIf="canViewSla()"
+      type="button"
+      class="tab-btn"
+      [class.active]="activeTab() === 'sla'"
+      (click)="selectTab('sla')"
+    >
+      SLA Performance
+    </button>
+  </div>
+
+  <!-- Filters & Controls Bar -->
+  <div class="filter-panel" [formGroup]="filters">
+    <div class="filter-group">
+      <mat-form-field appearance="outline" class="filter-field" *ngIf="activeTab() !== 'sla' && activeTab() !== 'company'">
+        <mat-label>Department</mat-label>
+        <mat-select formControlName="departmentId">
+          <mat-option value="">All Departments</mat-option>
+          <mat-option *ngFor="let dept of departments()" [value]="dept.id">
+            {{ dept.name }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="filter-field">
+        <mat-label>From Date</mat-label>
+        <input matInput type="date" formControlName="from" />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="filter-field">
+        <mat-label>To Date</mat-label>
+        <input matInput type="date" formControlName="to" />
+      </mat-form-field>
+
+      <div class="preset-buttons">
+        <button type="button" mat-stroked-button (click)="setPreset(7)">Last 7d</button>
+        <button type="button" mat-stroked-button (click)="setPreset(30)">Last 30d</button>
+        <button type="button" mat-stroked-button (click)="resetFilters()">Reset</button>
+      </div>
+
+      <button type="button" mat-flat-button color="primary" class="apply-btn" (click)="applyFilters()">
+        Apply Filters
+      </button>
+    </div>
+  </div>
+
+  <!-- Error Alert -->
+  <div class="error-banner" *ngIf="error()">
+    <span class="error-icon">⚠️</span>
+    <span>{{ error() }}</span>
+  </div>
+
+  <!-- Loading Indicator -->
+  <div class="loading-state" *ngIf="busy()">
+    <p>Loading analytics data...</p>
+  </div>
+
+  <!-- Content Sections -->
+  <div *ngIf="!busy()">
+    <!-- TAB 1: Manager Dashboard -->
+    <div *ngIf="activeTab() === 'manager' && managerData() as data" class="dashboard-content">
+      <div class="section-heading">
+        <h3>Task Operations</h3>
+      </div>
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <div class="kpi-title">Total Tasks</div>
+          <div class="kpi-value">{{ data.taskMetrics.totalTasks }}</div>
+        </div>
+        <div class="kpi-card accent-blue">
+          <div class="kpi-title">Active Tasks</div>
+          <div class="kpi-value">{{ data.taskMetrics.activeTasks }}</div>
+        </div>
+        <div class="kpi-card accent-green">
+          <div class="kpi-title">Completed Tasks</div>
+          <div class="kpi-value">{{ data.taskMetrics.completedTasks }}</div>
+        </div>
+        <div class="kpi-card accent-red">
+          <div class="kpi-title">Overdue Tasks</div>
+          <div class="kpi-value">{{ data.taskMetrics.overdueTasks }}</div>
+        </div>
+      </div>
+
+      <div class="section-heading">
+        <h3>Request Operations</h3>
+      </div>
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <div class="kpi-title">Total Requests</div>
+          <div class="kpi-value">{{ data.requestMetrics.totalRequests }}</div>
+        </div>
+        <div class="kpi-card accent-blue">
+          <div class="kpi-title">Pending Requests</div>
+          <div class="kpi-value">{{ data.requestMetrics.pendingRequests }}</div>
+        </div>
+        <div class="kpi-card accent-green">
+          <div class="kpi-title">Closed Requests</div>
+          <div class="kpi-value">{{ data.requestMetrics.closedRequests }}</div>
+        </div>
+        <div class="kpi-card accent-red">
+          <div class="kpi-title">Rejected Requests</div>
+          <div class="kpi-value">{{ data.requestMetrics.rejectedRequests }}</div>
+        </div>
+      </div>
+
+      <div class="section-heading">
+        <h3>Department Operational Summary</h3>
+      </div>
+      <div class="table-card">
+        <table class="report-table">
+          <thead>
+            <tr>
+              <th>Department</th>
+              <th>Active Tasks</th>
+              <th>Completed Tasks</th>
+              <th>Overdue Tasks</th>
+              <th>Total Requests</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let s of data.departmentSummaries">
+              <td class="font-medium">{{ s.departmentName }}</td>
+              <td><span class="badge badge-info">{{ s.activeTasks }}</span></td>
+              <td><span class="badge badge-success">{{ s.completedTasks }}</span></td>
+              <td>
+                <span class="badge" [class.badge-danger]="s.overdueTasks > 0" [class.badge-neutral]="s.overdueTasks === 0">
+                  {{ s.overdueTasks }}
+                </span>
+              </td>
+              <td>{{ s.totalRequests }}</td>
+            </tr>
+            <tr *ngIf="data.departmentSummaries.length === 0">
+              <td colspan="5" class="empty-cell">No department workload records found.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TAB 2: Company Report -->
+    <div *ngIf="activeTab() === 'company' && companyData() as comp" class="dashboard-content">
+      <div class="section-heading">
+        <h3>Company Performance Overview</h3>
+      </div>
+      <div class="kpi-grid">
+        <div class="kpi-card accent-green">
+          <div class="kpi-title">Task Completion Rate</div>
+          <div class="kpi-value">{{ comp.taskCompletionRatePercent }}%</div>
+          <div class="kpi-sub">{{ comp.totalTasksCompleted }} of {{ comp.totalTasksCreated }} tasks</div>
+        </div>
+        <div class="kpi-card accent-blue">
+          <div class="kpi-title">Avg Task Turnaround</div>
+          <div class="kpi-value">{{ comp.averageTaskCompletionTimeHours !== null ? (comp.averageTaskCompletionTimeHours | number:'1.1-1') + ' hrs' : 'N/A' }}</div>
+        </div>
+        <div class="kpi-card accent-green">
+          <div class="kpi-title">Request Resolution Rate</div>
+          <div class="kpi-value">{{ comp.requestResolutionRatePercent }}%</div>
+          <div class="kpi-sub">{{ comp.totalRequestsClosed }} of {{ comp.totalRequestsSubmitted }} requests</div>
+        </div>
+        <div class="kpi-card accent-blue">
+          <div class="kpi-title">Avg Request Turnaround</div>
+          <div class="kpi-value">{{ comp.averageRequestResolutionTimeHours !== null ? (comp.averageRequestResolutionTimeHours | number:'1.1-1') + ' hrs' : 'N/A' }}</div>
+        </div>
+      </div>
+
+      <div class="section-heading">
+        <h3>Department Execution Breakdown</h3>
+      </div>
+      <div class="table-card">
+        <table class="report-table">
+          <thead>
+            <tr>
+              <th>Department</th>
+              <th>Tasks Assigned</th>
+              <th>Tasks Completed</th>
+              <th>Requests Received</th>
+              <th>Requests Closed</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let m of comp.departmentMetrics">
+              <td class="font-medium">{{ m.departmentName }}</td>
+              <td>{{ m.totalTasks }}</td>
+              <td><span class="badge badge-success">{{ m.completedTasks }}</span></td>
+              <td>{{ m.totalRequests }}</td>
+              <td><span class="badge badge-success">{{ m.closedRequests }}</span></td>
+            </tr>
+            <tr *ngIf="comp.departmentMetrics.length === 0">
+              <td colspan="5" class="empty-cell">No department operational data available.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TAB 3: Workload Report -->
+    <div *ngIf="activeTab() === 'workload' && workloadData() as wl" class="dashboard-content">
+      <div class="section-heading">
+        <h3>User Workload Distribution</h3>
+      </div>
+      <div class="table-card">
+        <table class="report-table">
+          <thead>
+            <tr>
+              <th>User</th>
+              <th>Code</th>
+              <th>Department</th>
+              <th>Active Tasks</th>
+              <th>Completed Tasks</th>
+              <th>Overdue Tasks</th>
+              <th>Total Assigned</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let item of wl.items">
+              <td class="font-medium">{{ item.fullName }}</td>
+              <td><code>{{ item.employeeCode }}</code></td>
+              <td>{{ item.departmentName || '—' }}</td>
+              <td><span class="badge badge-info">{{ item.activeTasks }}</span></td>
+              <td><span class="badge badge-success">{{ item.completedTasks }}</span></td>
+              <td>
+                <span class="badge" [class.badge-danger]="item.overdueTasks > 0" [class.badge-neutral]="item.overdueTasks === 0">
+                  {{ item.overdueTasks }}
+                </span>
+              </td>
+              <td>{{ item.totalAssigned }}</td>
+            </tr>
+            <tr *ngIf="wl.items.length === 0">
+              <td colspan="7" class="empty-cell">No user workload records found.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="section-heading">
+        <h3>Department Workload Capacity</h3>
+      </div>
+      <div class="table-card">
+        <table class="report-table">
+          <thead>
+            <tr>
+              <th>Department</th>
+              <th>Active Tasks</th>
+              <th>Total Members</th>
+              <th>Avg Tasks / Member</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let d of wl.departmentBreakdown">
+              <td class="font-medium">{{ d.departmentName }}</td>
+              <td><span class="badge badge-info">{{ d.activeTasks }}</span></td>
+              <td>{{ d.totalMembers }}</td>
+              <td>{{ d.avgTasksPerMember | number:'1.1-1' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TAB 4: SLA Performance Report -->
+    <div *ngIf="activeTab() === 'sla' && slaData() as sla" class="dashboard-content">
+      <div class="section-heading">
+        <h3>SLA Compliance Summary</h3>
+      </div>
+      <div class="kpi-grid">
+        <div class="kpi-card accent-green">
+          <div class="kpi-title">Compliance Rate</div>
+          <div class="kpi-value">{{ sla.complianceRatePercent }}%</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-title">Total Tracked</div>
+          <div class="kpi-value">{{ sla.totalTracked }}</div>
+        </div>
+        <div class="kpi-card accent-green">
+          <div class="kpi-title">Compliant Requests</div>
+          <div class="kpi-value">{{ sla.compliantCount }}</div>
+        </div>
+        <div class="kpi-card accent-red">
+          <div class="kpi-title">Breached Requests</div>
+          <div class="kpi-value">{{ sla.breachedCount }}</div>
+        </div>
+      </div>
+
+      <div class="section-heading">
+        <h3>Service SLA Breakdown</h3>
+      </div>
+      <div class="table-card">
+        <table class="report-table">
+          <thead>
+            <tr>
+              <th>Service</th>
+              <th>Total Requests</th>
+              <th>Compliant</th>
+              <th>Breached</th>
+              <th>Compliance Rate</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let s of sla.serviceBreakdown">
+              <td class="font-medium">{{ s.serviceName }}</td>
+              <td>{{ s.totalRequests }}</td>
+              <td><span class="badge badge-success">{{ s.compliantRequests }}</span></td>
+              <td><span class="badge badge-danger">{{ s.breachedRequests }}</span></td>
+              <td>
+                <span class="badge" [class.badge-success]="s.complianceRatePercent >= 90" [class.badge-warning]="s.complianceRatePercent >= 70 && s.complianceRatePercent < 90" [class.badge-danger]="s.complianceRatePercent < 70">
+                  {{ s.complianceRatePercent }}%
+                </span>
+              </td>
+            </tr>
+            <tr *ngIf="sla.serviceBreakdown.length === 0">
+              <td colspan="5" class="empty-cell">No service SLA records available.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>

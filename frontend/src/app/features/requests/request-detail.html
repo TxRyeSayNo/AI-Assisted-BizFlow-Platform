@@ -1,0 +1,639 @@
+<header class="public-header"><a class="wordmark" routerLink="/workspace">BizFlow</a></header>
+<main id="main-content" class="page-content" tabindex="-1" [attr.aria-busy]="busy()">
+  <nav aria-label="Breadcrumb">
+    <a routerLink="/requests">Requests</a><span aria-hidden="true"> / </span>
+    <span>Request details</span>
+  </nav>
+
+  @if (busy()) {
+    <p role="status">Loading request details…</p>
+  }
+
+  @if (error()) {
+    <div class="directory-feedback">
+      <p role="alert">{{ error() }}</p>
+      <a mat-stroked-button routerLink="/requests">Back to requests</a>
+    </div>
+  }
+
+  @if (data(); as detail) {
+    <div class="detail-header">
+      <div>
+        <span class="eyebrow">{{ detail.serviceName }} · {{ detail.categoryName }}</span>
+        <h1>{{ detail.title }}</h1>
+      </div>
+      <div class="detail-actions">
+        @if (canSubmit()) {
+          <button mat-flat-button color="primary" type="button" [disabled]="actionInProgress()" (click)="submit()">
+            Submit request
+          </button>
+        }
+        @if (canRoute()) {
+          <button mat-flat-button color="primary" type="button" [disabled]="actionInProgress()" (click)="openModal('route')">
+            {{ detail.status === 'ROUTED' ? 'Re-route' : 'Route request' }}
+          </button>
+          <button mat-stroked-button color="accent" type="button" [disabled]="aiBusy() || actionInProgress()" (click)="recommendRouting()">
+            ✨ AI Route
+          </button>
+        }
+        @if (detail.status === 'SUBMITTED' || detail.status === 'ROUTED' || detail.status === 'RECEIVED' || detail.status === 'IN_PROGRESS') {
+          <button mat-stroked-button type="button" [disabled]="aiBusy() || actionInProgress()" (click)="analyzeMultiIntent()">
+            ✨ AI Split
+          </button>
+        }
+        @if (canReceive()) {
+          <button mat-flat-button color="accent" type="button" [disabled]="actionInProgress()" (click)="openModal('receive')">
+            Receive request
+          </button>
+        }
+        @if (canStart()) {
+          <button mat-flat-button color="primary" type="button" [disabled]="actionInProgress()" (click)="executeStartWork()">
+            Start work
+          </button>
+        }
+        @if (canResolve()) {
+          <button mat-flat-button color="primary" type="button" [disabled]="actionInProgress()" (click)="openModal('resolve')">
+            Resolve request
+          </button>
+        }
+        @if (canConfirm()) {
+          <button mat-flat-button color="primary" type="button" [disabled]="actionInProgress()" (click)="openModal('confirm')">
+            Review & confirm
+          </button>
+        }
+        @if (canRevise()) {
+          <button mat-flat-button color="primary" type="button" [disabled]="actionInProgress()" (click)="openModal('revise')">
+            Revise request
+          </button>
+        }
+        @if (canReject()) {
+          <button mat-stroked-button color="warn" type="button" [disabled]="actionInProgress()" (click)="openModal('reject')">
+            Reject
+          </button>
+        }
+        @if (canCancel()) {
+          <button mat-stroked-button type="button" [disabled]="actionInProgress()" (click)="openModal('cancel')">
+            Cancel
+          </button>
+        }
+        @if (canArchive()) {
+          <button mat-stroked-button color="warn" type="button" [disabled]="actionInProgress()" (click)="executeArchive()">
+            Archive request
+          </button>
+        }
+        @if (canCreateTask()) {
+          <button mat-flat-button color="accent" type="button" [disabled]="actionInProgress()" (click)="openModal('create-task')">
+            + Create task
+          </button>
+        }
+        <a mat-stroked-button routerLink="/requests">Back to requests</a>
+      </div>
+    </div>
+
+    @if (actionSuccess()) {
+      <div class="alert-success" role="status">
+        {{ actionSuccess() }}
+      </div>
+    }
+
+    @if (actionError()) {
+      <div class="alert-error" role="alert">
+        {{ actionError() }}
+      </div>
+    }
+
+    @if (aiMessage()) {
+      <div class="ai-notification-banner" role="status">
+        <span>✨ {{ aiMessage() }}</span>
+        <button type="button" class="btn-dismiss-ai" (click)="aiMessage.set('')">✕</button>
+      </div>
+    }
+
+    <!-- Rejection Callout -->
+    @if (detail.status === 'REJECTED' && detail.rejectionReason) {
+      <div class="rejection-callout" role="alert">
+        <div class="rejection-title">Request Rejected</div>
+        <div class="rejection-body">{{ detail.rejectionReason }}</div>
+      </div>
+    }
+
+    <!-- Routing Target Card (if routed or received) -->
+    @if (detail.currentRoutingDepartmentName || detail.currentRoutingUserName) {
+      <div class="routing-target-card">
+        <div class="routing-target-header">
+          <span class="routing-target-label">Current Assignment & Routing</span>
+          @if (detail.routedAt) {
+            <span class="routing-time">Routed {{ detail.routedAt | date: 'medium' }}</span>
+          }
+        </div>
+        <div class="routing-target-details">
+          @if (detail.currentRoutingDepartmentName) {
+            <span class="badge badge-dept">Department: <strong>{{ detail.currentRoutingDepartmentName }}</strong></span>
+          }
+          @if (detail.currentRoutingUserName) {
+            <span class="badge badge-user">Assigned: <strong>{{ detail.currentRoutingUserName }}</strong></span>
+          }
+          @if (detail.receivedAt) {
+            <span class="badge badge-received">Received {{ detail.receivedAt | date: 'medium' }}</span>
+          }
+        </div>
+      </div>
+    }
+
+    <!-- Inline Action Forms / Modals -->
+    @if (activeModal() === 'route') {
+      <div class="action-card" role="region" aria-label="Route request panel">
+        <h3>Route Request</h3>
+        <p class="action-subtext">Assign this request to a department queue or specific personnel.</p>
+
+        <div class="action-form-grid">
+          <mat-form-field appearance="outline">
+            <mat-label>Target Department</mat-label>
+            <mat-select [(ngModel)]="routeDepartmentId">
+              <mat-option value="">-- No Department --</mat-option>
+              @for (dept of departments(); track dept.departmentId) {
+                <mat-option [value]="dept.departmentId">{{ dept.name }} ({{ dept.code }})</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Target Assignee</mat-label>
+            <mat-select [(ngModel)]="routeUserId">
+              <mat-option value="">-- No Specific User --</mat-option>
+              @for (usr of users(); track usr.userId) {
+                <mat-option [value]="usr.userId">{{ usr.displayName }} ({{ usr.employeeCode }})</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+        </div>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Routing Reason / Instructions (Optional)</mat-label>
+          <textarea matInput [(ngModel)]="routeReason" rows="2" placeholder="e.g. Assigned to tier-2 hardware specialists"></textarea>
+        </mat-form-field>
+
+        <div class="modal-actions">
+          <button mat-flat-button color="primary" type="button" [disabled]="actionInProgress()" (click)="executeRoute()">
+            {{ actionInProgress() ? 'Routing…' : 'Confirm Route' }}
+          </button>
+          <button mat-stroked-button type="button" (click)="closeModal()">Cancel</button>
+        </div>
+      </div>
+    }
+
+    @if (activeModal() === 'receive') {
+      <div class="action-card" role="region" aria-label="Receive request panel">
+        <h3>Receive Request</h3>
+        <p class="action-subtext">Accept intake responsibility and acknowledge processing start.</p>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Receipt Confirmation Note (Optional)</mat-label>
+          <textarea matInput [(ngModel)]="receiveNote" rows="2" placeholder="e.g. Diagnosing ticket and triaging components"></textarea>
+        </mat-form-field>
+
+        <div class="modal-actions">
+          <button mat-flat-button color="accent" type="button" [disabled]="actionInProgress()" (click)="executeReceive()">
+            {{ actionInProgress() ? 'Receiving…' : 'Confirm Receipt' }}
+          </button>
+          <button mat-stroked-button type="button" (click)="closeModal()">Cancel</button>
+        </div>
+      </div>
+    }
+
+    @if (activeModal() === 'reject') {
+      <div class="action-card warn-border" role="region" aria-label="Reject request panel">
+        <h3 class="warn-title">Reject Request</h3>
+        <p class="action-subtext">Specify a clear plain-text explanation for why this request cannot be fulfilled.</p>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Rejection Reason *</mat-label>
+          <textarea matInput [(ngModel)]="rejectReason" rows="3" required placeholder="Mandatory explanation for requester…"></textarea>
+        </mat-form-field>
+
+        <div class="modal-actions">
+          <button mat-flat-button color="warn" type="button" [disabled]="actionInProgress() || !rejectReason().trim()" (click)="executeReject()">
+            {{ actionInProgress() ? 'Rejecting…' : 'Reject Request' }}
+          </button>
+          <button mat-stroked-button type="button" (click)="closeModal()">Cancel</button>
+        </div>
+      </div>
+    }
+
+    @if (activeModal() === 'cancel') {
+      <div class="action-card" role="region" aria-label="Cancel request panel">
+        <h3>Cancel Request</h3>
+        <p class="action-subtext">Are you sure you want to cancel this request? This action cannot be undone.</p>
+
+        <div class="modal-actions">
+          <button mat-flat-button color="warn" type="button" [disabled]="actionInProgress()" (click)="executeCancel()">
+            {{ actionInProgress() ? 'Cancelling…' : 'Confirm Cancellation' }}
+          </button>
+          <button mat-stroked-button type="button" (click)="closeModal()">Keep Request</button>
+        </div>
+      </div>
+    }
+
+    @if (activeModal() === 'resolve') {
+      <div class="action-card" role="region" aria-label="Resolve request panel">
+        <h3>Resolve Request</h3>
+        <p class="action-subtext">Provide full resolution details and deliverables for the requester to verify.</p>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Resolution Details / Deliverables *</mat-label>
+          <textarea matInput [(ngModel)]="resolveContent" rows="4" required placeholder="Describe work completed, deliverables provided, or verification instructions…"></textarea>
+        </mat-form-field>
+
+        <div class="modal-actions">
+          <button mat-flat-button color="primary" type="button" [disabled]="actionInProgress() || !resolveContent().trim()" (click)="executeResolve()">
+            {{ actionInProgress() ? 'Resolving…' : 'Submit Resolution' }}
+          </button>
+          <button mat-stroked-button type="button" (click)="closeModal()">Cancel</button>
+        </div>
+      </div>
+    }
+
+    @if (activeModal() === 'confirm') {
+      <div class="action-card" role="region" aria-label="Review and confirm resolution panel">
+        <h3>Review Resolution</h3>
+        <p class="action-subtext">Confirm that the work fulfills the request to close it, or request rework with notes.</p>
+
+        <div class="decision-toggle-group">
+          <label class="decision-option" [class.selected]="confirmDecision() === 'CONFIRMED'">
+            <input type="radio" name="confirmDecision" value="CONFIRMED" [checked]="confirmDecision() === 'CONFIRMED'" (change)="confirmDecision.set('CONFIRMED')" />
+            <div class="decision-text">
+              <strong>Confirm & Close</strong>
+              <span>Accept the resolution and mark the request closed.</span>
+            </div>
+          </label>
+          <label class="decision-option rework-option" [class.selected]="confirmDecision() === 'REWORK'">
+            <input type="radio" name="confirmDecision" value="REWORK" [checked]="confirmDecision() === 'REWORK'" (change)="confirmDecision.set('REWORK')" />
+            <div class="decision-text">
+              <strong>Request Rework</strong>
+              <span>Return to in-progress for further changes.</span>
+            </div>
+          </label>
+        </div>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>{{ confirmDecision() === 'REWORK' ? 'Rework Reason / Feedback *' : 'Feedback Notes (Optional)' }}</mat-label>
+          <textarea matInput [(ngModel)]="confirmNote" rows="3" [required]="confirmDecision() === 'REWORK'" placeholder="{{ confirmDecision() === 'REWORK' ? 'Explain what adjustments or corrections are needed…' : 'Optional confirmation remarks…' }}"></textarea>
+        </mat-form-field>
+
+        <div class="modal-actions">
+          <button mat-flat-button [color]="confirmDecision() === 'CONFIRMED' ? 'primary' : 'warn'" type="button" [disabled]="actionInProgress() || (confirmDecision() === 'REWORK' && !confirmNote().trim())" (click)="executeConfirm()">
+            {{ actionInProgress() ? 'Submitting…' : (confirmDecision() === 'CONFIRMED' ? 'Confirm & Close Request' : 'Request Rework') }}
+          </button>
+          <button mat-stroked-button type="button" (click)="closeModal()">Cancel</button>
+        </div>
+      </div>
+    }
+
+    @if (activeModal() === 'revise') {
+      <div class="action-card" role="region" aria-label="Revise rejected request panel">
+        <h3>Create Revised Request</h3>
+        <p class="action-subtext">Spawn a new draft or submission linked to this rejected request.</p>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Title *</mat-label>
+          <input matInput [(ngModel)]="reviseTitle" required placeholder="Updated request title" />
+        </mat-form-field>
+
+        <div class="action-form-grid">
+          <mat-form-field appearance="outline">
+            <mat-label>Priority</mat-label>
+            <mat-select [(ngModel)]="revisePriority">
+              <mat-option value="LOW">Low</mat-option>
+              <mat-option value="MEDIUM">Medium</mat-option>
+              <mat-option value="HIGH">High</mat-option>
+              <mat-option value="URGENT">Urgent</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <div class="checkbox-field">
+            <label class="checkbox-label">
+              <input type="checkbox" [checked]="reviseSubmitImmediately()" (change)="reviseSubmitImmediately.set(!reviseSubmitImmediately())" />
+              <span>Submit immediately</span>
+            </label>
+          </div>
+        </div>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Description (Optional)</mat-label>
+          <textarea matInput [(ngModel)]="reviseDescription" rows="3" placeholder="Updated details and justification addressing previous rejection…"></textarea>
+        </mat-form-field>
+
+        <div class="modal-actions">
+          <button mat-flat-button color="primary" type="button" [disabled]="actionInProgress() || !reviseTitle().trim()" (click)="executeRevise()">
+            {{ actionInProgress() ? 'Creating…' : 'Create Revision' }}
+          </button>
+          <button mat-stroked-button type="button" (click)="closeModal()">Cancel</button>
+        </div>
+      </div>
+    }
+
+    @if (activeModal() === 'create-task') {
+      <div class="action-card" role="region" aria-label="Create linked task panel">
+        <h3>Create Linked Task</h3>
+        <p class="action-subtext">Create and orchestrate a work task associated with this request.</p>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Task Title *</mat-label>
+          <input matInput [(ngModel)]="taskTitle" required placeholder="e.g. Investigate network outage on floor 3" />
+        </mat-form-field>
+
+        <div class="action-form-grid">
+          <mat-form-field appearance="outline">
+            <mat-label>Priority</mat-label>
+            <mat-select [(ngModel)]="taskPriority">
+              <mat-option value="LOW">Low</mat-option>
+              <mat-option value="MEDIUM">Medium</mat-option>
+              <mat-option value="HIGH">High</mat-option>
+              <mat-option value="URGENT">Urgent</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Deadline (Optional)</mat-label>
+            <input matInput type="datetime-local" [(ngModel)]="taskDeadline" />
+          </mat-form-field>
+        </div>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Description (Optional)</mat-label>
+          <textarea matInput [(ngModel)]="taskDescription" rows="3" placeholder="Detailed technical scope, instructions, or deliverables…"></textarea>
+        </mat-form-field>
+
+        <!-- Checklist Items -->
+        <div class="checklist-builder">
+          <span class="checklist-label">Checklist Items (Optional)</span>
+          <div class="checklist-input-row">
+            <mat-form-field appearance="outline" class="checklist-input-field">
+              <mat-label>Add checklist item</mat-label>
+              <input matInput [(ngModel)]="newChecklistItem" (keydown.enter)="$event.preventDefault(); addChecklistItem()" placeholder="e.g. Inspect router logs" />
+            </mat-form-field>
+            <button mat-stroked-button type="button" (click)="addChecklistItem()" [disabled]="!newChecklistItem().trim()">
+              Add
+            </button>
+          </div>
+          @if (taskChecklist().length > 0) {
+            <ul class="checklist-items-list">
+              @for (item of taskChecklist(); track $index) {
+                <li>
+                  <span>{{ item }}</span>
+                  <button type="button" class="btn-remove-item" (click)="removeChecklistItem($index)" aria-label="Remove item">✕</button>
+                </li>
+              }
+            </ul>
+          }
+        </div>
+
+        <div class="modal-actions">
+          <button mat-flat-button color="primary" type="button" [disabled]="actionInProgress() || !taskTitle().trim()" (click)="executeCreateTask()">
+            {{ actionInProgress() ? 'Creating task…' : 'Create Task' }}
+          </button>
+          <button mat-stroked-button type="button" (click)="closeModal()">Cancel</button>
+        </div>
+      </div>
+    }
+
+    @if (activeModal() === 'ai-split') {
+      <div class="action-card ai-assistant-card" role="region" aria-label="AI Multi-Intent Split panel">
+        <div class="ai-card-badge">✨ Phân tích đa mục tiêu (AI Request Split)</div>
+        <h3>Phát hiện yêu cầu chứa nhiều mục tiêu độc lập</h3>
+        <p class="action-subtext">
+          Hệ thống AI đề xuất phân rã yêu cầu này thành các yêu cầu con độc lập để các bộ phận chuyên trách xử lý song song.
+        </p>
+
+        @if (aiMultiIntent()?.reasoning) {
+          <div class="ai-reasoning-callout">
+            <strong>Nhận định AI:</strong> {{ aiMultiIntent()?.reasoning }}
+          </div>
+        }
+
+        <div class="ai-split-list">
+          @for (item of aiMultiIntent()?.intents; track $index) {
+            <div class="ai-split-item">
+              <div class="ai-split-item-header">
+                <span class="ai-split-index">Yêu cầu con #{{ $index + 1 }}</span>
+                @if (item.suggestedServiceName) {
+                  <span class="badge badge-dept">{{ item.suggestedServiceName }}</span>
+                }
+              </div>
+              <div class="ai-split-title"><strong>{{ item.title }}</strong></div>
+              <p class="ai-split-desc">{{ item.description }}</p>
+            </div>
+          }
+        </div>
+
+        <div class="modal-actions">
+          <button mat-flat-button color="primary" type="button" [disabled]="actionInProgress()" (click)="confirmSplit()">
+            {{ actionInProgress() ? 'Đang thực hiện tách…' : 'Xác nhận tách yêu cầu (Split Request)' }}
+          </button>
+          <button mat-stroked-button type="button" (click)="closeModal()">Đóng / Bỏ qua</button>
+        </div>
+      </div>
+    }
+
+    <section class="directory-panel request-card" aria-label="Request summary">
+      <dl class="request-properties">
+        <dt>Status</dt>
+        <dd>
+          <span class="status-badge" [ngClass]="statusClass(detail.status)">
+            {{ getStateName(detail.status) }}
+          </span>
+        </dd>
+
+        <dt>Priority</dt>
+        <dd>
+          <span class="priority-indicator" [ngClass]="priorityClass(detail.priority)">
+            {{ getPriorityName(detail.priority) }}
+          </span>
+        </dd>
+
+        <dt>Requester</dt>
+        <dd>
+          {{ detail.requesterName }}
+          @if (detail.requesterEmail) {
+            <span class="task-meta">{{ detail.requesterEmail }}</span>
+          }
+        </dd>
+
+        <dt>Service</dt>
+        <dd>{{ detail.serviceName }}</dd>
+
+        <dt>Category</dt>
+        <dd>{{ detail.categoryName }}</dd>
+
+        <dt>Created</dt>
+        <dd>{{ detail.createdAt | date: 'medium' }}</dd>
+
+        <dt>Updated</dt>
+        <dd>{{ detail.updatedAt | date: 'medium' }}</dd>
+
+        @if (detail.resolvedAt) {
+          <dt>Resolved</dt>
+          <dd>{{ detail.resolvedAt | date: 'medium' }}</dd>
+        }
+
+        @if (detail.closedAt) {
+          <dt>Closed</dt>
+          <dd>{{ detail.closedAt | date: 'medium' }}</dd>
+        }
+
+        @if (detail.parentRequestId) {
+          <dt>Parent Request</dt>
+          <dd>
+            <a [routerLink]="['/requests', detail.parentRequestId]">View parent request</a>
+          </dd>
+        }
+
+        @if (detail.revisedFromRequestId) {
+          <dt>Revised From</dt>
+          <dd>
+            <a [routerLink]="['/requests', detail.revisedFromRequestId]">View previous request</a>
+          </dd>
+        }
+      </dl>
+
+      <div style="margin-top: 1.5rem">
+        <span style="font-weight: 600; font-size: 0.875rem; color: var(--tp-mute)">Description</span>
+        <div class="description-box">
+          {{ detail.description || 'No description provided.' }}
+        </div>
+      </div>
+    </section>
+
+    <!-- Linked Tasks Section -->
+    <section class="directory-panel request-card" aria-label="Linked tasks">
+      <div class="section-title-row">
+        <div class="section-heading-group">
+          <h2>Linked Tasks</h2>
+          <span class="badge">{{ detail.tasks?.length || 0 }} {{ (detail.tasks?.length === 1) ? 'task' : 'tasks' }}</span>
+        </div>
+        @if (canCreateTask()) {
+          <button mat-stroked-button color="primary" type="button" (click)="openModal('create-task')">
+            + Create Task
+          </button>
+        }
+      </div>
+
+      @if (!detail.tasks || detail.tasks.length === 0) {
+        <p class="empty-hint">No tasks have been linked to this request yet.</p>
+      } @else {
+        <div class="linked-tasks-table-wrapper">
+          <table class="linked-tasks-table" aria-label="Linked tasks list">
+            <thead>
+              <tr>
+                <th scope="col">Title</th>
+                <th scope="col">Status</th>
+                <th scope="col">Priority</th>
+                <th scope="col">Assignee</th>
+                <th scope="col">Deadline</th>
+                <th scope="col" class="col-actions">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (task of detail.tasks; track task.taskId) {
+                <tr>
+                  <td class="task-title-cell">
+                    <a [routerLink]="['/tasks', task.taskId]" class="task-link">
+                      {{ task.title }}
+                    </a>
+                  </td>
+                  <td>
+                    <span class="status-badge" [ngClass]="statusClass(task.status)">
+                      {{ task.status }}
+                    </span>
+                  </td>
+                  <td>
+                    <span class="priority-indicator" [ngClass]="priorityClass(task.priority)">
+                      {{ task.priority }}
+                    </span>
+                  </td>
+                  <td>
+                    @if (task.assignedUserName) {
+                      <span class="assignee-text">{{ task.assignedUserName }}</span>
+                    } @else if (task.assignedDepartmentName) {
+                      <span class="dept-text">{{ task.assignedDepartmentName }}</span>
+                    } @else {
+                      <span class="unassigned-text">Unassigned</span>
+                    }
+                  </td>
+                  <td>
+                    @if (task.deadline) {
+                      <span>{{ task.deadline | date: 'short' }}</span>
+                    } @else {
+                      <span class="no-deadline">None</span>
+                    }
+                  </td>
+                  <td class="col-actions">
+                    <a mat-button [routerLink]="['/tasks', task.taskId]">View</a>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </section>
+
+    <!-- Resolution History Section -->
+    @if (detail.resolutions && detail.resolutions.length > 0) {
+      <section class="directory-panel request-card" aria-label="Resolution history">
+        <div class="section-title-row">
+          <h2>Resolution History</h2>
+          <span class="badge">{{ detail.resolutions.length }} {{ detail.resolutions.length === 1 ? 'revision' : 'revisions' }}</span>
+        </div>
+        <div class="history-list">
+          @for (res of detail.resolutions; track res.resolutionId) {
+            <div class="history-item">
+              <div class="history-item-header">
+                <span class="revision-badge">Revision #{{ res.revisionNo }}</span>
+                <span class="history-actor">Resolved by <strong>{{ res.resolverName }}</strong></span>
+                <span class="history-date">{{ res.resolvedAt | date: 'medium' }}</span>
+              </div>
+              <div class="history-item-body">
+                {{ res.content }}
+              </div>
+            </div>
+          }
+        </div>
+      </section>
+    }
+
+    <!-- Confirmations & Milestones History Section -->
+    @if (detail.confirmations && detail.confirmations.length > 0) {
+      <section class="directory-panel request-card" aria-label="Confirmation decisions">
+        <div class="section-title-row">
+          <h2>Requester Reviews & Decisions</h2>
+          <span class="badge">{{ detail.confirmations.length }} {{ detail.confirmations.length === 1 ? 'decision' : 'decisions' }}</span>
+        </div>
+        <div class="history-list">
+          @for (conf of detail.confirmations; track conf.confirmationId) {
+            <div class="history-item" [ngClass]="conf.decision === 'CONFIRMED' ? 'confirmed-item' : 'rework-item'">
+              <div class="history-item-header">
+                <span class="decision-badge" [ngClass]="conf.decision === 'CONFIRMED' ? 'decision-confirmed' : 'decision-rework'">
+                  {{ conf.decision === 'CONFIRMED' ? 'Confirmed & Accepted' : 'Rework Requested' }}
+                </span>
+                <span class="history-actor">Reviewed by <strong>{{ conf.actorName }}</strong></span>
+                <span class="history-date">{{ conf.decidedAt | date: 'medium' }}</span>
+              </div>
+              @if (conf.note) {
+                <div class="history-item-body">
+                  <strong>Notes:</strong> {{ conf.note }}
+                </div>
+              }
+            </div>
+          }
+        </div>
+      </section>
+    }
+
+    <!-- Comments and Collaboration Section -->
+    <bf-work-item-comments [objectType]="'REQUEST'" [objectId]="detail.requestId" />
+
+    <!-- Attachments and Evidence Section -->
+    <bf-work-item-attachments [objectType]="'REQUEST'" [objectId]="detail.requestId" />
+  }
+</main>

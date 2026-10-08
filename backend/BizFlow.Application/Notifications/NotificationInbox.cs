@@ -22,7 +22,7 @@ public interface INotificationReceiptTransaction : IAsyncDisposable
 }
 
 public sealed class NotificationInbox(ITenantContext context, TenantMembershipAuthorizer membership,
-    ISecurityAuditWriter securityAudit, INotificationInboxStore store, TimeProvider clock)
+    ISecurityAuditWriter securityAudit, INotificationInboxStore store, TimeProvider clock, INotificationUpdates updates)
 {
     public async Task<NotificationPage> ListAsync(NotificationFilter filter, CancellationToken cancellationToken)
     {
@@ -45,6 +45,8 @@ public sealed class NotificationInbox(ITenantContext context, TenantMembershipAu
         await membership.RequireAsync("notifications.mark-read", cancellationToken);
         var changed = transaction.Notification.MarkRead(tenantId, recipientId, clock.GetUtcNow());
         var audit = changed ? AuditLog.NotificationRead(tenantId, recipientId, id, transaction.Notification.ReadAt!.Value) : null;
-        return await transaction.CommitAsync(audit, cancellationToken);
+        var result = await transaction.CommitAsync(audit, cancellationToken);
+        if (changed) await updates.PublishAsync(tenantId, [recipientId], cancellationToken);
+        return result;
     }
 }

@@ -209,6 +209,20 @@ internal static class BrowserRunner
                 db.ManagementScopes.Add(ManagementScope.Create(tenant.Id, user.Id, department.Id, false, user.Id, DateTimeOffset.UtcNow));
                 await db.SaveChangesAsync();
                 taskCreateKeys[project] = tenant.TenantKey;
+                if (project.StartsWith("assignment_", StringComparison.Ordinal))
+                {
+                    // Historical overdue fixture only: this does not implement or test an SLA scheduler.
+                    var past = DateTimeOffset.UtcNow.AddDays(-2);
+                    var overdue = WorkTask.CreateDraft(tenant.Id, user.Id, "Overdue operational follow-up", past, deadline: past.AddDays(1));
+                    db.WorkTasks.Add(overdue); await db.SaveChangesAsync();
+                    var historical = TaskAssignment.Create(overdue.Id, user.Id, null, recipient.Id, past);
+                    db.TaskAssignments.Add(historical); await db.SaveChangesAsync();
+                    await db.Database.ExecuteSqlInterpolatedAsync($"""
+                        UPDATE "Task" SET "Status"='ASSIGNED' WHERE "TaskId"={overdue.Id};
+                        UPDATE "TaskAssignment" SET "AcceptedAt"={past.AddMinutes(1)} WHERE "TaskAssignmentId"={historical.Id};
+                        UPDATE "Task" SET "Status"='OVERDUE' WHERE "TaskId"={overdue.Id};
+                        """);
+                }
             }
             var inbox = new ResetInbox();
             await using var factory = new AuthenticationFactory(database, new Dictionary<string, string?>

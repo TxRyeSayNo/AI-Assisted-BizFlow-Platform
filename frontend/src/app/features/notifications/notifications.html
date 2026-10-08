@@ -7,6 +7,22 @@
     <a routerLink="/workspace">Workspace</a> / <span>Notifications</span>
   </nav>
   <h1>Notifications</h1>
+  <p role="status" aria-label="Live notification connection">
+    @switch (updates.status()) {
+      @case ('live') {
+        Live updates connected.
+      }
+      @case ('connecting') {
+        Connecting live updates…
+      }
+      @case ('reconnecting') {
+        Reconnecting live updates. You can still refresh the inbox.
+      }
+      @default {
+        Live updates unavailable. Use Refresh inbox to check for updates.
+      }
+    }
+  </p>
   <p>
     Updates addressed to you in this workspace. Reading a notification does not change the related
     work.

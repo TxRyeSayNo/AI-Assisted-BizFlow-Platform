@@ -7,7 +7,7 @@ using BizFlow.Domain.Tasks;
 namespace BizFlow.Application.Tasks;
 
 public sealed record TaskListFilter(int Page = 1, int PageSize = 25, string? Search = null,
-    string? Status = null, string? Priority = null);
+    string? Status = null, string? Priority = null, Guid? RequestId = null);
 public sealed record TaskListRow(Guid TaskId, string Title, string Status, string Priority,
     DateTimeOffset? Deadline, DateTimeOffset CreatedAt, Guid CreatorId, Guid? RequestId,
     Guid? AssignedUserId, string? AssignedUserName, Guid? AssignedDepartmentId, string? AssignedDepartmentName);

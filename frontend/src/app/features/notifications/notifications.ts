@@ -7,6 +7,7 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { RouterLink } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { SessionService } from '../../core/auth/session';
+import { InboxUpdates } from '../../core/notifications/inbox-updates';
 
 export interface NotificationRow {
   notificationId: string;
@@ -28,6 +29,7 @@ export interface NotificationPage {
 
 @Component({
   selector: 'bf-notifications',
+  providers: [InboxUpdates],
   imports: [RouterLink, DatePipe, MatButtonModule, MatCheckboxModule],
   templateUrl: './notifications.html',
   styleUrls: ['../organization/departments.scss', './notifications.scss'],
@@ -37,6 +39,8 @@ export class Notifications {
   private readonly destroy = inject(DestroyRef);
   private request?: Subscription;
   readonly session = inject(SessionService);
+  readonly updates = inject(InboxUpdates);
+  private refreshTimer?: ReturnType<typeof setTimeout>;
   readonly result = signal<NotificationPage | null>(null);
   readonly unreadOnly = signal(false);
   readonly page = signal(1);
@@ -47,6 +51,17 @@ export class Notifications {
   readonly receiptError = signal('');
   readonly receiptMessage = signal('');
   constructor() {
+    this.updates.changes.pipe(takeUntilDestroyed(this.destroy)).subscribe((event) => {
+      clearTimeout(this.refreshTimer);
+      if (event === 'clear') {
+        this.request?.unsubscribe();
+        this.result.set(null);
+        return;
+      }
+      // Coalesce bursts; a pending receipt already refreshes after success.
+      this.refreshTimer = setTimeout(() => this.load(this.page()), 100);
+    });
+    this.destroy.onDestroy(() => clearTimeout(this.refreshTimer));
     this.load(1);
   }
 

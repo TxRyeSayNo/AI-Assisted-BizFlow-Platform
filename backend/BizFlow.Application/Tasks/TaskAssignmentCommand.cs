@@ -27,7 +27,7 @@ public interface ITaskAssignmentTransaction : IAsyncDisposable
 }
 
 public sealed class TaskAssignmentCommand(ITenantContext context, IResourceAuthorizer authorizer, IAccessSnapshotProvider snapshots, ISecurityAuditWriter securityAudit,
-    ITaskAssignmentStore store, IWorkflowEngine workflow, TimeProvider clock)
+    ITaskAssignmentStore store, IWorkflowEngine workflow, TimeProvider clock, BizFlow.Application.Notifications.INotificationUpdates updates)
 {
     public async Task<TaskAssignedView> AssignAsync(Guid taskId, AssignTaskCommand input, string? key, CancellationToken cancellationToken)
     {
@@ -74,6 +74,7 @@ public sealed class TaskAssignmentCommand(ITenantContext context, IResourceAutho
         var notifications = target.Recipients.Distinct().Select(recipient => Notification.Create(tenantId, recipient,
             NotificationEvent.TaskAssigned, "Task assigned", task.Title, $"task-assigned/{assignment.Id:N}/{recipient:N}", "Task", task.Id)).ToArray();
         await transaction.CommitAsync(assignment, audit, notifications, cancellationToken);
+        await updates.PublishAsync(tenantId, notifications.Select(n => n.RecipientId).Distinct().ToArray(), cancellationToken);
         return new(task.Id, assignment.Id, "ASSIGNED", now);
     }
 }

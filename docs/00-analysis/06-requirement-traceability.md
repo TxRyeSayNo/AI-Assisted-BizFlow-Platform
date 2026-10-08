@@ -21,6 +21,16 @@ FR-TASK-003 / API-TASK-05 / BR-004/012/020 / ADR-0010 map to `TaskAcceptanceComm
 
 Verification maps to `TaskAcceptanceTests`, `TaskAcceptanceApiTests`, Angular `task-acceptance.spec.ts`, and the real desktop/mobile assignment → recipient acceptance → manager notification scenario. Remaining critical-milestone workflow configuration, rejection, execution and the polymorphic consistency-check job remain acceptance gates; no complete FR-TASK-003 claim follows from this mapping.
 
+### Task execution implementation mapping
+
+FR-TASK-004 / BR-004/020 / ADR-0003/0012 map to `TaskExecutionCommand` → `IWorkflowEngine.StartTask` → exact ACCEPTED/OVERDUE → IN_PROGRESS policy → `TaskExecutionStore` → POST `/api/v1/tasks/{id}/start` → GRID detail Start/Resume actions. The existing Task row and immutable AuditLog hold state/history and serialized replay; no new table or column is introduced. Current performer/receipt, tenant and capability checks cannot be supplied by clients. See [execution contract](../02-traceability/task-execution-command.md).
+
+Verification maps to `TaskExecutionTests`, `TaskExecutionApiTests`, Angular `task-execution.spec.ts`, and the real desktop/mobile assignment/acceptance/start/reopen flow. Progress/result operations, overdue scheduling and pinned workflow/SLA execution remain required; simulating an OVERDUE row in a test is not scheduler acceptance.
+
+### Recipient realtime implementation mapping
+
+SSS §22/§23 / M09 / UI-14 / BR-001/002 map to the existing persisted Notification producers → post-commit `INotificationUpdates` → API SignalR adapter and live-session-filtered connections → payload-free `InboxReady`/`InboxChanged` → Angular inbox authorized refetch. `/api/v1/realtime/notifications` is the architecture-required transport endpoint, not a business mutation API. No new table, event catalog entry or permission is introduced. `NotificationRealtimeTests`, Angular lifecycle/refresh tests and real desktop/mobile live-arrival/reconnect scenarios cover the boundary. See [contract](../02-traceability/notification-realtime.md) and [current evidence](../02-traceability/implementation-status.md); email, remaining producers, other resource events, platform notifications and full-shell badges remain required.
+
 **Reading note.** Where the SSS's inline FR text specifies an endpoint that Appendix D omits, the FR-specified endpoint is implemented and marked *(FR-spec)*. Findings and their resolutions are in `05-assumptions-and-ambiguities.md`.
 
 **Test-ID note.** §26 cites `TST-REQ-007` and `TST-TASK-007`, which §27 does not define. Both identifiers are intended (request resolve/confirm; task result/confirm) and are implemented under those exact IDs so the traceability links in §26 resolve. Recorded as a minor documentation inconsistency.

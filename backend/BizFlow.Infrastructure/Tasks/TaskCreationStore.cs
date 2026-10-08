@@ -42,9 +42,22 @@ public sealed class TaskCreationStore(BizFlowDbContext db, ITenantContext contex
             using var metadata = JsonDocument.Parse(audit.MetadataJson!);
             using var after = JsonDocument.Parse(audit.AfterJson!);
             var root = after.RootElement;
+            Guid? reqId = null;
+            if (root.TryGetProperty("requestId", out var reqProp) && reqProp.ValueKind == JsonValueKind.String && Guid.TryParse(reqProp.GetString(), out var parsedId))
+            {
+                reqId = parsedId;
+            }
             return new(metadata.RootElement.GetProperty("idempotency").GetProperty("fingerprint").GetString()!,
                 new(root.GetProperty("taskId").GetGuid(), root.GetProperty("title").GetString()!,
-                    root.GetProperty("status").GetString()!, root.GetProperty("createdAt").GetDateTimeOffset()));
+                    root.GetProperty("status").GetString()!, root.GetProperty("createdAt").GetDateTimeOffset(), reqId));
+        }
+        public async Task<bool> ValidateRequestAsync(Guid requestId, CancellationToken cancellationToken)
+        {
+            var req = await db.Requests.AsNoTracking().SingleOrDefaultAsync(r => r.TenantId == tenantId && r.Id == requestId && r.DeletedAt == null, cancellationToken);
+            if (req is null) return false;
+            return req.Status != BizFlow.Domain.Requests.RequestState.Cancelled &&
+                   req.Status != BizFlow.Domain.Requests.RequestState.Closed &&
+                   req.Status != BizFlow.Domain.Requests.RequestState.Rejected;
         }
         public async Task CommitAsync(WorkTask task, IReadOnlyList<TaskChecklistItem> checklist, AuditLog audit, CancellationToken cancellationToken)
         {

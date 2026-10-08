@@ -11,8 +11,8 @@ using BizFlow.Domain.Tasks;
 namespace BizFlow.Application.Tasks;
 
 public sealed record CreateTaskCommand(string Title, string? Description = null, string? Priority = null,
-    string? Deadline = null, string[]? Checklist = null);
-public sealed record TaskCreatedView(Guid TaskId, string Title, string Status, DateTimeOffset CreatedAt);
+    string? Deadline = null, string[]? Checklist = null, Guid? RequestId = null);
+public sealed record TaskCreatedView(Guid TaskId, string Title, string Status, DateTimeOffset CreatedAt, Guid? RequestId = null);
 public sealed record StoredTaskCreation(string Fingerprint, TaskCreatedView Result);
 public interface ITaskCreationStore
 {
@@ -22,6 +22,7 @@ public interface ITaskCreationTransaction : IAsyncDisposable
 {
     Task<StoredTaskCreation?> FindReplayAsync(CancellationToken cancellationToken);
     Task CommitAsync(WorkTask task, IReadOnlyList<TaskChecklistItem> checklist, AuditLog audit, CancellationToken cancellationToken);
+    Task<bool> ValidateRequestAsync(Guid requestId, CancellationToken cancellationToken) => Task.FromResult(true);
 }
 
 public static partial class TaskCreationRules
@@ -72,7 +73,7 @@ public sealed class TaskCreation(ITenantContext context, IResourceAuthorizer aut
         string[] titles;
         try
         {
-            prototype = WorkTask.CreateDraft(tenantId, actorId, input.Title, clock.GetUtcNow(), input.Description, priority, deadline);
+            prototype = WorkTask.CreateDraft(tenantId, actorId, input.Title, clock.GetUtcNow(), input.Description, priority, deadline, input.RequestId);
             titles = (input.Checklist ?? []).Select((title, index) => TaskChecklistItem.Create(prototype.Id, title, checked(index + 1)).Title).ToArray();
         }
         catch (ArgumentException)
@@ -82,7 +83,8 @@ public sealed class TaskCreation(ITenantContext context, IResourceAuthorizer aut
         var fingerprint = TaskCreationRules.Hash(JsonSerializer.Serialize(new
         {
             version = 1, title = prototype.Title, description = prototype.Description,
-            priority = priorityCode, deadline = deadline?.ToString("O", CultureInfo.InvariantCulture), checklist = titles
+            priority = priorityCode, deadline = deadline?.ToString("O", CultureInfo.InvariantCulture), checklist = titles,
+            requestId = prototype.RequestId
         }));
         await using var transaction = await store.BeginAsync(tenantId, actorId, keyHash, cancellationToken);
         await AuthorizeAsync(cancellationToken); // A concurrent revocation may have completed while waiting for the replay lock.
@@ -92,14 +94,20 @@ public sealed class TaskCreation(ITenantContext context, IResourceAuthorizer aut
                 throw new ApplicationFault(FaultKind.Conflict, "IDEMPOTENCY.CONFLICT", "This key was already used with different task input.");
             return replay.Result;
         }
+        if (prototype.RequestId is { } reqId)
+        {
+            var valid = await transaction.ValidateRequestAsync(reqId, cancellationToken);
+            if (!valid)
+                throw new ApplicationFault(FaultKind.Validation, "REQUEST.INVALID_STATE", "The parent request does not exist or is not in an active state.");
+        }
         var now = clock.GetUtcNow();
         if (deadline is not null && deadline <= now)
             throw new ApplicationFault(FaultKind.Validation, "TASK.INVALID_DEADLINE", "The deadline must be strictly later than server UTC now.");
         now = TaskCreationRules.DatabaseTime(now);
-        var task = WorkTask.CreateDraft(tenantId, actorId, prototype.Title, now, prototype.Description, priority, deadline);
+        var task = WorkTask.CreateDraft(tenantId, actorId, prototype.Title, now, prototype.Description, priority, deadline, prototype.RequestId);
         var checklist = titles.Select((title, index) => TaskChecklistItem.Create(task.Id, title, index + 1)).ToArray();
         var audit = AuditLog.TaskCreated(task, checklist, now, keyHash, keyHash is null ? null : fingerprint);
         await transaction.CommitAsync(task, checklist, audit, cancellationToken);
-        return new(task.Id, task.Title, "DRAFT", task.CreatedAt);
+        return new(task.Id, task.Title, "DRAFT", task.CreatedAt, task.RequestId);
     }
 }

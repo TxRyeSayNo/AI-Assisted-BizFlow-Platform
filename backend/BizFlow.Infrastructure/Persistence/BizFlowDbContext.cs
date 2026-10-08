@@ -1,7 +1,9 @@
 using BizFlow.Application.Common;
 using BizFlow.Application.Security;
+using BizFlow.Domain.AI;
 using BizFlow.Domain.Audit;
 using BizFlow.Domain.Authentication;
+using BizFlow.Domain.Collaboration;
 using BizFlow.Domain.Organization;
 using BizFlow.Domain.Notifications;
 using BizFlow.Domain.Security;
@@ -28,6 +30,7 @@ public sealed class BizFlowDbContext(DbContextOptions<BizFlowDbContext> options,
     public DbSet<InternalService> Services => Set<InternalService>();
     public DbSet<ServiceCategory> ServiceCategories => Set<ServiceCategory>();
     public DbSet<WorkRequest> Requests => Set<WorkRequest>();
+    public DbSet<RequestRouting> RequestRoutings => Set<RequestRouting>();
     public DbSet<RequestResolution> RequestResolutions => Set<RequestResolution>();
     public DbSet<WorkTask> WorkTasks => Set<WorkTask>();
     public DbSet<TaskChecklistItem> TaskChecklistItems => Set<TaskChecklistItem>();
@@ -35,6 +38,11 @@ public sealed class BizFlowDbContext(DbContextOptions<BizFlowDbContext> options,
     public DbSet<TaskResult> TaskResults => Set<TaskResult>();
     public DbSet<TaskAssignment> TaskAssignments => Set<TaskAssignment>();
     public DbSet<Confirmation> Confirmations => Set<Confirmation>();
+    public DbSet<Comment> Comments => Set<Comment>();
+    public DbSet<Attachment> Attachments => Set<Attachment>();
+    public DbSet<AIInteraction> AIInteractions => Set<AIInteraction>();
+    public DbSet<AIRecommendation> AIRecommendations => Set<AIRecommendation>();
+    public DbSet<AIAgentAction> AIAgentActions => Set<AIAgentAction>();
     public DbSet<UserAccount> Users => Set<UserAccount>();
     public DbSet<Department> Departments => Set<Department>();
     public DbSet<ManagementScope> ManagementScopes => Set<ManagementScope>();
@@ -62,6 +70,7 @@ public sealed class BizFlowDbContext(DbContextOptions<BizFlowDbContext> options,
         model.Entity<InternalService>().HasQueryFilter(x => CurrentUserId != null && CurrentTenantId != null && x.TenantId == CurrentTenantId);
         model.Entity<ServiceCategory>().HasQueryFilter(x => Services.Any(s => s.Id == x.ServiceId));
         model.Entity<WorkRequest>().HasQueryFilter(x => CurrentUserId != null && CurrentTenantId != null && x.TenantId == CurrentTenantId && x.DeletedAt == null);
+        model.Entity<RequestRouting>().HasQueryFilter(x => CurrentUserId != null && CurrentTenantId != null && x.TenantId == CurrentTenantId);
         model.Entity<RequestResolution>().HasQueryFilter(x => Requests.Any(r => r.Id == x.RequestId));
         model.Entity<WorkTask>().HasQueryFilter(x => CurrentUserId != null && CurrentTenantId != null && x.TenantId == CurrentTenantId && x.DeletedAt == null);
         model.Entity<TaskChecklistItem>().HasQueryFilter(x => WorkTasks.Any(t => t.Id == x.TaskId));
@@ -69,6 +78,11 @@ public sealed class BizFlowDbContext(DbContextOptions<BizFlowDbContext> options,
         model.Entity<TaskResult>().HasQueryFilter(x => WorkTasks.Any(t => t.Id == x.TaskId));
         model.Entity<TaskAssignment>().HasQueryFilter(x => WorkTasks.Any(t => t.Id == x.TaskId));
         model.Entity<Confirmation>().HasQueryFilter(x => CurrentUserId != null && CurrentTenantId != null && x.TenantId == CurrentTenantId);
+        model.Entity<Comment>().HasQueryFilter(x => CurrentUserId != null && CurrentTenantId != null && x.TenantId == CurrentTenantId && x.DeletedAt == null);
+        model.Entity<Attachment>().HasQueryFilter(x => CurrentUserId != null && CurrentTenantId != null && x.TenantId == CurrentTenantId && x.DeletedAt == null);
+        model.Entity<AIInteraction>().HasQueryFilter(x => CurrentUserId != null && CurrentTenantId != null && x.TenantId == CurrentTenantId);
+        model.Entity<AIRecommendation>().HasQueryFilter(x => CurrentUserId != null && CurrentTenantId != null && x.TenantId == CurrentTenantId);
+        model.Entity<AIAgentAction>().HasQueryFilter(x => CurrentUserId != null && CurrentTenantId != null && x.TenantId == CurrentTenantId);
         model.Entity<Company>().HasQueryFilter(x => Tenants.Any(t => t.CompanyId == x.Id));
         model.Entity<UserAccount>().HasQueryFilter(x => CurrentUserId != null && CurrentTenantId != null && x.TenantId == CurrentTenantId && x.DeletedAt == null);
         model.Entity<Department>().HasQueryFilter(x => CurrentUserId != null && CurrentTenantId != null && x.TenantId == CurrentTenantId);
@@ -110,7 +124,7 @@ public sealed class BizFlowDbContext(DbContextOptions<BizFlowDbContext> options,
 
             if (entry.State == EntityState.Modified)
             {
-                foreach (var property in new[] { "TenantId", "UserId", "FamilyId", "TokenHash", "CreatedAt", "IsPlatformAdministrator", "IsSystem", "WorkflowId", "WorkflowVersionId", "VersionNo", "BusinessType" })
+                foreach (var property in new[] { "TenantId", "UserId", "FamilyId", "TokenHash", "CreatedAt", "IsPlatformAdministrator", "IsSystem", "WorkflowId", "WorkflowVersionId", "VersionNo", "BusinessType", "ObjectType", "ObjectId", "AuthorId", "UploadedBy", "ObjectKey" })
                 {
                     if (entry.Metadata.FindProperty(property) is not null && entry.Property(property).IsModified)
                         throw new ApplicationFault(FaultKind.Conflict, "PERSISTENCE.IMMUTABLE_FIELD", "Record ownership and identity cannot be changed.");
@@ -154,12 +168,25 @@ public sealed class BizFlowDbContext(DbContextOptions<BizFlowDbContext> options,
                     AssertTenant(task.TenantId);
                     if (entry.State == EntityState.Modified)
                     {
+                        if (task.DeletedAt is not null &&
+                            (task.Status is TaskState.Completed or TaskState.Cancelled) &&
+                            task.WorkflowMutation is null)
+                        {
+                            if (entry.Properties.Any(p => p.IsModified && p.Metadata.Name is not (nameof(WorkTask.DeletedAt) or nameof(WorkTask.UpdatedAt))))
+                                throw Denied();
+                            var originalDeletedAt = (DateTimeOffset?)entry.OriginalValues[nameof(WorkTask.DeletedAt)];
+                            if (originalDeletedAt is not null) throw Denied();
+                            break;
+                        }
+
                         var mutation = task.WorkflowMutation;
-                        if (mutation is null || mutation.ActorId != CurrentUserId || task.Status is not (TaskState.Assigned or TaskState.Accepted) ||
+                        if (mutation is null || mutation.ActorId != CurrentUserId || task.Status != mutation.After ||
+                            task.Status is not (TaskState.Assigned or TaskState.Accepted or TaskState.InProgress or TaskState.Submitted or TaskState.Confirmed or TaskState.Completed) ||
                             task.WorkflowVersionId is not null || task.SlaVersionId is not null ||
-                            entry.Properties.Any(p => p.IsModified && p.Metadata.Name is not (nameof(WorkTask.Status) or nameof(WorkTask.UpdatedAt))) ||
+                            entry.Properties.Any(p => p.IsModified && p.Metadata.Name is not (nameof(WorkTask.Status) or nameof(WorkTask.UpdatedAt) or nameof(WorkTask.CompletedAt))) ||
                             !await WorkTasks.AsNoTracking().AnyAsync(t => t.Id == task.Id && t.Status == mutation.Before &&
                                 t.UpdatedAt == mutation.BeforeUpdatedAt && t.WorkflowVersionId == null && t.SlaVersionId == null, cancellationToken)) throw Denied();
+                        if (task.Status == TaskState.Completed && (task.CompletedAt is null || task.CompletedAt != task.UpdatedAt)) throw Denied();
                         break;
                     }
                     // Draft persistence only; the workflow engine remains the sole future state mutator.
@@ -188,13 +215,117 @@ public sealed class BizFlowDbContext(DbContextOptions<BizFlowDbContext> options,
                     break;
                 case Confirmation confirmation:
                     AssertTenant(confirmation.TenantId);
-                    var confirmedTask = WorkTasks.Local.FirstOrDefault(t => t.Id == confirmation.ObjectId);
-                    if (entry.State != EntityState.Added || confirmation.ActorId != CurrentUserId ||
-                        confirmation.ObjectType != "TASK" || confirmation.MilestoneType != "RECEIVE" || confirmation.Decision != "CONFIRMED" ||
-                        confirmedTask?.Status != TaskState.Accepted || confirmedTask.WorkflowMutation?.ActorId != CurrentUserId ||
-                        confirmedTask.UpdatedAt != confirmation.ConfirmedAt ||
-                        !await TaskAssignments.AnyAsync(a => a.TaskId == confirmation.ObjectId && a.UserId == confirmation.ActorId &&
-                            a.AcceptedAt == confirmation.ConfirmedAt && a.RejectedAt == null && a.EndedAt == null, cancellationToken)) throw Denied();
+                    if (entry.State != EntityState.Added || confirmation.ActorId != CurrentUserId) throw Denied();
+                    if (confirmation.ObjectType == "TASK")
+                    {
+                        var confirmedTask = WorkTasks.Local.FirstOrDefault(t => t.Id == confirmation.ObjectId);
+                        if (confirmation.MilestoneType == "RECEIVE")
+                        {
+                            if (confirmation.Decision != "CONFIRMED" ||
+                                confirmedTask?.Status != TaskState.Accepted || confirmedTask.WorkflowMutation?.ActorId != CurrentUserId ||
+                                confirmedTask.UpdatedAt != confirmation.ConfirmedAt ||
+                                !await TaskAssignments.AnyAsync(a => a.TaskId == confirmation.ObjectId && a.UserId == confirmation.ActorId &&
+                                    a.AcceptedAt == confirmation.ConfirmedAt && a.RejectedAt == null && a.EndedAt == null, cancellationToken)) throw Denied();
+                        }
+                        else if (confirmation.MilestoneType == "RESULT")
+                        {
+                            if (confirmation.Decision == "CONFIRMED")
+                            {
+                                if (confirmedTask?.Status is not (TaskState.Confirmed or TaskState.Completed) ||
+                                    confirmedTask.WorkflowMutation?.ActorId != CurrentUserId || confirmedTask.UpdatedAt != confirmation.ConfirmedAt) throw Denied();
+                            }
+                            else if (confirmation.Decision == "REJECTED")
+                            {
+                                if (confirmedTask?.Status != TaskState.InProgress ||
+                                    confirmedTask.WorkflowMutation?.ActorId != CurrentUserId || confirmedTask.UpdatedAt != confirmation.ConfirmedAt) throw Denied();
+                            }
+                            else throw Denied();
+                        }
+                        else throw Denied();
+                    }
+                    else if (confirmation.ObjectType == "REQUEST")
+                    {
+                        var confirmedRequest = Requests.Local.FirstOrDefault(r => r.Id == confirmation.ObjectId) ??
+                            await Requests.AsNoTracking().SingleOrDefaultAsync(r => r.Id == confirmation.ObjectId, cancellationToken);
+                        if (confirmedRequest is null) throw Denied();
+
+                        if (confirmation.MilestoneType == "RECEIVE")
+                        {
+                            if (confirmation.Decision != "CONFIRMED" ||
+                                confirmedRequest.Status != RequestState.Received ||
+                                confirmedRequest.UpdatedAt != confirmation.ConfirmedAt) throw Denied();
+                        }
+                        else if (confirmation.MilestoneType == "RESOLUTION")
+                        {
+                            if (confirmation.Decision == "CONFIRMED")
+                            {
+                                if (confirmedRequest.Status is not (RequestState.Confirmed or RequestState.Closed) ||
+                                    confirmedRequest.UpdatedAt != confirmation.ConfirmedAt) throw Denied();
+                            }
+                            else if (confirmation.Decision == "REJECTED")
+                            {
+                                if (confirmedRequest.Status != RequestState.InProgress ||
+                                    confirmedRequest.UpdatedAt != confirmation.ConfirmedAt) throw Denied();
+                            }
+                            else throw Denied();
+                        }
+                        else throw Denied();
+                    }
+                    else throw Denied();
+                    break;
+                case Comment comment:
+                    AssertTenant(comment.TenantId);
+                    if (!await Users.AnyAsync(u => u.Id == comment.AuthorId, cancellationToken)) throw Denied();
+                    if (entry.State == EntityState.Added)
+                    {
+                        if (comment.AuthorId != CurrentUserId) throw Denied();
+                        if (comment.ObjectType == CommentObjectType.Task)
+                        {
+                            if (!await WorkTasks.AnyAsync(t => t.Id == comment.ObjectId, cancellationToken)) throw Denied();
+                        }
+                        else if (comment.ObjectType == CommentObjectType.Request)
+                        {
+                            if (!await Requests.AnyAsync(r => r.Id == comment.ObjectId, cancellationToken)) throw Denied();
+                        }
+                    }
+                    else if (entry.State == EntityState.Modified)
+                    {
+                        if (entry.Property(nameof(Comment.Content)).IsModified && comment.AuthorId != CurrentUserId)
+                            throw Denied();
+                        if (comment.AuthorId != CurrentUserId)
+                        {
+                            var isAdmin = await UserRoles.AnyAsync(ur => ur.UserId == CurrentUserId &&
+                                Roles.Any(r => r.Id == ur.RoleId && r.Name == "COMPANY_ADMIN"), cancellationToken);
+                            if (!isAdmin) throw Denied();
+                        }
+                    }
+                    break;
+                case Attachment attachment:
+                    AssertTenant(attachment.TenantId);
+                    if (!await Users.AnyAsync(u => u.Id == attachment.UploadedBy, cancellationToken)) throw Denied();
+                    if (entry.State == EntityState.Added)
+                    {
+                        if (attachment.UploadedBy != CurrentUserId) throw Denied();
+                        var validTarget = attachment.ObjectType switch
+                        {
+                            AttachmentObjectType.Task => await WorkTasks.AnyAsync(t => t.Id == attachment.ObjectId, cancellationToken),
+                            AttachmentObjectType.Request => await Requests.AnyAsync(r => r.Id == attachment.ObjectId, cancellationToken),
+                            AttachmentObjectType.Comment => await Comments.AnyAsync(c => c.Id == attachment.ObjectId, cancellationToken),
+                            AttachmentObjectType.Result => await TaskResults.AnyAsync(r => r.Id == attachment.ObjectId, cancellationToken),
+                            AttachmentObjectType.Progress => await TaskProgressReports.AnyAsync(p => p.Id == attachment.ObjectId, cancellationToken),
+                            _ => false
+                        };
+                        if (!validTarget) throw Denied();
+                    }
+                    else if (entry.State == EntityState.Modified)
+                    {
+                        if (attachment.UploadedBy != CurrentUserId)
+                        {
+                            var isAdmin = await UserRoles.AnyAsync(ur => ur.UserId == CurrentUserId &&
+                                Roles.Any(r => r.Id == ur.RoleId && r.Name == "COMPANY_ADMIN"), cancellationToken);
+                            if (!isAdmin) throw Denied();
+                        }
+                    }
                     break;
                 case TaskProgressReport progress:
                     // State eligibility, current-percent correction rules, participant permission
@@ -204,15 +335,39 @@ public sealed class BizFlowDbContext(DbContextOptions<BizFlowDbContext> options,
                         !await Users.AnyAsync(u => u.Id == progress.AuthorId, cancellationToken)) throw Denied();
                     break;
                 case TaskResult result:
-                    if (entry.State != EntityState.Added ||
-                        !await WorkTasks.AnyAsync(t => t.Id == result.TaskId && t.Status == TaskState.InProgress, cancellationToken) ||
-                        !await Users.AnyAsync(u => u.Id == result.AuthorId, cancellationToken)) throw Denied();
+                    var submittingTask = WorkTasks.Local.FirstOrDefault(t => t.Id == result.TaskId);
+                    var validTask = submittingTask is not null && Entry(submittingTask).State == EntityState.Modified
+                        ? (submittingTask.Status == TaskState.Submitted && submittingTask.WorkflowMutation?.Before == TaskState.InProgress)
+                        : await WorkTasks.AnyAsync(t => t.Id == result.TaskId && t.Status == TaskState.InProgress, cancellationToken);
+                    if (entry.State != EntityState.Added || !validTask || !await Users.AnyAsync(u => u.Id == result.AuthorId, cancellationToken)) throw Denied();
                     break;
                 case WorkRequest request:
                     AssertTenant(request.TenantId);
-                    // Draft/revision persistence only. Lifecycle commands and their authorization,
-                    // evidence and audit must be implemented before allowing existing-row mutations.
-                    if (entry.State != EntityState.Added || request.Status != RequestState.Draft ||
+                    if (entry.State == EntityState.Modified)
+                    {
+                        if (request.DeletedAt is not null &&
+                            (request.Status is RequestState.Closed or RequestState.Cancelled) &&
+                            request.WorkflowMutation is null)
+                        {
+                            if (entry.Properties.Any(p => p.IsModified && p.Metadata.Name is not (nameof(WorkRequest.DeletedAt) or nameof(WorkRequest.UpdatedAt))))
+                                throw Denied();
+                            var originalDeletedAt = (DateTimeOffset?)entry.OriginalValues[nameof(WorkRequest.DeletedAt)];
+                            if (originalDeletedAt is not null) throw Denied();
+                            break;
+                        }
+
+                        var mutation = request.WorkflowMutation;
+                        if (mutation is null || mutation.ActorId != CurrentUserId || request.Status != mutation.After ||
+                            request.WorkflowVersionId is not null || request.SlaVersionId is not null ||
+                            entry.Properties.Any(p => p.IsModified && p.Metadata.Name is not (nameof(WorkRequest.Status) or nameof(WorkRequest.UpdatedAt) or nameof(WorkRequest.ResolvedAt) or nameof(WorkRequest.ClosedAt))) ||
+                            !await Requests.AsNoTracking().AnyAsync(r => r.Id == request.Id && r.Status == mutation.Before &&
+                                r.UpdatedAt == mutation.BeforeUpdatedAt && r.WorkflowVersionId == null && r.SlaVersionId == null, cancellationToken)) throw Denied();
+                        if (request.Status == RequestState.Resolved && (request.ResolvedAt is null || request.ResolvedAt != request.UpdatedAt)) throw Denied();
+                        if (request.Status == RequestState.Closed && (request.ClosedAt is null || request.ClosedAt != request.UpdatedAt)) throw Denied();
+                        break;
+                    }
+                    if (entry.State != EntityState.Added ||
+                        request.Status is not (RequestState.Draft or RequestState.Submitted) ||
                         request.WorkflowVersionId is not null || request.SlaVersionId is not null ||
                         request.ResolvedAt is not null || request.ClosedAt is not null || request.DeletedAt is not null ||
                         !await Users.AnyAsync(u => u.Id == request.RequesterId, cancellationToken) ||
@@ -224,9 +379,22 @@ public sealed class BizFlowDbContext(DbContextOptions<BizFlowDbContext> options,
                 case RequestResolution resolution:
                     // Persisted parent ownership/status: attached forged parents cannot authorize evidence.
                     // Exact action permission, assignment, revision numbering and audit belong to the use case.
-                    if (entry.State != EntityState.Added ||
-                        !await Requests.AnyAsync(r => r.Id == resolution.RequestId && r.Status == RequestState.InProgress, cancellationToken) ||
+                    var resolvingRequest = Requests.Local.FirstOrDefault(r => r.Id == resolution.RequestId);
+                    var validParent = resolvingRequest is not null && Entry(resolvingRequest).State == EntityState.Modified
+                        ? (resolvingRequest.Status == RequestState.Resolved && resolvingRequest.WorkflowMutation?.Before == RequestState.InProgress)
+                        : await Requests.AnyAsync(r => r.Id == resolution.RequestId && r.Status == RequestState.InProgress, cancellationToken);
+                    if (entry.State != EntityState.Added || !validParent ||
                         !await Users.AnyAsync(u => u.Id == resolution.ResolverId, cancellationToken)) throw Denied();
+                    break;
+                case RequestRouting routing:
+                    AssertTenant(routing.TenantId);
+                    if (entry.State != EntityState.Added ||
+                        routing.RoutedBy != CurrentUserId ||
+                        (routing.ToDepartmentId is null && routing.ToUserId is null) ||
+                        !await Requests.AnyAsync(r => r.Id == routing.RequestId, cancellationToken) ||
+                        !await Users.AnyAsync(u => u.Id == routing.RoutedBy, cancellationToken) ||
+                        (routing.ToDepartmentId is { } toDept && !await Departments.AnyAsync(d => d.Id == toDept, cancellationToken)) ||
+                        (routing.ToUserId is { } toUser && !await Users.AnyAsync(u => u.Id == toUser, cancellationToken))) throw Denied();
                     break;
                 case InternalService service:
                     AssertTenant(service.TenantId);
@@ -300,6 +468,29 @@ public sealed class BizFlowDbContext(DbContextOptions<BizFlowDbContext> options,
                     break;
                 case AuthenticationSession session:
                     if (CurrentUserId is null || session.UserId != CurrentUserId) throw Denied();
+                    break;
+                case AIInteraction interaction:
+                    AssertTenant(interaction.TenantId);
+                    if (entry.State != EntityState.Added || interaction.UserId != CurrentUserId) throw Denied();
+                    break;
+                case AIRecommendation recommendation:
+                    AssertTenant(recommendation.TenantId);
+                    if (entry.State == EntityState.Added)
+                    {
+                        if (!await AIInteractions.AnyAsync(i => i.Id == recommendation.AIInteractionId, cancellationToken)) throw Denied();
+                    }
+                    else if (entry.State == EntityState.Modified)
+                    {
+                        if (entry.Properties.Any(p => p.IsModified && p.Metadata.Name is not (nameof(AIRecommendation.HumanDecision) or nameof(AIRecommendation.DecisionBy) or nameof(AIRecommendation.DecidedAt))))
+                            throw Denied();
+                        if (recommendation.DecisionBy != CurrentUserId) throw Denied();
+                    }
+                    else throw Denied();
+                    break;
+                case AIAgentAction action:
+                    AssertTenant(action.TenantId);
+                    if (entry.State != EntityState.Added ||
+                        !await AIInteractions.AnyAsync(i => i.Id == action.AIInteractionId, cancellationToken)) throw Denied();
                     break;
                 default:
                     // New entities must explicitly declare their persistence boundary.

@@ -1,0 +1,106 @@
+<section class="attachments-section" aria-label="Attachments and evidence">
+  <div class="attachments-header">
+    <div class="header-title-group">
+      <h2>Attachments & Evidence</h2>
+      <span class="badge attachments-count">{{ attachments().length }}</span>
+    </div>
+    @if (loading()) {
+      <span class="loading-indicator">Loading…</span>
+    }
+  </div>
+
+  @if (error()) {
+    <p class="error-banner" role="alert">{{ error() }}</p>
+  }
+
+  @if (uploading()) {
+    <div class="upload-progress-box">
+      <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+      <span class="upload-message">{{ uploadMessage() }}</span>
+    </div>
+  }
+
+  <div class="attachments-list">
+    @for (att of attachments(); track att.attachmentId) {
+      <article class="attachment-item">
+        <div class="attachment-icon" aria-hidden="true">
+          <span class="icon-label">{{ att.fileName.split('.').pop()?.toUpperCase() || 'FILE' }}</span>
+        </div>
+        <div class="attachment-info">
+          <div class="attachment-title-row">
+            <a
+              class="attachment-link"
+              [href]="downloadUrl(att.attachmentId)"
+              target="_blank"
+              rel="noopener noreferrer"
+              [title]="att.fileName"
+            >
+              {{ att.fileName }}
+            </a>
+            <span class="file-size">({{ formatBytes(att.sizeBytes) }})</span>
+          </div>
+          <div class="attachment-meta">
+            <span class="uploader-name">Uploaded by {{ att.uploaderName }}</span>
+            <time class="upload-time" [attr.datetime]="att.createdAt">
+              {{ att.createdAt | date: 'medium' }}
+            </time>
+            <span class="hash-tag" [title]="'SHA-256: ' + att.hash">
+              SHA: {{ att.hash.substring(0, 8) }}…
+            </span>
+          </div>
+        </div>
+        <div class="attachment-actions">
+          <a
+            mat-stroked-button
+            class="btn-download"
+            [href]="downloadUrl(att.attachmentId)"
+            download
+          >
+            Download
+          </a>
+          @if (att.canDelete) {
+            <button
+              mat-button
+              color="warn"
+              class="btn-delete"
+              type="button"
+              (click)="deleteAttachment(att.attachmentId)"
+            >
+              Delete
+            </button>
+          }
+        </div>
+      </article>
+    } @empty {
+      @if (!loading() && !uploading()) {
+        <p class="empty-state">No attachments or evidence files uploaded yet.</p>
+      }
+    }
+  </div>
+
+  @if (session.hasPermission('attachments.upload')) {
+    <div class="upload-dropzone">
+      <input
+        #fileInput
+        type="file"
+        class="hidden-file-input"
+        (change)="onFileSelected($event, fileInput)"
+        [disabled]="uploading()"
+      />
+      <div class="dropzone-content">
+        <p class="dropzone-hint">
+          Upload documents, spreadsheets, diagrams, or evidence archives (Max 500 MB).
+        </p>
+        <button
+          mat-flat-button
+          color="primary"
+          type="button"
+          [disabled]="uploading()"
+          (click)="fileInput.click()"
+        >
+          Choose File to Upload
+        </button>
+      </div>
+    </div>
+  }
+</section>

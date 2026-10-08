@@ -1,6 +1,6 @@
 # Tenant recipient notification inbox
 
-Scope: API-NOTIF-01/02, the tenant portion of UI-14, SSS §22, Appendix C Notification and BR-001/019/020. This is the persistent inbox/read-receipt slice, not completion of event dispatch, realtime or email notifications.
+Scope: API-NOTIF-01/02, the tenant portion of UI-14, SSS §22, Appendix C Notification and BR-001/019/020. The persistent inbox/read-receipt slice now has [recipient SignalR updates](notification-realtime.md). Remaining event dispatch and email notifications are not complete.
 
 ## Storage and ownership
 
@@ -24,8 +24,10 @@ Workspace → Notifications (`/notifications`) shows the recipient's events, unr
 
 ## Remaining gates
 
-- Remaining Application event producers/dispatcher for the §22 catalog and FR-specific onboarding/status alerts. Task assignment now writes its in-app events atomically with authoritative resource references and assignment/recipient idempotency keys.
-- Task-assignment department audiences now expand to active members under membership locks. Remaining event audiences, configured recipient policies, email delivery/retry and correctly persisted SentAt, SignalR authenticated recipient updates, and badge integration with the full authenticated shell remain required.
+The tenant inbox now subscribes to a bearer-authenticated SignalR connection while open. Assignment, acceptance and first-read commits send payload-free refresh hints only to live recipient sessions. The client re-reads the existing authorized API, catches up after server-ready/reconnect, reports connection availability, and stops on navigation/session change. Realtime delivery failure never replaces the persisted inbox or reverses a commit. See the linked contract for security and reliability boundaries.
+
+- Remaining Application event producers/dispatcher for the §22 catalog and FR-specific onboarding/status alerts. Task assignment and acceptance now write their in-app events atomically with authoritative resource references and assignment/recipient idempotency keys; acceptance targets the original assigning manager.
+- Task-assignment department audiences now expand to active members under membership locks. Remaining event audiences, configured recipient policies, email delivery/retry and correctly persisted SentAt, other resource realtime events, and badge integration with the full authenticated shell remain required.
 - Request/Approval deep links after those modules exist, full UI-14 platform support after the pending schema decision, production load/accessibility review and packaged-image/hosted-CI verification. Task deep links are implemented and covered by the real assignment-to-recipient browser flow.
 - BR-019 scheduler/escalation guarantees remain unproven until the actual producers/jobs are implemented; a unique inbox key and idempotent read receipt are not a substitute.
 

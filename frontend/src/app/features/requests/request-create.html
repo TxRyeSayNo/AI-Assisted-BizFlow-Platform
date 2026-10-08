@@ -1,0 +1,92 @@
+<header class="public-header"><a class="wordmark" routerLink="/workspace">BizFlow</a></header>
+<main id="main-content" class="page-content" tabindex="-1">
+  <nav aria-label="Breadcrumb">
+    <a routerLink="/requests">Requests</a><span aria-hidden="true"> / </span
+    ><span>New request</span>
+  </nav>
+  <span class="eyebrow">Service Requests</span>
+  <h1>Create service request</h1>
+  <p>
+    Submit a business request or draft it for review. Requests are routed and governed according to
+    the active service catalog SLA.
+  </p>
+  @if (loadingServices()) {
+    <p role="status">Loading service catalog…</p>
+  } @else if (services().length === 0) {
+    <p role="alert">
+      No active services are available. Please contact your workspace administrator.
+    </p>
+    <a mat-stroked-button routerLink="/requests">Back to requests</a>
+  } @else {
+    <form [formGroup]="form" (ngSubmit)="save()" class="task-form directory-panel">
+      <mat-form-field appearance="outline">
+        <mat-label>Service</mat-label>
+        <mat-select formControlName="serviceId" required>
+          @for (svc of services(); track svc.serviceId) {
+            <mat-option [value]="svc.serviceId">{{ svc.name }}</mat-option>
+          }
+        </mat-select>
+        <mat-error>Service is required.</mat-error>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Category</mat-label>
+        <mat-select formControlName="categoryId" required>
+          @for (cat of availableCategories(); track cat.serviceCategoryId) {
+            <mat-option [value]="cat.serviceCategoryId">{{ cat.name }}</mat-option>
+          }
+        </mat-select>
+        <mat-error>Category is required.</mat-error>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Title</mat-label>
+        <input
+          matInput
+          formControlName="title"
+          maxlength="300"
+          required
+          placeholder="Brief summary of request"
+        />
+        <mat-error>Title is required (up to 300 characters).</mat-error>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Description</mat-label>
+        <textarea
+          matInput
+          formControlName="description"
+          rows="5"
+          placeholder="Detailed context and business requirements"
+        ></textarea>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Priority</mat-label>
+        <mat-select formControlName="priority" required>
+          <mat-option value="LOW">Low</mat-option>
+          <mat-option value="MEDIUM">Medium</mat-option>
+          <mat-option value="HIGH">High</mat-option>
+          <mat-option value="CRITICAL">Critical</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-checkbox formControlName="submitImmediately" color="primary">
+        Submit immediately for routing and processing (uncheck to save as draft)
+      </mat-checkbox>
+
+      @if (error()) {
+        <p role="alert" class="error-message" style="color: #b91c1c; font-weight: 500">
+          {{ error() }}
+        </p>
+      }
+
+      <div class="actions">
+        <button mat-flat-button type="submit" [disabled]="busy() || done()">
+          {{ form.controls.submitImmediately.value ? 'Submit request' : 'Save draft' }}
+        </button>
+        <a mat-stroked-button routerLink="/requests">Back to requests</a>
+      </div>
+    </form>
+  }
+</main>

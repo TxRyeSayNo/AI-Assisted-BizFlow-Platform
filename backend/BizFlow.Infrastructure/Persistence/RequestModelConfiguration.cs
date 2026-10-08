@@ -21,6 +21,7 @@ internal sealed class RequestModelConfiguration : IEntityTypeConfiguration<WorkR
             t.HasCheckConstraint("CK_Request_Revision", "\"RevisedFromRequestId\" IS NULL OR \"RevisedFromRequestId\" <> \"RequestId\"");
         });
         b.HasKey(r => r.Id); b.Property(r => r.Id).HasColumnName("RequestId");
+        b.Ignore(r => r.WorkflowMutation);
         b.Property(r => r.TenantId).IsConcurrencyToken(); b.Property(r => r.Title).HasMaxLength(300);
         // LOW is enum zero and must not be mistaken for an unset value.
         b.Property(r => r.Priority).HasDefaultValue(RequestPriority.Medium).HasSentinel(RequestPriority.Medium);

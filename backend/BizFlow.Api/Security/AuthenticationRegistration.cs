@@ -48,6 +48,16 @@ public static class AuthenticationRegistration
             options.TokenValidationParameters = settings.ValidationParameters();
             options.Events = new JwtBearerEvents
             {
+                OnMessageReceived = context =>
+                {
+                    // Browser WebSockets/SSE cannot supply bearer headers. Never enable query
+                    // credentials globally, or let them override an explicit Authorization header.
+                    if (context.Request.Path == Realtime.NotificationHub.Path &&
+                        !context.Request.Headers.ContainsKey("Authorization") &&
+                        context.Request.Query.TryGetValue("access_token", out var token) && token.Count == 1)
+                        context.Token = token[0];
+                    return Task.CompletedTask;
+                },
                 OnTokenValidated = async context =>
                 {
                     var identity = ReadIdentity(context.Principal);
@@ -67,7 +77,7 @@ public static class AuthenticationRegistration
         return services;
     }
 
-    private static AccessTokenRequest? ReadIdentity(ClaimsPrincipal? principal)
+    internal static AccessTokenRequest? ReadIdentity(ClaimsPrincipal? principal)
     {
         string? Single(string name)
         {

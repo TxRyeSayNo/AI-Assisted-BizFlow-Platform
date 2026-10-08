@@ -1,9 +1,11 @@
 using System.Text.Json;
 using BizFlow.Domain.Common;
 using BizFlow.Domain.Authentication;
+using BizFlow.Domain.Collaboration;
 using BizFlow.Domain.Sla;
 using BizFlow.Domain.Services;
 using BizFlow.Domain.Tasks;
+using BizFlow.Domain.Requests;
 
 namespace BizFlow.Domain.Audit;
 
@@ -23,6 +25,76 @@ public sealed class AuditLog
     public string? MetadataJson { get; private set; }
     public DateTimeOffset CreatedAt { get; private set; }
     private AuditLog() { }
+
+    public static AuditLog TaskResultSubmitted(WorkTask task, TaskAssignment assignment, TaskResult result, string? keyHash, string? fingerprint)
+    {
+        if (task.Status != TaskState.Submitted || task.WorkflowMutation is not { } mutation ||
+            mutation.Before != TaskState.InProgress || assignment.TaskId != task.Id ||
+            assignment.UserId != mutation.ActorId || result.TaskId != task.Id || result.AuthorId != mutation.ActorId)
+            throw new ArgumentException("Result submission audit requires the authorized performer and workflow mutation.");
+        static bool Hash(string? value) => value is { Length: 64 } && value.All(c => c is >= '0' and <= '9' or >= 'a' and <= 'f');
+        if ((keyHash is not null || fingerprint is not null) && (!Hash(keyHash) || !Hash(fingerprint))) throw new ArgumentException("Invalid replay hashes.");
+        return new()
+        {
+            Id = Guid.CreateVersion7(), TenantId = task.TenantId, ActorType = AuditActorType.User, ActorId = mutation.ActorId,
+            ObjectType = "Task", ObjectId = task.Id, Action = "TASK.RESULT_SUBMITTED", CreatedAt = task.UpdatedAt,
+            BeforeJson = JsonSerializer.Serialize(new { status = "IN_PROGRESS" }),
+            AfterJson = JsonSerializer.Serialize(new { taskId = task.Id, assignmentId = assignment.Id, taskResultId = result.Id, revisionNo = result.RevisionNo, status = "SUBMITTED", submittedAt = result.SubmittedAt }),
+            MetadataJson = keyHash is null ? null : JsonSerializer.Serialize(new { idempotency = new { operation = "TASK.RESULT_SUBMIT", keyHash, fingerprint } })
+        };
+    }
+
+    public static AuditLog TaskResultConfirmed(WorkTask task, TaskAssignment assignment, Confirmation confirmation, string? keyHash, string? fingerprint)
+    {
+        if (task.Status is not (TaskState.Confirmed or TaskState.Completed) || task.WorkflowMutation is not { } mutation ||
+            confirmation.ObjectId != task.Id || confirmation.ActorId != mutation.ActorId)
+            throw new ArgumentException("Result confirmation audit requires matching workflow and confirmation evidence.");
+        static bool Hash(string? value) => value is { Length: 64 } && value.All(c => c is >= '0' and <= '9' or >= 'a' and <= 'f');
+        if ((keyHash is not null || fingerprint is not null) && (!Hash(keyHash) || !Hash(fingerprint))) throw new ArgumentException("Invalid replay hashes.");
+        return new()
+        {
+            Id = Guid.CreateVersion7(), TenantId = task.TenantId, ActorType = AuditActorType.User, ActorId = mutation.ActorId,
+            ObjectType = "Task", ObjectId = task.Id, Action = "TASK.RESULT_CONFIRMED", CreatedAt = confirmation.ConfirmedAt,
+            BeforeJson = JsonSerializer.Serialize(new { status = "SUBMITTED" }),
+            AfterJson = JsonSerializer.Serialize(new { taskId = task.Id, assignmentId = assignment.Id, confirmationId = confirmation.Id, status = task.Status.ToString().ToUpperInvariant(), confirmedAt = confirmation.ConfirmedAt, note = confirmation.Note }),
+            MetadataJson = keyHash is null ? null : JsonSerializer.Serialize(new { idempotency = new { operation = "TASK.RESULT_CONFIRM", keyHash, fingerprint } })
+        };
+    }
+
+    public static AuditLog TaskResultRework(WorkTask task, TaskAssignment assignment, Confirmation confirmation, string? keyHash, string? fingerprint)
+    {
+        if (task.Status != TaskState.InProgress || task.WorkflowMutation is not { } mutation ||
+            mutation.Before != TaskState.Submitted || confirmation.ObjectId != task.Id || confirmation.ActorId != mutation.ActorId)
+            throw new ArgumentException("Result rework audit requires matching workflow and confirmation evidence.");
+        static bool Hash(string? value) => value is { Length: 64 } && value.All(c => c is >= '0' and <= '9' or >= 'a' and <= 'f');
+        if ((keyHash is not null || fingerprint is not null) && (!Hash(keyHash) || !Hash(fingerprint))) throw new ArgumentException("Invalid replay hashes.");
+        return new()
+        {
+            Id = Guid.CreateVersion7(), TenantId = task.TenantId, ActorType = AuditActorType.User, ActorId = mutation.ActorId,
+            ObjectType = "Task", ObjectId = task.Id, Action = "TASK.RESULT_REWORK", CreatedAt = confirmation.ConfirmedAt,
+            BeforeJson = JsonSerializer.Serialize(new { status = "SUBMITTED" }),
+            AfterJson = JsonSerializer.Serialize(new { taskId = task.Id, assignmentId = assignment.Id, confirmationId = confirmation.Id, status = "IN_PROGRESS", reworkedAt = confirmation.ConfirmedAt, note = confirmation.Note }),
+            MetadataJson = keyHash is null ? null : JsonSerializer.Serialize(new { idempotency = new { operation = "TASK.RESULT_REWORK", keyHash, fingerprint } })
+        };
+    }
+
+    public static AuditLog TaskStarted(WorkTask task, TaskAssignment assignment, string? keyHash, string? fingerprint)
+    {
+        if (task.Status != TaskState.InProgress || task.WorkflowMutation is not { } mutation ||
+            mutation.Before is not (TaskState.Accepted or TaskState.Overdue) || assignment.TaskId != task.Id ||
+            assignment.UserId != mutation.ActorId || assignment.AcceptedAt is null || assignment.RejectedAt is not null || assignment.EndedAt is not null)
+            throw new ArgumentException("Execution audit requires the authorized performer and workflow mutation.");
+        static bool Hash(string? value) => value is { Length: 64 } && value.All(c => c is >= '0' and <= '9' or >= 'a' and <= 'f');
+        if ((keyHash is not null || fingerprint is not null) && (!Hash(keyHash) || !Hash(fingerprint))) throw new ArgumentException("Invalid replay hashes.");
+        return new()
+        {
+            Id = Guid.CreateVersion7(), TenantId = task.TenantId, ActorType = AuditActorType.User, ActorId = mutation.ActorId,
+            ObjectType = "Task", ObjectId = task.Id, Action = "TASK.STARTED", CreatedAt = task.UpdatedAt,
+            BeforeJson = JsonSerializer.Serialize(new { status = mutation.Before.ToString().ToUpperInvariant() }),
+            AfterJson = JsonSerializer.Serialize(new { taskId = task.Id, assignmentId = assignment.Id, status = "IN_PROGRESS", startedAt = task.UpdatedAt }),
+            MetadataJson = keyHash is null ? null : JsonSerializer.Serialize(new { idempotency = new { operation = "TASK.START", keyHash, fingerprint } })
+        };
+    }
 
     public static AuditLog TaskAccepted(WorkTask task, TaskAssignment assignment, Confirmation confirmation, string? keyHash, string? fingerprint)
     {
@@ -60,6 +132,305 @@ public sealed class AuditLog
             MetadataJson = keyHash is null ? null : JsonSerializer.Serialize(new { idempotency = new { operation = "TASK.ASSIGN", keyHash, fingerprint } })
         };
     }
+
+    public static AuditLog RequestCreated(WorkRequest request, DateTimeOffset now,
+        string? idempotencyKeyHash = null, string? requestFingerprint = null)
+    {
+        static bool Hash(string? value) => value is { Length: 64 } && value.All(c => c is >= '0' and <= '9' or >= 'a' and <= 'f');
+        if ((idempotencyKeyHash is not null || requestFingerprint is not null) &&
+            (!Hash(idempotencyKeyHash) || !Hash(requestFingerprint)))
+            throw new ArgumentException("Replay metadata requires two SHA-256 hashes.");
+        if (request.Status is not (RequestState.Draft or RequestState.Submitted))
+            throw new ArgumentException("Request creation audit requires a draft or initially submitted request.");
+        return new()
+        {
+            Id = Guid.CreateVersion7(), TenantId = request.TenantId, ActorType = AuditActorType.User,
+            ActorId = request.RequesterId, ObjectType = "Request", ObjectId = request.Id, Action = "REQUEST.CREATED",
+            MetadataJson = idempotencyKeyHash is null ? null : JsonSerializer.Serialize(new
+            { idempotency = new { operation = "REQUEST.CREATE", keyHash = idempotencyKeyHash, fingerprint = requestFingerprint } }),
+            AfterJson = JsonSerializer.Serialize(new
+            {
+                requestId = request.Id, requesterId = request.RequesterId, serviceId = request.ServiceId,
+                categoryId = request.CategoryId, parentRequestId = request.ParentRequestId,
+                revisedFromRequestId = request.RevisedFromRequestId, title = request.Title,
+                description = request.Description, priority = request.Priority.ToString().ToUpperInvariant(),
+                status = request.Status.ToString().ToUpperInvariant(), createdAt = request.CreatedAt
+            }),
+            CreatedAt = now.ToUniversalTime()
+        };
+    }
+
+    public static AuditLog RequestSubmitted(WorkRequest request, DateTimeOffset now,
+        string? idempotencyKeyHash = null, string? requestFingerprint = null)
+    {
+        static bool Hash(string? value) => value is { Length: 64 } && value.All(c => c is >= '0' and <= '9' or >= 'a' and <= 'f');
+        if ((idempotencyKeyHash is not null || requestFingerprint is not null) &&
+            (!Hash(idempotencyKeyHash) || !Hash(requestFingerprint)))
+            throw new ArgumentException("Replay metadata requires two SHA-256 hashes.");
+        if (request.Status != RequestState.Submitted || request.WorkflowMutation is not { } mutation ||
+            mutation.Before != RequestState.Draft || mutation.ActorId != request.RequesterId)
+            throw new ArgumentException("Request submission audit requires an active workflow mutation from Draft to Submitted by the requester.");
+        return new()
+        {
+            Id = Guid.CreateVersion7(), TenantId = request.TenantId, ActorType = AuditActorType.User,
+            ActorId = mutation.ActorId, ObjectType = "Request", ObjectId = request.Id, Action = "REQUEST.SUBMITTED",
+            MetadataJson = idempotencyKeyHash is null ? null : JsonSerializer.Serialize(new
+            { idempotency = new { operation = "REQUEST.SUBMIT", keyHash = idempotencyKeyHash, fingerprint = requestFingerprint } }),
+            BeforeJson = JsonSerializer.Serialize(new { status = "DRAFT" }),
+            AfterJson = JsonSerializer.Serialize(new
+            {
+                requestId = request.Id, requesterId = request.RequesterId,
+                status = "SUBMITTED", submittedAt = request.UpdatedAt
+            }),
+            CreatedAt = now.ToUniversalTime()
+        };
+    }
+
+    public static AuditLog RequestRouted(WorkRequest request, RequestRouting routing, DateTimeOffset now,
+        string? idempotencyKeyHash = null, string? requestFingerprint = null)
+    {
+        static bool Hash(string? value) => value is { Length: 64 } && value.All(c => c is >= '0' and <= '9' or >= 'a' and <= 'f');
+        if ((idempotencyKeyHash is not null || requestFingerprint is not null) &&
+            (!Hash(idempotencyKeyHash) || !Hash(requestFingerprint)))
+            throw new ArgumentException("Replay metadata requires two SHA-256 hashes.");
+        if (request.Status != RequestState.Routed || request.WorkflowMutation is not { } mutation ||
+            mutation.Before is not (RequestState.Submitted or RequestState.Routed))
+            throw new ArgumentException("Request routing audit requires an active workflow mutation to Routed.");
+        return new()
+        {
+            Id = Guid.CreateVersion7(), TenantId = request.TenantId, ActorType = AuditActorType.User,
+            ActorId = mutation.ActorId, ObjectType = "Request", ObjectId = request.Id, Action = "REQUEST.ROUTED",
+            MetadataJson = idempotencyKeyHash is null ? null : JsonSerializer.Serialize(new
+            { idempotency = new { operation = "REQUEST.ROUTE", keyHash = idempotencyKeyHash, fingerprint = requestFingerprint } }),
+            BeforeJson = JsonSerializer.Serialize(new { status = mutation.Before.ToString().ToUpperInvariant() }),
+            AfterJson = JsonSerializer.Serialize(new
+            {
+                requestId = request.Id, routingId = routing.Id, toDepartmentId = routing.ToDepartmentId,
+                toUserId = routing.ToUserId, routedBy = routing.RoutedBy, routedAt = routing.RoutedAt,
+                reason = routing.Reason, source = routing.Source.ToString().ToUpperInvariant(),
+                status = "ROUTED"
+            }),
+            CreatedAt = now.ToUniversalTime()
+        };
+    }
+
+    public static AuditLog RequestReceived(WorkRequest request, Confirmation confirmation, DateTimeOffset now,
+        string? idempotencyKeyHash = null, string? requestFingerprint = null)
+    {
+        static bool Hash(string? value) => value is { Length: 64 } && value.All(c => c is >= '0' and <= '9' or >= 'a' and <= 'f');
+        if ((idempotencyKeyHash is not null || requestFingerprint is not null) &&
+            (!Hash(idempotencyKeyHash) || !Hash(requestFingerprint)))
+            throw new ArgumentException("Replay metadata requires two SHA-256 hashes.");
+        if (request.Status != RequestState.Received || request.WorkflowMutation is not { } mutation ||
+            mutation.Before != RequestState.Routed)
+            throw new ArgumentException("Request receipt audit requires an active workflow mutation to Received.");
+        return new()
+        {
+            Id = Guid.CreateVersion7(), TenantId = request.TenantId, ActorType = AuditActorType.User,
+            ActorId = mutation.ActorId, ObjectType = "Request", ObjectId = request.Id, Action = "REQUEST.RECEIVED",
+            MetadataJson = idempotencyKeyHash is null ? null : JsonSerializer.Serialize(new
+            { idempotency = new { operation = "REQUEST.RECEIVE", keyHash = idempotencyKeyHash, fingerprint = requestFingerprint } }),
+            BeforeJson = JsonSerializer.Serialize(new { status = "ROUTED" }),
+            AfterJson = JsonSerializer.Serialize(new
+            {
+                requestId = request.Id, confirmationId = confirmation.Id, receivedBy = confirmation.ActorId,
+                receivedAt = confirmation.ConfirmedAt, note = confirmation.Note, status = "RECEIVED"
+            }),
+            CreatedAt = now.ToUniversalTime()
+        };
+    }
+
+    public static AuditLog RequestExecutionStarted(WorkRequest request, DateTimeOffset now,
+        string? idempotencyKeyHash = null, string? requestFingerprint = null)
+    {
+        static bool Hash(string? value) => value is { Length: 64 } && value.All(c => c is >= '0' and <= '9' or >= 'a' and <= 'f');
+        if ((idempotencyKeyHash is not null || requestFingerprint is not null) &&
+            (!Hash(idempotencyKeyHash) || !Hash(requestFingerprint)))
+            throw new ArgumentException("Replay metadata requires two SHA-256 hashes.");
+        if (request.Status != RequestState.InProgress || request.WorkflowMutation is not { } mutation ||
+            mutation.Before is not (RequestState.Received or RequestState.WaitingForInformation or RequestState.Overdue or RequestState.Resolved))
+            throw new ArgumentException("Request execution audit requires an active workflow mutation to InProgress.");
+        return new()
+        {
+            Id = Guid.CreateVersion7(), TenantId = request.TenantId, ActorType = AuditActorType.User,
+            ActorId = mutation.ActorId, ObjectType = "Request", ObjectId = request.Id, Action = "REQUEST.STARTED",
+            MetadataJson = idempotencyKeyHash is null ? null : JsonSerializer.Serialize(new
+            { idempotency = new { operation = "REQUEST.START", keyHash = idempotencyKeyHash, fingerprint = requestFingerprint } }),
+            BeforeJson = JsonSerializer.Serialize(new { status = mutation.Before.ToString().ToUpperInvariant() }),
+            AfterJson = JsonSerializer.Serialize(new
+            {
+                requestId = request.Id, startedBy = mutation.ActorId, status = "IN_PROGRESS", startedAt = request.UpdatedAt
+            }),
+            CreatedAt = now.ToUniversalTime()
+        };
+    }
+
+    public static AuditLog RequestRejected(WorkRequest request, string reason, DateTimeOffset now,
+        string? idempotencyKeyHash = null, string? requestFingerprint = null)
+    {
+        static bool Hash(string? value) => value is { Length: 64 } && value.All(c => c is >= '0' and <= '9' or >= 'a' and <= 'f');
+        if ((idempotencyKeyHash is not null || requestFingerprint is not null) &&
+            (!Hash(idempotencyKeyHash) || !Hash(requestFingerprint)))
+            throw new ArgumentException("Replay metadata requires two SHA-256 hashes.");
+        if (request.Status != RequestState.Rejected || request.WorkflowMutation is not { } mutation ||
+            mutation.Before is not (RequestState.Submitted or RequestState.Routed))
+            throw new ArgumentException("Request rejection audit requires an active workflow mutation to Rejected.");
+        return new()
+        {
+            Id = Guid.CreateVersion7(), TenantId = request.TenantId, ActorType = AuditActorType.User,
+            ActorId = mutation.ActorId, ObjectType = "Request", ObjectId = request.Id, Action = "REQUEST.REJECTED",
+            MetadataJson = idempotencyKeyHash is null ? null : JsonSerializer.Serialize(new
+            { idempotency = new { operation = "REQUEST.REJECT", keyHash = idempotencyKeyHash, fingerprint = requestFingerprint } }),
+            BeforeJson = JsonSerializer.Serialize(new { status = mutation.Before.ToString().ToUpperInvariant() }),
+            AfterJson = JsonSerializer.Serialize(new
+            {
+                requestId = request.Id, rejectedBy = mutation.ActorId, reason, status = "REJECTED", rejectedAt = request.UpdatedAt
+            }),
+            CreatedAt = now.ToUniversalTime()
+        };
+    }
+
+    public static AuditLog RequestCancelled(WorkRequest request, DateTimeOffset now,
+        string? idempotencyKeyHash = null, string? requestFingerprint = null)
+    {
+        static bool Hash(string? value) => value is { Length: 64 } && value.All(c => c is >= '0' and <= '9' or >= 'a' and <= 'f');
+        if ((idempotencyKeyHash is not null || requestFingerprint is not null) &&
+            (!Hash(idempotencyKeyHash) || !Hash(requestFingerprint)))
+            throw new ArgumentException("Replay metadata requires two SHA-256 hashes.");
+        if (request.Status != RequestState.Cancelled || request.WorkflowMutation is not { } mutation)
+            throw new ArgumentException("Request cancellation audit requires an active workflow mutation to Cancelled.");
+        return new()
+        {
+            Id = Guid.CreateVersion7(), TenantId = request.TenantId, ActorType = AuditActorType.User,
+            ActorId = mutation.ActorId, ObjectType = "Request", ObjectId = request.Id, Action = "REQUEST.CANCELLED",
+            MetadataJson = idempotencyKeyHash is null ? null : JsonSerializer.Serialize(new
+            { idempotency = new { operation = "REQUEST.CANCEL", keyHash = idempotencyKeyHash, fingerprint = requestFingerprint } }),
+            BeforeJson = JsonSerializer.Serialize(new { status = mutation.Before.ToString().ToUpperInvariant() }),
+            AfterJson = JsonSerializer.Serialize(new
+            {
+                requestId = request.Id, cancelledBy = mutation.ActorId, status = "CANCELLED", cancelledAt = request.UpdatedAt
+            }),
+            CreatedAt = now.ToUniversalTime()
+        };
+    }
+
+    public static AuditLog RequestResolved(WorkRequest request, RequestResolution resolution, DateTimeOffset now,
+        string? idempotencyKeyHash = null, string? requestFingerprint = null)
+    {
+        static bool Hash(string? value) => value is { Length: 64 } && value.All(c => c is >= '0' and <= '9' or >= 'a' and <= 'f');
+        if ((idempotencyKeyHash is not null || requestFingerprint is not null) &&
+            (!Hash(idempotencyKeyHash) || !Hash(requestFingerprint)))
+            throw new ArgumentException("Replay metadata requires two SHA-256 hashes.");
+        if (request.Status != RequestState.Resolved || request.WorkflowMutation is not { } mutation ||
+            mutation.Before != RequestState.InProgress)
+            throw new ArgumentException("Request resolution audit requires an active workflow mutation to Resolved.");
+        return new()
+        {
+            Id = Guid.CreateVersion7(), TenantId = request.TenantId, ActorType = AuditActorType.User,
+            ActorId = mutation.ActorId, ObjectType = "Request", ObjectId = request.Id, Action = "REQUEST.RESOLVED",
+            MetadataJson = idempotencyKeyHash is null ? null : JsonSerializer.Serialize(new
+            { idempotency = new { operation = "REQUEST.RESOLVE", keyHash = idempotencyKeyHash, fingerprint = requestFingerprint } }),
+            BeforeJson = JsonSerializer.Serialize(new { status = "IN_PROGRESS" }),
+            AfterJson = JsonSerializer.Serialize(new
+            {
+                requestId = request.Id, resolutionId = resolution.Id, resolverId = resolution.ResolverId,
+                revisionNo = resolution.RevisionNo, content = resolution.Content, status = "RESOLVED", resolvedAt = request.ResolvedAt
+            }),
+            CreatedAt = now.ToUniversalTime()
+        };
+    }
+
+    public static AuditLog RequestConfirmed(WorkRequest request, Confirmation confirmation, DateTimeOffset now,
+        string? idempotencyKeyHash = null, string? requestFingerprint = null)
+    {
+        static bool Hash(string? value) => value is { Length: 64 } && value.All(c => c is >= '0' and <= '9' or >= 'a' and <= 'f');
+        if ((idempotencyKeyHash is not null || requestFingerprint is not null) &&
+            (!Hash(idempotencyKeyHash) || !Hash(requestFingerprint)))
+            throw new ArgumentException("Replay metadata requires two SHA-256 hashes.");
+        if (request.Status is not (RequestState.Confirmed or RequestState.Closed) || request.WorkflowMutation is not { } mutation)
+            throw new ArgumentException("Request confirmation audit requires an active workflow mutation.");
+        return new()
+        {
+            Id = Guid.CreateVersion7(), TenantId = request.TenantId, ActorType = AuditActorType.User,
+            ActorId = mutation.ActorId, ObjectType = "Request", ObjectId = request.Id, Action = "REQUEST.CONFIRMED",
+            MetadataJson = idempotencyKeyHash is null ? null : JsonSerializer.Serialize(new
+            { idempotency = new { operation = "REQUEST.CONFIRM", keyHash = idempotencyKeyHash, fingerprint = requestFingerprint } }),
+            BeforeJson = JsonSerializer.Serialize(new { status = "RESOLVED" }),
+            AfterJson = JsonSerializer.Serialize(new
+            {
+                requestId = request.Id, confirmationId = confirmation.Id, confirmedBy = confirmation.ActorId,
+                status = request.Status.ToString().ToUpperInvariant(), note = confirmation.Note, confirmedAt = confirmation.ConfirmedAt
+            }),
+            CreatedAt = now.ToUniversalTime()
+        };
+    }
+
+    public static AuditLog RequestRework(WorkRequest request, Confirmation confirmation, DateTimeOffset now,
+        string? idempotencyKeyHash = null, string? requestFingerprint = null)
+    {
+        static bool Hash(string? value) => value is { Length: 64 } && value.All(c => c is >= '0' and <= '9' or >= 'a' and <= 'f');
+        if ((idempotencyKeyHash is not null || requestFingerprint is not null) &&
+            (!Hash(idempotencyKeyHash) || !Hash(requestFingerprint)))
+            throw new ArgumentException("Replay metadata requires two SHA-256 hashes.");
+        if (request.Status != RequestState.InProgress || request.WorkflowMutation is not { } mutation ||
+            mutation.Before != RequestState.Resolved)
+            throw new ArgumentException("Request rework audit requires an active workflow mutation to InProgress.");
+        return new()
+        {
+            Id = Guid.CreateVersion7(), TenantId = request.TenantId, ActorType = AuditActorType.User,
+            ActorId = mutation.ActorId, ObjectType = "Request", ObjectId = request.Id, Action = "REQUEST.REWORK",
+            MetadataJson = idempotencyKeyHash is null ? null : JsonSerializer.Serialize(new
+            { idempotency = new { operation = "REQUEST.REWORK", keyHash = idempotencyKeyHash, fingerprint = requestFingerprint } }),
+            BeforeJson = JsonSerializer.Serialize(new { status = "RESOLVED" }),
+            AfterJson = JsonSerializer.Serialize(new
+            {
+                requestId = request.Id, confirmationId = confirmation.Id, requestedBy = confirmation.ActorId,
+                reason = confirmation.Note, status = "IN_PROGRESS", requestedAt = confirmation.ConfirmedAt
+            }),
+            CreatedAt = now.ToUniversalTime()
+        };
+    }
+
+    public static AuditLog RequestClosed(WorkRequest request, DateTimeOffset now)
+    {
+        if (request.Status != RequestState.Closed || request.WorkflowMutation is not { } mutation)
+            throw new ArgumentException("Request closure audit requires an active workflow mutation to Closed.");
+        return new()
+        {
+            Id = Guid.CreateVersion7(), TenantId = request.TenantId, ActorType = AuditActorType.User,
+            ActorId = mutation.ActorId, ObjectType = "Request", ObjectId = request.Id, Action = "REQUEST.CLOSED",
+            BeforeJson = JsonSerializer.Serialize(new { status = mutation.Before.ToString().ToUpperInvariant() }),
+            AfterJson = JsonSerializer.Serialize(new
+            {
+                requestId = request.Id, closedBy = mutation.ActorId, status = "CLOSED", closedAt = request.ClosedAt
+            }),
+            CreatedAt = now.ToUniversalTime()
+        };
+    }
+
+    public static AuditLog RequestRevised(WorkRequest source, WorkRequest revision, DateTimeOffset now,
+        string? idempotencyKeyHash = null, string? requestFingerprint = null)
+    {
+        static bool Hash(string? value) => value is { Length: 64 } && value.All(c => c is >= '0' and <= '9' or >= 'a' and <= 'f');
+        if ((idempotencyKeyHash is not null || requestFingerprint is not null) &&
+            (!Hash(idempotencyKeyHash) || !Hash(requestFingerprint)))
+            throw new ArgumentException("Replay metadata requires two SHA-256 hashes.");
+        return new()
+        {
+            Id = Guid.CreateVersion7(), TenantId = revision.TenantId, ActorType = AuditActorType.User,
+            ActorId = revision.RequesterId, ObjectType = "Request", ObjectId = revision.Id, Action = "REQUEST.REVISED",
+            MetadataJson = idempotencyKeyHash is null ? null : JsonSerializer.Serialize(new
+            { idempotency = new { operation = "REQUEST.REVISE", keyHash = idempotencyKeyHash, fingerprint = requestFingerprint } }),
+            BeforeJson = JsonSerializer.Serialize(new { sourceRequestId = source.Id, status = "REJECTED" }),
+            AfterJson = JsonSerializer.Serialize(new
+            {
+                requestId = revision.Id, sourceRequestId = source.Id, requesterId = revision.RequesterId,
+                title = revision.Title, status = revision.Status.ToString().ToUpperInvariant(), createdAt = revision.CreatedAt
+            }),
+            CreatedAt = now.ToUniversalTime()
+        };
+    }
+
 
     // FR-TASK-001 / BR-020: creation and a subsequent assignment are separate audit events.
     // The Application transaction must persist this snapshot with the draft and initial checklist.
@@ -203,4 +574,195 @@ public sealed class AuditLog
         MetadataJson = JsonSerializer.Serialize(new { permission = EntityRules.Text(permission, 120, nameof(permission)), reason }),
         CreatedAt = now.ToUniversalTime()
     };
+
+    public static AuditLog CommentCreated(Comment comment, DateTimeOffset now,
+        string? idempotencyKeyHash = null, string? requestFingerprint = null)
+    {
+        static bool Hash(string? value) => value is { Length: 64 } && value.All(c => c is >= '0' and <= '9' or >= 'a' and <= 'f');
+        if ((idempotencyKeyHash is not null || requestFingerprint is not null) &&
+            (!Hash(idempotencyKeyHash) || !Hash(requestFingerprint)))
+            throw new ArgumentException("Replay metadata requires two SHA-256 hashes.");
+
+        return new()
+        {
+            Id = Guid.CreateVersion7(),
+            TenantId = comment.TenantId,
+            ActorType = AuditActorType.User,
+            ActorId = comment.AuthorId,
+            ObjectType = "Comment",
+            ObjectId = comment.Id,
+            Action = "COMMENT.CREATED",
+            MetadataJson = idempotencyKeyHash is null ? null : JsonSerializer.Serialize(new
+            {
+                idempotency = new { operation = "COMMENT.CREATE", keyHash = idempotencyKeyHash, fingerprint = requestFingerprint }
+            }),
+            AfterJson = JsonSerializer.Serialize(new
+            {
+                commentId = comment.Id,
+                objectType = comment.ObjectType.ToString().ToUpperInvariant(),
+                objectId = comment.ObjectId,
+                authorId = comment.AuthorId,
+                content = comment.Content,
+                createdAt = comment.CreatedAt
+            }),
+            CreatedAt = now.ToUniversalTime()
+        };
+    }
+
+    public static AuditLog CommentEdited(Comment comment, string previousContent, DateTimeOffset now) => new()
+    {
+        Id = Guid.CreateVersion7(),
+        TenantId = comment.TenantId,
+        ActorType = AuditActorType.User,
+        ActorId = comment.AuthorId,
+        ObjectType = "Comment",
+        ObjectId = comment.Id,
+        Action = "COMMENT.EDITED",
+        BeforeJson = JsonSerializer.Serialize(new { content = previousContent }),
+        AfterJson = JsonSerializer.Serialize(new
+        {
+            commentId = comment.Id,
+            content = comment.Content,
+            editedAt = comment.EditedAt
+        }),
+        CreatedAt = now.ToUniversalTime()
+    };
+
+    public static AuditLog CommentDeleted(Comment comment, Guid actorId, DateTimeOffset now) => new()
+    {
+        Id = Guid.CreateVersion7(),
+        TenantId = comment.TenantId,
+        ActorType = AuditActorType.User,
+        ActorId = actorId,
+        ObjectType = "Comment",
+        ObjectId = comment.Id,
+        Action = "COMMENT.DELETED",
+        BeforeJson = JsonSerializer.Serialize(new { deletedAt = (DateTimeOffset?)null }),
+        AfterJson = JsonSerializer.Serialize(new
+        {
+            commentId = comment.Id,
+            deletedAt = comment.DeletedAt
+        }),
+        CreatedAt = now.ToUniversalTime()
+    };
+
+    public static AuditLog AttachmentUploadSessionCreated(
+        Attachment attachment,
+        DateTimeOffset now,
+        string? idempotencyKeyHash = null,
+        string? requestFingerprint = null)
+    {
+        static bool Hash(string? value) => value is { Length: 64 } && value.All(c => c is >= '0' and <= '9' or >= 'a' and <= 'f');
+        if ((idempotencyKeyHash is not null || requestFingerprint is not null) &&
+            (!Hash(idempotencyKeyHash) || !Hash(requestFingerprint)))
+            throw new ArgumentException("Replay metadata requires two SHA-256 hashes.");
+
+        return new()
+        {
+            Id = Guid.CreateVersion7(),
+            TenantId = attachment.TenantId,
+            ActorType = AuditActorType.User,
+            ActorId = attachment.UploadedBy,
+            ObjectType = "Attachment",
+            ObjectId = attachment.Id,
+            Action = "ATTACHMENT.UPLOAD_SESSION_CREATED",
+            MetadataJson = idempotencyKeyHash is null ? null : JsonSerializer.Serialize(new
+            {
+                idempotency = new { operation = "ATTACHMENT.CREATE_UPLOAD_SESSION", keyHash = idempotencyKeyHash, fingerprint = requestFingerprint }
+            }),
+            AfterJson = JsonSerializer.Serialize(new
+            {
+                attachmentId = attachment.Id,
+                objectType = attachment.ObjectType.ToString().ToUpperInvariant(),
+                objectId = attachment.ObjectId,
+                uploadedBy = attachment.UploadedBy,
+                fileName = attachment.FileName,
+                contentType = attachment.ContentType,
+                sizeBytes = attachment.SizeBytes,
+                objectKey = attachment.ObjectKey,
+                status = attachment.Status.ToString().ToUpperInvariant(),
+                createdAt = attachment.CreatedAt
+            }),
+            CreatedAt = now.ToUniversalTime()
+        };
+    }
+
+    public static AuditLog AttachmentFinalized(Attachment attachment, DateTimeOffset now) => new()
+    {
+        Id = Guid.CreateVersion7(),
+        TenantId = attachment.TenantId,
+        ActorType = AuditActorType.User,
+        ActorId = attachment.UploadedBy,
+        ObjectType = "Attachment",
+        ObjectId = attachment.Id,
+        Action = "ATTACHMENT.FINALIZED",
+        BeforeJson = JsonSerializer.Serialize(new { status = "UPLOADING" }),
+        AfterJson = JsonSerializer.Serialize(new
+        {
+            attachmentId = attachment.Id,
+            status = attachment.Status.ToString().ToUpperInvariant(),
+            hash = attachment.Hash,
+            sizeBytes = attachment.SizeBytes
+        }),
+        CreatedAt = now.ToUniversalTime()
+    };
+
+    public static AuditLog AttachmentDeleted(Attachment attachment, Guid actorId, DateTimeOffset now) => new()
+    {
+        Id = Guid.CreateVersion7(),
+        TenantId = attachment.TenantId,
+        ActorType = AuditActorType.User,
+        ActorId = actorId,
+        ObjectType = "Attachment",
+        ObjectId = attachment.Id,
+        Action = "ATTACHMENT.DELETED",
+        BeforeJson = JsonSerializer.Serialize(new { status = "READY", deletedAt = (DateTimeOffset?)null }),
+        AfterJson = JsonSerializer.Serialize(new
+        {
+            attachmentId = attachment.Id,
+            status = attachment.Status.ToString().ToUpperInvariant(),
+            deletedAt = attachment.DeletedAt
+        }),
+        CreatedAt = now.ToUniversalTime()
+    };
+
+    public static AuditLog RecordArchived(string recordType, Guid recordId, Guid tenantId, Guid actorId, string status, DateTimeOffset deletedAt, DateTimeOffset now)
+    {
+        if (string.IsNullOrWhiteSpace(recordType)) throw new ArgumentException("Record type is required.", nameof(recordType));
+        if (recordId == Guid.Empty) throw new ArgumentException("Record ID is required.", nameof(recordId));
+        if (tenantId == Guid.Empty) throw new ArgumentException("Tenant ID is required.", nameof(tenantId));
+        if (actorId == Guid.Empty) throw new ArgumentException("Actor ID is required.", nameof(actorId));
+
+        var normalizedType = recordType.Trim().ToUpperInvariant();
+        return new()
+        {
+            Id = Guid.CreateVersion7(),
+            TenantId = tenantId,
+            ActorType = AuditActorType.User,
+            ActorId = actorId,
+            ObjectType = normalizedType switch
+            {
+                "TASK" => "Task",
+                "REQUEST" => "Request",
+                _ => recordType.Trim()
+            },
+            ObjectId = recordId,
+            Action = "RECORD.ARCHIVED",
+            BeforeJson = JsonSerializer.Serialize(new { status, deletedAt = (DateTimeOffset?)null }),
+            AfterJson = JsonSerializer.Serialize(new
+            {
+                recordId,
+                recordType = normalizedType,
+                status,
+                deletedAt
+            }),
+            CreatedAt = now.ToUniversalTime()
+        };
+    }
+
+    public static AuditLog RecordArchived(WorkTask task, Guid actorId, DateTimeOffset now) =>
+        RecordArchived("TASK", task.Id, task.TenantId, actorId, task.Status.ToString().ToUpperInvariant(), task.DeletedAt ?? now, now);
+
+    public static AuditLog RecordArchived(WorkRequest request, Guid actorId, DateTimeOffset now) =>
+        RecordArchived("REQUEST", request.Id, request.TenantId, actorId, request.Status.ToString().ToUpperInvariant(), request.DeletedAt ?? now, now);
 }

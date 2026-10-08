@@ -11,6 +11,17 @@
   @if (data(); as detail) {
     <span class="eyebrow">Work management</span>
     <h1>{{ detail.task.title }}</h1>
+    @if (canStart()) {
+      <button mat-flat-button type="button" (click)="start()">
+        {{ detail.task.status === 'OVERDUE' ? 'Resume work' : 'Start work' }}
+      </button>
+    }
+    @if (canSubmit()) {
+      <button mat-flat-button type="button" (click)="submit()">Submit result</button>
+    }
+    @if (canConfirm()) {
+      <button mat-flat-button type="button" (click)="confirm()">Review result</button>
+    }
     @if (canAccept()) {
       <button mat-flat-button type="button" (click)="accept()">Accept task</button>
     }
@@ -19,6 +30,11 @@
       (detail.task.status === 'DRAFT' || detail.task.status === 'REJECTED')
     ) {
       <button mat-flat-button type="button" (click)="assign()">Assign task</button>
+    }
+    @if (canArchive()) {
+      <button mat-stroked-button color="warn" type="button" (click)="archive()" [disabled]="archiving">
+        {{ archiving ? 'Archiving…' : 'Archive task' }}
+      </button>
     }
     <section class="directory-panel detail-section" aria-label="Task summary">
       <dl>
@@ -42,7 +58,61 @@
       <p>Dates shown in your local time.</p>
       <p>{{ detail.description ?? 'No description' }}</p>
       @if (detail.task.requestId) {
-        <p>Linked request: {{ detail.task.requestId }}</p>
+        <p>Linked request: <a [routerLink]="['/requests', detail.task.requestId]" class="request-link">{{ detail.task.requestId }}</a></p>
+      }
+    </section>
+
+    <section class="ai-assistant-card" aria-label="AI Task Intelligence">
+      <div class="ai-header">
+        <span class="ai-badge">AI Intelligence</span>
+        <strong>Trợ lý Giám sát & Phân tích AI (FR-AI-005, FR-AI-006)</strong>
+      </div>
+      <p class="ai-meta">Đánh giá rủi ro tiến độ theo cam kết thời gian hoặc tạo bản tóm tắt nghiệp vụ tự động từ lịch sử thực hiện.</p>
+      <div class="ai-actions">
+        <button mat-stroked-button color="accent" type="button" (click)="evaluateRisk()" [disabled]="aiBusy()">
+          Đánh giá rủi ro (AI Risk)
+        </button>
+        <button mat-stroked-button type="button" (click)="summarizeProgress()" [disabled]="aiBusy()">
+          Tóm tắt tiến độ (AI Summary)
+        </button>
+      </div>
+      @if (aiError()) {
+        <p class="ai-meta" role="alert" style="color: #ef4444;">{{ aiError() }}</p>
+      }
+      @if (aiRisk(); as risk) {
+        <div class="ai-meta" style="margin-top: 0.75rem; padding: 0.5rem; background: rgba(0,0,0,0.02); border-radius: 4px;">
+          <p><strong>Mức độ rủi ro:</strong> <span [style.color]="risk.riskLevel === 'CRITICAL' ? '#dc2626' : risk.riskLevel === 'HIGH' ? '#ea580c' : '#16a34a'">{{ risk.riskLevel }} (Điểm: {{ (risk.riskScore * 100).toFixed(0) }}%)</span></p>
+          @if (risk.riskFactors?.length) {
+            <p><strong>Yếu tố ảnh hưởng:</strong></p>
+            <ul>
+              @for (factor of risk.riskFactors; track factor) {
+                <li>{{ factor }}</li>
+              }
+            </ul>
+          }
+          @if (risk.mitigationAdvice?.length) {
+            <p><strong>Khuyến nghị xử lý:</strong></p>
+            <ul>
+              @for (advice of risk.mitigationAdvice; track advice) {
+                <li>{{ advice }}</li>
+              }
+            </ul>
+          }
+          <small style="color: #64748b;">* Cảnh báo mang tính tham vấn, không thay đổi trạng thái chính thức của công việc.</small>
+        </div>
+      }
+      @if (aiSummary(); as sum) {
+        <div class="ai-meta" style="margin-top: 0.75rem; padding: 0.5rem; background: rgba(0,0,0,0.02); border-radius: 4px;">
+          <p><strong>Tóm tắt tự động:</strong> {{ sum.summary }}</p>
+          @if (sum.keyMilestones?.length) {
+            <p><strong>Các mốc chính:</strong></p>
+            <ul>
+              @for (m of sum.keyMilestones; track m) {
+                <li>{{ m }}</li>
+              }
+            </ul>
+          }
+        </div>
       }
     </section>
     @for (section of sections; track section.key) {
@@ -88,5 +158,7 @@
         </nav>
       </section>
     }
+    <bf-work-item-comments [objectType]="'TASK'" [objectId]="detail.task.taskId" />
+    <bf-work-item-attachments [objectType]="'TASK'" [objectId]="detail.task.taskId" />
   }
 </main>

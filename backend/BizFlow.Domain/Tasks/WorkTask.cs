@@ -25,18 +25,48 @@ public sealed class WorkTask
     public TaskWorkflowMutation? WorkflowMutation { get; private set; }
     private WorkTask() { }
 
+    internal void ApplyExecutionTransition(TaskWorkflowMutation mutation, DateTimeOffset now)
+    {
+        if (WorkflowMutation is not null || mutation.Before != Status || mutation.After != TaskState.InProgress || Status is not (TaskState.Accepted or TaskState.Overdue))
+            throw new InvalidOperationException("A workflow mutation must match the current task state.");
+        WorkflowMutation = mutation; Status = TaskState.InProgress; UpdatedAt = now.ToUniversalTime();
+    }
+
     internal void ApplyAcceptanceTransition(TaskWorkflowMutation mutation, DateTimeOffset now)
     {
-        if (WorkflowMutation is not null || mutation.Before != Status || Status != TaskState.Assigned)
+        if (WorkflowMutation is not null || mutation.Before != Status || mutation.After != TaskState.Accepted || Status != TaskState.Assigned)
             throw new InvalidOperationException("A workflow mutation must match the current task state.");
         WorkflowMutation = mutation; Status = TaskState.Accepted; UpdatedAt = now.ToUniversalTime();
     }
 
     internal void ApplyAssignmentTransition(TaskWorkflowMutation mutation, DateTimeOffset now)
     {
-        if (WorkflowMutation is not null || mutation.Before != Status || Status is not (TaskState.Draft or TaskState.Rejected))
+        if (WorkflowMutation is not null || mutation.Before != Status || mutation.After != TaskState.Assigned || Status is not (TaskState.Draft or TaskState.Rejected))
             throw new InvalidOperationException("A workflow mutation must match the current task state.");
         WorkflowMutation = mutation; Status = TaskState.Assigned; UpdatedAt = now.ToUniversalTime();
+    }
+
+    internal void ApplySubmissionTransition(TaskWorkflowMutation mutation, DateTimeOffset now)
+    {
+        if (WorkflowMutation is not null || mutation.Before != Status || mutation.After != TaskState.Submitted || Status != TaskState.InProgress)
+            throw new InvalidOperationException("A workflow mutation must match the current task state.");
+        WorkflowMutation = mutation; Status = TaskState.Submitted; UpdatedAt = now.ToUniversalTime();
+    }
+
+    internal void ApplyConfirmationTransition(TaskWorkflowMutation mutation, DateTimeOffset now)
+    {
+        if (WorkflowMutation is not null || mutation.Before != Status || (mutation.After != TaskState.Confirmed && mutation.After != TaskState.Completed && mutation.After != TaskState.InProgress) || Status != TaskState.Submitted)
+            throw new InvalidOperationException("A workflow mutation must match the current task state.");
+        WorkflowMutation = mutation; Status = mutation.After;
+        if (mutation.After == TaskState.Completed) CompletedAt = now.ToUniversalTime();
+        UpdatedAt = now.ToUniversalTime();
+    }
+
+    internal void ApplyCompletionTransition(TaskWorkflowMutation mutation, DateTimeOffset now)
+    {
+        if (WorkflowMutation is not null || mutation.Before != Status || mutation.After != TaskState.Completed || Status is not (TaskState.Confirmed or TaskState.Submitted))
+            throw new InvalidOperationException("A workflow mutation must match the current task state.");
+        WorkflowMutation = mutation; Status = TaskState.Completed; CompletedAt = now.ToUniversalTime(); UpdatedAt = now.ToUniversalTime();
     }
 
     // No assignment, workflow selection or lifecycle side effect. The Application use case
@@ -59,6 +89,16 @@ public sealed class WorkTask
             Priority = priority, Deadline = deadline?.ToUniversalTime(), Status = TaskState.Draft,
             CreatedAt = now.ToUniversalTime(), UpdatedAt = now.ToUniversalTime()
         };
+    }
+
+    public void Archive(DateTimeOffset now)
+    {
+        if (DeletedAt is not null)
+            throw new InvalidOperationException("Task is already archived.");
+        if (Status is not (TaskState.Completed or TaskState.Cancelled))
+            throw new InvalidOperationException($"Only tasks in terminal state (Completed or Cancelled) can be archived. Current state: {Status}.");
+        DeletedAt = now.ToUniversalTime();
+        UpdatedAt = now.ToUniversalTime();
     }
 }
 

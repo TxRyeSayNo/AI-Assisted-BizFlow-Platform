@@ -15,7 +15,7 @@ public sealed class ApiExceptionHandler(ILogger<ApiExceptionHandler> logger) : I
         }
 
         // Avoid sending or logging exception text containing SQL, submitted credentials or provider payloads.
-        logger.LogError("Unhandled error {ExceptionType}; trace {TraceId}", exception.GetType().Name, context.TraceIdentifier);
+        logger.LogError(exception, "Unhandled error {ExceptionType}; trace {TraceId}", exception.GetType().Name, context.TraceIdentifier);
         context.Response.StatusCode = StatusCodes.Status500InternalServerError;
         await context.Response.WriteAsJsonAsync(ApiErrors.Create(context, "INTERNAL.ERROR",
             "An unexpected error occurred."), cancellationToken);

@@ -25,6 +25,10 @@ public sealed class TaskListReader(BizFlowDbContext db) : ITaskListReader
             var value = Enum.GetValues<TaskPriority>().Single(p => TaskListCodes.Priority(p) == priority);
             query = query.Where(t => t.Priority == value);
         }
+        if (filter.RequestId is { } reqId)
+        {
+            query = query.Where(t => t.RequestId == reqId);
+        }
         var total = await query.LongCountAsync(cancellationToken);
         var rows = await query.OrderByDescending(t => t.CreatedAt).ThenBy(t => t.Id)
             .Skip(checked((filter.Page - 1) * filter.PageSize)).Take(filter.PageSize)

@@ -1,4 +1,4 @@
 {
-  "/api/**": { "target": "http://localhost:5154", "secure": false },
+  "/api/**": { "target": "http://localhost:5154", "secure": false, "ws": true },
   "/health/**": { "target": "http://localhost:5154", "secure": false }
 }

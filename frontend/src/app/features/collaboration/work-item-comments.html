@@ -1,0 +1,108 @@
+<section class="comments-section" aria-label="Collaboration and comments">
+  <div class="comments-header">
+    <div class="header-title-group">
+      <h2>Discussion & Collaboration</h2>
+      <span class="badge comments-count">{{ comments().length }}</span>
+    </div>
+    @if (loading()) {
+      <span class="loading-indicator">Loading…</span>
+    }
+  </div>
+
+  @if (error()) {
+    <p class="error-banner" role="alert">{{ error() }}</p>
+  }
+
+  <div class="timeline-container">
+    @for (comment of comments(); track comment.commentId) {
+      <article class="comment-item" [class.is-owner]="comment.isOwner">
+        <div class="comment-avatar" aria-hidden="true">
+          {{ comment.authorName.charAt(0).toUpperCase() }}
+        </div>
+        <div class="comment-content-box">
+          <div class="comment-meta">
+            <span class="author-name">{{ comment.authorName }}</span>
+            @if (comment.isOwner) {
+              <span class="owner-pill">You</span>
+            }
+            <time class="comment-time" [attr.datetime]="comment.createdAt">
+              {{ comment.createdAt | date: 'medium' }}
+            </time>
+            @if (comment.editedAt) {
+              <span class="edited-tag" title="Edited on {{ comment.editedAt | date: 'medium' }}">(edited)</span>
+            }
+
+            <div class="comment-actions">
+              @if (comment.isOwner && editingCommentId !== comment.commentId) {
+                <button type="button" class="btn-action edit-btn" (click)="startEdit(comment)">
+                  Edit
+                </button>
+              }
+              @if (comment.canDelete && editingCommentId !== comment.commentId) {
+                <button type="button" class="btn-action delete-btn" (click)="deleteComment(comment.commentId)">
+                  Delete
+                </button>
+              }
+            </div>
+          </div>
+
+          @if (editingCommentId === comment.commentId) {
+            <div class="edit-box">
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Edit Comment</mat-label>
+                <textarea
+                  matInput
+                  [(ngModel)]="editingText"
+                  rows="3"
+                  maxlength="4000"
+                  placeholder="Update your comment…"
+                ></textarea>
+                <mat-hint align="end">{{ editingText.length }} / 4000</mat-hint>
+              </mat-form-field>
+              <div class="edit-actions">
+                <button mat-flat-button color="primary" [disabled]="savingEdit || !editingText.trim()" (click)="saveEdit(comment.commentId)">
+                  {{ savingEdit ? 'Saving…' : 'Save' }}
+                </button>
+                <button mat-stroked-button type="button" (click)="cancelEdit()">Cancel</button>
+              </div>
+            </div>
+          } @else {
+            <p class="comment-text">{{ comment.content }}</p>
+          }
+        </div>
+      </article>
+    } @empty {
+      @if (!loading()) {
+        <p class="empty-state">No comments yet. Start the conversation!</p>
+      }
+    }
+  </div>
+
+  @if (session.hasPermission('comments.create')) {
+    <div class="new-comment-form">
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Add a comment</mat-label>
+        <textarea
+          matInput
+          [(ngModel)]="newCommentText"
+          rows="3"
+          maxlength="4000"
+          placeholder="Write a message, update, or ask a question…"
+        ></textarea>
+        <mat-hint align="end">{{ newCommentText.length }} / 4000</mat-hint>
+      </mat-form-field>
+
+      <div class="form-actions">
+        <button
+          mat-flat-button
+          color="primary"
+          type="button"
+          [disabled]="submitting() || !newCommentText.trim()"
+          (click)="postComment()"
+        >
+          {{ submitting() ? 'Posting…' : 'Post Comment' }}
+        </button>
+      </div>
+    </div>
+  }
+</section>
