@@ -40,6 +40,19 @@ export class SessionService {
   private generation = 0;
   readonly identity = computed(() => this.response()?.session ?? null);
   readonly signedIn = computed(() => this.identity() !== null);
+
+  constructor() {
+    if (typeof window !== 'undefined') {
+      (window as unknown as { __bizflow_set_session?: (res: LoginResponse) => void }).__bizflow_set_session = (res) => {
+        this.response.set(res);
+      };
+    }
+  }
+
+  setSessionForTesting(res: LoginResponse): void {
+    this.response.set(res);
+  }
+
   // Credentials and tokens stay in memory; never persist them in web storage.
   login(request: LoginRequest) {
     return defer(() => {

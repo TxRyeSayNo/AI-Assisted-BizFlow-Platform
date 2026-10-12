@@ -73,6 +73,16 @@ export const routes: Routes = [
     loadComponent: () => import('./features/reports/reports').then((m) => m.Reports),
   },
   {
+    path: 'approvals',
+    canActivate: [tenantGuard],
+    loadComponent: () => import('./features/approvals/approvals').then((m) => m.Approvals),
+  },
+  {
+    path: 'sla-monitor',
+    canActivate: [tenantGuard],
+    loadComponent: () => import('./features/sla/sla-monitor').then((m) => m.SlaMonitor),
+  },
+  {
     path: 'dashboard',
     redirectTo: 'reports',
     pathMatch: 'full',

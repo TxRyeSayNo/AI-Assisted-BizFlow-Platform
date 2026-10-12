@@ -38,6 +38,16 @@
 @keyframes tp-blink{50%{opacity:0}}
 @keyframes tp-tilt{0%,100%{transform:rotate(-2.5deg)}50%{transform:rotate(2.5deg)}}
 @keyframes tp-drift{0%{transform:translate3d(0,0,0) scale(1)}50%{transform:translate3d(4%,-3%,0) scale(1.12)}100%{transform:translate3d(0,0,0) scale(1)}}
+
+/* BizFlow Premium Ocean Blue keyframe animations */
+@keyframes ocean-pulse-glow{0%,100%{opacity:.55;transform:scale(1)}50%{opacity:.92;transform:scale(1.05)}}
+@keyframes ambient-drift{0%{transform:translate3d(0,0,0) scale(1)}50%{transform:translate3d(2%,-3%,0) scale(1.06)}100%{transform:translate3d(0,0,0) scale(1)}}
+@keyframes shimmer-flow{0%{background-position:-200% 0}100%{background-position:200% 0}}
+@keyframes sla-beacon{0%,100%{transform:scale(1);box-shadow:0 0 0 0 rgba(220,38,38,.5)}50%{transform:scale(1.08);box-shadow:0 0 0 6px rgba(220,38,38,0)}}
+@keyframes ai-pulse-glow{0%,100%{box-shadow:0 0 14px rgba(37,99,235,.28),inset 0 0 8px rgba(142,197,255,.18)}50%{box-shadow:0 0 26px rgba(37,99,235,.55),inset 0 0 14px rgba(142,197,255,.35)}}
+@keyframes card-entrance{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes flow-line{0%{stroke-dashoffset:100}100%{stroke-dashoffset:0}}
+
 @media (prefers-reduced-motion: reduce){*,*::before,*::after{animation-duration:1ms!important;animation-iteration-count:1!important;transition-duration:1ms!important}}
 
 @keyframes fx-scroll{from{background-position:0 0}to{background-position:0 160px}}
@@ -58,11 +68,86 @@
 @keyframes d3-card{0%,100%{transform:perspective(900px) rotateX(10deg) rotateY(-16deg) rotateZ(2deg)}50%{transform:perspective(900px) rotateX(4deg) rotateY(-6deg) translateY(-8px)}}
 @keyframes d3-bounce{0%,100%{transform:translateY(0) scale(1)}40%{transform:translateY(-10px) scale(1.01,.99)}60%{transform:translateY(0) scale(1.01,.98)}}
 @keyframes d3-web{0%,100%{transform:perspective(2400px) rotateX(2.5deg) rotateY(-3deg)}50%{transform:perspective(2400px) rotateX(1deg) rotateY(3deg) translateY(-4px)}}
-/* Web / landing: gentle tilt only on themes that declare --tp-3d or --tp-3d-anim. Set --tp-3d-web:d3-web 14s ease-in-out infinite on those themes (or none). */
+
 .tp-web-stage{position:relative;isolation:isolate;overflow:hidden;animation:var(--tp-3d-web,none);transform-origin:50% 50%}
 .tp-web-stage>.tp-fx{inset:-20%}
 .tp-fx{position:absolute;inset:-40%;z-index:-1;pointer-events:none;background:var(--tp-fx);background-size:var(--tp-fx-size);opacity:var(--tp-fx-op);mix-blend-mode:var(--tp-fx-blend);transform:var(--tp-fx-tf);animation:var(--tp-fx-anim)}
 .tp-screen{position:relative;isolation:isolate;overflow:hidden}
 .tp-stage{transform:var(--tp-3d);animation:var(--tp-3d-anim);transform-style:preserve-3d}
 
-[data-theme="grid"]{--tp-h:254;--tp-fx:none;--tp-fx-size:auto;--tp-fx-anim:none;--tp-fx-op:0;--tp-fx-blend:normal;--tp-fx-tf:none;--tp-3d:none;--tp-3d-anim:none;--tp-3d-web:none;--tp-dur-slow:440ms;--tp-stagger:60ms;--tp-reveal:tp-up;--tp-reveal-dist:16px;--tp-img-r:4px;--tp-img-frame:1px solid #d5d7da;--tp-img-sh:0 1px 3px rgba(20,24,30,.10);--tp-img-filter:none;--tp-img-overlay-op:0.1;--tp-img-blend:normal;--tp-img-tilt:0deg;--tp-img-ar:16 / 10;--tp-bg:#f5f6f7;--tp-canvas:#f5f6f7;--tp-surf:#ffffff;--tp-surf-2:#e9eaec;--tp-ink:#1a1c1f;--tp-mute:#6c7076;--tp-acc:oklch(0.6 0.16 calc(var(--tp-h) + 0));--tp-acc-2:#1a1c1f;--tp-acc-ink:#ffffff;--tp-line:#d5d7da;--tp-grad:linear-gradient(135deg, oklch(0.6 0.16 calc(var(--tp-h) + 0)), oklch(0.54 0.14 calc(var(--tp-h) + 30)));--tp-r:4px;--tp-r-sm:3px;--tp-r-lg:6px;--tp-r-btn:4px;--tp-sh:0 1px 3px rgba(20,24,30,.10);--tp-sh-sm:0 1px 2px rgba(20,24,30,.08);--tp-bw:1px;--tp-font-display:'Helvetica Neue', Helvetica, Arial, sans-serif;--tp-font-body:'Helvetica Neue', Helvetica, Arial, sans-serif;--tp-font-mono:'JetBrains Mono', monospace;--tp-w-display:700;--tp-track-display:-0.02em;--tp-case-display:none;--tp-hero:60px;--tp-dur:180ms;--tp-ease:cubic-bezier(.3,.9,.2,1);--tp-press:0.99;--tp-tex:none;--tp-blur:none;}
+/* Approved Premium Ocean Blue Design System Tokens */
+[data-theme="grid"] {
+  --tp-h: 215;
+  --tp-fx: none;
+  --tp-fx-size: auto;
+  --tp-fx-anim: none;
+  --tp-fx-op: 0;
+  --tp-fx-blend: normal;
+  --tp-fx-tf: none;
+  --tp-3d: none;
+  --tp-3d-anim: none;
+  --tp-3d-web: none;
+  --tp-dur-slow: 380ms;
+  --tp-stagger: 50ms;
+  --tp-reveal: tp-up;
+  --tp-reveal-dist: 14px;
+  --tp-img-r: 10px;
+  --tp-img-frame: 1px solid #DFE8F2;
+  --tp-img-sh: 0 4px 18px rgba(11, 42, 74, 0.08);
+  --tp-img-filter: none;
+  --tp-img-overlay-op: 0.12;
+  --tp-img-blend: normal;
+  --tp-img-tilt: 0deg;
+  --tp-img-ar: 16 / 10;
+  
+  /* Color System */
+  --bf-midnight-navy: #071B33;
+  --bf-deep-ocean: #0B2A4A;
+  --bf-ocean-blue: #145DA0;
+  --bf-primary-azure: #2563EB;
+  --bf-soft-sky: #8EC5FF;
+  --bf-ice-blue: #EAF4FF;
+  --bf-main-bg: #F5F8FC;
+  --bf-surface: #FFFFFF;
+  --bf-text-primary: #10243A;
+  --bf-text-secondary: #63758B;
+  --bf-border: #DFE8F2;
+  --bf-border-subtle: #E8EEF5;
+  --bf-success: #059669;
+  --bf-warning: #D97706;
+  --bf-danger: #DC2626;
+
+  /* Theme token mappings */
+  --tp-bg: #F5F8FC;
+  --tp-canvas: #F5F8FC;
+  --tp-surf: #FFFFFF;
+  --tp-surf-2: #EAF4FF;
+  --tp-surf-3: #F0F6FD;
+  --tp-ink: #10243A;
+  --tp-mute: #63758B;
+  --tp-acc: #2563EB;
+  --tp-acc-2: #0B2A4A;
+  --tp-acc-ink: #FFFFFF;
+  --tp-line: #DFE8F2;
+  --tp-grad: linear-gradient(135deg, #145DA0 0%, #2563EB 55%, #0B2A4A 100%);
+  --tp-r: 10px;
+  --tp-r-sm: 6px;
+  --tp-r-lg: 16px;
+  --tp-r-btn: 8px;
+  --tp-sh: 0 4px 20px -2px rgba(11, 42, 74, 0.07), 0 2px 6px -1px rgba(11, 42, 74, 0.04);
+  --tp-sh-sm: 0 1px 3px rgba(11, 42, 74, 0.05), 0 1px 2px rgba(11, 42, 74, 0.03);
+  --tp-sh-lg: 0 16px 40px -6px rgba(7, 27, 51, 0.12), 0 6px 16px -2px rgba(7, 27, 51, 0.06);
+  --tp-bw: 1px;
+  --tp-font-display: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --tp-font-body: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --tp-font-mono: 'JetBrains Mono', monospace;
+  --tp-w-display: 700;
+  --tp-track-display: -0.025em;
+  --tp-case-display: none;
+  --tp-hero: 52px;
+  --tp-dur: 200ms;
+  --tp-ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --tp-press: 0.98;
+  --tp-tex: none;
+  --tp-blur: 12px;
+}

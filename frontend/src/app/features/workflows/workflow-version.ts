@@ -32,9 +32,12 @@ export interface WorkflowVersionView {
     guard: Record<string, unknown> | null;
   }[];
 }
+
+import { WorkflowDesigner } from './workflow-designer';
+
 @Component({
   selector: 'bf-workflow-version',
-  imports: [RouterLink, MatButtonModule, DatePipe, JsonPipe],
+  imports: [RouterLink, MatButtonModule, DatePipe, JsonPipe, WorkflowDesigner],
   templateUrl: './workflow-version.html',
   styleUrls: ['../organization/departments.scss', './workflows.scss'],
 })

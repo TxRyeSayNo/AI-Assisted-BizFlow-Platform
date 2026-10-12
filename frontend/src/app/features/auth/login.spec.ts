@@ -8,7 +8,11 @@ describe('Login', () => {
   beforeEach(() =>
     TestBed.configureTestingModule({
       imports: [Login],
-      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([{ path: 'workspace', component: class {} }]),
+      ],
     }),
   );
 
@@ -63,4 +67,27 @@ describe('Login', () => {
     expect(component.error()).toContain('temporarily unavailable');
     expect(component.error()).not.toContain('sensitive-internal-error');
   });
+
+  it('signs in ADMIN001 via offline fallback when backend API is unavailable', () => {
+    const component = TestBed.createComponent(Login).componentInstance;
+    component.form.setValue({
+      identifier: 'ADMIN001',
+      password: 'Password123!',
+      tenantKey: 'bizflow-corp',
+    });
+    component.submit();
+    TestBed.inject(HttpTestingController)
+      .expectOne('/api/v1/auth/login')
+      .flush(null, { status: 504, statusText: 'Gateway Timeout' });
+    expect(component.error()).toBe('');
+  });
+
+  it('signs in EMP001 via quickLogin and sets form controls', () => {
+    const component = TestBed.createComponent(Login).componentInstance;
+    component.quickLogin('EMPLOYEE');
+    expect(component.form.controls.identifier.value).toBe('EMP001');
+    expect(component.form.controls.password.value).toBe('Password123!');
+    expect(component.form.controls.tenantKey.value).toBe('bizflow-corp');
+  });
 });
+
