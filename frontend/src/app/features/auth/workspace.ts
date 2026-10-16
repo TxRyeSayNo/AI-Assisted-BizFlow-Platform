@@ -13,7 +13,7 @@ import { AiAssistantComponent } from '../../shared/ai/ai-assistant';
     <header class="public-header workspace-nav">
       <div class="nav-brand-section">
         <a class="wordmark" routerLink="/workspace">
-          <span class="brand-mark" aria-hidden="true">B</span> BizFlow
+          <span class="brand-mark" aria-hidden="true"></span> BizFlow
         </a>
         <span class="tenant-badge">
           {{ identity()?.tenantName ?? 'Platform administration' }}

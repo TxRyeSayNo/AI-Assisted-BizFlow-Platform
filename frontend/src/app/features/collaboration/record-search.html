@@ -1,6 +1,8 @@
 <header class="public-header directory-header">
-  <a class="wordmark" routerLink="/workspace">BizFlow</a>
-  <span>{{ session.identity()?.tenantName }}</span>
+  <a class="wordmark" routerLink="/workspace">
+    <span class="brand-mark" aria-hidden="true"></span> BizFlow
+  </a>
+  <span class="tenant-badge">{{ session.identity()?.tenantName }}</span>
 </header>
 
 <main id="main-content" class="page-content" tabindex="-1">

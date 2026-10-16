@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
@@ -21,7 +21,7 @@ import { SessionService } from '../../core/auth/session';
   ],
   templateUrl: './login.html',
 })
-export class Login {
+export class Login implements OnInit {
   private readonly forms = inject(FormBuilder);
   private readonly session = inject(SessionService);
   private readonly router = inject(Router);
@@ -34,6 +34,11 @@ export class Login {
     password: ['', [Validators.required, Validators.maxLength(1024)]],
     tenantKey: ['', [Validators.maxLength(80), Validators.pattern(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)]],
   });
+
+  ngOnInit(): void {
+    // Eagerly pre-warm the workspace bundle while the user is typing credentials
+    void import('./workspace');
+  }
 
   changeMode(mode: 'code' | 'email') {
     this.mode.set(mode);
@@ -62,7 +67,7 @@ export class Login {
       .pipe(finalize(() => this.busy.set(false)))
       .subscribe({
         next: () => {
-          void this.router.navigateByUrl('/workspace');
+          void this.router.navigateByUrl('/workspace', { replaceUrl: true });
         },
         error: (failure: HttpErrorResponse) => {
           const rawId = values.identifier.trim();
@@ -189,3 +194,4 @@ export class Login {
     this.signInAsAccount('ADMIN');
   }
 }
+

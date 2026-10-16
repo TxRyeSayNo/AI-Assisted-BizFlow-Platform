@@ -26,7 +26,7 @@ export interface PendingApprovalItem {
   template: `
     <header class="public-header directory-header">
       <a class="wordmark" routerLink="/workspace">
-        <span class="brand-mark" aria-hidden="true">B</span> BizFlow
+        <span class="brand-mark" aria-hidden="true"></span> BizFlow
       </a>
       <span class="tenant-badge">{{ session.identity()?.tenantName }}</span>
     </header>

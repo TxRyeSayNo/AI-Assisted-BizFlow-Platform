@@ -14,7 +14,11 @@ import { SessionService } from '../../core/auth/session';
   imports: [ReactiveFormsModule, MatButtonModule, MatFormFieldModule, MatInputModule, RouterLink],
   template: `
     <div class="auth-page">
-      <header class="public-header"><a class="wordmark" routerLink="/login">BizFlow</a></header>
+      <header class="public-header">
+        <a class="wordmark" routerLink="/login">
+          <span class="brand-mark" aria-hidden="true"></span> BizFlow
+        </a>
+      </header>
       <main id="main-content" class="auth-content" tabindex="-1">
         <section class="auth-intro">
           <span class="eyebrow">Account security</span>
