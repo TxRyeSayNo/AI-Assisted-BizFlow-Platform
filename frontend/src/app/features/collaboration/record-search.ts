@@ -50,7 +50,11 @@ export interface RecordSearchPagedResult {
     MatSelectModule,
   ],
   templateUrl: './record-search.html',
-  styleUrls: ['../organization/departments.scss', '../requests/requests.scss', './record-search.scss'],
+  styleUrls: [
+    '../organization/departments.scss',
+    '../requests/requests.scss',
+    './record-search.scss',
+  ],
 })
 export class RecordSearch implements OnInit {
   private readonly http = inject(HttpClient);
@@ -122,7 +126,7 @@ export class RecordSearch implements OnInit {
         priority: priority.toUpperCase(),
         includeArchived,
       },
-      { emitEvent: false }
+      { emitEvent: false },
     );
 
     this.currentPage = isNaN(page) || page < 1 ? 1 : page;

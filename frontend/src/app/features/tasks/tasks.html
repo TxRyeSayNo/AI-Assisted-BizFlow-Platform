@@ -7,7 +7,7 @@
   </nav>
   <span class="eyebrow">Work management</span>
   <h1>Tasks</h1>
-  <div class="tasks-actions-bar" style="display: flex; gap: 0.5rem; margin-bottom: 1rem;">
+  <div class="tasks-actions-bar" style="display: flex; gap: 0.5rem; margin-bottom: 1rem">
     @if (session.hasPermission('tasks.create')) {
       <a mat-flat-button routerLink="/tasks/new">New task</a>
     }

@@ -15,7 +15,8 @@
     <h1>Search Records</h1>
   </div>
   <p class="search-subhead">
-    Find tasks, service requests, and archived historical business records across your organization workspace.
+    Find tasks, service requests, and archived historical business records across your organization
+    workspace.
   </p>
 
   <section class="directory-panel search-panel" aria-label="Record filters">
@@ -69,9 +70,7 @@
           <button mat-stroked-button type="button" (click)="resetFilters()" [disabled]="busy()">
             Reset
           </button>
-          <button mat-flat-button color="primary" type="submit" [disabled]="busy()">
-            Search
-          </button>
+          <button mat-flat-button color="primary" type="submit" [disabled]="busy()">Search</button>
         </div>
       </div>
     </form>
@@ -86,16 +85,24 @@
   }
 
   @if (data(); as result) {
-    <section class="directory-panel results-panel" aria-label="Search results" [attr.aria-busy]="busy()">
+    <section
+      class="directory-panel results-panel"
+      aria-label="Search results"
+      [attr.aria-busy]="busy()"
+    >
       <div class="results-header">
         <h2>Results</h2>
-        <span class="count-badge">{{ result.totalCount }} record{{ result.totalCount === 1 ? '' : 's' }} found</span>
+        <span class="count-badge"
+          >{{ result.totalCount }} record{{ result.totalCount === 1 ? '' : 's' }} found</span
+        >
       </div>
 
       @if (result.items.length === 0) {
         <div class="empty-state">
           <p>No records matched your search criteria.</p>
-          <p class="empty-hint">Try adjusting keywords, removing filters, or enabling "Include archived records".</p>
+          <p class="empty-hint">
+            Try adjusting keywords, removing filters, or enabling "Include archived records".
+          </p>
         </div>
       } @else {
         <div class="table-container">
@@ -115,16 +122,24 @@
               @for (item of result.items; track item.id) {
                 <tr [class.archived-row]="item.isArchived">
                   <td>
-                    <span class="type-pill" [class.type-task]="item.recordType === 'TASK'" [class.type-request]="item.recordType === 'REQUEST'">
+                    <span
+                      class="type-pill"
+                      [class.type-task]="item.recordType === 'TASK'"
+                      [class.type-request]="item.recordType === 'REQUEST'"
+                    >
                       {{ item.recordType }}
                     </span>
                   </td>
                   <td>
                     <div class="record-title-cell">
                       @if (item.recordType === 'TASK') {
-                        <a [routerLink]="['/tasks', item.id]" class="record-title-link">{{ item.title }}</a>
+                        <a [routerLink]="['/tasks', item.id]" class="record-title-link">{{
+                          item.title
+                        }}</a>
                       } @else {
-                        <a [routerLink]="['/requests', item.id]" class="record-title-link">{{ item.title }}</a>
+                        <a [routerLink]="['/requests', item.id]" class="record-title-link">{{
+                          item.title
+                        }}</a>
                       }
                       @if (item.description) {
                         <span class="record-desc-preview">{{ item.description }}</span>
@@ -132,7 +147,9 @@
                     </div>
                   </td>
                   <td>
-                    <span class="status-badge status-{{ item.status.toLowerCase().replace('_', '-') }}">
+                    <span
+                      class="status-badge status-{{ item.status.toLowerCase().replace('_', '-') }}"
+                    >
                       {{ item.status }}
                     </span>
                     @if (item.isArchived) {
@@ -152,9 +169,13 @@
                   </td>
                   <td>
                     @if (item.recordType === 'TASK') {
-                      <a mat-stroked-button [routerLink]="['/tasks', item.id]" class="view-btn">View</a>
+                      <a mat-stroked-button [routerLink]="['/tasks', item.id]" class="view-btn"
+                        >View</a
+                      >
                     } @else {
-                      <a mat-stroked-button [routerLink]="['/requests', item.id]" class="view-btn">View</a>
+                      <a mat-stroked-button [routerLink]="['/requests', item.id]" class="view-btn"
+                        >View</a
+                      >
                     }
                   </td>
                 </tr>
@@ -165,7 +186,12 @@
 
         @if (result.totalPages > 1) {
           <nav class="pagination" aria-label="Record search pagination">
-            <span>Page {{ result.page }} of {{ result.totalPages }} ({{ result.totalCount }} total)</span>
+            <span
+              >Page {{ result.page }} of {{ result.totalPages }} ({{
+                result.totalCount
+              }}
+              total)</span
+            >
             <div class="page-buttons">
               <button
                 mat-stroked-button

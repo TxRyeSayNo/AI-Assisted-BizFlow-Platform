@@ -124,7 +124,16 @@ export class RequestDetail implements OnInit {
 
   // Active action modal / panel
   readonly activeModal = signal<
-    'route' | 'receive' | 'reject' | 'cancel' | 'resolve' | 'confirm' | 'revise' | 'create-task' | 'ai-split' | null
+    | 'route'
+    | 'receive'
+    | 'reject'
+    | 'cancel'
+    | 'resolve'
+    | 'confirm'
+    | 'revise'
+    | 'create-task'
+    | 'ai-split'
+    | null
   >(null);
   readonly actionInProgress = signal(false);
 
@@ -230,7 +239,15 @@ export class RequestDetail implements OnInit {
   }
 
   openModal(
-    modal: 'route' | 'receive' | 'reject' | 'cancel' | 'resolve' | 'confirm' | 'revise' | 'create-task',
+    modal:
+      | 'route'
+      | 'receive'
+      | 'reject'
+      | 'cancel'
+      | 'resolve'
+      | 'confirm'
+      | 'revise'
+      | 'create-task',
   ) {
     this.activeModal.set(modal);
     this.actionError.set(null);
@@ -267,25 +284,28 @@ export class RequestDetail implements OnInit {
     if (!d || this.aiBusy()) return;
     this.aiBusy.set(true);
     this.aiMessage.set('');
-    this.http.post<any>('/api/v1/ai/request-multi-intent', {
-      requestId: d.requestId,
-      title: d.title,
-      description: d.description || ''
-    }).pipe(takeUntilDestroyed(this.destroy)).subscribe({
-      next: (res) => {
-        this.aiBusy.set(false);
-        this.aiMultiIntent.set(res);
-        if (res?.isMultiIntent) {
-          this.activeModal.set('ai-split');
-        } else {
-          this.aiMessage.set('AI xác nhận yêu cầu có phạm vi đơn lẻ, không cần phân tách.');
-        }
-      },
-      error: () => {
-        this.aiBusy.set(false);
-        this.aiMessage.set('Phân tích đa mục tiêu thất bại.');
-      }
-    });
+    this.http
+      .post<any>('/api/v1/ai/request-multi-intent', {
+        requestId: d.requestId,
+        title: d.title,
+        description: d.description || '',
+      })
+      .pipe(takeUntilDestroyed(this.destroy))
+      .subscribe({
+        next: (res) => {
+          this.aiBusy.set(false);
+          this.aiMultiIntent.set(res);
+          if (res?.isMultiIntent) {
+            this.activeModal.set('ai-split');
+          } else {
+            this.aiMessage.set('AI xác nhận yêu cầu có phạm vi đơn lẻ, không cần phân tách.');
+          }
+        },
+        error: () => {
+          this.aiBusy.set(false);
+          this.aiMessage.set('Phân tích đa mục tiêu thất bại.');
+        },
+      });
   }
 
   recommendRouting() {
@@ -293,27 +313,30 @@ export class RequestDetail implements OnInit {
     if (!d || this.aiBusy()) return;
     this.aiBusy.set(true);
     this.aiMessage.set('');
-    this.http.post<any>('/api/v1/ai/request-routing', {
-      requestId: d.requestId,
-      title: d.title,
-      description: d.description || '',
-      serviceId: d.serviceId
-    }).pipe(takeUntilDestroyed(this.destroy)).subscribe({
-      next: (res) => {
-        this.aiBusy.set(false);
-        this.aiRouting.set(res);
-        if (res?.recommendedDepartmentId) {
-          this.routeDepartmentId.set(res.recommendedDepartmentId);
-          this.routeReason.set(res.rationale || 'Điều phối theo gợi ý AI');
-          this.routeSource.set('AI');
-          this.openModal('route');
-        }
-      },
-      error: () => {
-        this.aiBusy.set(false);
-        this.aiMessage.set('Gợi ý điều phối thất bại.');
-      }
-    });
+    this.http
+      .post<any>('/api/v1/ai/request-routing', {
+        requestId: d.requestId,
+        title: d.title,
+        description: d.description || '',
+        serviceId: d.serviceId,
+      })
+      .pipe(takeUntilDestroyed(this.destroy))
+      .subscribe({
+        next: (res) => {
+          this.aiBusy.set(false);
+          this.aiRouting.set(res);
+          if (res?.recommendedDepartmentId) {
+            this.routeDepartmentId.set(res.recommendedDepartmentId);
+            this.routeReason.set(res.rationale || 'Điều phối theo gợi ý AI');
+            this.routeSource.set('AI');
+            this.openModal('route');
+          }
+        },
+        error: () => {
+          this.aiBusy.set(false);
+          this.aiMessage.set('Gợi ý điều phối thất bại.');
+        },
+      });
   }
 
   confirmSplit() {
@@ -325,12 +348,13 @@ export class RequestDetail implements OnInit {
       title: item.title,
       description: item.description,
       serviceId: item.suggestedServiceId || d.serviceId,
-      categoryId: item.suggestedCategoryId || d.categoryId
+      categoryId: item.suggestedCategoryId || d.categoryId,
     }));
 
     this.actionInProgress.set(true);
     this.actionError.set(null);
-    this.http.post<any>(`/api/v1/requests/${d.requestId}/split`, { splits })
+    this.http
+      .post<any>(`/api/v1/requests/${d.requestId}/split`, { splits })
       .pipe(takeUntilDestroyed(this.destroy))
       .subscribe({
         next: (res) => {
@@ -342,7 +366,7 @@ export class RequestDetail implements OnInit {
         error: (err: HttpErrorResponse) => {
           this.actionInProgress.set(false);
           this.actionError.set(err?.error?.message ?? 'Phân tách yêu cầu thất bại.');
-        }
+        },
       });
   }
 
@@ -585,9 +609,13 @@ export class RequestDetail implements OnInit {
     const resolveKey = crypto.randomUUID();
 
     this.http
-      .post(`/api/v1/requests/${this.requestId}/resolve`, { content }, {
-        headers: { 'Idempotency-Key': resolveKey },
-      })
+      .post(
+        `/api/v1/requests/${this.requestId}/resolve`,
+        { content },
+        {
+          headers: { 'Idempotency-Key': resolveKey },
+        },
+      )
       .pipe(takeUntilDestroyed(this.destroy))
       .subscribe({
         next: () => {
@@ -623,9 +651,13 @@ export class RequestDetail implements OnInit {
     const confirmKey = crypto.randomUUID();
 
     this.http
-      .post(`/api/v1/requests/${this.requestId}/confirm`, { decision, note: note || null }, {
-        headers: { 'Idempotency-Key': confirmKey },
-      })
+      .post(
+        `/api/v1/requests/${this.requestId}/confirm`,
+        { decision, note: note || null },
+        {
+          headers: { 'Idempotency-Key': confirmKey },
+        },
+      )
       .pipe(takeUntilDestroyed(this.destroy))
       .subscribe({
         next: () => {
@@ -641,7 +673,9 @@ export class RequestDetail implements OnInit {
         error: (err: HttpErrorResponse) => {
           this.actionInProgress.set(false);
           if (err.status === 403) {
-            this.actionError.set('You do not have permission to confirm or request rework for this request.');
+            this.actionError.set(
+              'You do not have permission to confirm or request rework for this request.',
+            );
           } else if (err.status === 409) {
             this.actionError.set('Request cannot be confirmed in its current state.');
           } else {
@@ -822,7 +856,8 @@ export class RequestDetail implements OnInit {
 
   canCancel(): boolean {
     const d = this.data();
-    if (!d || (d.status !== 'DRAFT' && d.status !== 'SUBMITTED' && d.status !== 'ROUTED')) return false;
+    if (!d || (d.status !== 'DRAFT' && d.status !== 'SUBMITTED' && d.status !== 'ROUTED'))
+      return false;
     return this.session.hasPermission('requests.cancel');
   }
 
@@ -836,7 +871,11 @@ export class RequestDetail implements OnInit {
   executeArchive(): void {
     if (this.actionInProgress() || !this.canArchive()) return;
     const d = this.data();
-    if (!confirm(`Are you sure you want to archive request "${d?.title}"? Once archived, it will be moved to historical records.`)) {
+    if (
+      !confirm(
+        `Are you sure you want to archive request "${d?.title}"? Once archived, it will be moved to historical records.`,
+      )
+    ) {
       return;
     }
     this.actionInProgress.set(true);

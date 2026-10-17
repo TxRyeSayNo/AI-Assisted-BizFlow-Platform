@@ -120,22 +120,18 @@ export class WorkItemComments implements OnInit {
     this.savingEdit = true;
     this.error.set('');
 
-    this.http
-      .put<CommentItem>(`/api/v1/comments/${commentId}`, { content: text })
-      .subscribe({
-        next: (updated) => {
-          this.comments.update((prev) =>
-            prev.map((c) => (c.commentId === commentId ? updated : c))
-          );
-          this.editingCommentId = null;
-          this.editingText = '';
-          this.savingEdit = false;
-        },
-        error: (err) => {
-          this.error.set(err?.error?.message ?? 'Failed to update comment.');
-          this.savingEdit = false;
-        },
-      });
+    this.http.put<CommentItem>(`/api/v1/comments/${commentId}`, { content: text }).subscribe({
+      next: (updated) => {
+        this.comments.update((prev) => prev.map((c) => (c.commentId === commentId ? updated : c)));
+        this.editingCommentId = null;
+        this.editingText = '';
+        this.savingEdit = false;
+      },
+      error: (err) => {
+        this.error.set(err?.error?.message ?? 'Failed to update comment.');
+        this.savingEdit = false;
+      },
+    });
   }
 
   deleteComment(commentId: string) {

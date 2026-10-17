@@ -61,7 +61,8 @@ export class TaskCreate {
     if (!prompt || this.aiBusy()) return;
     this.aiBusy.set(true);
     this.aiMessage.set('');
-    this.http.post<any>('/api/v1/ai/task-assistance', { prompt })
+    this.http
+      .post<any>('/api/v1/ai/task-assistance', { prompt })
       .pipe(takeUntilDestroyed(this.destroy))
       .subscribe({
         next: (draft) => {
@@ -73,13 +74,15 @@ export class TaskCreate {
               priority: draft.priority || 'MEDIUM',
               checklist: (draft.checklistItems || []).join('\n'),
             });
-            this.aiMessage.set(`AI đã tạo bản thảo (Độ tin cậy: ${(draft.confidence * 100).toFixed(0)}%): ${draft.reasoning}`);
+            this.aiMessage.set(
+              `AI đã tạo bản thảo (Độ tin cậy: ${(draft.confidence * 100).toFixed(0)}%): ${draft.reasoning}`,
+            );
           }
         },
         error: () => {
           this.aiBusy.set(false);
           this.aiMessage.set('Không thể kết nối trợ lý AI. Vui lòng thử lại.');
-        }
+        },
       });
   }
 
@@ -87,21 +90,30 @@ export class TaskCreate {
     const title = this.form.controls.title.value.trim();
     if (!title || this.aiBusy()) return;
     this.aiBusy.set(true);
-    this.http.post<any>('/api/v1/ai/task-breakdown', { title, description: this.form.controls.description.value, targetSubtaskCount: 4 })
+    this.http
+      .post<any>('/api/v1/ai/task-breakdown', {
+        title,
+        description: this.form.controls.description.value,
+        targetSubtaskCount: 4,
+      })
       .pipe(takeUntilDestroyed(this.destroy))
       .subscribe({
         next: (res) => {
           this.aiBusy.set(false);
           if (res?.subtasks?.length) {
-            const list = res.subtasks.map((s: any) => `${s.orderIndex}. ${s.title}: ${s.description}`).join('\n');
+            const list = res.subtasks
+              .map((s: any) => `${s.orderIndex}. ${s.title}: ${s.description}`)
+              .join('\n');
             this.form.patchValue({ checklist: list });
-            this.aiMessage.set(`AI đã phân rã thành ${res.subtasks.length} nhiệm vụ con: ${res.strategy}`);
+            this.aiMessage.set(
+              `AI đã phân rã thành ${res.subtasks.length} nhiệm vụ con: ${res.strategy}`,
+            );
           }
         },
         error: () => {
           this.aiBusy.set(false);
           this.aiMessage.set('Phân rã thất bại. Vui lòng kiểm tra tiêu đề.');
-        }
+        },
       });
   }
   save() {

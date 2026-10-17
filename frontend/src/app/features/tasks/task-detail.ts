@@ -239,7 +239,11 @@ export class TaskDetail {
   archive() {
     const task = this.data()?.task;
     if (!task || this.archiving || !this.canArchive()) return;
-    if (!confirm(`Are you sure you want to archive task "${task.title}"? Once archived, it will be moved to historical records.`)) {
+    if (
+      !confirm(
+        `Are you sure you want to archive task "${task.title}"? Once archived, it will be moved to historical records.`,
+      )
+    ) {
       return;
     }
     this.archiving = true;
@@ -294,7 +298,8 @@ export class TaskDetail {
     if (this.aiBusy()) return;
     this.aiBusy.set(true);
     this.aiError.set('');
-    this.http.post<any>('/api/v1/ai/task-risk', { taskId: this.id })
+    this.http
+      .post<any>('/api/v1/ai/task-risk', { taskId: this.id })
       .pipe(takeUntilDestroyed(this.destroy))
       .subscribe({
         next: (res) => {
@@ -304,7 +309,7 @@ export class TaskDetail {
         error: (err: HttpErrorResponse) => {
           this.aiBusy.set(false);
           this.aiError.set(err?.error?.message ?? 'Không thể đánh giá rủi ro.');
-        }
+        },
       });
   }
 
@@ -312,7 +317,8 @@ export class TaskDetail {
     if (this.aiBusy()) return;
     this.aiBusy.set(true);
     this.aiError.set('');
-    this.http.post<any>('/api/v1/ai/task-summary', { taskId: this.id })
+    this.http
+      .post<any>('/api/v1/ai/task-summary', { taskId: this.id })
       .pipe(takeUntilDestroyed(this.destroy))
       .subscribe({
         next: (res) => {
@@ -322,7 +328,7 @@ export class TaskDetail {
         error: (err: HttpErrorResponse) => {
           this.aiBusy.set(false);
           this.aiError.set(err?.error?.message ?? 'Không thể tạo tóm tắt tiến độ.');
-        }
+        },
       });
   }
 }

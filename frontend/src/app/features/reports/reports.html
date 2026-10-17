@@ -49,7 +49,11 @@
   <!-- Filters & Controls Bar -->
   <div class="filter-panel" [formGroup]="filters">
     <div class="filter-group">
-      <mat-form-field appearance="outline" class="filter-field" *ngIf="activeTab() !== 'sla' && activeTab() !== 'company'">
+      <mat-form-field
+        appearance="outline"
+        class="filter-field"
+        *ngIf="activeTab() !== 'sla' && activeTab() !== 'company'"
+      >
         <mat-label>Department</mat-label>
         <mat-select formControlName="departmentId">
           <mat-option value="">All Departments</mat-option>
@@ -75,7 +79,13 @@
         <button type="button" mat-stroked-button (click)="resetFilters()">Reset</button>
       </div>
 
-      <button type="button" mat-flat-button color="primary" class="apply-btn" (click)="applyFilters()">
+      <button
+        type="button"
+        mat-flat-button
+        color="primary"
+        class="apply-btn"
+        (click)="applyFilters()"
+      >
         Apply Filters
       </button>
     </div>
@@ -157,10 +167,18 @@
           <tbody>
             <tr *ngFor="let s of data.departmentSummaries">
               <td class="font-medium">{{ s.departmentName }}</td>
-              <td><span class="badge badge-info">{{ s.activeTasks }}</span></td>
-              <td><span class="badge badge-success">{{ s.completedTasks }}</span></td>
               <td>
-                <span class="badge" [class.badge-danger]="s.overdueTasks > 0" [class.badge-neutral]="s.overdueTasks === 0">
+                <span class="badge badge-info">{{ s.activeTasks }}</span>
+              </td>
+              <td>
+                <span class="badge badge-success">{{ s.completedTasks }}</span>
+              </td>
+              <td>
+                <span
+                  class="badge"
+                  [class.badge-danger]="s.overdueTasks > 0"
+                  [class.badge-neutral]="s.overdueTasks === 0"
+                >
                   {{ s.overdueTasks }}
                 </span>
               </td>
@@ -183,20 +201,36 @@
         <div class="kpi-card accent-green">
           <div class="kpi-title">Task Completion Rate</div>
           <div class="kpi-value">{{ comp.taskCompletionRatePercent }}%</div>
-          <div class="kpi-sub">{{ comp.totalTasksCompleted }} of {{ comp.totalTasksCreated }} tasks</div>
+          <div class="kpi-sub">
+            {{ comp.totalTasksCompleted }} of {{ comp.totalTasksCreated }} tasks
+          </div>
         </div>
         <div class="kpi-card accent-blue">
           <div class="kpi-title">Avg Task Turnaround</div>
-          <div class="kpi-value">{{ comp.averageTaskCompletionTimeHours !== null ? (comp.averageTaskCompletionTimeHours | number:'1.1-1') + ' hrs' : 'N/A' }}</div>
+          <div class="kpi-value">
+            {{
+              comp.averageTaskCompletionTimeHours !== null
+                ? (comp.averageTaskCompletionTimeHours | number: '1.1-1') + ' hrs'
+                : 'N/A'
+            }}
+          </div>
         </div>
         <div class="kpi-card accent-green">
           <div class="kpi-title">Request Resolution Rate</div>
           <div class="kpi-value">{{ comp.requestResolutionRatePercent }}%</div>
-          <div class="kpi-sub">{{ comp.totalRequestsClosed }} of {{ comp.totalRequestsSubmitted }} requests</div>
+          <div class="kpi-sub">
+            {{ comp.totalRequestsClosed }} of {{ comp.totalRequestsSubmitted }} requests
+          </div>
         </div>
         <div class="kpi-card accent-blue">
           <div class="kpi-title">Avg Request Turnaround</div>
-          <div class="kpi-value">{{ comp.averageRequestResolutionTimeHours !== null ? (comp.averageRequestResolutionTimeHours | number:'1.1-1') + ' hrs' : 'N/A' }}</div>
+          <div class="kpi-value">
+            {{
+              comp.averageRequestResolutionTimeHours !== null
+                ? (comp.averageRequestResolutionTimeHours | number: '1.1-1') + ' hrs'
+                : 'N/A'
+            }}
+          </div>
         </div>
       </div>
 
@@ -218,9 +252,13 @@
             <tr *ngFor="let m of comp.departmentMetrics">
               <td class="font-medium">{{ m.departmentName }}</td>
               <td>{{ m.totalTasks }}</td>
-              <td><span class="badge badge-success">{{ m.completedTasks }}</span></td>
+              <td>
+                <span class="badge badge-success">{{ m.completedTasks }}</span>
+              </td>
               <td>{{ m.totalRequests }}</td>
-              <td><span class="badge badge-success">{{ m.closedRequests }}</span></td>
+              <td>
+                <span class="badge badge-success">{{ m.closedRequests }}</span>
+              </td>
             </tr>
             <tr *ngIf="comp.departmentMetrics.length === 0">
               <td colspan="5" class="empty-cell">No department operational data available.</td>
@@ -251,12 +289,22 @@
           <tbody>
             <tr *ngFor="let item of wl.items">
               <td class="font-medium">{{ item.fullName }}</td>
-              <td><code>{{ item.employeeCode }}</code></td>
-              <td>{{ item.departmentName || '—' }}</td>
-              <td><span class="badge badge-info">{{ item.activeTasks }}</span></td>
-              <td><span class="badge badge-success">{{ item.completedTasks }}</span></td>
               <td>
-                <span class="badge" [class.badge-danger]="item.overdueTasks > 0" [class.badge-neutral]="item.overdueTasks === 0">
+                <code>{{ item.employeeCode }}</code>
+              </td>
+              <td>{{ item.departmentName || '—' }}</td>
+              <td>
+                <span class="badge badge-info">{{ item.activeTasks }}</span>
+              </td>
+              <td>
+                <span class="badge badge-success">{{ item.completedTasks }}</span>
+              </td>
+              <td>
+                <span
+                  class="badge"
+                  [class.badge-danger]="item.overdueTasks > 0"
+                  [class.badge-neutral]="item.overdueTasks === 0"
+                >
                   {{ item.overdueTasks }}
                 </span>
               </td>
@@ -285,9 +333,11 @@
           <tbody>
             <tr *ngFor="let d of wl.departmentBreakdown">
               <td class="font-medium">{{ d.departmentName }}</td>
-              <td><span class="badge badge-info">{{ d.activeTasks }}</span></td>
+              <td>
+                <span class="badge badge-info">{{ d.activeTasks }}</span>
+              </td>
               <td>{{ d.totalMembers }}</td>
-              <td>{{ d.avgTasksPerMember | number:'1.1-1' }}</td>
+              <td>{{ d.avgTasksPerMember | number: '1.1-1' }}</td>
             </tr>
           </tbody>
         </table>
@@ -336,10 +386,21 @@
             <tr *ngFor="let s of sla.serviceBreakdown">
               <td class="font-medium">{{ s.serviceName }}</td>
               <td>{{ s.totalRequests }}</td>
-              <td><span class="badge badge-success">{{ s.compliantRequests }}</span></td>
-              <td><span class="badge badge-danger">{{ s.breachedRequests }}</span></td>
               <td>
-                <span class="badge" [class.badge-success]="s.complianceRatePercent >= 90" [class.badge-warning]="s.complianceRatePercent >= 70 && s.complianceRatePercent < 90" [class.badge-danger]="s.complianceRatePercent < 70">
+                <span class="badge badge-success">{{ s.compliantRequests }}</span>
+              </td>
+              <td>
+                <span class="badge badge-danger">{{ s.breachedRequests }}</span>
+              </td>
+              <td>
+                <span
+                  class="badge"
+                  [class.badge-success]="s.complianceRatePercent >= 90"
+                  [class.badge-warning]="
+                    s.complianceRatePercent >= 70 && s.complianceRatePercent < 90
+                  "
+                  [class.badge-danger]="s.complianceRatePercent < 70"
+                >
                   {{ s.complianceRatePercent }}%
                 </span>
               </td>

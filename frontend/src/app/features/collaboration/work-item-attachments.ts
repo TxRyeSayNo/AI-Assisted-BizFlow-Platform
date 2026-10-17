@@ -102,7 +102,7 @@ export class WorkItemAttachments implements OnInit {
           fileName: file.name,
           contentType: file.type || 'application/octet-stream',
           sizeBytes: file.size,
-        })
+        }),
       );
 
       if (!sessionResult) throw new Error('Failed to create upload session.');
@@ -113,7 +113,7 @@ export class WorkItemAttachments implements OnInit {
       await lastValueFrom(
         this.http.put(sessionResult.uploadUrl, fileBytes, {
           headers: { 'Content-Type': file.type || 'application/octet-stream' },
-        })
+        }),
       );
 
       // Step 3: Compute SHA-256 hash
@@ -126,7 +126,7 @@ export class WorkItemAttachments implements OnInit {
         this.http.post<AttachmentItem>('/api/v1/attachments/finalize', {
           attachmentId: sessionResult.attachmentId,
           clientHash: hashHex,
-        })
+        }),
       );
 
       if (finalized) {
@@ -170,7 +170,11 @@ export class WorkItemAttachments implements OnInit {
 
   private async computeSha256(buffer: ArrayBuffer): Promise<string> {
     try {
-      if (typeof crypto !== 'undefined' && crypto.subtle && typeof crypto.subtle.digest === 'function') {
+      if (
+        typeof crypto !== 'undefined' &&
+        crypto.subtle &&
+        typeof crypto.subtle.digest === 'function'
+      ) {
         const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
         const hashArray = Array.from(new Uint8Array(hashBuffer));
         return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');

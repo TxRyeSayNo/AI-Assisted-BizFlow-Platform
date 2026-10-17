@@ -24,7 +24,9 @@
     @for (att of attachments(); track att.attachmentId) {
       <article class="attachment-item">
         <div class="attachment-icon" aria-hidden="true">
-          <span class="icon-label">{{ att.fileName.split('.').pop()?.toUpperCase() || 'FILE' }}</span>
+          <span class="icon-label">{{
+            att.fileName.split('.').pop()?.toUpperCase() || 'FILE'
+          }}</span>
         </div>
         <div class="attachment-info">
           <div class="attachment-title-row">

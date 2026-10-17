@@ -13,11 +13,15 @@ describe('scoped task detail', () => {
         provideHttpClient(),
         provideHttpClientTesting(),
         provideRouter([]),
-        { provide: ActivatedRoute, useValue: { paramMap: of(convertToParamMap({ id: 'task-1' })) } },
+        {
+          provide: ActivatedRoute,
+          useValue: { paramMap: of(convertToParamMap({ id: 'task-1' })) },
+        },
         {
           provide: SessionService,
           useValue: {
-            hasPermission: (perm: string) => perm === 'records.archive' || perm.startsWith('tasks.'),
+            hasPermission: (perm: string) =>
+              perm === 'records.archive' || perm.startsWith('tasks.'),
             identity: () => ({ userId: 'u1', tenantId: 't1' }),
           },
         },
@@ -82,17 +86,19 @@ describe('scoped task detail', () => {
       message: 'Task archived successfully.',
     });
 
-    http.expectOne((r) => r.url === '/api/v1/tasks/task-1').flush({
-      task: {
-        taskId: 'task-1',
-        title: 'Quarterly compliance audit',
-        status: 'COMPLETED',
-        priority: 'HIGH',
-        createdAt: '2026-10-07T12:00:00Z',
-      },
-      checklist: { items: [], page: 1, pageSize: 20, total: 0 },
-      reports: { items: [], page: 1, pageSize: 20, total: 0 },
-      results: { items: [], page: 1, pageSize: 20, total: 0 },
-    });
+    http
+      .expectOne((r) => r.url === '/api/v1/tasks/task-1')
+      .flush({
+        task: {
+          taskId: 'task-1',
+          title: 'Quarterly compliance audit',
+          status: 'COMPLETED',
+          priority: 'HIGH',
+          createdAt: '2026-10-07T12:00:00Z',
+        },
+        checklist: { items: [], page: 1, pageSize: 20, total: 0 },
+        reports: { items: [], page: 1, pageSize: 20, total: 0 },
+        results: { items: [], page: 1, pageSize: 20, total: 0 },
+      });
   });
 });

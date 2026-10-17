@@ -69,10 +69,7 @@ describe('request detail component', () => {
     http.verify();
   });
 
-  function flushInitRequests(
-    http: HttpTestingController,
-    detail: RequestDetailView = mockDetail,
-  ) {
+  function flushInitRequests(http: HttpTestingController, detail: RequestDetailView = mockDetail) {
     const req = http.expectOne('/api/v1/requests/01a12000-0000-7000-8000-000000000055');
     req.flush(detail);
 
@@ -172,9 +169,7 @@ describe('request detail component', () => {
 
     fixture.componentInstance.executeRoute();
 
-    const routePost = http.expectOne(
-      '/api/v1/requests/01a12000-0000-7000-8000-000000000055/route',
-    );
+    const routePost = http.expectOne('/api/v1/requests/01a12000-0000-7000-8000-000000000055/route');
     expect(routePost.request.headers.has('Idempotency-Key')).toBe(true);
     expect(routePost.request.body).toEqual({
       toDepartmentId: 'dept-1',
@@ -262,9 +257,7 @@ describe('request detail component', () => {
 
     fixture.componentInstance.executeStartWork();
 
-    const startPost = http.expectOne(
-      '/api/v1/requests/01a12000-0000-7000-8000-000000000055/start',
-    );
+    const startPost = http.expectOne('/api/v1/requests/01a12000-0000-7000-8000-000000000055/start');
     expect(startPost.request.headers.has('Idempotency-Key')).toBe(true);
     startPost.flush({
       requestId: '01a12000-0000-7000-8000-000000000055',
@@ -372,7 +365,9 @@ describe('request detail component', () => {
     expect(fixture.componentInstance.actionSuccess()).toContain('Request resolved successfully.');
     expect(fixture.nativeElement.textContent).toContain('Resolution History');
     expect(fixture.nativeElement.textContent).toContain('Revision #1');
-    expect(fixture.nativeElement.textContent).toContain('Replaced hardware module and tested telemetry.');
+    expect(fixture.nativeElement.textContent).toContain(
+      'Replaced hardware module and tested telemetry.',
+    );
   });
 
   it('confirms resolution and closes request', () => {
@@ -426,10 +421,14 @@ describe('request detail component', () => {
     });
     fixture.detectChanges();
 
-    expect(fixture.componentInstance.actionSuccess()).toContain('Resolution confirmed and request closed.');
+    expect(fixture.componentInstance.actionSuccess()).toContain(
+      'Resolution confirmed and request closed.',
+    );
     expect(fixture.nativeElement.textContent).toContain('Requester Reviews & Decisions');
     expect(fixture.nativeElement.textContent).toContain('Confirmed & Accepted');
-    expect(fixture.nativeElement.textContent).toContain('Everything looks great and works properly.');
+    expect(fixture.nativeElement.textContent).toContain(
+      'Everything looks great and works properly.',
+    );
   });
 
   it('submits rework for resolved request with feedback', () => {
@@ -446,7 +445,9 @@ describe('request detail component', () => {
 
     // Attempting rework with empty note sets validation error
     fixture.componentInstance.executeConfirm();
-    expect(fixture.componentInstance.actionError()).toContain('note explaining why rework is needed');
+    expect(fixture.componentInstance.actionError()).toContain(
+      'note explaining why rework is needed',
+    );
 
     // Fill note and submit
     fixture.componentInstance.confirmNote.set('Noise still persists on reboot.');
@@ -472,7 +473,9 @@ describe('request detail component', () => {
     reloadReq.flush({ ...mockDetail, status: 'IN_PROGRESS' });
     fixture.detectChanges();
 
-    expect(fixture.componentInstance.actionSuccess()).toContain('Rework requested and sent back to in-progress.');
+    expect(fixture.componentInstance.actionSuccess()).toContain(
+      'Rework requested and sent back to in-progress.',
+    );
   });
 
   it('creates revised request from rejected request', () => {
@@ -480,7 +483,11 @@ describe('request detail component', () => {
     fixture.detectChanges();
 
     const http = TestBed.inject(HttpTestingController);
-    flushInitRequests(http, { ...mockDetail, status: 'REJECTED', rejectionReason: 'Insufficient scope' });
+    flushInitRequests(http, {
+      ...mockDetail,
+      status: 'REJECTED',
+      rejectionReason: 'Insufficient scope',
+    });
     fixture.detectChanges();
 
     expect(fixture.componentInstance.canRevise()).toBe(true);
@@ -514,7 +521,9 @@ describe('request detail component', () => {
       createdAt: '2026-10-07T10:40:00Z',
     });
 
-    expect(fixture.componentInstance.actionSuccess()).toContain('Revised request created successfully.');
+    expect(fixture.componentInstance.actionSuccess()).toContain(
+      'Revised request created successfully.',
+    );
   });
 
   it('renders linked tasks in the request detail view', () => {
@@ -576,9 +585,7 @@ describe('request detail component', () => {
 
     fixture.componentInstance.executeCreateTask();
 
-    const taskPost = http.expectOne(
-      '/api/v1/requests/01a12000-0000-7000-8000-000000000055/tasks',
-    );
+    const taskPost = http.expectOne('/api/v1/requests/01a12000-0000-7000-8000-000000000055/tasks');
     expect(taskPost.request.headers.has('Idempotency-Key')).toBe(true);
     expect(taskPost.request.body).toEqual({
       title: 'Setup Redis Cluster',
@@ -619,7 +626,9 @@ describe('request detail component', () => {
     fixture.detectChanges();
 
     expect(fixture.componentInstance.activeModal()).toBeNull();
-    expect(fixture.componentInstance.actionSuccess()).toContain('Task created successfully and linked to this request.');
+    expect(fixture.componentInstance.actionSuccess()).toContain(
+      'Task created successfully and linked to this request.',
+    );
   });
 
   it('prevents task creation when request is in inactive status (e.g., CANCELLED or CLOSED)', () => {
@@ -647,7 +656,9 @@ describe('request detail component', () => {
 
     fixture.componentInstance.executeArchive();
 
-    const archiveReq = http.expectOne('/api/v1/records/request/01a12000-0000-7000-8000-000000000055/archive');
+    const archiveReq = http.expectOne(
+      '/api/v1/records/request/01a12000-0000-7000-8000-000000000055/archive',
+    );
     expect(archiveReq.request.method).toBe('POST');
     archiveReq.flush({
       recordId: '01a12000-0000-7000-8000-000000000055',
@@ -715,7 +726,10 @@ describe('request detail component', () => {
     splitReq.flush({
       parentRequestId: mockDetail.requestId,
       splitCount: 2,
-      childRequestIds: ['01a14000-0000-7000-8000-000000000011', '01a14000-0000-7000-8000-000000000012'],
+      childRequestIds: [
+        '01a14000-0000-7000-8000-000000000011',
+        '01a14000-0000-7000-8000-000000000012',
+      ],
     });
 
     const reloadReq = http.expectOne(`/api/v1/requests/${mockDetail.requestId}`);
@@ -750,7 +764,9 @@ describe('request detail component', () => {
 
     expect(fixture.componentInstance.aiBusy()).toBe(false);
     expect(fixture.componentInstance.activeModal()).toBe('route');
-    expect(fixture.componentInstance.routeDepartmentId()).toBe('01a10000-0000-7000-8000-000000000010');
+    expect(fixture.componentInstance.routeDepartmentId()).toBe(
+      '01a10000-0000-7000-8000-000000000010',
+    );
     expect(fixture.componentInstance.routeReason()).toContain('IT Operations');
     expect(fixture.componentInstance.routeSource()).toBe('AI');
   });

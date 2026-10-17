@@ -29,7 +29,9 @@
               {{ comment.createdAt | date: 'medium' }}
             </time>
             @if (comment.editedAt) {
-              <span class="edited-tag" title="Edited on {{ comment.editedAt | date: 'medium' }}">(edited)</span>
+              <span class="edited-tag" title="Edited on {{ comment.editedAt | date: 'medium' }}"
+                >(edited)</span
+              >
             }
 
             <div class="comment-actions">
@@ -39,7 +41,11 @@
                 </button>
               }
               @if (comment.canDelete && editingCommentId !== comment.commentId) {
-                <button type="button" class="btn-action delete-btn" (click)="deleteComment(comment.commentId)">
+                <button
+                  type="button"
+                  class="btn-action delete-btn"
+                  (click)="deleteComment(comment.commentId)"
+                >
                   Delete
                 </button>
               }
@@ -60,7 +66,12 @@
                 <mat-hint align="end">{{ editingText.length }} / 4000</mat-hint>
               </mat-form-field>
               <div class="edit-actions">
-                <button mat-flat-button color="primary" [disabled]="savingEdit || !editingText.trim()" (click)="saveEdit(comment.commentId)">
+                <button
+                  mat-flat-button
+                  color="primary"
+                  [disabled]="savingEdit || !editingText.trim()"
+                  (click)="saveEdit(comment.commentId)"
+                >
                   {{ savingEdit ? 'Saving…' : 'Save' }}
                 </button>
                 <button mat-stroked-button type="button" (click)="cancelEdit()">Cancel</button>
