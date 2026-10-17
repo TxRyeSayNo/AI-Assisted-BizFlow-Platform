@@ -8,6 +8,7 @@ import { MatInputModule } from '@angular/material/input';
 import { Router, RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
 import { SessionService } from '../../core/auth/session';
+import { TranslatePipe } from '../../core/i18n/translate.pipe';
 
 @Component({
   selector: 'bf-login',
@@ -18,6 +19,7 @@ import { SessionService } from '../../core/auth/session';
     MatFormFieldModule,
     MatInputModule,
     RouterLink,
+    TranslatePipe,
   ],
   templateUrl: './login.html',
 })

@@ -1,0 +1,22 @@
+.global-floating-lang-switch {
+  position: fixed;
+  top: 1rem;
+  right: 1.5rem;
+  z-index: 1050;
+  display: flex;
+  align-items: center;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-radius: var(--tp-r-btn, 6px);
+  box-shadow: 0 4px 12px rgba(20, 24, 30, 0.12);
+  transition: transform var(--tp-dur, 180ms) ease;
+
+  &:hover {
+    transform: translateY(-1px);
+  }
+
+  @media (max-width: 640px) {
+    top: 0.5rem;
+    right: 0.5rem;
+  }
+}

@@ -88,7 +88,18 @@ builder.Services.AddScoped<BizFlow.Application.Notifications.INotificationInboxS
 builder.Services.AddScoped<BizFlow.Application.Collaboration.CommentService>();
 builder.Services.AddScoped<BizFlow.Application.Collaboration.ICommentStore, BizFlow.Infrastructure.Collaboration.CommentStore>();
 builder.Services.AddScoped<BizFlow.Application.Collaboration.ICommentReader, BizFlow.Infrastructure.Collaboration.CommentReader>();
-builder.Services.AddScoped<BizFlow.Application.Collaboration.IObjectStorageProvider, BizFlow.Infrastructure.Collaboration.LocalStorageProvider>();
+var storageProvider = builder.Configuration["Storage:Provider"] ?? builder.Configuration["STORAGE_PROVIDER"];
+if (string.Equals(storageProvider, "S3", StringComparison.OrdinalIgnoreCase)
+    || string.Equals(storageProvider, "MinIO", StringComparison.OrdinalIgnoreCase))
+{
+    builder.Services.AddHttpClient<BizFlow.Application.Collaboration.IObjectStorageProvider, BizFlow.Infrastructure.Collaboration.S3CompatibleStorageProvider>();
+}
+else
+{
+    builder.Services.AddScoped<BizFlow.Application.Collaboration.IObjectStorageProvider, BizFlow.Infrastructure.Collaboration.LocalStorageProvider>();
+}
+
+builder.Services.AddSingleton<BizFlow.Application.Common.IBizFlowCacheService, BizFlow.Infrastructure.Caching.BizFlowRedisCacheService>();
 builder.Services.AddScoped<BizFlow.Application.Collaboration.IAttachmentStore, BizFlow.Infrastructure.Collaboration.AttachmentStore>();
 builder.Services.AddScoped<BizFlow.Application.Collaboration.IAttachmentReader, BizFlow.Infrastructure.Collaboration.AttachmentReader>();
 builder.Services.AddScoped<BizFlow.Application.Collaboration.AttachmentService>();
@@ -97,6 +108,7 @@ builder.Services.AddScoped<BizFlow.Application.Collaboration.IRecordSearchReader
 builder.Services.AddScoped<BizFlow.Application.Collaboration.RecordService>();
 builder.Services.AddScoped<BizFlow.Application.Reports.IReportingReader, BizFlow.Infrastructure.Reports.ReportingReader>();
 builder.Services.AddScoped<BizFlow.Application.Reports.ReportingService>();
+builder.Services.AddHttpClient<BizFlow.Application.AI.IAiModelClient, BizFlow.Infrastructure.AI.OpenAiModelClient>();
 builder.Services.AddScoped<BizFlow.Application.AI.IAiStore, BizFlow.Infrastructure.AI.AiStore>();
 builder.Services.AddScoped<BizFlow.Application.AI.IAiContextReader, BizFlow.Infrastructure.AI.AiContextReader>();
 builder.Services.AddSingleton<BizFlow.Application.AI.IAiToolRegistry, BizFlow.Infrastructure.AI.AiToolRegistry>();

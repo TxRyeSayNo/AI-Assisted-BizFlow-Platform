@@ -1,26 +1,34 @@
 import { Component, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { SessionService } from '../../core/auth/session';
+import { TranslatePipe } from '../../core/i18n/translate.pipe';
 
 @Component({
   selector: 'bf-workspace',
-  imports: [RouterLink],
+  imports: [RouterLink, TranslatePipe],
   template: `
     <header class="public-header">
       <span class="wordmark">BizFlow</span
       ><span>{{ identity()?.tenantName ?? 'Platform administration' }}</span>
     </header>
     <main id="main-content" class="page-content" tabindex="-1">
-      <span class="eyebrow">Your workspace</span>
-      <h1>Welcome, {{ identity()?.fullName }}</h1>
-      <p>You are signed in to {{ identity()?.tenantName ?? 'the platform console' }}.</p>
+      <span class="eyebrow">{{ 'workspace.title' | translate: 'Your workspace' }}</span>
+      <h1>{{ 'common.welcome' | translate: 'Welcome' }}, {{ identity()?.fullName }}</h1>
+      <p>
+        {{ 'workspace.signedInAs' | translate: 'You are signed in to' }}
+        {{ identity()?.tenantName ?? 'the platform console' }}.
+      </p>
       @if (identity()?.tenantId) {
         @if (
           session.hasPermission('requests.read.tenant') ||
           session.hasPermission('requests.read.managed') ||
           session.hasPermission('requests.read.own')
         ) {
-          <p><a routerLink="/requests">View requests</a></p>
+          <p>
+            <a routerLink="/requests">{{
+              'workspace.viewRequests' | translate: 'View requests'
+            }}</a>
+          </p>
         }
         @if (
           session.hasPermission('tasks.read.tenant') ||
@@ -28,10 +36,16 @@ import { SessionService } from '../../core/auth/session';
           session.hasPermission('tasks.read.own') ||
           session.hasPermission('tasks.read.assigned')
         ) {
-          <p><a routerLink="/tasks">View tasks</a></p>
+          <p>
+            <a routerLink="/tasks">{{ 'workspace.viewTasks' | translate: 'View tasks' }}</a>
+          </p>
         }
         @if (session.hasPermission('records.search')) {
-          <p><a routerLink="/records/search">Search records</a></p>
+          <p>
+            <a routerLink="/records/search">{{
+              'workspace.searchRecords' | translate: 'Search records'
+            }}</a>
+          </p>
         }
         @if (
           session.hasPermission('reports.manager') ||
@@ -39,13 +53,31 @@ import { SessionService } from '../../core/auth/session';
           session.hasPermission('reports.workload') ||
           session.hasPermission('reports.sla')
         ) {
-          <p><a routerLink="/reports">Dashboard & Reports</a></p>
+          <p>
+            <a routerLink="/reports">{{
+              'workspace.dashboardReports' | translate: 'Dashboard & Reports'
+            }}</a>
+          </p>
         }
-        <p><a routerLink="/notifications">Notifications</a></p>
-        <p><a routerLink="/settings/services">Browse service catalog</a></p>
-        <a routerLink="/settings/organization/departments">Browse department directory</a>
+        <p>
+          <a routerLink="/notifications">{{
+            'workspace.notifications' | translate: 'Notifications'
+          }}</a>
+        </p>
+        <p>
+          <a routerLink="/settings/services">{{
+            'workspace.browseServices' | translate: 'Browse service catalog'
+          }}</a>
+        </p>
+        <a routerLink="/settings/organization/departments">{{
+          'workspace.browseDepartments' | translate: 'Browse department directory'
+        }}</a>
         @if (session.hasPermission('users.read')) {
-          <p><a routerLink="/settings/organization/users">Browse people directory</a></p>
+          <p>
+            <a routerLink="/settings/organization/users">{{
+              'workspace.browseUsers' | translate: 'Browse people directory'
+            }}</a>
+          </p>
         }
         @if (
           session.hasPermission('roles.configure') ||
@@ -54,10 +86,14 @@ import { SessionService } from '../../core/auth/session';
           session.hasPermission('service.create') ||
           session.hasPermission('service.update')
         ) {
-          <p><a routerLink="/settings">Settings</a></p>
+          <p>
+            <a routerLink="/settings">{{ 'workspace.settings' | translate: 'Settings' }}</a>
+          </p>
         }
         @if (session.hasPermission('audit.read')) {
-          <p><a routerLink="/audit">Audit history</a></p>
+          <p>
+            <a routerLink="/audit">{{ 'workspace.audit' | translate: 'Audit history' }}</a>
+          </p>
         }
       }
       @if (

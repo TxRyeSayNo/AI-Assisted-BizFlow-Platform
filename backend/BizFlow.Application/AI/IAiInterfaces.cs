@@ -16,6 +16,7 @@ public sealed record AiModelResponse(
 
 public interface IAiModelClient
 {
+    bool IsConfigured { get; }
     Task<AiModelResponse> CompleteAsync(
         string prompt,
         string systemInstructions,
