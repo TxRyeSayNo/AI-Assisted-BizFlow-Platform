@@ -62,8 +62,7 @@ export class I18nService {
         // Fallback
       }
     }
-    // Default to Vietnamese for local Vietnamese users, or fallback to 'vi'
-    return 'vi';
+    return 'en';
   }
 
   private updateHtmlLang(lang: LanguageCode): void {
