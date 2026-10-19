@@ -25,6 +25,7 @@ public sealed class TasksController(TaskListQuery tasks, TaskCreation creation, 
     [JsonUnmappedMemberHandling(JsonUnmappedMemberHandling.Disallow)]
     public sealed record ConfirmationInput(string Decision, string? Note);
 
+    [HttpPost("{id:guid}/confirm")]
     [HttpPost("{id:guid}/confirmation")]
     public Task<TaskConfirmedView> ConfirmResult(Guid id, ConfirmationInput input, CancellationToken cancellationToken)
     {

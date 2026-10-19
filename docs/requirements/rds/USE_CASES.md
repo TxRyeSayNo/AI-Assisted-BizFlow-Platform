@@ -1,0 +1,547 @@
+# ĐẶC TẢ CHI TIẾT CÁC CA SỬ DỤNG NGHIỆP VỤ (BUSINESS USE CASE SPECIFICATIONS)
+
+- **Dự án:** AI-Assisted BizFlow Platform
+- **Mã tài liệu:** `BIZFLOW-RDS-UC-v1.0`
+- **Phiên bản:** `1.0-DRAFT`
+- **Ngày lập:** `2026-10-18`
+- **Trạng thái:** `DRAFT — REQUIREMENTS BASELINE`
+- **Tài liệu liên quan:** [RDS_v1.0_DRAFT.md](./RDS_v1.0_DRAFT.md), [REQUIREMENTS_CATALOG.csv](./REQUIREMENTS_CATALOG.csv), [REQUIREMENTS_TRACEABILITY.md](./REQUIREMENTS_TRACEABILITY.md), [OPEN_DECISIONS.md](./OPEN_DECISIONS.md), [SOURCE_REGISTER.md](./SOURCE_REGISTER.md)
+
+---
+
+## 1. Tổng quan Mô hình Ca Sử dụng (Use Case Model Overview)
+
+Tài liệu này đặc tả chi tiết **12 Ca sử dụng nghiệp vụ đầu-cuối chuẩn (`UC-001` đến `UC-012`)** của nền tảng **AI-Assisted BizFlow Platform**. Mỗi Ca sử dụng mô tả cách các tác nhân con người (`A01`–`A04`) và tác nhân phần mềm (`A05` — Trợ lý AI) tương tác với hệ thống để đạt được một mục tiêu nghiệp vụ hoàn chỉnh, đồng thời làm rõ các nhánh thay thế, nhánh ngoại lệ, quy tắc nghiệp vụ (`BR-001`..`BR-022`), phạm vi phân quyền và điều kiện nghiệm thu (`AC-001`..`AC-030`).
+
+```mermaid
+flowchart TB
+    subgraph Actors["Tác nhân (Actors)"]
+        A01["A01: Platform Admin"]
+        A02["A02: Company Admin"]
+        A03["A03: Manager"]
+        A04["A04: Employee (Requester / Assignee)"]
+        A05["A05: AI Agent (Advisory Only)"]
+    end
+
+    subgraph PlatformPlane["Mặt phẳng Quản trị Nền tảng (Platform Governance)"]
+        UC01["UC-001: Đăng ký Doanh nghiệp, Xét duyệt & Khởi tạo Tenant Mặc định"]
+    end
+
+    subgraph TenantPlane["Mặt phẳng Không gian Làm việc Doanh nghiệp (Tenant Workspace)"]
+        UC02["UC-002: Xác thực Người dùng, Quản lý Phiên & Khôi phục Mật khẩu"]
+        UC03["UC-003: Thiết lập Cơ cấu Tổ chức, Phạm vi Quản lý & Vai trò"]
+        UC04["UC-004: Cấu hình Danh mục Dịch vụ, Định tuyến, Quy trình & SLA"]
+        UC05["UC-005: Gửi Yêu cầu Dịch vụ, Định tuyến, Tiếp nhận & Sửa đổi"]
+        UC06["UC-006: Xử lý Yêu cầu, Liên kết Công việc, Giải quyết & Xác nhận Đóng"]
+        UC07["UC-007: Giao việc (Cá nhân/Phòng ban), Nhận việc & Thực thi"]
+        UC08["UC-008: Nộp Kết quả Công việc, Nghiệm thu hoặc Yêu cầu Làm lại"]
+        UC09["UC-009: Thực thi Bước Phê duyệt trong Quy trình Công việc"]
+        UC10["UC-010: Giám sát Đồng hồ SLA, Tạm dừng Hợp lệ & Leo thang Quá hạn"]
+        UC11["UC-011: Hỗ trợ Tác nghiệp bằng AI Có Kiểm soát Con người"]
+        UC12["UC-012: Giám sát Bảng điều khiển, Báo cáo, Tìm kiếm & Kiểm toán"]
+    end
+
+    A01 --> UC01
+    A01 --> UC02
+    A01 --> UC12
+
+    A02 --> UC02
+    A02 --> UC03
+    A02 --> UC04
+    A02 --> UC11
+    A02 --> UC12
+
+    A03 --> UC02
+    A03 --> UC05
+    A03 --> UC06
+    A03 --> UC07
+    A03 --> UC08
+    A03 --> UC09
+    A03 --> UC10
+    A03 --> UC11
+    A03 --> UC12
+
+    A04 --> UC02
+    A04 --> UC05
+    A04 --> UC06
+    A04 --> UC07
+    A04 --> UC08
+    A04 --> UC10
+    A04 --> UC11
+    A04 --> UC12
+
+    UC05 -.->|"Gợi ý & Kiểm tra"| A05
+    UC07 -.->|"Soạn nháp & Gợi ý giao"| A05
+    UC08 -.->|"Kiểm tra chất lượng"| A05
+    UC11 --> A05
+```
+
+---
+
+## 2. Đặc tả Chi tiết Từng Ca Sử dụng (`UC-001` – `UC-012`)
+
+### `UC-001`: Đăng ký Doanh nghiệp, Xét duyệt và Khởi tạo Không gian Làm việc Mặc định (Company Onboarding & Primary Tenant Provisioning)
+
+- **Use Case ID:** `UC-001`
+- **Name:** Đăng ký Doanh nghiệp, Xét duyệt và Khởi tạo Không gian Làm việc Mặc định
+- **Goal:** Cho phép đại diện một doanh nghiệp mới gửi hồ sơ đăng ký sử dụng nền tảng và cho phép Quản trị viên Nền tảng (`PLATFORM_ADMIN`) xét duyệt để khởi tạo nguyên tử đúng **01 Không gian làm việc / Thuê bao chính (`Primary Workspace / Tenant`)** hoàn toàn cách ly cho doanh nghiệp đó theo quyết định `DEC-WS-001`.
+- **Primary Actor:** Đại diện Doanh nghiệp đăng ký (Prospective Company Representative), `A01` — Quản trị viên Nền tảng (`PLATFORM_ADMIN`).
+- **Secondary Actors:** Dịch vụ gửi thư điện tử (Email Notification Service), `A02` — Quản trị viên Công ty ban đầu (`Initial COMPANY_ADMIN`).
+- **Trigger:** Đại diện doanh nghiệp gửi biểu mẫu đăng ký công ty mới trên cổng đăng ký của nền tảng.
+- **Preconditions:**
+  1. Cổng đăng ký doanh nghiệp đang hoạt động.
+  2. Đối với bước xét duyệt: `A01` (`PLATFORM_ADMIN`) đã đăng nhập hợp lệ vào Mặt phẳng Quản trị Nền tảng (`Platform Governance Plane`).
+- **Main Success Scenario:**
+  1. Đại diện doanh nghiệp nhập thông tin pháp nhân (Tên doanh nghiệp, Mã định danh thuê bao `TenantSlug`, Mã số thuế/Đăng ký kinh doanh, Tên và Email của Quản trị viên Công ty ban đầu, Mật khẩu khởi tạo) và gửi đơn đăng ký.
+  2. Hệ thống kiểm tra tính hợp lệ và tính duy nhất của thông tin đăng ký, lưu hồ sơ doanh nghiệp ở trạng thái chờ duyệt (`PENDING`), ghi nhật ký kiểm toán và phát thông báo có đơn đăng ký mới cho `A01`.
+  3. `A01` mở danh sách đơn đăng ký chờ duyệt, kiểm tra thông tin hồ sơ doanh nghiệp và chọn hành động **Phê duyệt (`Approve`)**.
+  4. Hệ thống cập nhật trạng thái doanh nghiệp, tự động khởi tạo **01 Không gian làm việc chính (`Primary Tenant`)** ở trạng thái `ACTIVE`, khởi tạo các vai trò hệ thống chuẩn (`COMPANY_ADMIN`, `MANAGER`, `EMPLOYEE`), lịch làm việc mặc định và tài khoản `COMPANY_ADMIN` đầu tiên.
+  5. Hệ thống ghi nhận sự kiện kiểm toán bất biến và gửi thông báo kích hoạt thành công cho `COMPANY_ADMIN` của doanh nghiệp.
+- **Alternative Flows:**
+  - **A1 — Quản trị viên Nền tảng Từ chối Đơn đăng ký:** Tại bước 3, nếu hồ sơ không hợp lệ hoặc không đủ điều kiện, `A01` chọn **Từ chối (`Reject`)** và bắt buộc nhập lý do từ chối (`BR-022`). Hệ thống chuyển trạng thái doanh nghiệp sang `REJECTED`, không khởi tạo Tenant, ghi nhật ký kiểm toán và gửi thông báo kèm lý do từ chối cho người đăng ký.
+  - **A2 — Quản trị viên Nền tảng Tạm ngưng hoặc Kích hoạt lại Doanh nghiệp (`FR-TEN-003`):** Sau khi doanh nghiệp đã `ACTIVE`, `A01` có thể chuyển trạng thái doanh nghiệp/thuê bao sang `SUSPENDED` (kèm lý do bắt buộc) khi cần khóa quyền truy cập tạm thời, hoặc kích hoạt lại từ `SUSPENDED` sang `ACTIVE`.
+- **Exception / Error Flows:**
+  - **E1 — Trùng lặp Mã định danh Doanh nghiệp hoặc Email Quản trị:** Tại bước 2, nếu `TenantSlug`, mã số thuế hoặc email quản trị đã tồn tại, hệ thống từ chối lưu và trả về thông báo lỗi xung đột rõ ràng.
+  - **E2 — Từ chối Đơn đăng ký nhưng Không nhập Lý do:** Tại nhánh A1, nếu `A01` bỏ trống lý do từ chối, hệ thống chặn thao tác theo quy tắc `BR-022`.
+  - **E3 — Truy cập Trái phép Dữ liệu Giữa các Doanh nghiệp:** Nếu bất kỳ người dùng nào thuộc Doanh nghiệp A cố gắng truy vấn hoặc tác động lên hồ sơ của Doanh nghiệp B, hệ thống tự động chặn tại tầng cách ly dữ liệu và trả về phản hồi không tiết lộ (`404 Not Found`).
+- **Business Rules:** `BR-002` (Cách ly đa thuê bao tuyệt đối), `BR-021` (Nhật ký kiểm toán bất biến), `BR-022` (Bắt buộc nhập lý do khi từ chối), `DEC-WS-001` (1 Công ty = 1 Không gian làm việc chính trong MVP), `DEC-WS-002` (Không bao gồm thanh toán/gói cước thương mại).
+- **Permissions / Scope:**
+  - Gửi đăng ký: Công khai (Public / Unauthenticated).
+  - Xem và xét duyệt đăng ký, quản lý trạng thái Tenant: Chỉ dành cho `A01` (`PLATFORM_ADMIN` với quyền `platform.companies.read`, `platform.companies.approve`, `platform.tenants.manage` trong `Platform Scope`).
+- **Postconditions:**
+  - Doanh nghiệp và Không gian làm việc chính (`Primary Tenant`) được kích hoạt (`ACTIVE`) và cách ly hoàn toàn theo `TenantId`, hoặc bị đánh dấu `REJECTED` kèm lý do và dấu vết kiểm toán.
+- **Related Requirements:**
+  - RDS: `STKN-001`, `STKN-002`, `BIZ-003`, `BIZ-004`, `CAP-002`, `INFO-001`, `QREQ-006`.
+  - SRS: `FR-TEN-001`, `FR-TEN-002`, `FR-TEN-003`, `FR-TEN-004`, `DR-001`, `DR-002`, `SEC-004`, `SEC-012`.
+- **Acceptance Criteria:** `AC-001`, `AC-002`.
+- **Source:** `SRC-002`, `SRC-003`, `DEC-WS-001`, `DEC-WS-002`, `OD-005`, `OD-009`, `OD-018`.
+- **Status:** `CONFIRMED` (Chi tiết trạng thái duyệt nguyên tử và thông báo nền tảng tham chiếu `OD-005`, `OD-009`).
+
+---
+
+### `UC-002`: Xác thực Người dùng, Quản lý Phiên và Khôi phục Mật khẩu (Authentication, Session Lifecycle & Password Recovery)
+
+- **Use Case ID:** `UC-002`
+- **Name:** Xác thực Người dùng, Quản lý Phiên và Khôi phục Mật khẩu
+- **Goal:** Cho phép người dùng doanh nghiệp đăng nhập bằng Mã nhân viên (`EmployeeCode`) hoặc Email, cho phép `PLATFORM_ADMIN` đăng nhập vào mặt phẳng nền tảng, duy trì phiên làm việc an toàn có khả năng thu hồi tức thời và hỗ trợ khôi phục mật khẩu cho cả nhân viên có email lẫn nhân viên không có email.
+- **Primary Actor:** `A01` (`PLATFORM_ADMIN`), `A02` (`COMPANY_ADMIN`), `A03` (`MANAGER`), `A04` (`EMPLOYEE`).
+- **Secondary Actors:** Dịch vụ gửi thư điện tử (Email Service), `A02` (`COMPANY_ADMIN` trong luồng cấp mật khẩu tạm thời).
+- **Trigger:** Người dùng truy cập màn hình đăng nhập, phiên làm việc hết hạn cần làm mới, người dùng bấm đăng xuất, hoặc người dùng yêu cầu đặt lại mật khẩu.
+- **Preconditions:**
+  1. Tài khoản người dùng đã được tạo và đang ở trạng thái hoạt động (`ACTIVE`).
+  2. Đối với người dùng doanh nghiệp (`A02`, `A03`, `A04`): Không gian làm việc (`Tenant`) của doanh nghiệp đang ở trạng thái `ACTIVE`.
+- **Main Success Scenario:**
+  1. Người dùng nhập định danh đăng nhập (đối với người dùng doanh nghiệp: Mã doanh nghiệp + `EmployeeCode` hoặc `Email`; đối với `PLATFORM_ADMIN`: `Email`) cùng mật khẩu.
+  2. Hệ thống kiểm tra trạng thái hoạt động của tài khoản và doanh nghiệp, đối chiếu mật khẩu đã băm, khởi tạo phiên xác thực (`AuthenticationSession`) và cấp quyền truy cập kèm danh sách vai trò, quyền hạn và phạm vi quản lý của người dùng.
+  3. Hệ thống điều hướng người dùng tới đúng không gian làm việc tương ứng với vai trò (`Platform Governance Plane` cho `A01` hoặc `Tenant Workspace Plane` cho `A02/A03/A04`).
+  4. Khi thời hạn phiên ngắn hạn sắp hết, hệ thống tự động xoay vòng mã làm mới phiên (`RefreshToken Rotation`) để duy trì trải nghiệm liền mạch.
+  5. Khi người dùng chọn **Đăng xuất (`Logout`)**, hệ thống thu hồi ngay lập tức phiên xác thực hiện tại và ghi nhật ký kiểm toán.
+- **Alternative Flows:**
+  - **A1 — Khôi phục Mật khẩu qua Email (Dành cho Người dùng Có Email):** Người dùng chọn "Quên mật khẩu" và nhập địa chỉ Email. Hệ thống sinh mã đặt lại mật khẩu có thời hạn hiệu lực ngắn, gửi qua email; người dùng nhập mật khẩu mới hợp lệ, hệ thống cập nhật mật khẩu và thu hồi toàn bộ các phiên đăng nhập cũ.
+  - **A2 — Cấp Mật khẩu Tạm thời cho Nhân viên Không có Email (`FR-AUTH-004`, `OD-004`, `OD-007`):** Đối với nhân viên chỉ dùng `EmployeeCode` và không có địa chỉ email, `A02` (`COMPANY_ADMIN`) thực hiện cấp mật khẩu tạm thời. Khi nhân viên đăng nhập bằng mật khẩu tạm thời, hệ thống yêu cầu đổi sang mật khẩu cá nhân mới trước khi sử dụng các chức năng nghiệp vụ.
+- **Exception / Error Flows:**
+  - **E1 — Sai Thông tin Đăng nhập hoặc Tài khoản/Doanh nghiệp Bị Khóa:** Hệ thống từ chối đăng nhập với thông báo lỗi chung không tiết lộ tài khoản có tồn tại hay không (chống dò quét định danh) và ghi nhận sự kiện đăng nhập thất bại vào nhật ký kiểm toán.
+  - **E2 — Phát hiện Sử dụng Lại Mã Làm mới Phiên Cũ (Refresh Token Replay):** Nếu một mã làm mới phiên đã được xoay vòng bị gửi lại lần thứ hai, hệ thống lập tức thu hồi toàn bộ chuỗi phiên liên quan và buộc người dùng đăng nhập lại.
+- **Business Rules:** `BR-001` (Định danh đăng nhập kép: Mã nhân viên hoặc Email), `BR-002` (Cách ly đa thuê bao), `BR-021` (Nhật ký kiểm toán bất biến), `ADR-0002` (Lưu trữ phiên xác thực và `TenantId = NULL` cho `PLATFORM_ADMIN`).
+- **Permissions / Scope:** Mọi tác nhân `A01`..`A04`; thao tác cấp mật khẩu tạm thời yêu cầu quyền `users.manage` của `A02` trong cùng `Tenant`.
+- **Postconditions:** Phiên xác thực hợp lệ được thiết lập đúng mặt phẳng và phạm vi dữ liệu, hoặc bị thu hồi an toàn khi đăng xuất/đổi mật khẩu.
+- **Related Requirements:**
+  - RDS: `STKN-003`, `BIZ-001`, `BIZ-002`, `CAP-001`, `INFO-002`, `INFO-003`, `QREQ-005`.
+  - SRS: `FR-AUTH-001`, `FR-AUTH-002`, `FR-AUTH-003`, `FR-AUTH-004`, `DR-004`, `NFR-SEC-001`, `SEC-001`, `SEC-002`.
+- **Acceptance Criteria:** `AC-003`, `AC-004`.
+- **Source:** `SRC-002`, `ADR-0002`, `OD-004`, `OD-007`.
+- **Status:** `CONFIRMED` (Luồng mật khẩu tạm cho nhân viên không có email tham chiếu `OD-004`, `OD-007`).
+
+---
+
+### `UC-003`: Thiết lập Cơ cấu Tổ chức, Phạm vi Quản lý và Vai trò Tùy chỉnh (Organization Structure, Management Scope & Custom Role Governance)
+
+- **Use Case ID:** `UC-003`
+- **Name:** Thiết lập Cơ cấu Tổ chức, Phạm vi Quản lý và Vai trò Tùy chỉnh
+- **Goal:** Cho phép Quản trị viên Doanh nghiệp (`COMPANY_ADMIN`) xây dựng sơ đồ phòng ban phân cấp, quản lý vòng đời tài khoản nhân sự, thiết lập phạm vi quản lý (`ManagementScope`) cho các cấp Quản lý (`MANAGER`) và cấu hình ma trận quyền hạn theo vai trò tùy chỉnh.
+- **Primary Actor:** `A02` — Quản trị viên Doanh nghiệp (`COMPANY_ADMIN`).
+- **Secondary Actors:** `A03` (`MANAGER`), `A04` (`EMPLOYEE`) là đối tượng thụ hưởng cấu hình.
+- **Trigger:** Doanh nghiệp mới khởi tạo xong không gian làm việc hoặc khi có sự thay đổi về cơ cấu phòng ban, nhân sự, chức vụ và phân quyền nội bộ.
+- **Preconditions:** `A02` đã đăng nhập vào Không gian làm việc của doanh nghiệp và có các quyền quản trị tổ chức (`departments.manage`, `users.manage`, `roles.manage`).
+- **Main Success Scenario:**
+  1. `A02` tạo danh mục các Phòng ban (`Department`) theo cấu trúc phân cấp cha – con (mỗi phòng ban có Mã phòng ban `Code` và Tên phòng ban `Name` duy nhất trong doanh nghiệp).
+  2. `A02` tạo hồ sơ tài khoản cho từng nhân viên (`User`), nhập Mã nhân viên (`EmployeeCode` duy nhất trong doanh nghiệp), Họ tên, Email (tùy chọn đối với nhân viên không có email theo `OD-004`), gắn phòng ban trực thuộc và gán một hoặc nhiều vai trò (`COMPANY_ADMIN`, `MANAGER`, `EMPLOYEE` hoặc vai trò tùy chỉnh).
+  3. Đối với những người dùng giữ vai trò Quản lý (`MANAGER`), `A02` cấu hình **Phạm vi Quản lý (`ManagementScope`)** xác định rõ danh sách các phòng ban/đơn vị mà người quản lý đó có thẩm quyền điều phối yêu cầu, giao việc, nghiệm thu và xem báo cáo (`BR-003`).
+  4. Khi cần phân quyền chuyên biệt, `A02` tạo Vai trò tùy chỉnh (`Custom Role`) và chọn tập quyền hạn hạt nhân từ danh mục quyền chuẩn của hệ thống.
+  5. Hệ thống lưu toàn bộ cấu hình trong phạm vi `TenantId` của doanh nghiệp và ghi nhật ký kiểm toán cho từng thay đổi.
+- **Alternative Flows:**
+  - **A1 — Cập nhật Luân chuyển Phòng ban hoặc Thay đổi Phạm vi Quản lý (`FR-ORG-002`, `FR-ORG-004`):** `A02` chuyển nhân viên sang phòng ban mới hoặc thêm/bớt phòng ban trong `ManagementScope` của یک `MANAGER`. Quyền truy cập theo phạm vi mới có hiệu lực ngay lập tức mà không làm mất lịch sử các công việc/yêu cầu trước đó.
+  - **A2 — Vô hiệu hóa Tài khoản Nhân viên Nghỉ việc (`FR-ORG-003`):** `A02` chuyển trạng thái tài khoản sang `INACTIVE`. Hệ thống lập tức thu hồi mọi phiên đăng nhập đang mở của tài khoản đó, chặn đăng nhập mới nhưng giữ nguyên toàn bộ lịch sử công việc, yêu cầu, bình luận và kiểm toán liên quan (`BR-021`).
+- **Exception / Error Flows:**
+  - **E1 — Trùng Mã Nhân viên, Email hoặc Mã/Tên Phòng ban trong cùng Doanh nghiệp:** Hệ thống từ chối lưu và thông báo trường bị trùng lặp.
+  - **E2 — Cấu trúc Phòng ban Tạo Vòng lặp Cha – Con (Circular Hierarchy):** Nếu `A02` chọn phòng ban cha là chính nó hoặc là một phòng ban con của nó, hệ thống chặn thao tác để bảo vệ tính toàn vẹn của cây tổ chức.
+  - **E3 — Xóa hoặc Sửa đổi Vai trò Hệ thống Gốc (`IsSystem = true`):** Hệ thống không cho phép xóa các vai trò chuẩn mặc định để tránh mất quyền quản trị doanh nghiệp.
+- **Business Rules:** `BR-001` (Định danh Mã nhân viên/Email), `BR-002` (Cách ly đa thuê bao), `BR-003` (Ủy quyền kết hợp Vai trò RBAC và Phạm vi quản lý `ManagementScope`), `BR-021` (Nhật ký kiểm toán bất biến).
+- **Permissions / Scope:** Yêu cầu quyền `departments.manage`, `users.manage`, `roles.manage` trong phạm vi `Tenant Scope`.
+- **Postconditions:** Sơ đồ tổ chức, danh bạ nhân sự, phạm vi quản lý của từng `MANAGER` và ma trận quyền RBAC được thiết lập nhất quán và sẵn sàng cho vận hành.
+- **Related Requirements:**
+  - RDS: `STKN-003`, `STKN-004`, `BIZ-005`, `BIZ-006`, `CAP-003`, `INFO-002`, `INFO-003`.
+  - SRS: `FR-ORG-001`, `FR-ORG-002`, `FR-ORG-003`, `FR-ORG-004`, `FR-ORG-005`, `DR-003`, `DR-004`, `SEC-003`.
+- **Acceptance Criteria:** `AC-005`, `AC-006`, `AC-007`.
+- **Source:** `SRC-002`, `SRC-003`, `SRC-008`, `OD-004`, `OD-006`, `OD-007`.
+- **Status:** `CONFIRMED` (Ràng buộc email tùy chọn và duy nhất tên phòng ban tham chiếu `OD-004`, `OD-006`).
+
+---
+
+### `UC-004`: Cấu hình Danh mục Dịch vụ Nội bộ, Định tuyến, Quy trình và Cam kết Mức dịch vụ (Service Catalog, Routing, Workflow & SLA Configuration)
+
+- **Use Case ID:** `UC-004`
+- **Name:** Cấu hình Danh mục Dịch vụ Nội bộ, Định tuyến, Quy trình và Cam kết Mức dịch vụ
+- **Goal:** Cho phép Quản trị viên Doanh nghiệp (`COMPANY_ADMIN`) chuẩn hóa các dịch vụ nội bộ thông qua việc thiết lập Hồ sơ SLA bất biến, Quy trình xử lý phiên bản hóa, Danh mục dịch vụ, Quy tắc định tuyến tự động và Quy tắc phê duyệt.
+- **Primary Actor:** `A02` — Quản trị viên Doanh nghiệp (`COMPANY_ADMIN`).
+- **Secondary Actors:** Không có.
+- **Trigger:** Doanh nghiệp thiết lập mới hoặc cập nhật chính sách cung cấp dịch vụ nội bộ (ví dụ: Cấp quyền GitLab, Cấp thiết bị CNTT, Phê duyệt mua sắm, Xác nhận nhân sự).
+- **Preconditions:** Cơ cấu phòng ban và tài khoản người dùng/quản lý đã được thiết lập trong doanh nghiệp (`UC-003`).
+- **Main Success Scenario:**
+  1. `A02` thiết lập Lịch làm việc của doanh nghiệp (`BusinessCalendar` gồm khung giờ làm việc các ngày trong tuần, múi giờ và danh sách ngày nghỉ lễ) và tạo Hồ sơ SLA (`SLAProfile`) kèm phiên bản SLA (`SLAVersion`) quy định Thời gian mục tiêu (`TargetMinutes`), Thời gian cảnh báo sớm (`WarningMinutes`, với `0 <= WarningMinutes < TargetMinutes` theo `ADR-0005`) và Quy tắc leo thang theo cấp (`EscalationRules` theo `ADR-0006`).
+  2. `A02` tạo Quy trình công việc (`Workflow`), định nghĩa các bước xử lý/phê duyệt và điều kiện chuyển bước trên phiên bản nháp (`DRAFT`), kiểm tra tính hợp lệ và bấm **Phát hành (`Publish`)** để tạo phiên bản quy trình bất biến (`PUBLISHED WorkflowVersion`).
+  3. `A02` tạo Phân loại dịch vụ (`ServiceCategory`) và Dịch vụ nội bộ (`Service`), mô tả thông tin cần thu thập từ người gửi yêu cầu.
+  4. `A02` cấu hình Quy tắc định tuyến (`RoutingRule`) cho dịch vụ để chỉ định phòng ban hoặc người phụ trách mặc định sẽ nhận yêu cầu khi nhân viên gửi lên (`BR-008`).
+  5. `A02` gắn phiên bản Quy trình (`WorkflowVersion`), phiên bản SLA (`SLAVersion`) và Quy tắc phê duyệt (`ApprovalRule`) mặc định cho Dịch vụ, sau đó kích hoạt Dịch vụ (`ACTIVE`).
+- **Alternative Flows:**
+  - **A1 — Nâng cấp Phiên bản Quy trình hoặc Phiên bản SLA Mới (`BR-013`, `BR-014`, `ADR-0004`, `ADR-0007`):** Khi doanh nghiệp thay đổi thời hạn SLA hoặc quy trình xử lý, `A02` phát hành một `SLAVersion` hoặc `WorkflowVersion` mới. Hệ thống áp dụng phiên bản mới cho các hồ sơ tạo sau thời điểm phát hành, đồng thời giữ nguyên bất biến phiên bản cũ trên toàn bộ các Công việc và Yêu cầu đang chạy hoặc đã đóng.
+  - **A2 — Ngừng Kích hoạt Dịch vụ Nội bộ (`OD-020`):** `A02` chuyển trạng thái Dịch vụ sang `INACTIVE`. Hệ thống ẩn dịch vụ khỏi danh sách tạo yêu cầu mới của nhân viên nhưng vẫn cho phép các yêu cầu đang xử lý đi hết vòng đời.
+- **Exception / Error Flows:**
+  - **E1 — Cấu hình SLA Không Hợp lệ:** Nếu `WarningMinutes >= TargetMinutes` hoặc các cấp độ leo thang không có số phút tăng dần nghiêm ngặt sau mốc quá hạn, hệ thống từ chối lưu theo `ADR-0005` và `ADR-0006`.
+  - **E2 — Quy trình Công việc Thiếu Bước Bắt đầu/Kết thúc hoặc Có Bước Cô lập:** Khi `A02` bấm phát hành phiên bản quy trình không liên thông, hệ thống báo lỗi kiểm tra cấu trúc và giữ phiên bản ở trạng thái `DRAFT`.
+  - **E3 — Xung đột Chỉnh sửa Đồng thời trên Dịch vụ (`ADR-0008`):** Nếu hai quản trị viên cùng lưu đè một dịch vụ với phiên bản dữ liệu cũ, hệ thống từ chối ghi đè và yêu cầu tải lại bản mới nhất.
+- **Business Rules:** `BR-008` (Định tuyến theo cấu hình dịch vụ), `BR-012` (Quy tắc phê duyệt), `BR-013` (Ghim phiên bản Workflow bất biến), `BR-014` (Ghim phiên bản SLA bất biến), `BR-021` (Nhật ký kiểm toán), `ADR-0004`, `ADR-0005`, `ADR-0006`, `ADR-0007`, `ADR-0008`.
+- **Permissions / Scope:** Yêu cầu quyền `sla.manage`, `workflows.manage`, `service.create`, `service.update` trong phạm vi `Tenant Scope`.
+- **Postconditions:** Dịch vụ nội bộ sẵn sàng tiếp nhận yêu cầu từ nhân viên với quy tắc định tuyến, quy trình và cam kết SLA rõ ràng, bất biến theo phiên bản.
+- **Related Requirements:**
+  - RDS: `STKN-005`, `STKN-008`, `STKN-009`, `BIZ-007`, `BIZ-008`, `BIZ-016`, `BIZ-018`, `CAP-004`, `CAP-007`, `CAP-008`, `INFO-004`, `INFO-007`, `INFO-008`.
+  - SRS: `FR-SVC-001`..`004`, `FR-WF-001`, `FR-SLA-001`, `DR-005`, `DR-009`, `DR-010`, `IR-API-002`.
+- **Acceptance Criteria:** `AC-008`, `AC-009`, `AC-019`.
+- **Source:** `SRC-002`, `SRC-003`, `ADR-0004`..`0008`, `OD-008`, `OD-010`, `OD-011`, `OD-020`.
+- **Status:** `CONFIRMED` (Chi tiết cập nhật nháp quy trình, lịch mặc định và ngừng kích hoạt dịch vụ tham chiếu `OD-008`, `OD-010`, `OD-020`).
+
+---
+
+### `UC-005`: Gửi Yêu cầu Dịch vụ Nội bộ, Định tuyến Tự động, Tiếp nhận và Sửa đổi Yêu cầu Bị Từ chối (Employee Request Submission, Routing, Intake & Rejected Request Revision)
+
+- **Use Case ID:** `UC-005`
+- **Name:** Gửi Yêu cầu Dịch vụ Nội bộ, Định tuyến Tự động, Tiếp nhận và Sửa đổi Yêu cầu Bị Từ chối
+- **Goal:** Cho phép nhân viên gửi yêu cầu dịch vụ nội bộ theo danh mục chuẩn, tự động định tuyến yêu cầu tới đúng phòng ban/người phụ trách, đảm bảo bộ phận nhận xác nhận tiếp nhận trước khi xử lý, và cho phép người gửi tạo bản sửa đổi có liên kết truy vết khi yêu cầu bị từ chối.
+- **Primary Actor:** `A04` — Nhân viên trong vai trò Người gửi yêu cầu (`Requester`), `A03`/`A04` — Quản lý hoặc Nhân viên bộ phận tiếp nhận (`Receiver / Processor`).
+- **Secondary Actors:** `A05` — Trợ lý AI (`AI_AGENT` hỗ trợ gợi ý dịch vụ và kiểm tra độ đầy đủ thông tin).
+- **Trigger:** Nhân viên phát sinh nhu cầu hỗ trợ dịch vụ nội bộ (ví dụ: xin cấp quyền truy cập, yêu cầu thiết bị, hỗ trợ hành chính/nhân sự).
+- **Preconditions:**
+  1. Người gửi đã đăng nhập và có quyền tạo yêu cầu (`requests.create`).
+  2. Dịch vụ nội bộ được chọn đang ở trạng thái hoạt động (`ACTIVE`).
+- **Main Success Scenario:**
+  1. Người gửi khởi tạo yêu cầu mới, chọn Dịch vụ nội bộ phù hợp (hoặc nhập mô tả nhu cầu để Trợ lý AI gợi ý dịch vụ theo `UC-011`), nhập tiêu đề, mô tả chi tiết, mức độ ưu tiên và đính kèm tài liệu liên quan (nếu có).
+  2. Người gửi bấm **Gửi yêu cầu (`Submit`)**. Hệ thống chuyển yêu cầu từ `DRAFT` (hoặc tạo trực tiếp) sang `SUBMITTED`, ghim phiên bản Quy trình (`WorkflowVersion`) và phiên bản SLA (`SLAVersion`) hiện hành của dịch vụ (`BR-013`, `BR-014`).
+  3. Hệ thống đánh giá Quy tắc định tuyến (`RoutingRule`) của dịch vụ, tự động chuyển yêu cầu sang trạng thái `ROUTED`, ghi nhận lịch sử định tuyến (`RequestRouting`), kích hoạt đồng hồ SLA và gửi thông báo tới phòng ban/người phụ trách (`BR-008`).
+  4. Người phụ trách hoặc Quản lý bộ phận nhận mở yêu cầu, kiểm tra nội dung và bấm **Xác nhận tiếp nhận (`Receive`)** để chuyển trạng thái từ `ROUTED` sang `RECEIVED` (`BR-009`).
+  5. Người xử lý bấm **Bắt đầu xử lý (`Start Processing`)**, chuyển yêu cầu từ `RECEIVED` sang `IN_PROGRESS`.
+- **Alternative Flows:**
+  - **A1 — Lưu Bản nháp Yêu cầu (`DRAFT`):** Tại bước 2, người gửi có thể lưu yêu cầu ở trạng thái `DRAFT` để chỉnh sửa sau trước khi chính thức gửi đi (`SUBMITTED`).
+  - **A2 — Định tuyến Thủ công hoặc Điều chuyển Bộ phận (`Manual Route / Re-route`):** Nếu dịch vụ chưa có quy tắc định tuyến tự động hoặc yêu cầu cần chuyển sang bộ phận chuyên môn khác, người có quyền điều phối (`requests.route`) thực hiện định tuyến thủ công và lưu lịch sử `RequestRouting`.
+  - **A3 — Yêu cầu Người gửi Bổ sung Thông tin (`WAITING_FOR_INFO`, `FR-REQ-002`):** Sau khi tiếp nhận (`RECEIVED` hoặc `IN_PROGRESS`), nếu thông tin chưa đủ để xử lý, người xử lý chuyển yêu cầu sang `WAITING_FOR_INFO` kèm nội dung câu hỏi bắt buộc (`BR-022`). Hệ thống tạm dừng đồng hồ SLA (`BR-016`) và thông báo cho người gửi. Khi người gửi cung cấp thông tin bổ sung, yêu cầu quay lại xử lý và đồng hồ SLA tiếp tục chạy.
+  - **A4 — Từ chối Yêu cầu và Luồng Tạo Yêu cầu Sửa đổi Mới (`REJECTED -> Revise Request`, `FR-REQ-005`, `FR-REQ-009`):** Nếu yêu cầu không hợp lệ hoặc không đủ điều kiện đáp ứng, bộ phận tiếp nhận/phê duyệt chuyển yêu cầu sang trạng thái kết thúc `REJECTED` kèm lý do bắt buộc (`BR-022`). Người gửi xem lý do từ chối và chọn **Tạo bản sửa đổi (`Revise Rejected Request`)**: hệ thống khởi tạo một bản ghi Yêu cầu mới (ở trạng thái `DRAFT` hoặc `SUBMITTED` mới) sao chép thông tin cần thiết và gắn liên kết truy vết ngược (`ParentRequestId / RevisedFromRequestId`) tới yêu cầu cũ đã bị từ chối, giữ nguyên yêu cầu cũ ở trạng thái `REJECTED` để bảo toàn lịch sử kiểm toán.
+  - **A5 — Hủy Yêu cầu (`CANCELLED`):** Khi nhu cầu không còn cần thiết trước khi yêu cầu được đóng, người gửi hoặc người có thẩm quyền hủy yêu cầu kèm lý do bắt buộc (`BR-022`), chuyển yêu cầu sang trạng thái kết thúc `CANCELLED`.
+- **Exception / Error Flows:**
+  - **E1 — Bỏ qua Bước Xác nhận Tiếp nhận (`BR-009`):** Nếu người xử lý cố chuyển yêu cầu từ `ROUTED` thẳng sang `IN_PROGRESS` hoặc `RESOLVED` mà chưa qua `RECEIVED`, hệ thống từ chối thao tác.
+  - **E2 — Từ chối, Hủy hoặc Yêu cầu Bổ sung Thông tin Không có Lý do (`BR-022`):** Hệ thống chặn thao tác nếu trường lý do để trống.
+- **Business Rules:** `BR-008`, `BR-009`, `BR-013`, `BR-014`, `BR-016`, `BR-021`, `BR-022`, `ADR-0009`.
+- **Permissions / Scope:**
+  - Tạo/Gửi/Sửa đổi yêu cầu của mình: `requests.create` (`Own Scope`).
+  - Định tuyến yêu cầu: `requests.route` (`Managed / Tenant Scope`).
+  - Tiếp nhận và xử lý yêu cầu: `requests.process` trong phạm vi được giao hoặc phạm vi phòng ban quản lý (`Assigned / Managed Scope`).
+- **Postconditions:** Yêu cầu dịch vụ được tiếp nhận chính xác vào luồng xử lý (`IN_PROGRESS`), hoặc được ghi nhận từ chối/hủy/sửa đổi với chuỗi liên kết truy vết đầy đủ.
+- **Related Requirements:**
+  - RDS: `STKN-005`, `STKN-006`, `BIZ-012`, `BIZ-013`, `BIZ-015`, `CAP-006`, `INFO-005`.
+  - SRS: `FR-REQ-001`, `FR-REQ-002`, `FR-REQ-003`, `FR-REQ-004`, `FR-REQ-005`, `FR-REQ-009`, `DR-006`.
+- **Acceptance Criteria:** `AC-013`, `AC-014`, `AC-015`, `AC-017`.
+- **Source:** `SRC-002`, `SRC-025`, `ADR-0009`, `OD-003`.
+- **Status:** `CONFIRMED` (Tập trạng thái hủy chi tiết tham chiếu `OD-003`).
+
+---
+
+### `UC-006`: Xử lý Yêu cầu, Tạo Công việc Liên kết, Giải quyết và Xác nhận Đóng (Request Fulfillment, Linked Task Execution, Resolution & Requester Confirmation)
+
+- **Use Case ID:** `UC-006`
+- **Name:** Xử lý Yêu cầu, Tạo Công việc Liên kết, Giải quyết và Xác nhận Đóng
+- **Goal:** Cho phép bộ phận xử lý phân rã một Yêu cầu dịch vụ phức tạp thành các Công việc thực thi (`Linked Tasks`), kiểm soát chặt chẽ điều kiện hoàn tất toàn bộ công việc con trước khi đánh dấu Yêu cầu đã giải quyết (`RESOLVED`), và đảm bảo chính Người gửi yêu cầu xác nhận nghiệm thu kết quả trước khi đóng hồ sơ (`CONFIRMED -> CLOSED`).
+- **Primary Actor:** `A03`/`A04` — Người xử lý yêu cầu (`Processor / Manager`), `A04` — Người gửi yêu cầu (`Requester`).
+- **Secondary Actors:** Những nhân viên thực hiện các Công việc liên kết (`Task Assignees`).
+- **Trigger:** Yêu cầu dịch vụ đã ở trạng thái đang xử lý (`IN_PROGRESS`).
+- **Preconditions:** Yêu cầu đang ở trạng thái `IN_PROGRESS` (hoặc được khôi phục từ `OVERDUE` về `IN_PROGRESS` theo `ADR-0009`).
+- **Main Success Scenario:**
+  1. Trong quá trình xử lý yêu cầu, Người xử lý hoặc Quản lý khởi tạo một hoặc nhiều Công việc thực thi (`Task`) gắn liên kết trực tiếp với mã Yêu cầu hiện tại (`RequestId`, `BR-004`) để giao cho các cá nhân hoặc phòng ban chuyên môn thực hiện (theo `UC-007` và `UC-008`).
+  2. Các Công việc liên kết được thực hiện và nghiệm thu cho đến khi đạt trạng thái kết thúc (`COMPLETED` hoặc `CANCELLED`).
+  3. Khi toàn bộ Công việc liên kết đã hoàn tất (`BR-011`), Người xử lý nhập nội dung tóm tắt giải pháp thực hiện (`ResolutionSummary`) và bấm **Đánh dấu Đã giải quyết (`Resolve`)**.
+  4. Hệ thống kiểm tra điều kiện chặn `BR-011` (xác nhận không còn bất kỳ `Task` liên kết nào ở trạng thái chưa kết thúc), lưu bản ghi kết quả giải quyết (`RequestResolution`), chuyển trạng thái Yêu cầu từ `IN_PROGRESS` sang `RESOLVED` và gửi thông báo cho Người gửi yêu cầu (`Requester`).
+  5. Người gửi yêu cầu kiểm tra kết quả thực tế và bấm **Xác nhận Hoàn tất (`Confirm Resolution`)**.
+  6. Hệ thống ghi nhận mốc xác nhận của người gửi (`Confirmation`), chuyển trạng thái Yêu cầu qua `CONFIRMED` sang trạng thái đóng hoàn toàn `CLOSED` (`ADR-0009`), dừng đồng hồ SLA và ghi nhật ký kiểm toán.
+- **Alternative Flows:**
+  - **A1 — Giải quyết Yêu cầu Đơn giản Không cần Tạo Công việc Con:** Nếu yêu cầu có thể được người xử lý thực hiện trực tiếp ngay tại chỗ, người xử lý bỏ qua bước 1–2 và chuyển thẳng sang bước 3 (`IN_PROGRESS -> RESOLVED`).
+  - **A2 — Người gửi Từ chối Kết quả Giải quyết để Yêu cầu Xử lý lại (`RESOLVED -> IN_PROGRESS`, `BR-010`, `ADR-0009`):** Tại bước 5, nếu kết quả chưa đáp ứng đúng yêu cầu (ví dụ: cấp sai quyền truy cập GitLab), Người gửi chọn **Từ chối kết quả (`Reject Resolution`)** kèm lý do bắt buộc (`BR-022`). Hệ thống lưu vết từ chối và chuyển Yêu cầu từ `RESOLVED` quay về `IN_PROGRESS` để bộ phận phụ trách khắc phục.
+  - **A3 — Tiếp tục Xử lý Yêu cầu Đã Quá hạn (`OVERDUE -> IN_PROGRESS`, `ADR-0009`):** Nếu Yêu cầu bị chuyển sang `OVERDUE` trước khi giải quyết xong, Người xử lý bấm tiếp tục xử lý để đưa Yêu cầu về `IN_PROGRESS` rồi mới thực hiện `Resolve`.
+- **Exception / Error Flows:**
+  - **E1 — Vi phạm Quy tắc Chặn Giải quyết Khi Còn Công việc Liên kết Chưa Hoàn tất (`BR-011`):** Tại bước 3, nếu vẫn còn ít nhất một `Task` gắn với `Request` đang ở trạng thái `DRAFT`, `ASSIGNED`, `ACCEPTED`, `IN_PROGRESS`, `SUBMITTED`, `CONFIRMED`, `OVERDUE` hoặc `REJECTED` (tức chưa đạt `COMPLETED` hoặc `CANCELLED`), hệ thống lập tức chặn thao tác `Resolve` và thông báo danh sách công việc chưa hoàn tất.
+  - **E2 — Người Không phải Người gửi Cố gắng Xác nhận Đóng Yêu cầu:** Hệ thống từ chối thao tác xác nhận kết quả nếu người gọi không phải là `Requester` của yêu cầu đó (trừ quyền quản trị được ủy quyền hợp lệ).
+- **Business Rules:** `BR-004` (Liên kết Task – Request), `BR-010` (Người gửi xác nhận kết quả giải quyết), `BR-011` (Chặn giải quyết Request khi còn Task liên kết chưa hoàn tất), `BR-021` (Nhật ký kiểm toán), `BR-022` (Bắt buộc nhập lý do khi từ chối kết quả), `ADR-0009`.
+- **Permissions / Scope:**
+  - Tạo Task liên kết và Giải quyết yêu cầu: `requests.process` / `tasks.create` (`Assigned / Managed Scope`).
+  - Xác nhận hoặc Từ chối kết quả giải quyết: Người gửi yêu cầu (`Requester` trong `Own Scope`).
+- **Postconditions:** Yêu cầu dịch vụ được giải quyết triệt để, mọi công việc con đều đã hoàn tất, có xác nhận hai chiều từ người thụ hưởng và đóng ở trạng thái `CLOSED`.
+- **Related Requirements:**
+  - RDS: `STKN-005`, `STKN-006`, `BIZ-014`, `CAP-006`, `INFO-005`, `INFO-006`.
+  - SRS: `FR-REQ-006`, `FR-REQ-007`, `FR-REQ-008`, `DR-006`, `DR-008`.
+- **Acceptance Criteria:** `AC-016`, `AC-017`.
+- **Source:** `SRC-002`, `SRC-026`, `ADR-0009`.
+- **Status:** `CONFIRMED`.
+
+---
+
+### `UC-007`: Giao việc Trực tiếp hoặc cho Phòng ban, Nhận việc và Thực thi (Manager Task Assignment, Department Claim & Task Execution)
+
+- **Use Case ID:** `UC-007`
+- **Name:** Giao việc Trực tiếp hoặc cho Phòng ban, Nhận việc và Thực thi
+- **Goal:** Cho phép Quản lý (`MANAGER`) khởi tạo công việc kèm danh sách kiểm tra (`Checklist`), giao việc đích danh cho cá nhân hoặc giao cho hàng đợi chung của Phòng ban, đảm bảo cơ chế xác nhận nhận việc (`RECEIVE Confirmation` và chiếm quyền sở hữu nguyên tử theo `ADR-0010`), và theo dõi tiến độ thực hiện.
+- **Primary Actor:** `A03` — Quản lý (`MANAGER`), `A04` — Nhân viên nhận việc (`EMPLOYEE / Assignee`).
+- **Secondary Actors:** `A05` — Trợ lý AI (`AI_AGENT` hỗ trợ soạn thảo công việc và gợi ý người nhận phù hợp).
+- **Trigger:** Quản lý cần giao một công việc vận hành độc lập hoặc công việc phát sinh từ một Yêu cầu dịch vụ nội bộ.
+- **Preconditions:**
+  1. Người tạo/giao việc có quyền `tasks.create` và `tasks.assign`.
+  2. Cá nhân hoặc phòng ban được giao việc thuộc cùng doanh nghiệp (`Tenant`) và đang hoạt động (`ACTIVE`).
+- **Main Success Scenario:**
+  1. `A03` tạo Công việc mới (`Task`), nhập Tiêu đề, Mô tả, Mức độ ưu tiên, Hạn chót hoàn thành (`Deadline` bắt buộc ở tương lai theo `ADR-0012`) và thiết lập Danh sách mục kiểm tra (`Checklist Items`). (Có thể dùng AI hỗ trợ tạo bản nháp theo `UC-011`).
+  2. `A03` thực hiện giao việc (`Assign`) cho một **Cá nhân cụ thể (`UserId`)** hoặc cho cả một **Phòng ban (`DepartmentId`)** trong phạm vi cho phép (`BR-005`). Hệ thống tạo bản ghi phân công đang hoạt động (`Active TaskAssignment`), chuyển trạng thái công việc sang `ASSIGNED` và gửi thông báo cho người/phòng ban nhận.
+  3. `A04` mở chi tiết công việc và bấm **Xác nhận Nhận việc (`Accept Task`)**:
+     - Nếu công việc được giao cho cả phòng ban (`DepartmentId != null, UserId == null`), hệ thống thực hiện **gán quyền sở hữu cá nhân nguyên tử một lần (`UserId = actorId`)** cho nhân viên đầu tiên bấm nhận theo `ADR-0010`.
+     - Hệ thống ghi nhận mốc xác nhận thứ nhất (`Confirmation` loại `RECEIVE` theo `BR-006`) và chuyển trạng thái công việc từ `ASSIGNED` sang `ACCEPTED`.
+  4. `A04` bấm **Bắt đầu thực hiện (`Start Work`)**, chuyển trạng thái từ `ACCEPTED` sang `IN_PROGRESS`.
+  5. Trong quá trình thực hiện, `A04` tích hoàn thành từng mục trong `Checklist`, cập nhật tỷ lệ phần trăm tiến độ (`ProgressPercent`) và gửi các Báo cáo tiến độ (`TaskProgressReport`) hoặc trao đổi bình luận khi có vướng mắc.
+- **Alternative Flows:**
+  - **A1 — Người được giao Từ chối Nhận việc (`ASSIGNED -> REJECTED`, `FR-TASK-003`, `OD-001`):** Tại bước 3, nếu người được giao không thể nhận việc vì lý do chính đáng, người có thẩm quyền bấm **Từ chối nhận việc (`Reject Assignment`)** kèm lý do bắt buộc (`BR-022`). Hệ thống chuyển công việc sang `REJECTED` và thông báo cho Quản lý để xem xét giao lại (`REJECTED -> ASSIGNED`).
+  - **A2 — Giao lại Công việc cho Người hoặc Phòng ban Khác (`Reassign`, `FR-TASK-009`, `BR-007`):** Khi cần điều phối lại nhân sự, `A03` thực hiện giao lại công việc kèm lý do bắt buộc (`BR-022`). Hệ thống đóng bản ghi phân công cũ (ghi nhận thời điểm kết thúc), tạo bản ghi `TaskAssignment` mới và **giữ nguyên toàn bộ lịch sử phân công, báo cáo tiến độ, bình luận và tệp đính kèm trước đó**.
+  - **A3 — Hủy Công việc Trước khi Hoàn thành (`Cancel`, `FR-TASK-010`):** Khi công việc không còn cần thực hiện, `A03` hủy công việc kèm lý do bắt buộc (`BR-022`), chuyển trạng thái sang `CANCELLED`.
+- **Exception / Error Flows:**
+  - **E1 — Hai Nhân viên Cùng Phòng ban Bấm Nhận việc Đồng thời (`ADR-0010`):** Khi hai thành viên trong cùng phòng ban bấm nhận một công việc cấp phòng ban cùng lúc, hệ thống chỉ cho phép giao dịch đầu tiên thành công (`200 OK`) và từ chối giao dịch thứ hai với thông báo công việc đã có người nhận (`409 Conflict`).
+  - **E2 — Xem Công việc Ngoài Phạm vi Quyền Đọc (`ADR-0011`, `ADR-0012`):** Nếu một nhân viên hoặc quản lý cố truy cập chi tiết một công việc không thuộc phạm vi quyền đọc của mình (`tenant`, `managed`, `own`, `assigned`), hệ thống trả về phản hồi không tiết lộ (`404 Not Found`).
+- **Business Rules:** `BR-003`, `BR-004`, `BR-005`, `BR-006`, `BR-007`, `BR-021`, `BR-022`, `ADR-0010`, `ADR-0011`, `ADR-0012`.
+- **Permissions / Scope:**
+  - Tạo và giao việc: `tasks.create`, `tasks.assign`.
+  - Nhận việc và cập nhật tiến độ: `tasks.update` (người được giao trực tiếp hoặc thành viên đang hoạt động của phòng ban được giao).
+  - Xem danh sách và chi tiết công việc: Phân tầng theo `tasks.read.tenant`, `tasks.read.managed`, `tasks.read.own`, `tasks.read.assigned` (`ADR-0011`).
+- **Postconditions:** Công việc được giao đúng đối tượng, có xác nhận tiếp nhận rõ ràng, quy trách nhiệm cá nhân minh bạch và theo dõi được tiến độ thực thi theo thời gian thực.
+- **Related Requirements:**
+  - RDS: `STKN-007`, `BIZ-009`, `BIZ-010`, `CAP-005`, `CAP-009`, `INFO-006`.
+  - SRS: `FR-TASK-001`..`006`, `FR-TASK-009`, `FR-TASK-010`, `FR-COL-001`, `DR-007`, `DR-008`, `SEC-003`, `SEC-012`.
+- **Acceptance Criteria:** `AC-010`, `AC-011`.
+- **Source:** `SRC-002`, `ADR-0010`, `ADR-0011`, `ADR-0012`, `OD-001`, `OD-002`.
+- **Status:** `CONFIRMED` (Thẩm quyền từ chối việc phòng ban và gửi báo cáo khi quá hạn tham chiếu `OD-001`, `OD-002`).
+
+---
+
+### `UC-008`: Nộp Kết quả Công việc, Đính kèm Bằng chứng và Quản lý Nghiệm thu (Task Result Submission, Evidence Attachment & Manager Confirmation / Rework)
+
+- **Use Case ID:** `UC-008`
+- **Name:** Nộp Kết quả Công việc, Đính kèm Bằng chứng và Quản lý Nghiệm thu
+- **Goal:** Cho phép nhân viên đính kèm tệp bằng chứng dung lượng lớn (tới 500 MB), nộp báo cáo kết quả thực hiện công việc (`TaskResult`), và cho phép Quản lý kiểm tra, xác nhận nghiệm thu hoàn tất (`CONFIRMED -> COMPLETED`) hoặc từ chối kết quả để yêu cầu làm lại (`SUBMITTED -> IN_PROGRESS`).
+- **Primary Actor:** `A04` — Nhân viên thực hiện (`Assignee`), `A03` — Quản lý nghiệm thu (`MANAGER`).
+- **Secondary Actors:** `A05` — Trợ lý AI (`AI_AGENT` hỗ trợ đánh giá độ đầy đủ của kết quả nộp theo `FR-AI-004`).
+- **Trigger:** Nhân viên hoàn thành nội dung công việc được giao và sẵn sàng nộp kết quả nghiệm thu.
+- **Preconditions:** Công việc đang ở trạng thái `IN_PROGRESS` (nếu công việc đang ở trạng thái quá hạn `OVERDUE`, nhân viên bắt buộc phải thực hiện thao tác tiếp tục công việc `OVERDUE -> IN_PROGRESS` trước theo `ADR-0003`).
+- **Main Success Scenario:**
+  1. `A04` tải lên một hoặc nhiều tệp bằng chứng thực hiện công việc (tài liệu, hình ảnh, bản ghi log, video kiểm thử với dung lượng tối đa 500 MB/tệp theo `BR-020`). Hệ thống kiểm tra kiểu tệp, kích thước và mã băm toàn vẹn trước khi gắn tệp vào hồ sơ công việc.
+  2. `A04` nhập nội dung tóm tắt kết quả thực hiện (`ResultSummary`) và bấm **Nộp kết quả (`Submit Result`)**.
+  3. Hệ thống lưu bản ghi kết quả (`TaskResult`), chuyển trạng thái công việc từ `IN_PROGRESS` sang `SUBMITTED` và gửi thông báo chờ nghiệm thu cho `A03` (`MANAGER`).
+  4. `A03` mở hồ sơ công việc, xem nội dung kết quả, tải tệp bằng chứng để kiểm tra (có thể tham khảo nhận xét đánh giá chất lượng của Trợ lý AI) và bấm **Xác nhận Hoàn thành (`Confirm Completion`)**.
+  5. Hệ thống lưu bản ghi xác nhận mốc thứ hai (`Confirmation` loại `RESULT` theo `BR-006`), chuyển trạng thái công việc qua `CONFIRMED` sang trạng thái hoàn tất `COMPLETED`, dừng đồng hồ SLA và ghi nhật ký kiểm toán.
+- **Alternative Flows:**
+  - **A1 — Quản lý Từ chối Kết quả và Yêu cầu Làm lại (`SUBMITTED -> IN_PROGRESS`, `BR-006`, `ADR-0003`):** Tại bước 4, nếu kết quả nộp chưa đạt yêu cầu hoặc thiếu bằng chứng, `A03` chọn **Từ chối kết quả (`Reject Result / Request Rework`)** và bắt buộc nhập lý do từ chối (`BR-022`). Hệ thống lưu bản ghi đánh giá không đạt, giữ nguyên các bản ghi `TaskResult` cũ để làm lịch sử, chuyển trạng thái công việc từ `SUBMITTED` quay về `IN_PROGRESS` và thông báo cho `A04` bổ sung/làm lại.
+  - **A2 — Tiếp tục Công việc Đã Quá hạn Trước khi Nộp Kết quả (`OVERDUE -> IN_PROGRESS -> SUBMITTED`, `ADR-0003`):** Nếu công việc đã bị đánh dấu `OVERDUE`, `A04` bấm **Tiếp tục thực hiện (`Resume`)** để chuyển trạng thái từ `OVERDUE` về `IN_PROGRESS`, sau đó mới thực hiện bước nộp kết quả sang `SUBMITTED`.
+- **Exception / Error Flows:**
+  - **E1 — Nộp Kết quả Trực tiếp từ Trạng thái `OVERDUE` (`ADR-0003`):** Nếu người dùng cố gọi thao tác nộp kết quả khi trạng thái đang là `OVERDUE` mà chưa chuyển về `IN_PROGRESS`, hệ thống từ chối chuyển trạng thái.
+  - **E2 — Tệp Đính kèm Vượt Quá 500 MB hoặc Sai Mã Kiểm tra Toàn vẹn (`BR-020`):** Hệ thống từ chối hoàn tất phiên tải tệp và thông báo lỗi dung lượng/toàn vẹn rõ ràng.
+  - **E3 — Từ chối Kết quả Không Nhập Lý do (`BR-022`):** Hệ thống chặn thao tác từ chối nghiệm thu nếu lý do bị bỏ trống.
+- **Business Rules:** `BR-006` (Xác nhận hai mốc RECEIVE & RESULT), `BR-020` (Tệp đính kèm tối đa 500 MB), `BR-021` (Nhật ký kiểm toán), `BR-022` (Bắt buộc nhập lý do khi từ chối kết quả), `ADR-0003`.
+- **Permissions / Scope:**
+  - Đính kèm tệp và nộp kết quả: `tasks.update`, `attachments.upload` (`Assigned Scope`).
+  - Nghiệm thu hoặc từ chối kết quả: `tasks.confirm` trong phạm vi quản lý (`Managed Scope`) hoặc người giao việc.
+- **Postconditions:** Công việc kết thúc ở trạng thái `COMPLETED` với đầy đủ bằng chứng và xác nhận nghiệm thu, hoặc quay về `IN_PROGRESS` với lý do yêu cầu làm lại rõ ràng.
+- **Related Requirements:**
+  - RDS: `STKN-007`, `STKN-012`, `BIZ-010`, `BIZ-011`, `BIZ-023`, `CAP-005`, `CAP-010`, `INFO-006`, `INFO-009`.
+  - SRS: `FR-TASK-004`, `FR-TASK-007`, `FR-TASK-008`, `FR-COL-002`, `IR-FILE-001`, `IR-FILE-002`, `DR-007`, `DR-008`, `DR-011`, `NFR-FILE-001`, `SEC-006`.
+- **Acceptance Criteria:** `AC-011`, `AC-012`, `AC-021`.
+- **Source:** `SRC-002`, `SRC-023`, `ADR-0003`.
+- **Status:** `CONFIRMED`.
+
+---
+
+### `UC-009`: Thực thi Bước Phê duyệt trong Quy trình Công việc (Workflow Execution & Multi-Step Approval Decision)
+
+- **Use Case ID:** `UC-009`
+- **Name:** Thực thi Bước Phê duyệt trong Quy trình Công việc
+- **Goal:** Đảm bảo các Yêu cầu hoặc Công việc gắn với quy trình có bước phê duyệt bắt buộc phải được định tuyến tới đúng người có thẩm quyền phê duyệt (`Approver`) và chỉ được phép chuyển sang bước thực thi tiếp theo sau khi có quyết định phê duyệt hợp lệ (`BR-012`).
+- **Primary Actor:** `A03` / Người có thẩm quyền phê duyệt (`Approver`).
+- **Secondary Actors:** `A04` (Người gửi yêu cầu), `A05` (Trợ lý AI hỗ trợ tóm tắt hồ sơ phục vụ phê duyệt).
+- **Trigger:** Một Yêu cầu dịch vụ hoặc Công việc đi vào bước yêu cầu phê duyệt theo cấu hình của `WorkflowVersion` hoặc `ApprovalRule`.
+- **Preconditions:**
+  1. Hồ sơ có gắn `WorkflowVersion` và `ApprovalRule` đã phát hành.
+  2. Hồ sơ chuyển sang trạng thái chờ phê duyệt (`WAITING_APPROVAL`).
+- **Main Success Scenario:**
+  1. Khi hồ sơ bước vào giai đoạn cần phê duyệt, hệ thống tự động khởi tạo phiên phê duyệt (`ApprovalInstance`) cùng các bước phê duyệt (`ApprovalStepInstance`), tạm dừng đồng hồ SLA của yêu cầu (`BR-016`) và gửi thông báo cho người phê duyệt của bước hiện hành (`FR-WF-003`).
+  2. Người phê duyệt mở chi tiết hồ sơ, xem xét thông tin yêu cầu, lịch sử trao đổi và tài liệu đính kèm (có thể sử dụng tính năng AI tóm tắt nhanh nội dung theo `FR-AI-003`).
+  3. Người phê duyệt chọn **Chấp thuận (`Approve`)** và nhập ghi chú phê duyệt (nếu có) (`FR-WF-004`).
+  4. Hệ thống ghi nhận quyết định phê duyệt kèm dấu thời gian vào `ApprovalStepInstance` và `AuditLog`.
+  5. Khi bước phê duyệt hiện tại đã hội tụ đủ điều kiện chấp thuận (và không còn bước phê duyệt tuần tự tiếp theo), hệ thống mở khóa tiến trình (`FR-WF-002`), chuyển hồ sơ sang bước xử lý tiếp theo (`ROUTED` / `IN_PROGRESS`) và kích hoạt lại đồng hồ SLA.
+- **Alternative Flows:**
+  - **A1 — Phê duyệt Nhiều Cấp Tuần tự (`Multi-Step Sequential Approval`):** Nếu quy tắc phê duyệt có nhiều bước liên tiếp (ví dụ: Bước 1 — Trưởng bộ phận duyệt; Bước 2 — Quản trị CNTT duyệt), sau khi Bước 1 được chấp thuận, hệ thống tự động kích hoạt và thông báo cho người phê duyệt của Bước 2.
+  - **A2 — Người Phê duyệt Từ chối (`Reject Approval`, `FR-WF-004`, `BR-022`):** Tại bước 3, nếu người phê duyệt không đồng ý, họ chọn **Từ chối (`Reject`)** kèm lý do bắt buộc (`BR-022`). Hệ thống đánh dấu phiên phê duyệt là `REJECTED`, chuyển Yêu cầu sang trạng thái `REJECTED` (cho phép người gửi tạo bản sửa đổi theo `UC-005` Nhánh A4) và thông báo cho người gửi.
+- **Exception / Error Flows:**
+  - **E1 — Cố gắng Thực thi hoặc Giải quyết Hồ sơ Khi Chưa Hoàn tất Bước Phê duyệt (`BR-012`):** Hệ thống chặn mọi thao tác bỏ qua bước phê duyệt đang mở.
+  - **E2 — Người Dùng Không Có Thẩm quyền Tại Bước Phê duyệt Hiện tại:** Nếu người gọi không phải là người phê duyệt được chỉ định cho bước hiện hành, hệ thống từ chối thao tác (`403 Forbidden`).
+- **Business Rules:** `BR-012` (Bắt buộc hoàn tất phê duyệt trước khi đi tiếp), `BR-013` (Ghim phiên bản quy trình bất biến), `BR-016` (Tạm dừng SLA khi chờ phê duyệt), `BR-021` (Nhật ký kiểm toán), `BR-022` (Bắt buộc nhập lý do khi từ chối phê duyệt).
+- **Permissions / Scope:** Yêu cầu quyền `requests.approve` / người được chỉ định trong `ApprovalStepInstance` trong cùng `Tenant`.
+- **Postconditions:** Quyết định phê duyệt hoặc từ chối được ghi nhận bất biến; hồ sơ được phép đi tiếp đúng quy trình hoặc dừng lại an toàn.
+- **Related Requirements:**
+  - RDS: `STKN-009`, `BIZ-016`, `BIZ-017`, `CAP-007`, `INFO-007`.
+  - SRS: `FR-SVC-004`, `FR-WF-002`, `FR-WF-003`, `FR-WF-004`, `DR-009`.
+- **Acceptance Criteria:** `AC-018`.
+- **Source:** `SRC-002`, `SRC-003`, `OD-008`, `OD-011`.
+- **Status:** `CONFIRMED` (Quy tắc hội tụ nhiều người duyệt cùng một bước và ánh xạ bước quy trình tham chiếu `OD-008`, `OD-011`).
+
+---
+
+### `UC-010`: Theo dõi Đồng hồ SLA, Tạm dừng Hợp lệ và Leo thang Khi Quá hạn (SLA Clock Tracking, Valid Pause/Resume & Multi-Tier Escalation)
+
+- **Use Case ID:** `UC-010`
+- **Name:** Theo dõi Đồng hồ SLA, Tạm dừng Hợp lệ và Leo thang Khi Quá hạn
+- **Goal:** Tự động đo lường thời gian xử lý Công việc và Yêu cầu theo đúng lịch làm việc hành chính đã ghim (`BusinessCalendar`), phát cảnh báo sớm trước khi trễ hạn, tạm dừng đồng hồ ở các trạng thái chờ hợp lệ và tự động leo thang thông báo theo cấp khi quá hạn.
+- **Primary Actor:** Tiến trình Giám sát Thời gian Nền tảng (System SLA Background Monitor), `A03` (`MANAGER`), `A04` (`EMPLOYEE`).
+- **Secondary Actors:** Hệ thống Thông báo Thời gian thực (Notification Service).
+- **Trigger:** Hồ sơ Công việc (`Task`) hoặc Yêu cầu (`Request`) có gắn `SLAVersion` được khởi tạo hoặc thay đổi trạng thái, hoặc đến chu kỳ đánh giá của tiến trình giám sát SLA.
+- **Preconditions:** Hồ sơ đang ở trạng thái hoạt động và tham chiếu tới một bản chụp `SLAVersion` và `BusinessCalendar` bất biến (`ADR-0004`).
+- **Main Success Scenario:**
+  1. Ngay khi hồ sơ bắt đầu tính SLA, hệ thống khởi tạo trạng thái theo dõi đồng hồ SLA (`SLAState`) dựa trên `TargetMinutes`, `WarningMinutes` và `BusinessCalendar` đã ghim (`BR-014`, `ADR-0004`).
+  2. Hệ thống tính toán số phút làm việc thực tế đã trôi qua (chỉ tính thời gian nằm trong khung giờ làm việc và loại trừ các ngày nghỉ lễ được định nghĩa trong `BusinessCalendar`).
+  3. Khi số phút làm việc đã trôi qua đạt ngưỡng `WarningMinutes` (`0 <= WarningMinutes < TargetMinutes` theo `ADR-0005`), hệ thống ghi nhận sự kiện `WARNING` (`SLAEvent`) và phát thông báo cảnh báo sớm tới người đang phụ trách xử lý và quản lý liên quan (`FR-SLA-002`, `BR-015`).
+  4. Nếu hồ sơ được hoàn tất/giải quyết trước khi vượt quá `TargetMinutes`, hệ thống dừng đồng hồ SLA và ghi nhận hồ sơ **Đạt cam kết SLA (`SLA Met`)**.
+- **Alternative Flows:**
+  - **A1 — Tạm dừng và Tiếp tục Đồng hồ SLA ở Các Trạng thái Chờ Hợp lệ (`FR-SLA-004`, `BR-016`, `OD-012`):** Khi hồ sơ chuyển sang trạng thái chờ thông tin từ người gửi (`WAITING_FOR_INFO`) hoặc chờ phê duyệt (`WAITING_APPROVAL`), hệ thống chuyển đồng hồ SLA sang trạng thái tạm dừng (`PAUSED`) và ghi nhận sự kiện `PAUSED`. Khi hồ sơ quay trở lại trạng thái xử lý (`IN_PROGRESS`), hệ thống tiếp tục tính đồng hồ SLA (`RESUMED`) từ số phút đã tích lũy trước đó.
+  - **A2 — Quá hạn (`OVERDUE`) và Leo thang Thông báo Nhiều Cấp (`FR-SLA-003`, `BR-015`, `ADR-0006`):** Nếu số phút làm việc tiêu thụ vượt quá `TargetMinutes` mà hồ sơ vẫn chưa hoàn tất, hệ thống tự động chuyển trạng thái hồ sơ sang `OVERDUE`, ghi nhận sự kiện `BREACHED` và kích hoạt các cấp leo thang (`level = 1..N`) theo số phút quá hạn tăng dần (`afterMinutes`) trong `EscalationRules`:
+    - Mỗi cấp leo thang chỉ phát thông báo đúng một lần (idempotent).
+    - Hệ thống gửi thông báo leo thang tới cấp quản lý tương ứng nhưng **giữ nguyên người sở hữu/phụ trách hiện tại của hồ sơ** (`ADR-0006`).
+- **Exception / Error Flows:**
+  - **E1 — Tiến trình Nền Chạy Lại Nhiều Lần Trên Cùng Một Hồ sơ Quá hạn:** Hệ thống kiểm tra lịch sử sự kiện `SLAEvent` đã phát để đảm bảo không gửi trùng lặp thông báo cảnh báo hoặc leo thang của cùng một cấp (`ADR-0006`).
+- **Business Rules:** `BR-014` (Ghim SLAVersion bất biến), `BR-015` (Cảnh báo sớm và tự động quá hạn/leo thang), `BR-016` (Tạm dừng đồng hồ SLA ở trạng thái chờ), `ADR-0004`, `ADR-0005`, `ADR-0006`.
+- **Permissions / Scope:** Tiến trình hệ thống thực thi tự động theo từng `TenantId`; thông báo cảnh báo/leo thang chỉ gửi tới người phụ trách và quản lý có thẩm quyền trong cùng `Tenant`.
+- **Postconditions:** Trạng thái tuân thủ SLA, các mốc cảnh báo, tạm dừng, vi phạm và leo thang đều được ghi nhận chính xác phục vụ điều hành và báo cáo tuân thủ SLA.
+- **Related Requirements:**
+  - RDS: `STKN-008`, `BIZ-018`, `BIZ-019`, `BIZ-020`, `CAP-008`, `CAP-009`, `INFO-008`.
+  - SRS: `FR-SLA-002`, `FR-SLA-003`, `FR-SLA-004`, `IR-NOTIF-001`, `IR-NOTIF-002`, `DR-010`.
+- **Acceptance Criteria:** `AC-019`, `AC-020`.
+- **Source:** `SRC-002`, `ADR-0004`, `ADR-0005`, `ADR-0006`, `OD-010`, `OD-012`.
+- **Status:** `CONFIRMED` (Tính độc lập đồng hồ SLA giữa Request cha và Task con tham chiếu `OD-012`).
+
+---
+
+### `UC-011`: Tương tác Trợ lý AI Hỗ trợ Tác nghiệp Có Kiểm soát Con người (Human-in-the-Loop AI-Assisted Operations)
+
+- **Use Case ID:** `UC-011`
+- **Name:** Tương tác Trợ lý AI Hỗ trợ Tác nghiệp Có Kiểm soát Con người
+- **Goal:** Cung cấp 10 năng lực hỗ trợ thông minh bằng AI giúp giảm thời gian nhập liệu, phân loại, tổng hợp thông tin và phát hiện rủi ro cho người dùng doanh nghiệp, đồng thời đảm bảo tuyệt đối nguyên tắc **Con người kiểm soát quyết định cuối cùng (Human-in-the-Loop — `BR-017`, `BR-018`, `BR-019`)**.
+- **Primary Actor:** `A02` (`COMPANY_ADMIN`), `A03` (`MANAGER`), `A04` (`EMPLOYEE`).
+- **Secondary Actors:** `A05` — Trợ lý Vận hành AI (`AI_AGENT`), Nhà cung cấp Mô hình Ngôn ngữ Lớn bên ngoài (External LLM Provider).
+- **Trigger:** Người dùng kích hoạt một chức năng hỗ trợ AI trên giao diện trong quá trình tạo yêu cầu, giao việc, xử lý hồ sơ, nghiệm thu hoặc xem bảng điều khiển.
+- **Preconditions:**
+  1. Người dùng đã đăng nhập và có quyền sử dụng trợ lý AI (`ai.use`).
+  2. Tính năng AI đang được bật trong cấu hình của doanh nghiệp (`TenantSetting` theo `BR-019`).
+- **Main Success Scenario:**
+  1. Người dùng yêu cầu một trong 10 năng lực hỗ trợ của `A05` (`AI_AGENT`):
+     - **Soạn thảo bản nháp Công việc (`FR-AI-001`):** Sinh tiêu đề, mô tả, checklist và độ ưu tiên gợi ý từ mô tả ngôn ngữ tự nhiên.
+     - **Gợi ý người hoặc phòng ban nhận việc (`FR-AI-002`):** Đề xuất ứng viên/phòng ban phù hợp dựa trên phạm vi và khối lượng công việc.
+     - **Tóm tắt nội dung và lịch sử trao đổi (`FR-AI-003`):** Tóm tắt nhanh chuỗi bình luận và lịch sử xử lý dài của Task/Request.
+     - **Đánh giá chất lượng kết quả nộp (`FR-AI-004`):** Kiểm tra mức độ khớp giữa kết quả nộp (`TaskResult`) với yêu cầu và checklist ban đầu.
+     - **Phân tích rủi ro trễ hạn và điểm nghẽn (`FR-AI-005`):** Cảnh báo sớm nguy cơ vi phạm SLA và nguyên nhân tắc nghẽn.
+     - **Phát hiện bất thường vận hành (`FR-AI-006`):** Nhận diện các mẫu bất thường (ví dụ: tỷ lệ từ chối/làm lại tăng đột biến).
+     - **Gợi ý Dịch vụ và Phân loại cho Yêu cầu mới (`FR-AI-007`):** Đề xuất đúng `Service` và `ServiceCategory` từ mô tả vấn đề của nhân viên.
+     - **Kiểm tra độ đầy đủ thông tin trước khi gửi Yêu cầu (`FR-AI-008`):** Phát hiện các thông tin còn thiếu trước khi nhân viên bấm gửi.
+     - **Hỏi đáp trạng thái hồ sơ bằng ngôn ngữ tự nhiên (`FR-AI-009`):** Trả lời câu hỏi về tình trạng các hồ sơ trong phạm vi quyền đọc của người dùng.
+     - **Tổng hợp nhận định thông minh trên Bảng điều khiển (`FR-AI-010`):** Tóm tắt xu hướng hiệu suất và điểm cần lưu ý cho Quản lý/Admin.
+  2. Hệ thống kiểm tra quyền hạn và lọc ngữ cảnh dữ liệu **nghiêm ngặt trong phạm vi `TenantId` và phạm vi quyền đọc của chính người dùng đang gọi**, tuyệt đối không đưa dữ liệu ngoài phạm vi hoặc của doanh nghiệp khác vào ngữ cảnh AI (`BR-002`, `SEC-009`).
+  3. Hệ thống gửi yêu cầu tới dịch vụ AI, nhận kết quả, lưu vết đầy đủ vào lịch sử tương tác và đề xuất AI (`AIInteraction`, `AIRecommendation`, `AIAgentAction`) và hiển thị cho người dùng kèm **nhãn nhận diện rõ ràng là "Đề xuất bởi AI (AI Suggestion)"** (`BR-018`).
+  4. Hệ thống **không tự động ghi nhận thay đổi trạng thái nghiệp vụ** (`BR-017`). Người dùng xem xét đề xuất của AI và chủ động chọn một trong ba quyết định:
+     - **Chấp nhận (`ACCEPT`):** Điền nội dung đề xuất vào biểu mẫu để người dùng xác nhận lưu.
+     - **Chỉnh sửa (`EDIT`):** Sửa đổi nội dung gợi ý trước khi áp dụng.
+     - **Bỏ qua (`IGNORE`):** Đóng gợi ý và thao tác thủ công.
+  5. Hệ thống lưu quyết định của người dùng (`ACCEPT / EDIT / IGNORE`) vào hồ sơ đề xuất AI và nhật ký kiểm toán.
+- **Alternative Flows:**
+  - **A1 — Quản trị viên Doanh nghiệp Tắt Tính năng AI (`BR-019`):** `A02` tắt cấu hình AI của doanh nghiệp bất kỳ lúc nào; toàn bộ luồng công việc và yêu cầu vẫn vận hành bình thường 100% ở chế độ thủ công.
+- **Exception / Error Flows:**
+  - **E1 — Dịch vụ AI Bên ngoài Quá thời gian chờ (Timeout), Lỗi hoặc Vượt Giới hạn Tốc độ (`BR-019`, `OD-014`):** Hệ thống xử lý suy giảm an toàn (graceful degradation), hiển thị thông báo thân thiện rằng trợ lý AI tạm thời không khả dụng và giữ nguyên biểu mẫu để người dùng nhập liệu thủ công mà không làm gián đoạn công việc.
+  - **E2 — Cố gắng Sử dụng AI để Truy vấn Dữ liệu Ngoài Phạm vi Quyền Đọc (Prompt Injection / Scope Bypass):** Do dữ liệu đầu vào đã được lọc cứng theo quyền đọc của người gọi tại tầng ứng dụng trước khi gọi AI, mọi câu hỏi vượt phạm vi đều không thể truy xuất dữ liệu trái phép.
+- **Business Rules:** `BR-002` (Cách ly đa thuê bao), `BR-017` (AI không tự ý quyết định trạng thái cuối cùng), `BR-018` (Đánh dấu rõ nội dung AI), `BR-019` (Bật/tắt AI theo Tenant và suy giảm an toàn), `BR-021` (Nhật ký kiểm toán).
+- **Permissions / Scope:** Quyền `ai.use`; ngữ cảnh dữ liệu bị giới hạn cứng bởi quyền đọc thực tế của người gọi (`Caller Scope`) trong cùng `TenantId`.
+- **Postconditions:** Người dùng được hỗ trợ tăng tốc tác nghiệp trong khi quyền kiểm soát, tính an toàn dữ liệu và dấu vết kiểm toán được bảo toàn tuyệt đối.
+- **Related Requirements:**
+  - RDS: `STKN-010`, `STKN-011`, `BIZ-021`, `BIZ-022`, `CAP-012`, `INFO-010`, `QREQ-008`, `QREQ-009`, `EXT-002`.
+  - SRS: `FR-AI-001`..`010`, `IR-UI-003`, `IR-EXT-001`, `DR-012`, `NFR-AI-001`, `NFR-AI-002`, `SEC-008`, `SEC-009`.
+- **Acceptance Criteria:** `AC-022`, `AC-023`, `AC-024`.
+- **Source:** `SRC-002`, `SRC-004`, `SRC-022`, `OD-014`.
+- **Status:** `CONFIRMED` (Ngưỡng timeout và giới hạn tần suất gọi AI tham chiếu `OD-014`).
+
+---
+
+### `UC-012`: Tra cứu Bảng điều khiển, Báo cáo Vận hành, Tìm kiếm Hợp nhất, Lưu trữ và Kiểm toán (Dashboards, Operational Reporting, Unified Search, Archiving & Audit Inspection)
+
+- **Use Case ID:** `UC-012`
+- **Name:** Tra cứu Bảng điều khiển, Báo cáo Vận hành, Tìm kiếm Hợp nhất, Lưu trữ và Kiểm toán
+- **Goal:** Cung cấp cho Quản lý và Quản trị viên cái nhìn tức thời về hiệu suất vận hành, khối lượng công việc và tỷ lệ tuân thủ SLA đúng theo phạm vi thẩm quyền; đồng thời hỗ trợ tìm kiếm hợp nhất, lưu trữ hồ sơ đã hoàn tất và tra cứu nhật ký kiểm toán bất biến.
+- **Primary Actor:** `A01` (`PLATFORM_ADMIN`), `A02` (`COMPANY_ADMIN`), `A03` (`MANAGER`), `A04` (`EMPLOYEE`).
+- **Secondary Actors:** Không có.
+- **Trigger:** Người dùng mở Bảng điều khiển, truy xuất báo cáo định kỳ, tìm kiếm hồ sơ công việc/yêu cầu, đưa hồ sơ đã đóng vào kho lưu trữ hoặc kiểm tra lịch sử kiểm toán.
+- **Preconditions:** Người dùng đã đăng nhập hợp lệ và có quyền xem báo cáo/tìm kiếm/kiểm toán tương ứng.
+- **Main Success Scenario:**
+  1. **Giám sát trên Bảng điều khiển Quản lý (`Scoped Manager Dashboard`, `FR-REP-001`):** `A03` (`MANAGER`) mở bảng điều khiển để theo dõi số lượng Công việc và Yêu cầu theo trạng thái, các hồ sơ sắp đến hạn hoặc đã quá hạn (`OVERDUE`) và các mục đang chờ mình phê duyệt/nghiệm thu **chỉ trong phạm vi các phòng ban thuộc `ManagementScope` của mình** (`BR-003`).
+  2. **Xem Báo cáo Tổng hợp Toàn Doanh nghiệp, Phân bổ Khối lượng Công việc và Tuân thủ SLA (`FR-REP-002`, `FR-REP-003`, `FR-REP-004`):** `A02` (toàn doanh nghiệp) hoặc `A03` (trong phạm vi quản lý) lọc báo cáo theo khoảng thời gian và phòng ban để đánh giá khối lượng công việc theo nhân sự/phòng ban và tỷ lệ hoàn thành đúng hạn vs. trễ hạn SLA.
+  3. **Tìm kiếm và Lọc Hợp nhất (`Unified Search`, `FR-COL-004`):** Người dùng (`A02`, `A03`, `A04`) tìm kiếm theo từ khóa, trạng thái, độ ưu tiên, phòng ban, người phụ trách hoặc khoảng thời gian trên cả `Task` và `Request` trong phạm vi quyền đọc được phép.
+  4. **Lưu trữ Hồ sơ Đã Hoàn tất (`Archive`, `FR-COL-003`):** Đối với các Công việc đã `COMPLETED`/`CANCELLED` hoặc Yêu cầu đã `CLOSED`/`REJECTED`/`CANCELLED`, người có thẩm quyền thực hiện gắn cờ lưu trữ (`Archived`) để tách khỏi danh sách tác nghiệp hàng ngày nhưng vẫn giữ nguyên khả năng tra cứu lịch sử.
+  5. **Tra cứu Nhật ký Kiểm toán Bất biến (`Audit Log Inspection`, `M13`):** `A02` tra cứu nhật ký kiểm toán trong phạm vi doanh nghiệp mình (hoặc `A01` tra cứu nhật ký kiểm toán cấp nền tảng) theo thời gian, tác nhân, loại hành động và mã đối tượng.
+- **Alternative Flows:**
+  - **A1 — Kết hợp Nhận định Thông minh của AI trên Bảng điều khiển (`FR-AI-010`):** Khi mở bảng điều khiển, `A02`/`A03` có thể yêu cầu AI tổng hợp nhận định ngắn gọn về các điểm nghẽn và xu hướng vận hành từ dữ liệu thống kê hiện tại.
+- **Exception / Error Flows:**
+  - **E1 — Cố gắng Lưu trữ Hồ sơ Đang Mở (`FR-COL-003`):** Nếu người dùng cố thực hiện lưu trữ (`Archive`) một Công việc hoặc Yêu cầu chưa ở trạng thái kết thúc, hệ thống từ chối thao tác.
+  - **E2 — Cố gắng Xóa hoặc Sửa đổi Nhật ký Kiểm toán (`BR-021`):** Hệ thống chặn tuyệt đối mọi hành vi sửa đổi hoặc xóa bản ghi `AuditLog` ở mọi tầng.
+  - **E3 — Truy vấn Báo cáo cho Phòng ban Ngoài `ManagementScope` (`BR-003`):** Nếu یک `MANAGER` truyền bộ lọc phòng ban không nằm trong `ManagementScope` của mình, hệ thống từ chối hoặc chỉ trả về dữ liệu thuộc phạm vi được cấp quyền.
+- **Business Rules:** `BR-002` (Cách ly đa thuê bao), `BR-003` (Giới hạn theo `ManagementScope`), `BR-021` (Nhật ký kiểm toán bất biến và cấm xóa cứng).
+- **Permissions / Scope:**
+  - Báo cáo quản lý theo phạm vi: `reports.read.managed` (`A03`).
+  - Báo cáo toàn doanh nghiệp & Kiểm toán Tenant: `reports.read.tenant`, `audit.read` (`A02`).
+  - Kiểm toán Nền tảng: `platform.audit.read` (`A01`).
+  - Tìm kiếm & Lưu trữ: Theo phạm vi quyền đọc/quản lý trên hồ sơ (`ADR-0011`).
+- **Postconditions:** Thông tin điều hành, báo cáo hiệu suất, kết quả tìm kiếm và bằng chứng kiểm toán được cung cấp chính xác, trung thực và bảo mật theo đúng phạm vi quyền hạn.
+- **Related Requirements:**
+  - RDS: `STKN-012`, `STKN-013`, `STKN-014`, `BIZ-024`, `BIZ-025`, `BIZ-026`, `CAP-010`, `CAP-011`, `CAP-013`, `INFO-011`, `INFO-012`, `QREQ-002`, `QREQ-007`.
+  - SRS: `FR-COL-003`, `FR-COL-004`, `FR-REP-001`..`004`, `DR-013`, `DR-014`, `NFR-PERF-002`, `NFR-DATA-001`, `SEC-007`, `SEC-011`.
+- **Acceptance Criteria:** `AC-025`, `AC-026`, `AC-027`, `AC-028`.
+- **Source:** `SRC-002`, `SRC-024`, `SRC-031`, `OD-013`, `OD-015`.
+- **Status:** `CONFIRMED` (Chính sách lưu trữ dài hạn và tải chuẩn đo hiệu năng báo cáo tham chiếu `OD-013`, `OD-015`).
+
+---
+
+## 3. Bảng Ma trận Bao phủ giữa Tác nhân, Quy trình Nghiệp vụ và Ca Sử dụng (Actor – Process – Use Case Coverage Matrix)
+
+| Mã UC | Tên Ca Sử dụng | Luồng Nghiệp vụ Liên quan (RDS Mục 6) | Tác nhân Chính | Tác nhân Phụ | Năng lực Sản phẩm (`CAP-*`) | Yêu cầu Nghiệp vụ (`BIZ-*`) |
+|---|---|---|---|---|---|---|
+| `UC-001` | Đăng ký doanh nghiệp, xét duyệt & khởi tạo Tenant mặc định | Flow D (Company Onboarding & Tenant Provisioning) | `A01`, Đại diện công ty | `A02`, Email Service | `CAP-002`, `CAP-009`, `CAP-013` | `BIZ-003`, `BIZ-004` |
+| `UC-002` | Xác thực người dùng, quản lý phiên & khôi phục mật khẩu | Nền tảng bảo mật cho Flow A, B, C, D, E | `A01`, `A02`, `A03`, `A04` | `A02`, Email Service | `CAP-001`, `CAP-013` | `BIZ-001`, `BIZ-002` |
+| `UC-003` | Thiết lập cơ cấu tổ chức, phạm vi quản lý & vai trò | Flow D (Tenant Setup) & Quản trị tổ chức | `A02` | `A03`, `A04` | `CAP-003`, `CAP-013` | `BIZ-005`, `BIZ-006` |
+| `UC-004` | Cấu hình danh mục dịch vụ, định tuyến, quy trình & SLA | Chuẩn bị cấu hình cho Flow A, B, C | `A02` | — | `CAP-004`, `CAP-007`, `CAP-008` | `BIZ-007`, `BIZ-008`, `BIZ-016`, `BIZ-018` |
+| `UC-005` | Gửi yêu cầu dịch vụ, định tuyến, tiếp nhận & sửa đổi | Flow B (Request Processing) & Flow C (Rejected Request Revision) | `A04`, `A03` | `A05` | `CAP-006`, `CAP-009` | `BIZ-012`, `BIZ-013`, `BIZ-015` |
+| `UC-006` | Xử lý yêu cầu, liên kết công việc, giải quyết & xác nhận đóng | Flow B (Request Processing & Resolution) | `A03`, `A04` | Assignees | `CAP-006`, `CAP-005` | `BIZ-014` |
+| `UC-007` | Giao việc (cá nhân/phòng ban), nhận việc & thực thi | Flow A (Manager-Initiated Task Assignment) | `A03`, `A04` | `A05` | `CAP-005`, `CAP-009` | `BIZ-009`, `BIZ-010` |
+| `UC-008` | Nộp kết quả công việc, nghiệm thu hoặc yêu cầu làm lại | Flow A (Task Submission, Confirmation & Rework) | `A04`, `A03` | `A05` | `CAP-005`, `CAP-010` | `BIZ-010`, `BIZ-011`, `BIZ-023` |
+| `UC-009` | Thực thi bước phê duyệt trong quy trình công việc | Flow B (Workflow Approval Gate) | `A03` (Approver) | `A04`, `A05` | `CAP-007`, `CAP-009` | `BIZ-016`, `BIZ-017` |
+| `UC-010` | Giám sát đồng hồ SLA, tạm dừng hợp lệ & leo thang quá hạn | Flow A & Flow B (SLA Governance) | System SLA Monitor, `A03`, `A04` | Notification Service | `CAP-008`, `CAP-009` | `BIZ-018`, `BIZ-019`, `BIZ-020` |
+| `UC-011` | Hỗ trợ tác nghiệp bằng AI có kiểm soát con người | Flow E (Human-in-the-Loop AI Assistance) | `A02`, `A03`, `A04` | `A05`, LLM Provider | `CAP-012` | `BIZ-021`, `BIZ-022` |
+| `UC-012` | Giám sát bảng điều khiển, báo cáo, tìm kiếm & kiểm toán | Giám sát điều hành & Tuân thủ xuyên suốt | `A01`, `A02`, `A03`, `A04` | `A05` | `CAP-010`, `CAP-011`, `CAP-013` | `BIZ-024`, `BIZ-025`, `BIZ-026` |
