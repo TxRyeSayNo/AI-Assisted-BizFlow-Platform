@@ -5,6 +5,7 @@ using BizFlow.Application.Security;
 using Microsoft.AspNetCore.Mvc;
 using Serilog;
 using Serilog.Formatting.Compact;
+LoadDotEnvIfExists();
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Logging.ClearProviders();
@@ -151,5 +152,45 @@ app.MapControllers();
 app.MapHub<BizFlow.Api.Realtime.NotificationHub>(BizFlow.Api.Realtime.NotificationHub.Path,
     options => options.CloseOnAuthenticationExpiration = true);
 app.Run();
+
+static void LoadDotEnvIfExists()
+{
+    try
+    {
+        var current = Directory.GetCurrentDirectory();
+        var candidates = new[]
+        {
+            Path.Combine(current, "deploy", ".env"),
+            Path.Combine(current, "..", "deploy", ".env"),
+            Path.Combine(current, "..", "..", "deploy", ".env"),
+            Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "deploy", ".env"),
+            Path.Combine(current, ".env")
+        };
+        foreach (var candidate in candidates)
+        {
+            if (File.Exists(candidate))
+            {
+                foreach (var line in File.ReadAllLines(candidate))
+                {
+                    var trimmed = line.Trim();
+                    if (string.IsNullOrWhiteSpace(trimmed) || trimmed.StartsWith('#')) continue;
+                    var sep = trimmed.IndexOf('=');
+                    if (sep <= 0) continue;
+                    var key = trimmed[..sep].Trim();
+                    var val = trimmed[(sep + 1)..].Trim();
+                    if (val.Length > 0 && string.IsNullOrEmpty(Environment.GetEnvironmentVariable(key)))
+                    {
+                        Environment.SetEnvironmentVariable(key, val);
+                    }
+                }
+                break;
+            }
+        }
+    }
+    catch
+    {
+        // Ignore dot-env loading exceptions in locked/read-only environments
+    }
+}
 
 public partial class Program;
