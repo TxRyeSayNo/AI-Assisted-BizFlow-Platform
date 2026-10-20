@@ -1,9 +1,9 @@
 # DANH MỤC QUYẾT ĐỊNH CÒN MỞ VÀ CÂU HỎI KHÁM PHÁ (OPEN DECISIONS & DISCOVERY LOG)
 
 - **Dự án:** AI-Assisted BizFlow Platform
-- **Mã tài liệu:** `BIZFLOW-SRS-OD-v1.0`
-- **Phiên bản:** `1.0-DRAFT`
-- **Ngày lập:** `2026-10-18`
+- **Mã tài liệu:** `BIZFLOW-SRS-OD-v1.1`
+- **Phiên bản:** `1.1-DRAFT`
+- **Ngày lập:** `2026-10-18` (Cập nhật rà soát Onboarding: `2026-10-19`)
 - **Trạng thái:** `ACTIVE — AWAITING OWNER SIGN-OFF`
 - **Tài liệu liên quan:** [SRS_v1.0_DRAFT.md](file:///d:/FA26/AI-Assisted-BizFlow-Platform/docs/requirements/srs/SRS_v1.0_DRAFT.md), [SOURCE_REGISTER.md](file:///d:/FA26/AI-Assisted-BizFlow-Platform/docs/requirements/srs/SOURCE_REGISTER.md), [REQUIREMENTS_TRACEABILITY.md](file:///d:/FA26/AI-Assisted-BizFlow-Platform/docs/requirements/srs/REQUIREMENTS_TRACEABILITY.md)
 
@@ -59,10 +59,12 @@ Dưới đây là 7 câu hỏi cốt lõi nhất mà câu trả lời từ Produ
    Hồ sơ SLA sẽ tham chiếu Lịch làm việc mặc định của Tenant qua khóa cấu hình `TenantSetting (key = "sla.default_calendar_id")` hay gắn khóa ngoại `BusinessCalendarId` trực tiếp trên từng `SLAVersion`? Khi yêu cầu chuyển sang `WAITING_FOR_INFO` hoặc `WAITING_APPROVAL` (`FR-SLA-004`), hệ thống chỉ tạm dừng cho `Request` hay tự động tạm dừng luôn đồng hồ SLA của các `Task` con liên kết?
 7. **[Câu hỏi 7 — Ngưỡng cam kết Phi chức năng (NFR), Giới hạn AI và Chính sách lưu trữ dữ liệu (`OD-013`..`OD-016`)]:**
    Bạn có chấp thuận bộ ngưỡng nghiệm thu đề xuất cho môi trường MVP (API chuẩn `p95 <= 500 ms`, Dashboard/Report `p95 <= 2000 ms` ở mức 100 người dùng đồng thời; AI timeout `15 giây` với fallback không chặn luồng chính; RPO `<= 24h`, RTO `<= 4h`; giữ dữ liệu lịch sử tối thiểu 365 ngày và không xóa cứng) làm tiêu chí nghiệm thu chính thức không?
+8. **[Câu hỏi 8 — Mô hình Tiếp nhận Doanh nghiệp (Admin-Gated vs. Self-Service), Xác minh Email, Đăng ký lại và Rollback Khởi tạo Workspace (`OD-021`..`OD-024`)]:**
+   Trong phạm vi MVP theo định hướng Multi-Tenant SaaS (`DEC-WS-001`: 1 Doanh nghiệp = 1 Workspace chính), Stakeholder muốn giữ mô hình **`PLATFORM_ADMIN` phê duyệt thủ công** (`CONFIRMED` tại `FR-TEN-001`..`002`) hay chuyển sang/hỗ trợ song song phương án **Tự đăng ký doanh nghiệp (`Self-Service Company Registration` — `PROPOSED — NOT APPROVED`)** tự động khởi tạo Workspace chính và cấp quyền `COMPANY_ADMIN` ngay sau khi người đại diện xác minh email? Đồng thời, xin xác nhận chính sách: (a) thời hạn hiệu lực mã xác minh email (đề xuất `24 giờ`), (b) cho phép người dùng đăng ký lại (`Re-register`) bằng cùng email/mã công ty khi đơn cũ đã bị từ chối (`REJECTED`) hoặc hết hạn xác minh, và (c) thực thi khởi tạo `Company + Primary Tenant/Workspace + Initial COMPANY_ADMIN` trong một giao dịch nguyên tử (rollback 100% nếu bất kỳ bước khởi tạo hay cấp quyền ban đầu nào thất bại).
 
 ---
 
-## 4. Sổ Đăng ký Chi tiết các Quyết định Còn Mở (`OD-001` đến `OD-018`)
+## 4. Sổ Đăng ký Chi tiết các Quyết định Còn Mở (`OD-001` đến `OD-024`)
 
 ### `OD-001`: Thẩm quyền từ chối nhận việc đối với Task giao cho Phòng ban
 - **Trạng thái:** `OPEN`
@@ -284,3 +286,100 @@ Dưới đây là 7 câu hỏi cốt lõi nhất mà câu trả lời từ Produ
   - **Phương án A (Giữ nguyên thiết kế hiện tại cho MVP, mở rộng ở Enterprise):** Giữ cột khóa ngoại `Tenant.CompanyId -> Company.Id` (vốn đã là quan hệ `1 Company : N Tenants` trong lược đồ cơ sở dữ liệu hiện tại!) nhưng trong MVP chỉ khởi tạo 1 `Tenant` mặc định cho mỗi `Company`. Ở giai đoạn Enterprise, bổ sung màn hình chuyển đổi Workspace (Workspace Switcher) và bảng ánh xạ thành viên đa workspace mà không phải phá vỡ cấu trúc `TenantId` của 36+ bảng nghiệp vụ.
   - **Phương án B:** Đưa tính năng quản lý đa workspace vào ngay MVP.
 - **Khuyến nghị (`PROPOSED — NOT APPROVED`):** Chọn **Phương án A** — tuân thủ nghiêm ngặt quyết định `DEC-WS-001` (MVP = 1 workspace chính/doanh nghiệp), đồng thời tận dụng lợi thế kiến trúc hiện tại là bảng `Tenant` đã tách riêng khỏi bảng `Company` qua khóa ngoại `CompanyId`.
+
+---
+
+### `OD-019`: Số liệu Đo lường Cơ sở (Baseline Metrics) và Chỉ tiêu Định lượng Thành công Nghiệp vụ
+- **Trạng thái:** `OPEN`
+- **Nguồn phát sinh:** `BG-001`..`BG-008`, `RDS_v1.0_DRAFT.md` §3, `SRS_v1.0_DRAFT.md` §3.
+- **Yêu cầu bị ảnh hưởng:** `BG-001`..`BG-008`, `STKN-001`..`STKN-014`.
+- **Mô tả vấn đề:** Các tài liệu gốc xác định rõ 8 mục tiêu định tính (`BG-001`..`BG-008`), nhưng chưa có số liệu đo lường hiện trạng trước khi áp dụng hệ thống (AS-IS Baseline) và tỷ lệ phần trăm cải thiện mục tiêu được phê duyệt chính thức (Target KPIs).
+- **Các phương án:**
+  - **Phương án A:** Ghi nhận các số liệu cơ sở là `TBD (Cần khảo sát tại doanh nghiệp thí điểm)` và thiết lập bộ chỉ số chuẩn hệ thống tự động thu thập (Thời gian định tuyến trung vị, Tỷ lệ hoàn thành đúng hạn SLA, Tỷ lệ hồ sơ trả lại do thiếu thông tin, Tỷ lệ chấp nhận gợi ý AI) kèm ngưỡng đề xuất `PROPOSED — NOT APPROVED`.
+  - **Phương án B:** Tự đặt các con số KPI giả định.
+- **Khuyến nghị (`PROPOSED — NOT APPROVED`):** Chọn **Phương án A**.
+
+---
+
+### `OD-020`: Xử lý các Yêu cầu Đang Mở khi Ngừng Kích hoạt Dịch vụ Nội bộ (`Service Deactivation Impact`)
+- **Trạng thái:** `OPEN`
+- **Nguồn phát sinh:** `FR-SVC-001`, `FR-REQ-001`, `BR-013`, `BR-014`.
+- **Yêu cầu bị ảnh hưởng:** `FR-SVC-001`, `FR-REQ-001`, `UC-004`, `UC-006`.
+- **Mô tả vấn đề:** Khi `COMPANY_ADMIN` chuyển trạng thái một Dịch vụ (`Service`) sang `INACTIVE`, hệ thống chặn tạo yêu cầu mới. Cần xác định rõ hành vi đối với các yêu cầu đã gửi trước đó và đang trong quá trình xử lý.
+- **Các phương án:**
+  - **Phương án A:** Chỉ chặn tạo mới (`DRAFT` / `SUBMITTED` mới) đối với dịch vụ `INACTIVE`; toàn bộ yêu cầu đang mở được phép tiếp tục chạy hết vòng đời theo phiên bản quy trình và SLA đã ghim lúc tạo (`BR-013`, `BR-014`, `ADR-0004`).
+  - **Phương án B:** Tự động hủy toàn bộ yêu cầu đang mở khi dịch vụ ngừng kích hoạt.
+- **Khuyến nghị (`PROPOSED — NOT APPROVED`):** Chọn **Phương án A**.
+
+---
+
+### `OD-021`: Mô hình Tiếp nhận Doanh nghiệp (Admin-Approved vs. Self-Service Onboarding) và Điểm vào Đăng ký Công khai (`Landing / Registration Entry Point`)
+- **Trạng thái:** `OPEN`
+- **Nguồn phát sinh:** Rà soát Onboarding & Workspace Provisioning; đối chiếu `SRC-002` (`FR-TEN-001`, `FR-TEN-002`), `SRC-004` (`UI-01`, `UI-02`), `DEC-WS-001`, `frontend/src/app/app.routes.ts`, `frontend/src/app/pages/login/login.html` và `backend/BizFlow.Api/Controllers/CompanyRegistrationsController.cs`.
+- **Yêu cầu bị ảnh hưởng:** `FR-TEN-001`, `FR-TEN-002`, `FR-TEN-005`, `IR-UI-001`, `IR-UI-004`, `BR-023`, `BR-024`, `UC-001`, `UC-013`, `TST-004`, `TST-031`.
+- **Mô tả vấn đề:**
+  1. **Sự khác biệt giữa Baseline Đã Xác nhận (`CONFIRMED`) và Phương án Đề xuất Multi-Tenant SaaS (`PROPOSED — NOT APPROVED`):** Tài liệu gốc (`SRC-002` `FR-TEN-001`..`002`) xác nhận mô hình có cổng phê duyệt bởi `PLATFORM_ADMIN` (`PENDING -> UI-02 Approve -> ACTIVE Tenant`). Tuy nhiên, theo định hướng Multi-Tenant SaaS cho MVP, phương án **Tự đăng ký doanh nghiệp (`Self-Service Company Registration` — `FR-TEN-005`)** — nơi đại diện đăng ký tài khoản + thông tin công ty, xác minh email và được tự động kích hoạt **01 Primary Tenant / Workspace (`DEC-WS-001`)** kèm quyền `COMPANY_ADMIN` — là phương án đề xuất (`PROPOSED — NOT APPROVED`) giúp loại bỏ điểm nghẽn chờ duyệt thủ công.
+  2. **Khoảng trống Điểm vào Đăng ký (`Landing / Registration Entry Point`) trong thực tế triển khai:** `frontend/src/app/app.routes.ts` chuyển hướng root `''` về `/login`; màn hình `/login` chỉ có dòng chữ tĩnh *"Need access? Contact your company administrator."* mà chưa có tuyến đường `/register-company` hay liên kết CTA công khai.
+- **Các phương án:**
+  - **Phương án A (Giữ nguyên Baseline Đã Xác nhận — Admin-Approved Onboarding):** Bổ sung tuyến đường công khai `/register-company` và liên kết CTA từ `/login` (`UI-01`); đơn đăng ký sau khi gửi/xác minh email dừng ở trạng thái `PENDING` chờ `PLATFORM_ADMIN` phê duyệt tại `/platform/companies` (`UI-02`).
+  - **Phương án B (Phương án Đề xuất cho MVP — Self-Service Onboarding có Cờ Cấu hình Linh hoạt — `PROPOSED — NOT APPROVED`):** Bổ sung điểm vào `/register-company` (CTA từ `/login`); đại diện doanh nghiệp đăng ký thông tin công ty và tài khoản quản trị viên đầu tiên. Ngay sau khi hoàn tất **Xác minh Email (`Email Verification`)**, hệ thống tự động kích hoạt `Company (ACTIVE)`, khởi tạo **01 Không gian làm việc chính (`Primary Tenant`, `DEC-WS-001`)** và gán vai trò `COMPANY_ADMIN` (hỗ trợ cờ cấu hình `Onboarding:ApprovalMode = "SelfService" | "PlatformAdminApproval"`).
+- **Khuyến nghị (`PROPOSED — NOT APPROVED`):** Chọn **Phương án B**, nhưng **không tự ý ghi đè** yêu cầu `CONFIRMED` hiện hành (`FR-TEN-001`..`002`) cho đến khi có phê duyệt chính thức của Product Owner.
+
+---
+
+### `OD-022`: Chính sách Xác minh Email (`Email Verification Policy`), Thời hạn Mã Xác minh và Xử lý Tài khoản / Doanh nghiệp Chưa Xác minh Email
+- **Trạng thái:** `OPEN`
+- **Nguồn phát sinh:** Rà soát luồng đăng ký tài khoản, tạo doanh nghiệp và xác minh email; đối chiếu `Company.cs`, `UserAccount.cs` và `PasswordResetService.cs`.
+- **Yêu cầu bị ảnh hưởng:** `BR-024`, `FR-TEN-001`, `FR-TEN-005`, `IR-EXT-002`, `IR-UI-004`, `DR-002`, `DR-003`, `UC-001`, `UC-013`, `TST-004`, `TST-031`.
+- **Mô tả vấn đề:** Trong mã nguồn hiện tại, thực thể `Company` và `UserAccount` chưa có trường `EmailVerified` / `EmailVerifiedAt` hay cơ chế lưu token xác minh email đăng ký. Cần xác định:
+  1. Khi chưa xác minh email, hồ sơ công ty và tài khoản người đại diện ở trạng thái nào?
+  2. Người đại diện có được phép đăng nhập khi email chưa xác minh không?
+  3. Thời hạn hiệu lực của mã xác minh và giới hạn gửi lại mã (`Resend Verification`).
+- **Các phương án:**
+  - **Phương án A (`PROPOSED — NOT APPROVED`):**
+    1. Bắt buộc xác minh địa chỉ email người đại diện qua token một lần (băm SHA-256) có thời hạn hiệu lực **`24 giờ`**.
+    2. Khi `EmailVerified = false`, đơn đăng ký ở trạng thái chờ xác minh, **chưa kích hoạt Primary Tenant** và **chặn đăng nhập** với mã lỗi `403 AUTH.EMAIL_NOT_VERIFIED`, kèm tùy chọn gửi lại email xác minh (rate limit tối đa `3 lần / 15 phút`).
+    3. Với mô hình Admin-Approved, chỉ đơn đã xác minh email mới được phép `Approve` trên `UI-02`.
+  - **Phương án B:** Không thực hiện xác minh email tự động trong MVP.
+- **Khuyến nghị (`PROPOSED — NOT APPROVED`):** Chọn **Phương án A**.
+
+---
+
+### `OD-023`: Chính sách Xử lý Email Trùng, Mã Doanh nghiệp / `TenantKey` Trùng và Quy tắc Người dùng Đăng ký Lại (`Duplicate & Re-registration Governance`)
+- **Trạng thái:** `OPEN`
+- **Nguồn phát sinh:** Rà soát các trường hợp biên khi đăng ký: trùng email, trùng code/tenant key, đăng ký lại sau khi thất bại/từ chối; đối chiếu `Company.cs` (enum `CompanyStatus` thiếu `Rejected`) và `IdentityModelConfiguration.cs`.
+- **Yêu cầu bị ảnh hưởng:** `BR-024`, `FR-TEN-001`, `FR-TEN-002`, `FR-TEN-005`, `DR-002`, `UC-001`, `UC-013`, `TST-004`, `TST-031`.
+- **Mô tả vấn đề:** Cần xác định rõ hành vi khi biểu mẫu đăng ký mới có thông tin trùng với dữ liệu đã có:
+  1. Trùng với doanh nghiệp/tài khoản đang hoạt động (`ACTIVE`) hoặc tạm ngưng (`SUSPENDED`).
+  2. Trùng với hồ sơ đăng ký đang chờ xác minh email (`UNVERIFIED`) hoặc chờ duyệt (`PENDING`).
+  3. Trùng với hồ sơ đã bị từ chối (`REJECTED`) hoặc hết hạn xác minh (`EXPIRED`) — trường hợp **người dùng đăng ký lại (`Re-registration`)**.
+  4. Enum `CompanyStatus` trong mã nguồn hiện chỉ có `{ Pending, Active, Suspended, Inactive }`, thiếu giá trị `Rejected` (`FR-TEN-002`).
+- **Các phương án:**
+  - **Phương án A (`PROPOSED — NOT APPROVED`):**
+    1. Trùng với hồ sơ `ACTIVE` / `SUSPENDED` / `PENDING` (đã xác minh): Trả về `409 Conflict` (`COMPANY.DUPLICATE_CODE_OR_KEY`, `IDENTITY.DUPLICATE_EMAIL`).
+    2. Trùng với hồ sơ `UNVERIFIED` còn hạn: Không tạo bản ghi trùng mới; trả thông báo hướng dẫn kiểm tra email hoặc bấm gửi lại mã xác minh.
+    3. Đăng ký lại sau khi bị `REJECTED` hoặc `EXPIRED`: Cho phép người dùng đăng ký lại bằng cùng email/mã công ty sau khi sửa sai; bảo toàn lịch sử từ chối trong `AuditLog` (`BR-021`); bổ sung giá trị `Rejected` vào enum `CompanyStatus`.
+  - **Phương án B:** Dùng ràng buộc `UNIQUE` cứng không điều kiện trên bảng `Company` và chặn vĩnh viễn việc đăng ký lại.
+- **Khuyến nghị (`PROPOSED — NOT APPROVED`):** Chọn **Phương án A**.
+
+---
+
+### `OD-024`: Tính Nguyên tử Giao dịch (`Transactional Atomicity`), Rollback Khi Khởi tạo Tenant / Workspace Không Hoàn tất và Xử lý Khi Cấp Quyền Owner / Admin Ban đầu Thất bại
+- **Trạng thái:** `OPEN`
+- **Nguồn phát sinh:** Rà soát rủi ro tạo tenant/workspace không hoàn tất và cấp quyền owner/admin ban đầu không thành công; đối chiếu `IdentityModelConfiguration.cs` (`Tenant.CompanyId` unique index, `CK_Role_Scope`) và `BizFlowDbContext.cs`.
+- **Yêu cầu bị ảnh hưởng:** `BR-023`, `FR-TEN-002`, `FR-TEN-005`, `DR-002`, `DR-004`, `UC-001`, `UC-013`, `TST-004`, `TST-031`.
+- **Mô tả vấn đề:** Chuỗi 5 tác vụ provisioning liên hoàn:
+  1. Chuyển `Company` sang `ACTIVE`.
+  2. Tạo đúng **01 Không gian làm việc chính (`Primary Tenant / Workspace`)** gắn với `CompanyId` (`Unique(CompanyId)` theo `DEC-WS-001`) và chuyển sang `ACTIVE`.
+  3. Khởi tạo cấu hình hạt giống (`TenantSettings`, `BusinessCalendar`).
+  4. Tạo tài khoản người đại diện (`UserAccount` gắn `TenantId`, `Status = Active`).
+  5. Gán vai trò `COMPANY_ADMIN` (`UserRole` liên kết vai trò hệ thống `IsSystem = true`) và ghi `AuditLog`.
+  Nếu bước (1)-(2) thành công nhưng bước (3), (4) hoặc bước (5) **cấp quyền `COMPANY_ADMIN` thất bại**, hệ thống rơi vào trạng thái "Workspace không người quản trị" (Adminless Workspace) hoặc kẹt ở `TenantStatus = Provisioning`.
+- **Các phương án:**
+  - **Phương án A (`PROPOSED — NOT APPROVED` — Giao dịch Nguyên tử Tất-cả-hoặc-Không-gì `All-or-Nothing Atomic Unit of Work`):**
+    1. Thực thi toàn bộ 5 bước trong **một giao dịch cơ sở dữ liệu ACID duy nhất** có khóa chống trùng lặp (`Idempotency-Key`).
+    2. **Kiểm tra điều kiện bất biến trước khi Commit (`Post-Provisioning Invariant Check`):** Xác minh tồn tại đúng `01 Primary Tenant (ACTIVE)` cho `Company` và tồn tại ít nhất `01 UserAccount (ACTIVE)` thuộc `Tenant` đó được gán vai trò `COMPANY_ADMIN`. Nếu bất kỳ bước nào thất bại, **Rollback 100% toàn bộ giao dịch** về trạng thái trước khi khởi tạo (giữ nguyên đơn `PENDING`), ghi nhật ký lỗi kèm `CorrelationId` và cho phép thử lại (`Idempotent Retry`) an toàn.
+    3. Tách gửi email thông báo kích hoạt ra sau bước Commit DB (qua Outbox/hàng đợi) để lỗi SMTP không làm rollback giao dịch hợp lệ.
+  - **Phương án B:** Khởi tạo bất đồng bộ từng phần không dùng chung giao dịch ACID, giữ `Tenant.Status = Provisioning` khi lỗi và yêu cầu `PLATFORM_ADMIN` can thiệp thủ công.
+- **Khuyến nghị (`PROPOSED — NOT APPROVED`):** Chọn **Phương án A**.
+

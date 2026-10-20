@@ -1,8 +1,9 @@
 # Danh mục Phân rã Module Hệ thống (System Module Catalog)
 
-- **Mã tài liệu:** `SSS-MOD-v1.0`
+- **Mã tài liệu:** `SSS-MOD-v1.1`
+- **Phiên bản:** `1.1-DRAFT`
 - **Thuộc bộ tài liệu:** [SSS_v1.0_DRAFT.md](SSS_v1.0_DRAFT.md) — Mục 6, Mục 7 & Mục 10
-- **Ngày lập:** `2026-10-18`
+- **Ngày lập:** `2026-10-18` (Cập nhật rà soát Onboarding: `2026-10-19`)
 - **Tổng số module đặc tả:** `15` module hệ thống (`MOD-001` .. `MOD-013` cho 13 miền nghiệp vụ Backend, `MOD-FE-001` cho ứng dụng Frontend Angular 22 SPA, và `MOD-BG-001` cho tiến trình Background Worker).
 
 ---
@@ -34,9 +35,10 @@
 ### 2.1. `MOD-001`: Identity & Authentication (Định danh và Xác thực)
 - **Module ID:** `MOD-001`
 - **Module Name:** Identity & Authentication
-- **Purpose:** Xác thực danh tính người dùng, cấp phát và xoay vòng JWT Access Token / Refresh Token, quản lý vòng đời phiên đăng nhập (`UserSession`) và quy trình khôi phục/đổi mật khẩu an toàn.
+- **Purpose:** Xác thực danh tính người dùng, cấp phát và xoay vòng JWT Access Token / Refresh Token, quản lý vòng đời phiên đăng nhập (`UserSession`), quy trình khôi phục/đổi mật khẩu an toàn và chặn đăng nhập đối với tài khoản chưa xác minh email.
 - **Key Responsibilities:**
-  - Xác thực thông tin đăng nhập bằng Email và mật khẩu băm (`PasswordCredential`).
+  - Xác thực thông tin đăng nhập bằng Email/Mã nhân viên và mật khẩu băm (`PasswordCredential`).
+  - Kiểm tra trạng thái xác minh email (`EmailVerified` flag); từ chối đăng nhập với mã lỗi `403 AUTH.EMAIL_NOT_VERIFIED` nếu tài khoản đại diện chưa xác thực email hợp lệ (`BR-024`, `OD-022`).
   - Phát hành JWT Access Token có nhúng các claim bắt buộc (`sub`, `tenant_id`, `workspace_id`, `session_id`) theo `ADR-0009`.
   - Quản lý làm mới token (`RefreshToken`), thu hồi phiên đơn lẻ hoặc thu hồi toàn bộ phiên khi đổi mật khẩu / khóa tài khoản.
   - Cung cấp cài đặt `ClaimsTenantContext` (`ITenantContext`) cho toàn bộ chuỗi xử lý HTTP và SignalR.
@@ -44,13 +46,13 @@
   - Không quản lý sơ đồ cây phòng ban hay định nghĩa ma trận quyền RBAC (thuộc `MOD-003`).
   - Không hỗ trợ SSO/SAML/OIDC doanh nghiệp trong phạm vi MVP.
 - **Inputs:** Yêu cầu đăng nhập (`LoginRequest`), yêu cầu làm mới phiên (`RefreshTokenRequest`), yêu cầu quên/đặt lại/đổi mật khẩu, HTTP Header `Authorization: Bearer <token>`.
-- **Outputs:** `AuthSessionResponse` (AccessToken, RefreshToken, thông tin hồ sơ phiên), đối tượng `ITenantContext` đã xác thực, bản ghi `SecurityEvent` khi đăng nhập thành công/thất bại.
+- **Outputs:** `AuthSessionResponse` (AccessToken, RefreshToken, thông tin hồ sơ phiên), đối tượng `ITenantContext` đã xác thực, bản ghi `SecurityEvent` khi đăng nhập thành công/thất bại hoặc bị chặn do chưa xác minh email.
 - **Data Ownership:** `PasswordCredentials`, `UserSessions`, `RefreshTokens`, `PasswordResetTokens`.
 - **Dependencies:** `MOD-002` (kiểm tra trạng thái `Tenant` và `Workspace`), `MOD-009` (xếp hàng gửi email đặt lại mật khẩu), `MOD-013` (ghi `SecurityEvents` và `AuditLogs`).
 - **Public Interfaces:** `INT-001` (`AuthController`, `AccountController`, `SessionsController`), `INT-015` (`ITenantContext`).
-- **Security/Tenant Requirements:** Áp dụng giới hạn tốc độ (`RateLimiter`) cho các endpoint đăng nhập và khôi phục mật khẩu; mật khẩu phải được băm một chiều có salt; thu hồi ngay lập tức mọi phiên (`UserSessions`) khi người dùng bị vô hiệu hóa hoặc Tenant bị đình chỉ (`BR-001`).
-- **Related SRS Requirements:** `FR-AUTH-001`, `FR-AUTH-002`, `FR-AUTH-003`, `FR-AUTH-004`, `FR-AUTH-005`, `SEC-AUTH-001`, `SEC-AUTH-002`, `DR-002`.
-- **Testing Approach:** Unit tests kiểm tra phát hành/thu hồi token và hết hạn phiên; Integration tests (`AuthAndSessionIntegrationTests`) xác minh chặn phiên đã thu hồi và kiểm tra `ClaimsTenantContext`.
+- **Security/Tenant Requirements:** Áp dụng giới hạn tốc độ (`RateLimiter`) cho các endpoint đăng nhập và khôi phục mật khẩu; mật khẩu phải được băm một chiều có salt; thu hồi ngay lập tức mọi phiên (`UserSessions`) khi người dùng bị vô hiệu hóa hoặc Tenant bị đình chỉ (`BR-001`, `BR-024`).
+- **Related SRS Requirements:** `FR-AUTH-001`, `FR-AUTH-002`, `FR-AUTH-003`, `FR-AUTH-004`, `FR-AUTH-005`, `BR-001`, `BR-024`, `SEC-AUTH-001`, `SEC-AUTH-002`, `DR-002`.
+- **Testing Approach:** Unit tests kiểm tra phát hành/thu hồi token và hết hạn phiên; Integration tests (`AuthAndSessionIntegrationTests`) xác minh chặn phiên đã thu hồi, chặn đăng nhập chưa xác minh email và kiểm tra `ClaimsTenantContext`.
 - **Status:** `CONFIRMED` | `IMPLEMENTED` (`AuthController.cs`, `AccountController.cs`, `SessionsController.cs`, `ClaimsTenantContext.cs`).
 
 ---
@@ -58,24 +60,29 @@
 ### 2.2. `MOD-002`: Tenant & Workspace Management (Quản trị Thuê bao và Không gian Làm việc)
 - **Module ID:** `MOD-002`
 - **Module Name:** Tenant & Workspace Management
-- **Purpose:** Quản lý vòng đời đăng ký doanh nghiệp mới, phê duyệt khởi tạo thuê bao (`Tenant`), duy trì ranh giới `1 Company = 1 Primary Workspace` trong MVP (`DEC-WS-001`) và quản lý cấu hình cấp công ty.
+- **Purpose:** Quản lý vòng đời đăng ký doanh nghiệp mới (cả Admin-Approved và Self-Service Onboarding), xác minh email, cấp phát nguyên tử Không gian làm việc chính duy nhất trong MVP (`1 Company = 1 Primary Workspace` theo `DEC-WS-001`), gán quyền quản trị viên ban đầu và quản lý cấu hình cấp công ty.
 - **Key Responsibilities:**
-  - Tiếp nhận hồ sơ đăng ký doanh nghiệp (`CompanyRegistrationRequest`) từ khách truy cập.
-  - Cho phép `Platform Super Admin` phê duyệt (tự động khởi tạo `Tenant`, `Workspace` mặc định, `TenantSetting`, các vai trò chuẩn và tài khoản `Company Admin` đầu tiên trong một giao dịch nguyên tử) hoặc từ chối hồ sơ.
+  - Tiếp nhận hồ sơ đăng ký doanh nghiệp công khai từ khách truy cập (`POST /api/v1/auth/register-company` hoặc `/api/v1/company-registrations`).
+  - Kiểm tra tính duy nhất chống trùng lặp (`Duplicate Check`): kiểm tra `Company.Code`, `Tenant.TenantKey` và `AdminEmail`. Trả về `409 Conflict` nếu trùng dữ liệu đang hoạt động/chờ duyệt (`BR-024`, `OD-023`).
+  - Hỗ trợ người dùng đăng ký lại (`Re-registration`): cho phép đăng ký lại sau khi đơn cũ bị `REJECTED` hoặc token xác minh hết hạn `TTL`, bảo toàn lịch sử từ chối trong `AuditLog` (`BR-021`, `OD-023`).
+  - Quản lý mã/token xác minh email (`Email Verification Token`, TTL `24 giờ`, băm SHA-256); phối hợp với `MOD-009` qua Transactional Outbox.
+  - Thực thi giao dịch cấp phát nguyên tử Tất-cả-hoặc-Không-gì (`All-or-Nothing Unit of Work` theo `ADR-SSS-007` & `BR-023`): Kích hoạt `Company (ACTIVE)` + Tạo đúng 01 `Primary Tenant (ACTIVE)` gắn với `CompanyId` (`Unique(CompanyId)` theo `DEC-WS-001`) + Khởi tạo cấu hình hạt giống (`TenantSettings`, `BusinessCalendar`) + Tạo tài khoản đại diện ban đầu (`UserAccount`, `Status = Active`) + Gán vai trò hệ thống `COMPANY_ADMIN` (`UserRole`) + Ghi `AuditLog`.
+  - Thực thi kiểm tra bất biến sau khởi tạo (**Post-Provisioning Invariant Guard**): Xác minh `Count(PrimaryTenant) == 1 && Count(CompanyAdmin) >= 1`; nếu có bất kỳ lỗi nào hoặc bước gán quyền thất bại, **Rollback 100% giao dịch**, giữ đơn ở trạng thái `PENDING`, trả về mã lỗi `500 ONBOARDING.PROVISIONING_ROLLED_BACK` kèm `CorrelationId`, không sinh workspace mồ côi.
+  - Cho phép `Platform Super Admin` phê duyệt hoặc từ chối đơn đăng ký thủ công tại `UI-02` (`CONFIRMED` theo `FR-TEN-001`..`002`).
   - Cho phép `Platform Super Admin` tạm ngưng (`Suspended`) hoặc kích hoạt lại (`Active`) một doanh nghiệp.
   - Cung cấp bộ lọc `TenantMembershipAuthorizer` xác minh tính hợp lệ của thành viên và trạng thái hoạt động của Tenant trên mọi request.
 - **Non-Responsibilities:**
   - Không xử lý thanh toán, gói cước, hóa đơn hoặc giới hạn thương mại (`DEC-WS-002`).
   - Không cho phép tạo nhiều Workspace độc lập trong cùng một Company ở giai đoạn MVP (`DEC-WS-001`).
-- **Inputs:** Đơn đăng ký doanh nghiệp, lệnh duyệt/từ chối/đình chỉ/kích hoạt lại từ Platform Admin, yêu cầu cập nhật `TenantSetting` từ Company Admin.
-- **Outputs:** Bản ghi `Tenant`, `Workspace`, `TenantSetting` đã khởi tạo; email thông báo kết quả duyệt; phản hồi kiểm tra thành viên từ `TenantMembershipAuthorizer`.
-- **Data Ownership:** `Tenants`, `Workspaces`, `TenantSettings`, `CompanyRegistrationRequests`.
-- **Dependencies:** `MOD-001` (khởi tạo thông tin xác thực cho Company Admin đầu tiên), `MOD-003` (khởi tạo vai trò mặc định của Tenant), `MOD-009` (gửi email thông báo duyệt/từ chối), `MOD-013` (ghi nhật ký kiểm toán cấp Platform và Tenant).
-- **Public Interfaces:** `INT-002` (`CompanyRegistrationsController`, `PlatformTenantsController`, `PlatformAuditController`), `INT-003` (`WorkspacesController`, `TenantSettingsController`).
-- **Security/Tenant Requirements:** Hanya `Platform Super Admin` mới được gọi các API `/api/platform/*`; khi `Tenant.Status != Active`, `TenantMembershipAuthorizer` phải chặn ngay lập tức mọi thao tác nghiệp vụ của người dùng thuộc Tenant đó (`BR-001`, `SEC-TEN-001..003`).
-- **Related SRS Requirements:** `FR-TEN-001`, `FR-TEN-002`, `FR-TEN-003`, `FR-TEN-004`, `FR-TEN-005`, `SEC-TEN-001`, `SEC-TEN-002`, `SEC-TEN-003`, `DR-001`.
-- **Testing Approach:** Integration tests kiểm tra quy trình nộp đơn $\rightarrow$ duyệt $\rightarrow$ sinh Tenant/Workspace/Admin nguyên tử, và kiểm thử chặn truy cập khi Tenant bị chuyển sang `Suspended`.
-- **Status:** `CONFIRMED` | `IMPLEMENTED` (`CompanyRegistrationsController.cs`, `PlatformTenantsController.cs`, `WorkspacesController.cs`, `TenantSettingsController.cs`, `TenantMembershipAuthorizer.cs`).
+- **Inputs:** Đơn đăng ký doanh nghiệp, token xác minh email, lệnh duyệt/từ chối/đình chỉ/kích hoạt lại từ Platform Admin, yêu cầu cập nhật `TenantSetting` từ Company Admin.
+- **Outputs:** Bản ghi `Tenant`, `Workspace`, `TenantSetting`, `UserAccount`, `UserRole (COMPANY_ADMIN)` đã khởi tạo nguyên tử; email thông báo xác minh/chào mừng; phản hồi kiểm tra thành viên từ `TenantMembershipAuthorizer`.
+- **Data Ownership:** `Tenants`, `Workspaces`, `TenantSettings`, `CompanyRegistrationRequests` (`Companies`), `EmailVerificationTokens`.
+- **Dependencies:** `MOD-001` (khởi tạo thông tin xác thực cho Company Admin đầu tiên), `MOD-003` (khởi tạo vai trò mặc định của Tenant), `MOD-009` (gửi email xác minh/chào mừng), `MOD-013` (ghi nhật ký kiểm toán cấp Platform và Tenant).
+- **Public Interfaces:** `INT-002` (`CompanyRegistrationsController`, `PlatformTenantsController`, `PlatformAuditController`), `INT-003` (`WorkspacesController`, `TenantSettingsController`), `INT-018` (`Public Onboarding & Registration Contract`).
+- **Security/Tenant Requirements:** Chỉ `Platform Super Admin` mới được gọi các API `/api/v1/platform/*`; khi `Tenant.Status != Active`, `TenantMembershipAuthorizer` phải chặn ngay lập tức mọi thao tác nghiệp vụ của người dùng thuộc Tenant đó (`BR-001`, `BR-023`, `SEC-TEN-001..003`).
+- **Related SRS Requirements:** `FR-TEN-001`, `FR-TEN-002`, `FR-TEN-003`, `FR-TEN-004`, `FR-TEN-005`, `IR-UI-004`, `IR-EXT-002`, `BR-023`, `BR-024`, `SEC-TEN-001`, `SEC-TEN-002`, `SEC-TEN-003`, `DR-001`, `DR-002`, `TST-004`, `TST-031`.
+- **Testing Approach:** Integration tests kiểm tra quy trình nộp đơn $\rightarrow$ xác minh email $\rightarrow$ sinh Tenant/Workspace/Admin nguyên tử (`TST-031`), kiểm thử rollback 100% khi cấp quyền thất bại, và kiểm thử chặn truy cập khi Tenant bị chuyển sang `Suspended`.
+- **Status:** `CONFIRMED` & `PROPOSED (Self-Service)` | `PARTIAL` (`CompanyRegistrationsController.cs`, `PlatformTenantsController.cs`, `WorkspacesController.cs`, `TenantSettingsController.cs`, `TenantMembershipAuthorizer.cs` đã có; Self-service provisioning pipeline & verification flow đang ở mức đặc tả thiết kế).
 
 ---
 
@@ -349,20 +356,22 @@
 - **Purpose:** Cung cấp giao diện người dùng tương tác cho toàn bộ các vai trò (Applicant, Platform Admin, Company Admin, Department Manager, Approver, Staff, Internal Auditor) trên trình duyệt web hiện đại.
 - **Key Responsibilities:**
   - Quản lý định tuyến phía client (`app.routes.ts` gồm 28 route) được bảo vệ bởi bộ 3 Guard: `sessionGuard` (kiểm tra đăng nhập), `tenantGuard` (kiểm tra ngữ cảnh workspace/tenant đang hoạt động) và `permissionGuard` (kiểm tra quyền hiển thị màn hình).
+  - Cung cấp điểm vào công khai đăng ký doanh nghiệp `/register-company` kèm liên kết CTA từ màn hình đăng nhập `/login` (`UI-01`) và màn hình xác minh email `/verify-email` (`IR-UI-004`, `UC-013`, `OD-021`, `OD-022`).
+  - Xử lý phản hồi `403 AUTH.EMAIL_NOT_VERIFIED` từ Backend để hiển thị hộp thoại cảnh báo tài khoản chưa xác minh email và cung cấp nút yêu cầu gửi lại email xác minh (`Resend Verification Email`).
   - Tự động đính kèm JWT Access Token, xử lý làm mới phiên (`RefreshToken`) và chuẩn hóa hiển thị lỗi từ `ProblemDetails` thông qua HTTP Interceptors.
   - Duy trì kết nối WebSocket thời gian thực tới `/hubs/notifications` bằng `@microsoft/signalr` để cập nhật trung tâm thông báo và trạng thái công việc tức thời.
   - Hiển thị rõ ràng các đề xuất của AI với nhãn phân biệt và nút xác nhận/chỉnh sửa trước khi gửi lệnh áp dụng về Backend (`Human-in-the-Loop UI`).
 - **Non-Responsibilities:**
   - Không được coi kiểm tra quyền ở Frontend (`permissionGuard`) là rào chắn bảo mật duy nhất — mọi kiểm tra phân quyền và cô lập Tenant đều phải được Backend xác thực lại 100%.
-- **Inputs:** Thao tác của người dùng trên trình duyệt, dữ liệu JSON từ REST API (`INT-001..014`) và sự kiện đẩy từ SignalR (`INT-012`).
+- **Inputs:** Thao tác của người dùng trên trình duyệt, dữ liệu JSON từ REST API (`INT-001..014`, `INT-018`) và sự kiện đẩy từ SignalR (`INT-012`).
 - **Outputs:** Các lệnh gọi HTTP REST chuẩn hóa tới `BizFlow.Api` và giao diện hiển thị trực quan.
 - **Data Ownership:** Trạng thái phiên trình duyệt và trạng thái hiển thị tạm thời (View State).
-- **Dependencies:** Phụ thuộc qua mạng (HTTP/WSS) vào `BizFlow.Api` (`INT-001` .. `INT-014`).
-- **Public Interfaces:** Tiêu thụ `INT-001` .. `INT-014`; cung cấp 28 màn hình ứng dụng cho người dùng cuối.
+- **Dependencies:** Phụ thuộc qua mạng (HTTP/WSS) vào `BizFlow.Api` (`INT-001` .. `INT-014`, `INT-018`).
+- **Public Interfaces:** Tiêu thụ `INT-001` .. `INT-014`, `INT-018`; cung cấp các màn hình ứng dụng cho người dùng cuối.
 - **Security/Tenant Requirements:** Không lưu thông tin nhạy cảm của Tenant khác trong bộ nhớ trình duyệt sau khi đăng xuất; tự động xóa trạng thái phiên và điều hướng về `/login` hoặc `/access-denied` khi nhận mã `401`/`403`.
-- **Related SRS Requirements:** `IR-UI-001`, `IR-UI-002`, `IR-UI-003`, cùng toàn bộ các yêu cầu chức năng có giao diện người dùng.
+- **Related SRS Requirements:** `IR-UI-001`, `IR-UI-002`, `IR-UI-003`, `IR-UI-004`, `FR-TEN-005`, `TST-029`, `TST-031`, cùng toàn bộ các yêu cầu chức năng có giao diện người dùng.
 - **Testing Approach:** Kiểm thử biên dịch TypeScript/Angular, kiểm thử đơn vị cho Guards/Services và kiểm thử tích hợp luồng giao diện.
-- **Status:** `CONFIRMED` | `IMPLEMENTED` (`frontend/src/app/`).
+- **Status:** `CONFIRMED` | `IMPLEMENTED` (`frontend/src/app/`) & `PROPOSED (Self-service routes /register-company & /verify-email)`.
 
 ---
 

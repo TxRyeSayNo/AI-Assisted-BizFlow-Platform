@@ -19,6 +19,7 @@ public static class PostgresOptions
         this DbContextOptionsBuilder<BizFlowDbContext> builder, string connectionString) =>
         builder.UseNpgsql(connectionString, options =>
         {
+            options.MigrationsAssembly(typeof(BizFlowDbContext).Assembly.FullName);
             options.MapEnum<CompanyStatus>("company_status", nameTranslator: UpperCaseEnumTranslator.Instance);
             options.MapEnum<ServiceStatus>("service_status", nameTranslator: UpperCaseEnumTranslator.Instance);
             options.MapEnum<RequestState>("request_state", nameTranslator: UpperCaseEnumTranslator.Instance);

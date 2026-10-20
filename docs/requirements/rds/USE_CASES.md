@@ -1,9 +1,9 @@
 # ĐẶC TẢ CHI TIẾT CÁC CA SỬ DỤNG NGHIỆP VỤ (BUSINESS USE CASE SPECIFICATIONS)
 
 - **Dự án:** AI-Assisted BizFlow Platform
-- **Mã tài liệu:** `BIZFLOW-RDS-UC-v1.0`
-- **Phiên bản:** `1.0-DRAFT`
-- **Ngày lập:** `2026-10-18`
+- **Mã tài liệu:** `BIZFLOW-RDS-UC-v1.1`
+- **Phiên bản:** `1.1-DRAFT`
+- **Ngày lập:** `2026-10-18` (Cập nhật rà soát Onboarding: `2026-10-19`)
 - **Trạng thái:** `DRAFT — REQUIREMENTS BASELINE`
 - **Tài liệu liên quan:** [RDS_v1.0_DRAFT.md](./RDS_v1.0_DRAFT.md), [REQUIREMENTS_CATALOG.csv](./REQUIREMENTS_CATALOG.csv), [REQUIREMENTS_TRACEABILITY.md](./REQUIREMENTS_TRACEABILITY.md), [OPEN_DECISIONS.md](./OPEN_DECISIONS.md), [SOURCE_REGISTER.md](./SOURCE_REGISTER.md)
 
@@ -11,20 +11,21 @@
 
 ## 1. Tổng quan Mô hình Ca Sử dụng (Use Case Model Overview)
 
-Tài liệu này đặc tả chi tiết **12 Ca sử dụng nghiệp vụ đầu-cuối chuẩn (`UC-001` đến `UC-012`)** của nền tảng **AI-Assisted BizFlow Platform**. Mỗi Ca sử dụng mô tả cách các tác nhân con người (`A01`–`A04`) và tác nhân phần mềm (`A05` — Trợ lý AI) tương tác với hệ thống để đạt được một mục tiêu nghiệp vụ hoàn chỉnh, đồng thời làm rõ các nhánh thay thế, nhánh ngoại lệ, quy tắc nghiệp vụ (`BR-001`..`BR-022`), phạm vi phân quyền và điều kiện nghiệm thu (`AC-001`..`AC-030`).
+Tài liệu này đặc tả chi tiết **13 Ca sử dụng nghiệp vụ đầu-cuối (`UC-001` đến `UC-013`)** của nền tảng **AI-Assisted BizFlow Platform** (bao gồm 12 ca sử dụng chuẩn đã xác nhận `UC-001`..`UC-012` và 01 ca sử dụng đề xuất cho mô hình Self-Service SaaS Onboarding `UC-013` gắn nhãn `PROPOSED — NOT APPROVED` tại `OD-021`). Mỗi Ca sử dụng mô tả cách các tác nhân con người (`A01`–`A04`) và tác nhân phần mềm (`A05` — Trợ lý AI) tương tác với hệ thống để đạt được một mục tiêu nghiệp vụ hoàn chỉnh, đồng thời làm rõ các nhánh thay thế, nhánh ngoại lệ, quy tắc nghiệp vụ (`BR-001`..`BR-024`), phạm vi phân quyền và điều kiện nghiệm thu (`AC-001`..`AC-032`).
 
 ```mermaid
 flowchart TB
     subgraph Actors["Tác nhân (Actors)"]
         A01["A01: Platform Admin"]
-        A02["A02: Company Admin"]
+        A02["A02: Company Admin (Initial Owner / Admin)"]
         A03["A03: Manager"]
         A04["A04: Employee (Requester / Assignee)"]
         A05["A05: AI Agent (Advisory Only)"]
     end
 
-    subgraph PlatformPlane["Mặt phẳng Quản trị Nền tảng (Platform Governance)"]
-        UC01["UC-001: Đăng ký Doanh nghiệp, Xét duyệt & Khởi tạo Tenant Mặc định"]
+    subgraph PlatformPlane["Mặt phẳng Quản trị Nền tảng & Onboarding (Platform & Onboarding)"]
+        UC01["UC-001: Đăng ký Doanh nghiệp, Xét duyệt bởi Platform Admin & Khởi tạo Workspace Chính (CONFIRMED)"]
+        UC13["UC-013: Tự Đăng ký Doanh nghiệp (Self-Service), Xác minh Email & Tự động Khởi tạo Workspace Chính (PROPOSED - OD-021)"]
     end
 
     subgraph TenantPlane["Mặt phẳng Không gian Làm việc Doanh nghiệp (Tenant Workspace)"]
@@ -45,6 +46,8 @@ flowchart TB
     A01 --> UC02
     A01 --> UC12
 
+    A02 --> UC01
+    A02 --> UC13
     A02 --> UC02
     A02 --> UC03
     A02 --> UC04
@@ -78,44 +81,59 @@ flowchart TB
 
 ---
 
-## 2. Đặc tả Chi tiết Từng Ca Sử dụng (`UC-001` – `UC-012`)
+## 2. Đặc tả Chi tiết Từng Ca Sử dụng (`UC-001` – `UC-013`)
 
-### `UC-001`: Đăng ký Doanh nghiệp, Xét duyệt và Khởi tạo Không gian Làm việc Mặc định (Company Onboarding & Primary Tenant Provisioning)
+### `UC-001`: Đăng ký Doanh nghiệp, Xét duyệt bởi Quản trị viên Nền tảng và Khởi tạo Không gian Làm việc Mặc định (Admin-Approved Company Registration, Tenant Onboarding & Primary Workspace Provisioning)
 
 - **Use Case ID:** `UC-001`
-- **Name:** Đăng ký Doanh nghiệp, Xét duyệt và Khởi tạo Không gian Làm việc Mặc định
-- **Goal:** Cho phép đại diện một doanh nghiệp mới gửi hồ sơ đăng ký sử dụng nền tảng và cho phép Quản trị viên Nền tảng (`PLATFORM_ADMIN`) xét duyệt để khởi tạo nguyên tử đúng **01 Không gian làm việc / Thuê bao chính (`Primary Workspace / Tenant`)** hoàn toàn cách ly cho doanh nghiệp đó theo quyết định `DEC-WS-001`.
+- **Name:** Đăng ký Doanh nghiệp, Xét duyệt bởi Quản trị viên Nền tảng và Khởi tạo Không gian Làm việc Mặc định
+- **Goal:** Cho phép đại diện một doanh nghiệp mới truy cập điểm vào đăng ký công khai, gửi hồ sơ đăng ký doanh nghiệp kèm thông tin tài khoản quản trị viên ban đầu, xác minh email liên hệ (`OD-022`), và cho phép Quản trị viên Nền tảng (`PLATFORM_ADMIN`) xét duyệt để khởi tạo nguyên tử đúng **01 Không gian làm việc / Thuê bao chính (`Primary Workspace / Tenant`)** hoàn toàn cách ly cùng quyền `COMPANY_ADMIN` ban đầu theo quyết định `DEC-WS-001` và `BR-023`. *(Lưu ý: Phương án đề xuất Tự đăng ký doanh nghiệp không chờ duyệt thủ công `Self-Service Company Registration` được đặc tả riêng tại `UC-013` theo `OD-021`).*
 - **Primary Actor:** Đại diện Doanh nghiệp đăng ký (Prospective Company Representative), `A01` — Quản trị viên Nền tảng (`PLATFORM_ADMIN`).
-- **Secondary Actors:** Dịch vụ gửi thư điện tử (Email Notification Service), `A02` — Quản trị viên Công ty ban đầu (`Initial COMPANY_ADMIN`).
-- **Trigger:** Đại diện doanh nghiệp gửi biểu mẫu đăng ký công ty mới trên cổng đăng ký của nền tảng.
+- **Secondary Actors:** Dịch vụ gửi thư điện tử (Email Notification Service), `A02` — Quản trị viên Công ty ban đầu (`Initial Owner / COMPANY_ADMIN`).
+- **Trigger:** Đại diện doanh nghiệp bấm liên kết đăng ký doanh nghiệp mới từ trang cổng vào / màn hình đăng nhập (`UI-01` $\rightarrow$ `/register-company`) và gửi biểu mẫu đăng ký công ty.
 - **Preconditions:**
-  1. Cổng đăng ký doanh nghiệp đang hoạt động.
-  2. Đối với bước xét duyệt: `A01` (`PLATFORM_ADMIN`) đã đăng nhập hợp lệ vào Mặt phẳng Quản trị Nền tảng (`Platform Governance Plane`).
-- **Main Success Scenario:**
-  1. Đại diện doanh nghiệp nhập thông tin pháp nhân (Tên doanh nghiệp, Mã định danh thuê bao `TenantSlug`, Mã số thuế/Đăng ký kinh doanh, Tên và Email của Quản trị viên Công ty ban đầu, Mật khẩu khởi tạo) và gửi đơn đăng ký.
-  2. Hệ thống kiểm tra tính hợp lệ và tính duy nhất của thông tin đăng ký, lưu hồ sơ doanh nghiệp ở trạng thái chờ duyệt (`PENDING`), ghi nhật ký kiểm toán và phát thông báo có đơn đăng ký mới cho `A01`.
-  3. `A01` mở danh sách đơn đăng ký chờ duyệt, kiểm tra thông tin hồ sơ doanh nghiệp và chọn hành động **Phê duyệt (`Approve`)**.
-  4. Hệ thống cập nhật trạng thái doanh nghiệp, tự động khởi tạo **01 Không gian làm việc chính (`Primary Tenant`)** ở trạng thái `ACTIVE`, khởi tạo các vai trò hệ thống chuẩn (`COMPANY_ADMIN`, `MANAGER`, `EMPLOYEE`), lịch làm việc mặc định và tài khoản `COMPANY_ADMIN` đầu tiên.
-  5. Hệ thống ghi nhận sự kiện kiểm toán bất biến và gửi thông báo kích hoạt thành công cho `COMPANY_ADMIN` của doanh nghiệp.
+  1. Điểm vào đăng ký doanh nghiệp công khai (`/register-company`) đang hoạt động.
+  2. Đối với bước xét duyệt: `A01` (`PLATFORM_ADMIN`) đã đăng nhập hợp lệ vào Mặt phẳng Quản trị Nền tảng (`Platform Governance Plane` — `/platform/companies` `UI-02`).
+- **Main Success Scenario (Mô hình `CONFIRMED` — Có Bước Phê duyệt của `PLATFORM_ADMIN`):**
+  1. **Truy cập điểm vào đăng ký & Khai báo hồ sơ:** Đại diện doanh nghiệp mở trang đăng ký doanh nghiệp mới (`/register-company` từ liên kết trên màn hình `/login` `UI-01`), nhập thông tin doanh nghiệp (`CompanyName`, `CompanyCode` viết hoa duy nhất, khóa định danh không gian làm việc đề xuất `TenantKey` dạng slug chữ thường, múi giờ `TimeZone`, `ContactEmail`) và thông tin tài khoản người quản trị ban đầu (`FullName`, `EmployeeCode`, `Email`, `Password` đạt chuẩn bảo mật) rồi gửi đơn đăng ký.
+  2. **Kiểm tra hợp lệ & Ghi nhận hồ sơ `PENDING`:** Hệ thống kiểm tra tính hợp lệ, định dạng và tính duy nhất của `CompanyCode`, `TenantKey` và `Email` (`BR-024`), lưu hồ sơ đăng ký doanh nghiệp ở trạng thái chờ duyệt (`PENDING`), ghi nhật ký kiểm toán (`COMPANY.REGISTRATION_SUBMITTED`) và gửi email xác minh địa chỉ thư điện tử cho người đăng ký (`OD-022`) đồng thời phát thông báo có đơn đăng ký mới cho `A01` (`OD-009`).
+  3. **Xác minh Email liên hệ (`OD-022`):** Đại diện doanh nghiệp mở thư điện tử và xác nhận liên kết/mã xác minh email hợp lệ; hệ thống đánh dấu email của hồ sơ đăng ký đã được xác minh (`EmailVerified = true`).
+  4. **Thẩm định và Phê duyệt (`Approve`):** `A01` (`PLATFORM_ADMIN`) mở hàng đợi quản trị đăng ký doanh nghiệp tại `/platform/companies` (`UI-02`), kiểm tra thông tin pháp nhân và chọn hành động **Phê duyệt (`Approve`)**.
+  5. **Khởi tạo Nguyên tử Tenant, Không gian làm việc Chính và Cấp quyền `COMPANY_ADMIN` ban đầu (`BR-023`, `OD-005`, `OD-024`):** Trong **một giao dịch cơ sở dữ liệu nguyên tử duy nhất (Single ACID Transaction)**:
+     - (5a) Chuyển trạng thái `Company` từ `PENDING` sang `ACTIVE`.
+     - (5b) Khởi tạo đúng **01 Không gian làm việc chính (`Primary Tenant / Workspace`)** gắn với `CompanyId` (`Unique(CompanyId)` theo `DEC-WS-001`) ở trạng thái `ACTIVE` với `TenantKey` và `TimeZone` đã cấu hình.
+     - (5c) Khởi tạo dữ liệu cấu hình hạt giống mặc định cho Workspace (`TenantSettings`, `BusinessCalendar` mặc định).
+     - (5d) Khởi tạo tài khoản người dùng đại diện đầu tiên (`UserAccount` gắn với `TenantId`, mật khẩu băm `Argon2id/BCrypt`, `Status = ACTIVE`).
+     - (5e) Cấp quyền chủ sở hữu/quản trị ban đầu bằng cách gán vai trò hệ thống `COMPANY_ADMIN` (`UserRole`) cho tài khoản vừa tạo và kiểm tra bất biến đảm bảo Workspace có ít nhất 01 `COMPANY_ADMIN` hợp lệ.
+  6. **Ghi kiểm toán & Thông báo hoàn tất:** Hệ thống ghi nhận sự kiện kiểm toán bất biến (`COMPANY.APPROVED`, `TENANT.PROVISIONED`, `USER.INITIAL_ADMIN_ASSIGNED`) và gửi email thông báo kích hoạt thành công để `A02` (`COMPANY_ADMIN`) đăng nhập vào Không gian làm việc chính của doanh nghiệp.
 - **Alternative Flows:**
-  - **A1 — Quản trị viên Nền tảng Từ chối Đơn đăng ký:** Tại bước 3, nếu hồ sơ không hợp lệ hoặc không đủ điều kiện, `A01` chọn **Từ chối (`Reject`)** và bắt buộc nhập lý do từ chối (`BR-022`). Hệ thống chuyển trạng thái doanh nghiệp sang `REJECTED`, không khởi tạo Tenant, ghi nhật ký kiểm toán và gửi thông báo kèm lý do từ chối cho người đăng ký.
-  - **A2 — Quản trị viên Nền tảng Tạm ngưng hoặc Kích hoạt lại Doanh nghiệp (`FR-TEN-003`):** Sau khi doanh nghiệp đã `ACTIVE`, `A01` có thể chuyển trạng thái doanh nghiệp/thuê bao sang `SUSPENDED` (kèm lý do bắt buộc) khi cần khóa quyền truy cập tạm thời, hoặc kích hoạt lại từ `SUSPENDED` sang `ACTIVE`.
-- **Exception / Error Flows:**
-  - **E1 — Trùng lặp Mã định danh Doanh nghiệp hoặc Email Quản trị:** Tại bước 2, nếu `TenantSlug`, mã số thuế hoặc email quản trị đã tồn tại, hệ thống từ chối lưu và trả về thông báo lỗi xung đột rõ ràng.
-  - **E2 — Từ chối Đơn đăng ký nhưng Không nhập Lý do:** Tại nhánh A1, nếu `A01` bỏ trống lý do từ chối, hệ thống chặn thao tác theo quy tắc `BR-022`.
-  - **E3 — Truy cập Trái phép Dữ liệu Giữa các Doanh nghiệp:** Nếu bất kỳ người dùng nào thuộc Doanh nghiệp A cố gắng truy vấn hoặc tác động lên hồ sơ của Doanh nghiệp B, hệ thống tự động chặn tại tầng cách ly dữ liệu và trả về phản hồi không tiết lộ (`404 Not Found`).
-- **Business Rules:** `BR-002` (Cách ly đa thuê bao tuyệt đối), `BR-021` (Nhật ký kiểm toán bất biến), `BR-022` (Bắt buộc nhập lý do khi từ chối), `DEC-WS-001` (1 Công ty = 1 Không gian làm việc chính trong MVP), `DEC-WS-002` (Không bao gồm thanh toán/gói cước thương mại).
+  - **A1 — Quản trị viên Nền tảng Từ chối Đơn đăng ký (`Reject`):** Tại bước 4, nếu hồ sơ không hợp lệ hoặc không đủ điều kiện, `A01` chọn **Từ chối (`Reject`)** và bắt buộc nhập lý do từ chối (`BR-022`). Hệ thống chuyển trạng thái đơn đăng ký sang `REJECTED` (`OD-023`), không khởi tạo Tenant/Workspace, ghi nhật ký kiểm toán và gửi thông báo kèm lý do từ chối cho người đăng ký.
+  - **A2 — Quản trị viên Nền tảng Tạm ngưng hoặc Kích hoạt lại Doanh nghiệp (`FR-TEN-003`):** Sau khi doanh nghiệp đã `ACTIVE`, `A01` có thể chuyển trạng thái doanh nghiệp và Không gian làm việc chính sang `SUSPENDED` (kèm lý do bắt buộc) khi cần khóa quyền truy cập tạm thời, hoặc kích hoạt lại từ `SUSPENDED` sang `ACTIVE`.
+  - **A3 — Phương án Đề xuất Tự Đăng ký Doanh nghiệp Không Chờ Duyệt Thủ công (`Self-Service Onboarding` — `PROPOSED — NOT APPROVED` tại `OD-021`):** Xem chi tiết tại ca sử dụng **`UC-013`** (ngay sau bước 3 xác minh email thành công, hệ thống tự động thực hiện bước 5 khởi tạo nguyên tử `Primary Tenant` và cấp quyền `COMPANY_ADMIN`).
+- **Exception / Error Flows (Kiểm soát Đầy đủ 6 Tình huống Lỗi & Biên Trọng tâm):**
+  - **E1 — Đăng ký Thất bại do Dữ liệu Không Hợp lệ hoặc Lỗi Giao dịch (`Registration Failure`):** Tại bước 1–2, nếu thiếu trường bắt buộc, sai định dạng email, mật khẩu yếu, `CompanyCode` / `TenantKey` sai quy ước ký tự hoặc kết nối lưu trữ gặp sự cố, hệ thống từ chối yêu cầu (`400 Bad Request` / `422 Unprocessable Entity` / `500`), **không lưu bản ghi doanh nghiệp/người dùng dở dang** và hiển thị thông báo lỗi cụ thể trên biểu mẫu để người dùng sửa và gửi lại.
+  - **E2 — Trùng lặp Email, Mã Doanh nghiệp (`CompanyCode`) hoặc Khóa Thuê bao (`TenantKey`) (`Duplicate Email / Identifiers` — `BR-024`, `OD-023`):** Tại bước 2, nếu `Email`, `CompanyCode` hoặc `TenantKey` đã thuộc về một Doanh nghiệp/Tài khoản đang `ACTIVE`, `SUSPENDED` hoặc đang chờ duyệt `PENDING`, hệ thống từ chối tạo trùng (`409 Conflict` kèm mã lỗi tường minh) và không ghi đè hồ sơ hiện có. Nếu trùng với hồ sơ của chính người đó đang ở trạng thái chờ xác minh email (`UNVERIFIED` còn hạn), hệ thống hướng dẫn gửi lại thư xác minh thay vì tạo bản ghi trùng lặp.
+  - **E3 — Email Chưa Xác minh hoặc Mã Xác minh Hết hạn (`Unverified Email` — `OD-022`):** Nếu người đăng ký cố gắng đăng nhập trước khi hoàn tất xác minh email (hoặc trước khi đơn được kích hoạt), hệ thống chặn đăng nhập với thông báo rõ trạng thái (`AUTH.EMAIL_NOT_VERIFIED` / `TENANT.NOT_ACTIVE`) và cho phép yêu cầu gửi lại liên kết xác minh mới (có giới hạn tần suất chống lạm dụng). Nếu mã xác minh đã quá hạn (đề xuất `24 giờ`), liên kết cũ bị vô hiệu hóa và người dùng phải yêu cầu cấp mã mới hoặc đăng ký lại.
+  - **E4 — Người dùng Đăng ký Lại sau khi Đơn Cũ Bị Từ chối hoặc Hết hạn (`User Re-registration` — `BR-024`, `OD-023`):** Khi một đơn đăng ký trước đó đã chuyển sang trạng thái `REJECTED` (hoặc `EXPIRED` quá hạn xác minh email), hệ thống cho phép người đại diện **đăng ký lại (`Re-register`)** với cùng địa chỉ Email / `CompanyCode` sau khi đã bổ sung/sửa thông tin hợp lệ, đồng thời bảo toàn nguyên vẹn bản ghi lịch sử và nhật ký kiểm toán của lần từ chối trước đó (`BR-021` — cấm xóa cứng).
+  - **E5 — Khởi tạo Tenant / Không gian Làm việc Chính Không Hoàn tất (`Incomplete Tenant/Workspace Provisioning` — `BR-023`, `OD-024`):** Tại bước 5, nếu quá trình tạo bản ghi `Primary Tenant`, khởi tạo cấu hình `TenantSettings` hoặc tạo `BusinessCalendar` mặc định gặp lỗi giữa chừng (ví dụ: vi phạm ràng buộc duy nhất `Unique(CompanyId)` hoặc lỗi cơ sở dữ liệu), hệ thống bắt buộc **Rollback 100% toàn bộ giao dịch** về trạng thái trước khi bấm duyệt (`PENDING`), tuyệt đối không để lại một `Company` ở trạng thái `ACTIVE` mà không có `Primary Tenant` hoặc một `Tenant` kẹt ở trạng thái `Provisioning` mồ côi.
+  - **E6 — Cấp Quyền Chủ sở hữu / Quản trị Ban đầu (`COMPANY_ADMIN`) Không Thành công (`Failed Initial Owner/Admin Role Assignment` — `BR-023`, `OD-024`):** Tại bước 5d–5e, nếu việc tạo `UserAccount` đại diện ban đầu hoặc việc gán vai trò `COMPANY_ADMIN` (`UserRole`) thất bại (ví dụ: không tìm thấy vai trò hệ thống `COMPANY_ADMIN` hoặc lỗi ghi bảng phân quyền), hệ thống coi toàn bộ giao dịch khởi tạo là thất bại và **Rollback 100%** cả `Company`, `Tenant` và `UserAccount` vừa tạo trong giao dịch đó, ghi nhật ký lỗi hệ thống kèm `CorrelationId` và cho phép thử lại (`Idempotent Retry`) an toàn; tuyệt đối không cho phép tồn tại một Workspace `ACTIVE` mà không có tài khoản `COMPANY_ADMIN` nào có quyền quản trị.
+  - **E7 — Từ chối Đơn đăng ký nhưng Không nhập Lý do (`BR-022`) hoặc Truy cập Chéo Giữa các Doanh nghiệp (`BR-002`):** Tại nhánh A1, nếu `A01` bỏ trống lý do từ chối thì hệ thống chặn thao tác (`400/422`). Sau khi khởi tạo, mọi truy cập chéo từ doanh nghiệp khác đều bị chặn và trả về `404 Not Found` (`ADR-0012`).
+- **Business Rules:** `BR-002` (Cách ly đa thuê bao tuyệt đối), `BR-021` (Nhật ký kiểm toán bất biến & cấm xóa cứng), `BR-022` (Bắt buộc nhập lý do khi từ chối), `BR-023` (Khởi tạo nguyên tử 01 Workspace chính & cấp quyền `COMPANY_ADMIN` ban đầu), `BR-024` (Kiểm soát trùng lặp định danh, xác minh email & đăng ký lại), `DEC-WS-001` (1 Công ty = 1 Không gian làm việc chính trong MVP), `DEC-WS-002` (Không bao gồm thanh toán/gói cước thương mại).
 - **Permissions / Scope:**
-  - Gửi đăng ký: Công khai (Public / Unauthenticated).
-  - Xem và xét duyệt đăng ký, quản lý trạng thái Tenant: Chỉ dành cho `A01` (`PLATFORM_ADMIN` với quyền `platform.companies.read`, `platform.companies.approve`, `platform.tenants.manage` trong `Platform Scope`).
+  - Gửi đăng ký & Xác minh email: Công khai (`Public / Unauthenticated`).
+  - Xem danh sách đăng ký, xét duyệt và quản lý trạng thái Tenant: Chỉ dành cho `A01` (`PLATFORM_ADMIN` với quyền `platform.company-registrations.read`, `platform.companies.approve`, `platform.tenants.manage` trong `Platform Scope`).
 - **Postconditions:**
-  - Doanh nghiệp và Không gian làm việc chính (`Primary Tenant`) được kích hoạt (`ACTIVE`) và cách ly hoàn toàn theo `TenantId`, hoặc bị đánh dấu `REJECTED` kèm lý do và dấu vết kiểm toán.
+  - Khi thành công: Doanh nghiệp (`Company`), đúng **01 Không gian làm việc chính (`Primary Tenant`)** và tài khoản `COMPANY_ADMIN` đầu tiên cùng ở trạng thái `ACTIVE`, có đầy đủ vai trò quản trị và cách ly hoàn toàn theo `TenantId`.
+  - Khi bị từ chối hoặc lỗi khởi tạo: Không có `Tenant` hay `UserAccount` mồ côi nào được sinh ra; dấu vết kiểm toán được ghi nhận đầy đủ.
 - **Related Requirements:**
-  - RDS: `STKN-001`, `STKN-002`, `BIZ-003`, `BIZ-004`, `CAP-002`, `INFO-001`, `QREQ-006`.
-  - SRS: `FR-TEN-001`, `FR-TEN-002`, `FR-TEN-003`, `FR-TEN-004`, `DR-001`, `DR-002`, `SEC-004`, `SEC-012`.
-- **Acceptance Criteria:** `AC-001`, `AC-002`.
-- **Source:** `SRC-002`, `SRC-003`, `DEC-WS-001`, `DEC-WS-002`, `OD-005`, `OD-009`, `OD-018`.
-- **Status:** `CONFIRMED` (Chi tiết trạng thái duyệt nguyên tử và thông báo nền tảng tham chiếu `OD-005`, `OD-009`).
+  - RDS: `STKN-001`, `STKN-002`, `BR-023`, `BR-024`, `BIZ-003`, `BIZ-004`, `BIZ-027`, `BIZ-028`, `CAP-002`, `INFO-001`..`003`, `QREQ-006`.
+  - SRS: `FR-TEN-001`, `FR-TEN-002`, `FR-TEN-003`, `FR-TEN-004`, `FR-TEN-005`, `IR-UI-001`, `IR-UI-004`, `DR-001`..`004`, `SEC-004`, `SEC-012`.
+- **Acceptance Criteria:** `AC-001`, `AC-002`, `AC-031`, `AC-032`.
+- **Source:** `SRC-002`, `SRC-003`, `SRC-004`, `DEC-WS-001`, `DEC-WS-002`, `OD-005`, `OD-009`, `OD-018`, `OD-021`..`OD-024`.
+- **Status:** `CONFIRMED` cho luồng `PLATFORM_ADMIN` xét duyệt (`BIZ-003`); các chính sách chi tiết về Self-Service, xác minh email, đăng ký lại và rollback nguyên tử tham chiếu `OD-005`, `OD-009`, `OD-021`..`OD-024`.
+- **Current Implementation Reality Check (`Verified against Repo`):**
+  - Giao diện `/platform/companies` (`UI-02`) và API `GET /api/v1/platform/company-registrations` đã được triển khai ở chế độ **chỉ đọc (`Read-Only`)**.
+  - Tuyến đường công khai `/register-company`, nút liên kết trên `/login` (`UI-01`), luồng xác minh email và các API `POST /api/v1/company-registrations`, `approve`, `reject`, `provision` hiện ở trạng thái **`NOT_IMPLEMENTED`**.
 
 ---
 
@@ -529,11 +547,69 @@ flowchart TB
 
 ---
 
+### UC-013 — Đăng ký Doanh nghiệp Tự phục vụ, Xác minh Email và Tự động Khởi tạo Không gian Làm việc Chính (Proposed Self-Service Onboarding Option)
+
+- **Use Case ID:** `UC-013`
+- **Name:** Đăng ký Doanh nghiệp Tự phục vụ, Xác minh Email và Tự động Khởi tạo Không gian Làm việc Chính (Self-Service Company Registration, Email Verification & Automated Primary Workspace Provisioning)
+- **Goal:** Cho phép người đại diện doanh nghiệp mới tự đăng ký tài khoản chủ sở hữu và hồ sơ doanh nghiệp qua cổng công khai (`/register-company`), xác minh địa chỉ email công vụ qua mã xác nhận một lần có thời hạn, và tự động kích hoạt nguyên tử (`atomic`) Không gian làm việc chính duy nhất (`1 Company = 1 Primary Workspace/Tenant`) cùng quyền quản trị viên ban đầu (`COMPANY_ADMIN`) ngay sau khi xác minh email thành công mà không cần chờ `PLATFORM_ADMIN` phê duyệt thủ công từng bước.
+- **Primary Actor:** Người đại diện doanh nghiệp đăng ký mới (Prospective Company Representative / Initial Owner).
+- **Secondary Actors:**
+  - Hệ thống Gửi Thư điện tử (Email Delivery Service — gửi email xác minh có chữ ký mật mã và thông báo hoàn tất kích hoạt).
+  - `A02` (`COMPANY_ADMIN` — vai trò được cấp tự động cho chính người đại diện sau khi hoàn tất kích hoạt).
+  - `A01` (`PLATFORM_ADMIN` — chỉ đóng vai trò giám sát hậu kiểm trên `/platform/companies` (`UI-02`), hỗ trợ xử lý sự cố hoặc đình chỉ (`Suspended`) khi phát hiện vi phạm, không chặn luồng kích hoạt ban đầu).
+- **Trigger:** Người đại diện doanh nghiệp truy cập trang chủ/cổng đăng ký công khai (`/register-company`) hoặc nhấp vào liên kết kêu gọi hành động (*"Register your company"*) trên màn hình Đăng nhập (`/login`, `UI-01`).
+- **Preconditions:**
+  - Người dùng truy cập ứng dụng web qua kết nối bảo mật HTTPS.
+  - Quản trị sản phẩm đã phê duyệt phương án Self-Service cho MVP trong quyết định mở `OD-021` (hiện tại `UC-013` mang trạng thái `PROPOSED — NOT APPROVED`, song hành cùng baseline đã xác nhận `UC-001`).
+  - Mã doanh nghiệp (`CompanyCode`), Khóa định danh Không gian làm việc (`TenantKey`) và Email người đại diện chưa thuộc về bất kỳ doanh nghiệp/tài khoản đang hoạt động (`ACTIVE`) hoặc đang chờ kích hoạt hợp lệ nào (`BR-024`, `OD-023`).
+- **Main Success Scenario (7 Điểm Kiểm soát Vòng đời Onboarding Tự phục vụ):**
+  1. **Điểm kiểm soát 1 — Truy cập Điểm vào Đăng ký Công khai (`Landing Page / Registration Entry Point`, `IR-UI-004`):** Từ màn hình Đăng nhập (`/login`, `UI-01`) hoặc trang đích công khai, người đại diện chọn chức năng đăng ký doanh nghiệp mới để điều hướng tới biểu mẫu `/register-company`.
+  2. **Điểm kiểm soát 2 & 3 — Đăng ký Tài khoản Người đại diện & Khởi tạo Hồ sơ Doanh nghiệp (`User Account & Company Registration`, `FR-TEN-005`):** Người đại diện nhập thông tin doanh nghiệp (`CompanyName`, `CompanyCode`, `TenantKey` đề xuất, `ContactEmail`, `TimeZone`) và thông tin tài khoản chủ sở hữu ban đầu (`FullName`, `Email`, `EmployeeCode`, `Password` thỏa mãn chính sách bảo mật).
+  3. **Kiểm tra Tính Duy nhất & Khởi tạo Trạng thái Chờ Xác minh (`BR-024`, `OD-022`, `OD-023`):** Hệ thống kiểm tra cấu trúc và tính duy nhất không phân biệt hoa thường (`case-insensitive`) của `CompanyCode`, `TenantKey` và `Email`. Nếu hợp lệ, hệ thống ghi nhận hồ sơ đăng ký ở trạng thái chờ xác minh (`CompanyStatus = Pending`, `EmailVerified = false`) và sinh mã xác minh email một lần (`verification token` lưu dạng băm, có thời hạn hiệu lực theo `OD-022`, đề xuất 24 giờ).
+  4. **Điểm kiểm soát 4 — Gửi & Xác minh Địa chỉ Email (`Email Verification`, `OD-022`):**
+     - Hệ thống gửi email chứa liên kết/mã xác minh tới địa chỉ email của người đại diện và chuyển giao diện sang màn hình hướng dẫn kiểm tra hộp thư (kèm nút gửi lại mã xác minh có giới hạn tần suất `rate-limit`).
+     - Người đại diện mở email và nhấp vào liên kết xác minh hợp lệ trước khi hết hạn. Hệ thống kiểm tra chữ ký/mã băm, đánh dấu `EmailVerified = true` và thu hồi hiệu lực của token vừa sử dụng.
+  5. **Điểm kiểm soát 5, 6 & 7 — Giao dịch Nguyên tử Khởi tạo Tenant, Không gian Làm việc Chính Duy nhất & Cấp Quyền `COMPANY_ADMIN` Ban đầu (`Atomic Tenant, Primary Workspace & Initial Admin Provisioning`, `BR-001`, `BR-023`, `OD-024`):** Ngay khi xác minh email thành công, hệ thống thực thi một giao dịch cơ sở dữ liệu nguyên tử duy nhất (`single ACID database transaction`):
+     - **(a) Kích hoạt Doanh nghiệp:** Chuyển `Company.Status = Active`.
+     - **(b) Khởi tạo Tenant & Không gian Làm việc Chính (`Primary Workspace`):** Tạo duy nhất 01 bản ghi `Tenant` (`Status = Active`, gắn chỉ mục duy nhất `UNIQUE(CompanyId)` theo `DEC-WS-001`: `1 Company = 1 Primary Workspace/Tenant` trong MVP).
+     - **(c) Kích hoạt Tài khoản Người dùng Đại diện:** Tạo hoặc kích hoạt bản ghi `UserAccount` thuộc `TenantId` vừa tạo (`Status = Active`, `EmailVerified = true`).
+     - **(d) Cấp Quyền Chủ sở hữu / Quản trị viên Ban đầu (`Initial Owner/Admin Assignment`):** Tạo bản ghi `UserRole` gán vai trò `COMPANY_ADMIN` cho `UserAccount` trong `TenantId` đó.
+     - **(e) Ghi Nhật ký Kiểm toán:** Tạo bản ghi `AuditLog` (`Action = CompanySelfServiceProvisioned`) trong cùng giao dịch.
+  6. **Kiểm tra Bất biến Hậu Khởi tạo (`Post-Provisioning Invariant Check`, `BR-023`):** Trước khi `COMMIT`, hệ thống xác nhận bất biến: doanh nghiệp `Active` có đúng 01 `Tenant` chính `Active` và ít nhất 01 `UserAccount` `Active` giữ vai trò `COMPANY_ADMIN`.
+  7. **Điều hướng vào Không gian Làm việc Chính:** Hệ thống hoàn tất giao dịch, thông báo kích hoạt thành công và chuyển hướng người đại diện tới màn hình đăng nhập (hoặc cấp phiên JWT hợp lệ chứa `tid = TenantId` và `role = COMPANY_ADMIN`) để bắt đầu thiết lập cơ cấu tổ chức (`UC-003`).
+- **Alternative Flows:**
+  - **A1 — Yêu cầu Gửi lại Email Xác minh (`Resend Verification Email`, `OD-022`):** Nếu người đại diện chưa nhận được email hoặc mã xác minh cũ đã hết hạn khi hồ sơ vẫn đang ở trạng thái `Pending`, người đại diện có thể yêu cầu gửi lại email xác minh (tuân thủ giới hạn tần suất chống lạm dụng). Hệ thống vô hiệu hóa token cũ và phát hành token mới.
+  - **A2 — Chế độ Kết hợp (Xác minh Email Trước, Phê duyệt `PLATFORM_ADMIN` Sau — `OD-021`, `OD-022`):** Nếu stakeholder chọn phương án kết hợp trong `OD-021`/`OD-022`, sau bước 4 (`EmailVerified = true`), hồ sơ chuyển sang hàng đợi trên `/platform/companies` (`UI-02`) để `PLATFORM_ADMIN` phê duyệt trước khi chạy bước 5 (tương tự `UC-001`).
+- **Exception / Error Flows (6 Trường hợp Lỗi & Biên Bắt buộc):**
+  - **E1 — Đăng ký Thất bại do Dữ liệu Không Hợp lệ (`Registration Validation Failure`):** Nếu thiếu trường bắt buộc, sai định dạng email, mật khẩu yếu hoặc định dạng `CompanyCode`/`TenantKey` không hợp lệ, hệ thống từ chối ngay (`400 Bad Request`), trả về danh sách lỗi theo từng trường và không tạo bất kỳ bản ghi nào.
+  - **E2 — Trùng lặp Email, Mã Doanh nghiệp hoặc Khóa Tenant (`Duplicate Email / CompanyCode / TenantKey`, `BR-024`, `OD-023`):** Nếu `Email`, `CompanyCode` hoặc `TenantKey` đã tồn tại trong một hồ sơ `Active` hoặc `Pending` còn hạn, hệ thống trả về `409 Conflict` với mã lỗi tường minh và gợi ý hành động phù hợp (đăng nhập, khôi phục mật khẩu hoặc gửi lại email xác minh).
+  - **E3 — Email Chưa Xác minh hoặc Token Xác minh Hết hạn / Không Hợp lệ (`Unverified Email / Invalid or Expired Token`, `BR-024`, `OD-022`):**
+    - Nếu người dùng cố đăng nhập hoặc truy cập API cấp Tenant khi `EmailVerified = false` (hoặc `Company.Status = Pending`), hệ thống chặn cấp phiên làm việc Tenant (`403 Forbidden`) và hiển thị trạng thái chờ xác minh email.
+    - Nếu người dùng nhấp vào liên kết xác minh có token sai hoặc đã hết hạn, hệ thống từ chối kích hoạt, giữ nguyên `Company.Status = Pending` và cho phép yêu cầu gửi lại mã xác minh mới.
+  - **E4 — Người dùng Đăng ký lại Sau khi Hồ sơ Bị Từ chối hoặc Hết hạn (`User Re-registration`, `BR-024`, `OD-023`):** Khi một hồ sơ đăng ký trước đó đã hết hạn xác minh (`EXPIRED`) hoặc bị từ chối (`REJECTED`), hệ thống áp dụng chính sách đăng ký lại theo `OD-023` (cho phép giải phóng/tái sử dụng `Email`, `CompanyCode`, `TenantKey` trong lượt đăng ký mới và lưu vết kiểm toán liên kết với hồ sơ cũ, không khóa vĩnh viễn định danh hợp lệ của khách hàng).
+  - **E5 — Tạo Tenant / Không gian Làm việc Chính Không Hoàn tất (`Incomplete Tenant/Workspace Creation — Atomic Rollback`, `BR-023`, `OD-024`):** Nếu xảy ra lỗi cơ sở dữ liệu hoặc xung đột ràng buộc duy nhất trong quá trình tạo `Tenant` (Primary Workspace) hoặc `UserAccount`, toàn bộ giao dịch ở bước 5 bị `ROLLBACK` hoàn toàn; không để lại `Company` ở trạng thái `Active` mà thiếu `Tenant` hoặc thiếu tài khoản chủ sở hữu.
+  - **E6 — Cấp Quyền Quản trị viên Ban đầu Không Thành công (`Failed Initial Owner/Admin Role Assignment — Atomic Rollback`, `BR-023`, `OD-024`):** Nếu bước gán vai trò `COMPANY_ADMIN` vào bảng `UserRole` thất bại (ví dụ: chưa seed vai trò `COMPANY_ADMIN` trong bảng `Role` hoặc lỗi ghi dữ liệu), toàn bộ giao dịch khởi tạo `Tenant` và kích hoạt `Company` bị `ROLLBACK` hoàn toàn; hệ thống tuyệt đối không tạo ra một Không gian làm việc mới không có quản trị viên (`headless workspace`).
+- **Business Rules:** `BR-001` (Một doanh nghiệp tương ứng đúng một không gian làm việc chính trong MVP — `DEC-WS-001`; không đa workspace, không thanh toán/gói cước — `DEC-WS-002`), `BR-002` (Cách ly đa thuê bao), `BR-023` (Tính nguyên tử khi khởi tạo Không gian làm việc chính và cấp quyền `COMPANY_ADMIN` ban đầu), `BR-024` (Tính duy nhất của định danh đăng ký, bắt buộc xác minh email và chính sách đăng ký lại).
+- **Permissions / Scope:**
+  - Điểm vào đăng ký và xác minh email (`/register-company`, `POST /api/v1/public/company-registrations`, `POST /api/v1/public/company-registrations/verify-email`): Công khai (`Public / Anonymous`) có kiểm soát chống lạm dụng (`rate-limiting`).
+  - Sau khi hoàn tất bước 5: Người đại diện nhận vai trò `COMPANY_ADMIN` (`A02`) chỉ trong phạm vi `TenantId` mới được tạo.
+- **Postconditions:**
+  - **Khi thành công:** `Company` (`Active`), đúng 01 `Tenant` chính (`Active`), 01 `UserAccount` (`Active`, `EmailVerified = true`) và 01 `UserRole` (`COMPANY_ADMIN`) cùng tồn tại nhất quán; bản ghi `AuditLog` được lưu vết đầy đủ.
+  - **Khi thất bại ở bất kỳ bước khởi tạo nào:** Không có bản ghi mồ côi (`orphaned Tenant/UserAccount`) hoặc trạng thái nửa vời (`Active Company` không có `Tenant`/`COMPANY_ADMIN`); hồ sơ giữ nguyên trạng thái `Pending` để có thể thử lại an toàn.
+- **Related Requirements:**
+  - RDS: `STKN-001`, `BR-001`, `BR-002`, `BR-023`, `BR-024`, `BIZ-003`, `BIZ-004`, `BIZ-027`, `BIZ-028`, `CAP-002`, `INFO-001`, `INFO-002`, `EXT-001`, `EXT-003`, `QREQ-001`, `QREQ-007`.
+  - SRS: `FR-TEN-001`, `FR-TEN-002`, `FR-TEN-005`, `IR-UI-001`, `IR-UI-004`, `IR-EXT-001`, `DR-002`, `SEC-008`, `TST-004`, `TST-031`.
+- **Acceptance Criteria:** `AC-001`, `AC-002`, `AC-031`, `AC-032`.
+- **Source:** `SRC-001`, `SRC-005`, `SRC-007`, `SRC-025`, `SRC-032`, `SRC-034`, `SRC-036`, `OD-005`, `OD-021`, `OD-022`, `OD-023`, `OD-024`.
+- **Status:** `PROPOSED — NOT APPROVED` (Phương án đề xuất cho MVP dựa trên định hướng multi-tenant SaaS; cần phê duyệt chính thức tại `OD-021`..`OD-024`. Hiện trạng mã nguồn: `NOT_IMPLEMENTED` đối với tuyến `/register-company`, luồng xác minh email và giao dịch khởi tạo nguyên tử).
+
+---
+
 ## 3. Bảng Ma trận Bao phủ giữa Tác nhân, Quy trình Nghiệp vụ và Ca Sử dụng (Actor – Process – Use Case Coverage Matrix)
 
 | Mã UC | Tên Ca Sử dụng | Luồng Nghiệp vụ Liên quan (RDS Mục 6) | Tác nhân Chính | Tác nhân Phụ | Năng lực Sản phẩm (`CAP-*`) | Yêu cầu Nghiệp vụ (`BIZ-*`) |
 |---|---|---|---|---|---|---|
-| `UC-001` | Đăng ký doanh nghiệp, xét duyệt & khởi tạo Tenant mặc định | Flow D (Company Onboarding & Tenant Provisioning) | `A01`, Đại diện công ty | `A02`, Email Service | `CAP-002`, `CAP-009`, `CAP-013` | `BIZ-003`, `BIZ-004` |
+| `UC-001` | Đăng ký doanh nghiệp, xét duyệt bởi `PLATFORM_ADMIN` & khởi tạo Tenant chính (Confirmed Baseline) | Flow D — Nhánh D1 (`PLATFORM_ADMIN`-Approved Onboarding) | `A01`, Đại diện công ty | `A02`, Email Service | `CAP-002`, `CAP-009`, `CAP-013` | `BIZ-003`, `BIZ-004`, `BIZ-028` |
 | `UC-002` | Xác thực người dùng, quản lý phiên & khôi phục mật khẩu | Nền tảng bảo mật cho Flow A, B, C, D, E | `A01`, `A02`, `A03`, `A04` | `A02`, Email Service | `CAP-001`, `CAP-013` | `BIZ-001`, `BIZ-002` |
 | `UC-003` | Thiết lập cơ cấu tổ chức, phạm vi quản lý & vai trò | Flow D (Tenant Setup) & Quản trị tổ chức | `A02` | `A03`, `A04` | `CAP-003`, `CAP-013` | `BIZ-005`, `BIZ-006` |
 | `UC-004` | Cấu hình danh mục dịch vụ, định tuyến, quy trình & SLA | Chuẩn bị cấu hình cho Flow A, B, C | `A02` | — | `CAP-004`, `CAP-007`, `CAP-008` | `BIZ-007`, `BIZ-008`, `BIZ-016`, `BIZ-018` |
@@ -545,3 +621,5 @@ flowchart TB
 | `UC-010` | Giám sát đồng hồ SLA, tạm dừng hợp lệ & leo thang quá hạn | Flow A & Flow B (SLA Governance) | System SLA Monitor, `A03`, `A04` | Notification Service | `CAP-008`, `CAP-009` | `BIZ-018`, `BIZ-019`, `BIZ-020` |
 | `UC-011` | Hỗ trợ tác nghiệp bằng AI có kiểm soát con người | Flow E (Human-in-the-Loop AI Assistance) | `A02`, `A03`, `A04` | `A05`, LLM Provider | `CAP-012` | `BIZ-021`, `BIZ-022` |
 | `UC-012` | Giám sát bảng điều khiển, báo cáo, tìm kiếm & kiểm toán | Giám sát điều hành & Tuân thủ xuyên suốt | `A01`, `A02`, `A03`, `A04` | `A05` | `CAP-010`, `CAP-011`, `CAP-013` | `BIZ-024`, `BIZ-025`, `BIZ-026` |
+| `UC-013` | Đăng ký doanh nghiệp tự phục vụ, xác minh email & tự động khởi tạo Không gian làm việc chính (Proposed Self-Service Option) | Flow D — Nhánh D2 (`PROPOSED` Self-Service Onboarding) | Đại diện công ty (Initial Owner) | Email Service, `A02`, `A01` | `CAP-002`, `CAP-009`, `CAP-013` | `BIZ-003`, `BIZ-004`, `BIZ-027`, `BIZ-028` |
+

@@ -1,21 +1,21 @@
 # Ma trận Truy vết Kiến trúc Hệ thống Toàn diện (SSS Bidirectional Traceability Matrix)
 
-- **Mã tài liệu:** `SSS-TRC-v1.0`
+- **Mã tài liệu:** `SSS-TRC-v1.1`
 - **Thuộc bộ tài liệu:** [SSS_v1.0_DRAFT.md](SSS_v1.0_DRAFT.md) — Mục 23
 - **Liên kết ngược tới SRS:** [SRS_v1.0_DRAFT.md](../../requirements/srs/SRS_v1.0_DRAFT.md), [REQUIREMENTS_TRACEABILITY.md](../../requirements/srs/REQUIREMENTS_TRACEABILITY.md), [REQUIREMENTS_CATALOG.csv](../../requirements/srs/REQUIREMENTS_CATALOG.csv)
-- **Ngày lập:** `2026-10-18`
+- **Ngày cập nhật:** `2026-10-19` (`v1.1-DRAFT`)
 - **Độ phủ truy vết (100%):**
-  - `8/8` Mục tiêu Kinh doanh (`BG-01..08`) & `22/22` Quy tắc Nghiệp vụ (`BR-001..022`)
-  - `116/116` Yêu cầu SRS (`62 FR`, `12 IR`, `15 DR`, `15 NFR`, `12 SEC`) khớp chính xác 1-1 với `REQUIREMENTS_CATALOG.csv`
+  - `8/8` Mục tiêu Kinh doanh (`BG-01..08`) & `24/24` Quy tắc Nghiệp vụ (`BR-001..024`) (bổ sung `BR-023`, `BR-024`)
+  - `118/118` Yêu cầu SRS (`63 FR`, `13 IR`, `15 DR`, `15 NFR`, `12 SEC`) khớp chính xác 1-1 với `REQUIREMENTS_CATALOG.csv`
   - `15/15` Module Hệ thống (`MOD-001..013`, `MOD-FE-001`, `MOD-BG-001`)
   - `28/28` Giao diện Hệ thống (`INT-001..028`)
-  - `6/6` Luồng Tuần tự Trọng yếu (`SEQ-001..006`)
-  - `10/10` Chiến thuật Chất lượng Kiến trúc (`ARCH-*`) & `20/20` Quyết định Kiến trúc (`DEC-WS-*`, `ADR-*`, `ADR-SSS-*`)
-  - `30/30` Kịch bản Kiểm thử Nghiệm thu (`TST-001..030`)
+  - `7/7` Luồng Tuần tự Trọng yếu (`SEQ-001..007`, bổ sung `SEQ-007`)
+  - `10/10` Chiến thuật Chất lượng Kiến trúc (`ARCH-*`) & `21/21` Quyết định Kiến trúc (`DEC-WS-*`, `ADR-*`, `ADR-SSS-*`, bổ sung `ADR-SSS-007`)
+  - `31/31` Kịch bản Kiểm thử Nghiệm thu (`TST-001..031`, bổ sung `TST-031`)
 
 ---
 
-## 1. Ma trận Truy vết Yêu cầu Chức năng (`FR` — `62` Yêu cầu) sang Kiến trúc SSS và Kiểm thử
+## 1. Ma trận Truy vết Yêu cầu Chức năng (`FR` — `63` Yêu cầu) sang Kiến trúc SSS và Kiểm thử
 
 | Mã Yêu cầu SRS | Module SRS / SSS | Mục tiêu & Quy tắc (`BG`/`BR`) | Giao diện (`INT-*`) | Luồng Runtime & ADR (`SEQ-*` / `ADR-*`) | Trạng thái Triển khai (`Repo Fact`) | Kịch bản Kiểm thử (`TST-*`) |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
@@ -25,8 +25,9 @@
 | `FR-AUTH-004` | `M01` / `MOD-001`, `MOD-003` | `BG-08`, `BR-001` | `INT-001`, `INT-004` | `ADR-0002` | `PARTIAL` (Đã có đổi mật khẩu/reset; chưa mở luồng Admin cấp mật khẩu tạm buộc đổi lần đầu) | `TST-002` |
 | `FR-TEN-001` | `M02` / `MOD-002`, `MOD-FE-001` | `BG-08`, `BR-001` | `INT-002` | `DEC-WS-001`, `DEC-WS-002` | `NOT_IMPLEMENTED` (Đã có thực thể & `GET` queue; chưa mở `POST` nộp đơn công khai) | `TST-003` |
 | `FR-TEN-002` | `M02` / `MOD-002`, `MOD-001`, `MOD-003` | `BG-08`, `BR-001`, `BR-002` | `INT-002`, `INT-020` | `DEC-WS-001`, `DEC-WS-002` | `NOT_IMPLEMENTED` (Chưa mở endpoint duyệt & khởi tạo Tenant tự động) | `TST-003` |
-| `FR-TEN-003` | `M02` / `MOD-002` | `BG-08`, `BR-001` | `INT-002`, `INT-015` | `SEQ-001`, `SEQ-005` | `NOT_IMPLEMENTED` (Chưa mở endpoint đổi trạng thái Tenant; tầng讀 đã chặn Tenant không active) | `TST-004` |
+| `FR-TEN-003` | `M02` / `MOD-002` | `BG-08`, `BR-001` | `INT-002`, `INT-015` | `SEQ-001`, `SEQ-005` | `NOT_IMPLEMENTED` (Chưa mở endpoint đổi trạng thái Tenant; tầng đọc đã chặn Tenant không active) | `TST-004` |
 | `FR-TEN-004` | `M02` / `MOD-002`, `MOD-001..013` | `BG-08`, `BR-001`, `BR-002` | `INT-015`, `INT-022` | `SEQ-005`, `ADR-SSS-001` | `IMPLEMENTED` (`ClaimsTenantContext.cs`, `TenantMembershipAuthorizer.cs`, `BizFlowDbContext.cs`) | `TST-004`, `TST-029` |
+| `FR-TEN-005` | `M02` / `MOD-002`, `MOD-001`, `MOD-FE-001` | `BG-08`, `BR-001`, `BR-023`, `BR-024` | `INT-002`, `INT-026` | `SEQ-007`, `ADR-SSS-007`, `DEC-WS-001` | `NOT_IMPLEMENTED` (Đề xuất tự phục vụ; chưa mở endpoint đăng ký/kích hoạt tự động — `OD-021..024`) | `TST-031` |
 | `FR-ORG-001` | `M03` / `MOD-003`, `MOD-FE-001` | `BG-07`, `BR-003` | `INT-004` | `ADR-0011` | `NOT_IMPLEMENTED` (Đã có `GET /api/v1/departments`; chưa mở API tạo/cập nhật phòng ban) | `TST-005` |
 | `FR-ORG-002` | `M03` / `MOD-003`, `MOD-001` | `BG-07`, `BR-003` | `INT-004` | `ADR-0002` | `NOT_IMPLEMENTED` (Đã có `GET /api/v1/users`; chưa mở API tạo/vô hiệu hóa người dùng) | `TST-005` |
 | `FR-ORG-003` | `M03` / `MOD-003` | `BG-07`, `BR-003` | `INT-004` | `ADR-0011` | `NOT_IMPLEMENTED` (Đã có bảng `ManagementScope` & `Department`; chưa mở API gán trưởng phòng) | `TST-005` |
@@ -84,13 +85,14 @@
 
 ---
 
-## 2. Ma trận Truy vết Yêu cầu Giao diện, Dữ liệu, Phi Chức năng và Bảo mật (`IR`, `DR`, `NFR`, `SEC` — `54` Yêu cầu)
+## 2. Ma trận Truy vết Yêu cầu Giao diện, Dữ liệu, Phi Chức năng và Bảo mật (`IR`, `DR`, `NFR`, `SEC` — `55` Yêu cầu)
 
 | Mã Yêu cầu SRS | Nhóm Yêu cầu | Module & Giao diện SSS (`MOD-*` / `INT-*`) | Chiến thuật & Quyết định Kiến trúc (`ARCH-*` / `ADR-*`) | Trạng thái Triển khai (`Repo Fact`) | Kịch bản Kiểm thử (`TST-*`) |
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | `IR-UI-001` | Phân tách Platform Plane & Tenant Workspace Plane | `MOD-FE-001`, `INT-001..014` | `ARCH-SEC-001`, `ARCH-MNT-001`, `ADR-0001`, `DEC-WS-001` | `IMPLEMENTED` (`app.routes.ts`, Guards) | `TST-024` |
 | `IR-UI-002` | Xử lý 4 Trạng thái Giao diện Chuẩn (`loading`, `empty`, `error`, `permission-denied`) | `MOD-FE-001`, `INT-001..014` | `ARCH-MNT-001`, `ADR-0001` | `IMPLEMENTED` (`frontend/src/app/`) | `TST-024` |
 | `IR-UI-003` | Hiển thị Minh bạch Nhãn `AI suggestion` & Xác nhận Con người | `MOD-FE-001`, `MOD-012`, `INT-014` | `ARCH-AI-001`, `SEQ-003` | `IMPLEMENTED` (`AiController.cs`, Frontend AI components) | `TST-021`, `TST-024` |
+| `IR-UI-004` | Giao diện Đăng ký Doanh nghiệp Tự phục vụ & Xác minh Email | `MOD-FE-001`, `MOD-002`, `INT-002` | `ARCH-MNT-001`, `ADR-SSS-007`, `IR-UI-001` | `NOT_IMPLEMENTED` (Chưa có route `/register-company` & `/verify-email` trong `app.routes.ts` — `OD-021..024`) | `TST-031` |
 | `IR-API-001` | Hợp đồng RESTful JSON (`/api/v1/*`) & Bearer JWT | `BizFlow.Api`, `INT-001..015` | `ARCH-SEC-001`, `ADR-0002` | `IMPLEMENTED` (`Program.cs`, 19 Controllers) | `TST-001`, `TST-024` |
 | `IR-API-002` | Chuẩn hóa Lỗi `ProblemDetails`, `errorCode` & Ngữ nghĩa `404` Không Tiết lộ | `BizFlow.Api`, `INT-001..014`, `INT-028` | `ARCH-SEC-002`, `ARCH-OBS-001`, `ADR-0012` | `IMPLEMENTED` (`ApiExceptionHandler.cs`, `ApiErrors.cs`) | `TST-016`, `TST-024` |
 | `IR-API-003` | Kiểm soát Tương tranh (`If-Match` ETag) & Lũy đẳng (`Idempotency-Key`) | `BizFlow.Api`, `INT-005`, `INT-009` | `ARCH-REL-001`, `ADR-0008`, `ADR-0012` | `IMPLEMENTED` (`ServicesController.cs`, `TasksController.cs`) | `TST-007`, `TST-010`, `TST-025` |
@@ -101,7 +103,7 @@
 | `IR-NOTIF-001` | Giao diện Thông báo Thời gian Thực qua SignalR (`/hubs/notifications`) | `MOD-009`, `INT-011`, `INT-012` | `ARCH-SEC-001`, `ARCH-REL-002` | `IMPLEMENTED` (`NotificationHub.cs`, `SignalRNotificationUpdates.cs`) | `TST-019` |
 | `IR-NOTIF-002` | Giao diện Chuyển phát Thông báo Email Ra Ngoài (`Outbound Email`) | `MOD-009`, `MOD-BG-001`, `INT-020`, `INT-026` | `ARCH-REL-002`, `ADR-SSS-002` | `NOT_IMPLEMENTED` (Đã có `PasswordResetEmail.cs`; chưa có bộ gửi email thông báo tổng quát — `OD-005`) | `TST-019` |
 | `DR-001` | Dữ liệu Thuê bao, Đăng ký Doanh nghiệp & Cấu hình Tenant | `MOD-002`, `INT-022` | `ARCH-TEN-001`, `DEC-WS-001`, `ADR-SSS-001` | `IMPLEMENTED` (`Tenant`, `CompanyRegistrationRequest`, `TenantSetting`) | `TST-003`, `TST-029` |
-| `DR-002` | Dữ liệu Định danh, Mật khẩu & Phiên Xác thực (`AuthenticationSession`) | `MOD-001`, `INT-022` | `ARCH-SEC-001`, `ADR-0002` | `IMPLEMENTED` (`IdentityModelConfiguration.cs`) | `TST-001`, `TST-002` |
+| `DR-002` | Dữ liệu Định danh, Mật khẩu, Xác minh Email & Phiên Xác thực (`AuthenticationSession`) | `MOD-001`, `MOD-002`, `INT-022` | `ARCH-SEC-001`, `ADR-0002`, `ADR-SSS-007` | `PARTIAL` (`IdentityModelConfiguration.cs` đã có bảng; chưa có cột `EmailVerified`/`TenantKey` & token xác minh — `OD-005`, `OD-018`, `OD-022..024`) | `TST-001`, `TST-002`, `TST-031` |
 | `DR-003` | Dữ liệu Cơ cấu Phòng ban, Người dùng & Phạm vi Quản lý (`ManagementScope`) | `MOD-003`, `INT-022` | `ARCH-SEC-002`, `BR-003`, `ADR-0011` | `IMPLEMENTED` (`ManagementScopeConfiguration.cs`, `IdentityModelConfiguration.cs`) | `TST-005`, `TST-006` |
 | `DR-004` | Dữ liệu Vai trò, Quyền hạn & Gán Quyền (`RBAC`) | `MOD-003`, `INT-022` | `ARCH-SEC-002`, `ADR-SSS-006` | `IMPLEMENTED` (`RoleStore.cs`, `IdentityModelConfiguration.cs`) | `TST-006` |
 | `DR-005` | Dữ liệu Danh mục Dịch vụ, Phân loại & Quy tắc Định tuyến | `MOD-004`, `MOD-007`, `INT-022` | `ARCH-MNT-001`, `ADR-0008`, `ADR-SSS-003` | `PARTIAL` (`ServiceModelConfiguration.cs` đã có; bảng `RoutingRule` chưa tạo — `OD-001`) | `TST-007` |

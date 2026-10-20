@@ -1,14 +1,16 @@
 # View D: Sơ đồ Tuần tự các Luồng Nghiệp vụ và Kỹ thuật Trọng yếu (Key Sequence Diagrams)
 
 - **Mã tài liệu:** `SSS-DIAG-04`
+- **Phiên bản:** `1.1-DRAFT`
 - **Thuộc bộ tài liệu:** [SSS_v1.0_DRAFT.md](../SSS_v1.0_DRAFT.md) — Mục 8, Mục 11, Mục 12, Mục 13 & Mục 15
-- **Danh mục luồng (`SEQ-001` .. `SEQ-006`):**
+- **Danh mục luồng (`SEQ-001` .. `SEQ-007`):**
   1. `SEQ-001`: Xác thực, Thiết lập Ngữ cảnh Tenant và Kiểm tra Quyền hạn (`Authentication & Tenant Context Resolution`)
   2. `SEQ-002`: Tiếp nhận Yêu cầu Nội bộ, Kiểm tra Form Động và Định tuyến Quy trình (`Request Intake, Validation & Routing`)
   3. `SEQ-003`: Hỗ trợ Xử lý bằng AI có Kiểm soát Con người (`AI-Assisted Request/Task Processing & Human-in-the-Loop`)
   4. `SEQ-004`: Giao việc Phòng ban, Nhân viên Nhận việc (`Claim`) và Xác nhận Hoàn thành (`Task Claim & Confirmation Lifecycle`)
   5. `SEQ-005`: Ngăn chặn Truy cập Trái phép Liên Tenant (`Cross-Tenant Resource Access Denial — Defense-in-Depth`)
   6. `SEQ-006`: Xử lý Lỗi Nhà cung cấp Bên ngoài và Chế độ Suy giảm An toàn (`External Provider Failure & Graceful Fallback`)
+  7. `SEQ-007`: Đăng ký Doanh nghiệp, Xác minh Email và Khởi tạo Nguyên tử Primary Tenant kèm Rollback (`Company Registration, Email Verification & Atomic Provisioning Workflow`)
 
 ---
 
@@ -262,3 +264,81 @@ sequenceDiagram
     DB-->>API: 201 Created
     API-->>SPA: Gửi yêu cầu thành công
 ```
+
+---
+
+## 7. `SEQ-007`: Đăng ký Doanh nghiệp, Xác minh Email và Khởi tạo Nguyên tử Primary Tenant kèm Rollback
+
+Luồng này đặc tả toàn diện chuỗi tương tác từ điểm vào công khai (`/register-company`, liên kết CTA từ `/login`), kiểm tra trùng lặp, gửi token xác minh email, xử lý đăng nhập khi chưa xác minh, và giao dịch nguyên tử cấp phát Workspace chính (`Primary Tenant` duy nhất theo `DEC-WS-001`, `ADR-SSS-007`) kèm điều kiện kiểm tra bất biến sau khởi tạo (`Post-Provisioning Invariant Guard`) và cơ chế phục hồi khi cấp quyền `COMPANY_ADMIN` thất bại.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Owner as Đại diện Doanh nghiệp (Initial Owner)
+    participant SPA as Angular 22 SPA (MOD-FE-001)
+    participant API as BizFlow.Api (Public & Middleware)
+    participant OnbSvc as TenantOnboardingService (MOD-002)
+    participant DB as PostgreSQL 18 (BizFlowDbContext)
+    participant Outbox as EmailQueue / Outbox
+
+    Note over Owner,SPA: Giai đoạn 1: Điểm vào Công khai & Gửi Hồ sơ Đăng ký
+    Owner->>SPA: Truy cập /login -> Bấm liên kết CTA Register your company -> Chuyển đến /register-company
+    Owner->>SPA: Nhập thông tin công ty (Code, Name, TenantKey, TimeZone) & Tài khoản đại diện (Email, FullName, Password)
+    SPA->>API: POST /api/v1/auth/register-company (Idempotency-Key: UUID)
+    API->>OnbSvc: RegisterCompanyAsync(RegisterCompanyDto)
+
+    OnbSvc->>DB: Kiểm tra trùng lặp: Code, TenantKey hoặc Email (IgnoreQueryFilters)
+    alt Trùng lặp với hồ sơ ACTIVE hoặc PENDING đã xác minh
+        DB-->>OnbSvc: Tồn tại bản ghi trùng
+        OnbSvc-->>API: ConflictException (409 Conflict: COMPANY.DUPLICATE_CODE_OR_KEY)
+        API-->>SPA: 409 Conflict ProblemDetails
+        SPA-->>Owner: Báo lỗi trùng thông tin, yêu cầu chọn mã khác
+    else Trùng đơn cũ đã REJECTED hoặc EXPIRED (Re-registration) hoặc Hồ sơ Mới
+        OnbSvc->>DB: Tạo Company (Status = Pending, EmailVerified = false)
+        OnbSvc->>DB: Tạo EmailVerificationToken (TokenHash SHA-256, TTL = 24 giờ)
+        OnbSvc->>Outbox: Lưu bản ghi gửi email xác minh vào EmailQueueItems (Transactional Outbox)
+        DB-->>OnbSvc: Lưu thành công
+        OnbSvc-->>API: 202 Accepted (RegistrationPendingDto)
+        API-->>SPA: 202 Accepted (Please check your email to verify your registration)
+        SPA-->>Owner: Hiển thị màn hình chờ xác minh email
+    end
+
+    Note over Owner,SPA: Giai đoạn 2: Tình huống Cố gắng Đăng nhập khi Chưa Xác minh Email
+    Owner->>SPA: Cố gắng đăng nhập tại /login khi chưa bấm link xác minh
+    SPA->>API: POST /api/v1/auth/login (Email, Password)
+    API->>DB: Kiểm tra tài khoản & EmailVerified flag
+    DB-->>API: UserAccount / Company tồn tại nhưng EmailVerified = false
+    API-->>SPA: 403 Forbidden (AUTH.EMAIL_NOT_VERIFIED)
+    SPA-->>Owner: Thông báo email chưa xác minh, cung cấp nút Resend verification email
+
+    Note over Owner,DB: Giai đoạn 3: Xác minh Email & Khởi tạo Nguyên tử Primary Tenant
+    Owner->>SPA: Nhấp liên kết xác minh trong Email (/verify-email?token=raw_token)
+    SPA->>API: POST /api/v1/auth/verify-email (Token)
+    API->>OnbSvc: VerifyEmailAndProvisionAsync(Token)
+    OnbSvc->>DB: Kiểm tra token còn hạn (TTL <= 24h) & băm SHA-256 khớp
+    DB-->>OnbSvc: Token hợp lệ
+
+    Note over OnbSvc,DB: Khởi chạy Giao dịch ACID Duy nhất (All-or-Nothing Unit of Work)
+    OnbSvc->>DB: BEGIN TRANSACTION (IsolationLevel.ReadCommitted)
+    OnbSvc->>DB: (1) Cập nhật Company.Status = Active, EmailVerified = true
+    OnbSvc->>DB: (2) Khởi tạo đúng 01 Primary Tenant (Unique CompanyId per DEC-WS-001, Status = Active)
+    OnbSvc->>DB: (3) Khởi tạo TenantSettings & BusinessCalendar mặc định
+    OnbSvc->>DB: (4) Khởi tạo UserAccount đại diện (TenantId = PrimaryTenant.Id, Status = Active)
+    OnbSvc->>DB: (5) Gán vai trò hệ thống COMPANY_ADMIN qua UserRole (IsSystem = true) + Ghi AuditLog
+
+    Note over OnbSvc,DB: Post-Provisioning Invariant Check (Kiểm tra điều kiện bất biến)
+    alt Nếu bước 5 gán quyền COMPANY_ADMIN thất bại HOẶC Invariant Check vi phạm
+        OnbSvc->>DB: ROLLBACK TRANSACTION (Hủy bỏ 100% mọi thay đổi)
+        OnbSvc->>DB: Đánh dấu Company.Status = Pending (cho phép thử lại, không sinh workspace mồ côi)
+        OnbSvc-->>API: ProvisioningException (500 ONBOARDING.PROVISIONING_ROLLED_BACK)
+        API-->>SPA: 500 Internal Server Error kèm CorrelationId
+        SPA-->>Owner: Thông báo lỗi khởi tạo hệ thống, dữ liệu an toàn, vui lòng thử lại
+    else Mọi bước thành công và Invariant Check thỏa mãn (1 Primary Tenant + >=1 Company Admin)
+        OnbSvc->>DB: COMMIT TRANSACTION
+        OnbSvc->>Outbox: Thêm thông báo chào mừng và hướng dẫn vào EmailQueueItems
+        OnbSvc-->>API: 200 OK (ProvisioningSuccessDto: TenantId, WorkspaceUrl, AccessToken)
+        API-->>SPA: 200 OK kèm phiên đăng nhập tự động
+        SPA-->>Owner: Chuyển hướng vào Không gian làm việc chính (/tasks) với vai trò COMPANY_ADMIN
+    end
+```
+

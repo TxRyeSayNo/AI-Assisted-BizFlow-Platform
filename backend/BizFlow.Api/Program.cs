@@ -24,12 +24,18 @@ builder.Services.AddSingleton<BizFlow.Application.Common.IReadinessProbe>(_ => n
     builder.Configuration.GetConnectionString("BizFlow") ?? throw new InvalidOperationException("ConnectionStrings:BizFlow is required.")));
 builder.Services.AddScoped<BizFlow.Application.Tenancy.CompanyRegistrationQuery>();
 builder.Services.AddScoped<BizFlow.Application.Tenancy.ICompanyRegistrationReader, BizFlow.Infrastructure.Tenancy.CompanyRegistrationReader>();
+builder.Services.AddScoped<BizFlow.Application.Tenancy.CompanyRegistrationManagement>();
+builder.Services.AddScoped<BizFlow.Application.Tenancy.ICompanyProvisioningStore, BizFlow.Infrastructure.Tenancy.CompanyProvisioningStore>();
 builder.Services.AddScoped<TenantMembershipAuthorizer>();
 builder.Services.AddScoped<BizFlow.Application.Organization.DepartmentQuery>();
 builder.Services.AddScoped<BizFlow.Application.Organization.IDepartmentReader, BizFlow.Infrastructure.Organization.DepartmentReader>();
+builder.Services.AddScoped<BizFlow.Application.Organization.DepartmentManagement>();
+builder.Services.AddScoped<BizFlow.Application.Organization.IDepartmentManagementStore, BizFlow.Infrastructure.Organization.DepartmentManagementStore>();
 builder.Services.AddScoped<BizFlow.Application.Organization.RoleManagement>();
 builder.Services.AddScoped<BizFlow.Application.Organization.IRoleStore, BizFlow.Infrastructure.Organization.RoleStore>();
 builder.Services.AddScoped<BizFlow.Application.Organization.UserDirectoryQuery>();
+builder.Services.AddScoped<BizFlow.Application.Organization.UserManagement>();
+builder.Services.AddScoped<BizFlow.Application.Organization.IUserManagementStore, BizFlow.Infrastructure.Organization.UserManagementStore>();
 builder.Services.AddScoped<BizFlow.Application.Tasks.TaskListQuery>();
 builder.Services.AddScoped<BizFlow.Application.Tasks.TaskCreation>();
 builder.Services.AddScoped<BizFlow.Application.Tasks.TaskAssignmentCommand>();

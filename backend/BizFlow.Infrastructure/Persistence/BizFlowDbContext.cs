@@ -107,15 +107,7 @@ public sealed class BizFlowDbContext(DbContextOptions<BizFlowDbContext> options,
     {
         ChangeTracker.DetectChanges();
         var entries = ChangeTracker.Entries().Where(e => e.State is EntityState.Added or EntityState.Modified or EntityState.Deleted).ToArray();
-        bool? platformAccount = null;
-        async Task AssertPlatformAccount()
-        {
-            // Plane guard only; the calling Application use case must also authorize the exact action.
-            platformAccount ??= CurrentTenantId is null && CurrentUserId is { } userId && userId != Guid.Empty &&
-                await Users.IgnoreQueryFilters().AnyAsync(u => u.Id == userId && u.IsPlatformAdministrator &&
-                    u.TenantId == null && u.Status == UserStatus.Active && u.DeletedAt == null, cancellationToken);
-            if (platformAccount != true) throw Denied();
-        }
+        async Task AssertPlatformAccount() => await AssertPlatformAccountAsync(cancellationToken);
 
         foreach (var entry in entries)
         {
@@ -446,12 +438,25 @@ public sealed class BizFlowDbContext(DbContextOptions<BizFlowDbContext> options,
                         throw Denied();
                     break;
                 case UserAccount user when user.TenantId is { } tenantId:
+                    if (entry.State == EntityState.Added && CurrentTenantId is null)
+                    {
+                        // Platform admin provisioning initial tenant admin account (FR-TEN-002, BR-023, OD-024)
+                        await AssertPlatformAccount();
+                        break;
+                    }
                     AssertTenant(tenantId);
                     break;
                 case UserAccount:
-                case Company:
                 case Tenant:
                 case Permission:
+                    await AssertPlatformAccount();
+                    break;
+                case Company company:
+                    if (entry.State == EntityState.Added && company.Status == CompanyStatus.Pending && CurrentUserId is null)
+                    {
+                        // Public registration intake allows anonymous submission of Pending company registration (FR-TEN-001)
+                        break;
+                    }
                     await AssertPlatformAccount();
                     break;
                 case Role role when !role.IsSystem && role.TenantId is { } tenantId:
@@ -506,6 +511,14 @@ public sealed class BizFlowDbContext(DbContextOptions<BizFlowDbContext> options,
             throw Denied();
     }
 
+    private async Task AssertPlatformAccountAsync(CancellationToken cancellationToken)
+    {
+        var platformAccount = CurrentTenantId is null && CurrentUserId is { } userId && userId != Guid.Empty &&
+            await Users.IgnoreQueryFilters().AnyAsync(u => u.Id == userId && u.IsPlatformAdministrator &&
+                u.TenantId == null && u.Status == UserStatus.Active && u.DeletedAt == null, cancellationToken);
+        if (!platformAccount) throw Denied();
+    }
+
     private async Task ValidateWorkflowOwnerAsync(Guid workflowId, CancellationToken cancellationToken)
     {
         var root = Workflows.Local.FirstOrDefault(w => w.Id == workflowId && Entry(w).State == EntityState.Added) ??
@@ -545,10 +558,18 @@ public sealed class BizFlowDbContext(DbContextOptions<BizFlowDbContext> options,
     private async Task ValidateUserRoleAsync(UserRole link, CancellationToken cancellationToken)
     {
         var user = Users.Local.FirstOrDefault(x => x.Id == link.UserId) ??
-            await Users.SingleOrDefaultAsync(x => x.Id == link.UserId, cancellationToken);
+            await Users.IgnoreQueryFilters().SingleOrDefaultAsync(x => x.Id == link.UserId, cancellationToken);
         var role = Roles.Local.FirstOrDefault(x => x.Id == link.RoleId) ??
-            await Roles.SingleOrDefaultAsync(x => x.Id == link.RoleId, cancellationToken);
+            await Roles.IgnoreQueryFilters().SingleOrDefaultAsync(x => x.Id == link.RoleId, cancellationToken);
         if (user?.TenantId is not { } tenantId || role is null) throw Denied();
+
+        if (CurrentTenantId is null && role.Name == "COMPANY_ADMIN" && role.IsSystem)
+        {
+            // Platform admin provisioning initial COMPANY_ADMIN role (FR-TEN-002, BR-023, OD-024)
+            await AssertPlatformAccountAsync(cancellationToken);
+            return;
+        }
+
         AssertTenant(tenantId);
         if ((!role.IsSystem && role.TenantId != tenantId) || role.Status != RecordStatus.Active ||
             await RolePermissions.IgnoreQueryFilters().Join(Permissions.IgnoreQueryFilters(),

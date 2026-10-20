@@ -21,4 +21,26 @@ public sealed class Company
         Name = EntityRules.Text(name, 200, nameof(name)), ContactEmail = EntityRules.Email(contactEmail),
         Status = CompanyStatus.Pending, CreatedAt = now.ToUniversalTime(), UpdatedAt = now.ToUniversalTime()
     };
+
+    public void Approve(DateTimeOffset now)
+    {
+        if (Status != CompanyStatus.Pending)
+            throw new InvalidOperationException($"Only Pending companies can be approved. Current status: {Status}");
+        Status = CompanyStatus.Active;
+        UpdatedAt = now.ToUniversalTime();
+    }
+
+    public void Reject(DateTimeOffset now)
+    {
+        if (Status != CompanyStatus.Pending)
+            throw new InvalidOperationException($"Only Pending companies can be rejected. Current status: {Status}");
+        Status = CompanyStatus.Inactive;
+        UpdatedAt = now.ToUniversalTime();
+    }
+
+    public void UpdateStatus(CompanyStatus newStatus, DateTimeOffset now)
+    {
+        Status = newStatus;
+        UpdatedAt = now.ToUniversalTime();
+    }
 }

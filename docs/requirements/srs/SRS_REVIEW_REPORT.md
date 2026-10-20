@@ -1,93 +1,130 @@
-# BÁO CÁO RÀ SOÁT CHẤT LƯỢNG VÀ KIỂM CHỨNG ĐẶC TẢ YÊU CẦU PHẦN MỀM (SRS QUALITY & VERIFICATION REVIEW REPORT)
+# SRS Review & Validation Gate Report — AI-Assisted BizFlow Platform
 
-- **Dự án:** AI-Assisted BizFlow Platform
-- **Mã tài liệu:** `BIZFLOW-SRS-REV-v1.0`
-- **Phiên bản:** `1.0-DRAFT`
-- **Ngày rà soát:** `2026-10-18`
-- **Hội đồng rà soát:** Senior Business Analyst, Senior Requirements Engineer, Senior Software Architect, Senior QA/Test Engineer, Technical Writer
-- **Kết luận tổng thể:** **`PASS WITH OPEN OWNER DECISIONS TRACKED (OD-001..OD-018)`**
-- **Tài liệu được rà soát:**
-  1. [SRS_v1.0_DRAFT.md](file:///d:/FA26/AI-Assisted-BizFlow-Platform/docs/requirements/srs/SRS_v1.0_DRAFT.md)
-  2. [REQUIREMENTS_TRACEABILITY.md](file:///d:/FA26/AI-Assisted-BizFlow-Platform/docs/requirements/srs/REQUIREMENTS_TRACEABILITY.md)
-  3. [OPEN_DECISIONS.md](file:///d:/FA26/AI-Assisted-BizFlow-Platform/docs/requirements/srs/OPEN_DECISIONS.md)
-  4. [SOURCE_REGISTER.md](file:///d:/FA26/AI-Assisted-BizFlow-Platform/docs/requirements/srs/SOURCE_REGISTER.md)
-  5. [REQUIREMENTS_CATALOG.csv](file:///d:/FA26/AI-Assisted-BizFlow-Platform/docs/requirements/srs/REQUIREMENTS_CATALOG.csv)
+| Thuộc tính | Giá trị |
+| :--- | :--- |
+| **Mã tài liệu** | `BF-SRS-REV-2026-002` |
+| **Tên tài liệu** | Báo cáo Rà soát Yêu cầu Phần mềm, Kiểm định Thực tế Triển khai & Gate Review cho Software Requirements Specification (SRS) |
+| **Phiên bản** | `1.1-DRAFT` |
+| **Trạng thái** | `PASSED WITH OPEN DECISIONS (24 ODs)` — Đã hoàn tất đợt Review chuyên sâu về Company Registration, Tenant Onboarding & Workspace Provisioning |
+| **Ngày kiểm định** | `2026-10-19` (Bản gốc `1.0-DRAFT`: `2026-10-18`) |
+| **Tài liệu được kiểm định & đồng bộ** | Bộ SRS (`docs/requirements/srs/`), đồng bộ hai chiều với RDS (`docs/requirements/rds/`) và SSS (`docs/specifications/sss/`) |
 
 ---
 
-## 1. Mục đích và Phương pháp Rà soát (Review Purpose & Methodology)
+## 1. Mục tiêu Kiểm định & Phạm vi Đợt Rà soát `v1.1-DRAFT` (Review Scope & Objectives)
 
-Báo cáo này ghi lại kết quả rà soát độc lập và kiểm chứng tự động đối với bộ hồ sơ **Software Requirements Specification (SRS v1.0-DRAFT)** của dự án **AI-Assisted BizFlow Platform**, đối chiếu với:
-1. Các nguyên tắc chất lượng yêu cầu của **ISO/IEC/IEEE 29148:2018** (*Necessary, Atomic, Unambiguous, Verifiable, Feasible, Consistent, Traceable, Implementation-free*).
-2. Toàn bộ nguồn bằng chứng trong workspace `d:\FA26\AI-Assisted-BizFlow-Platform` (`SRC-001`..`SRC-036`), bao gồm tài liệu phân tích `docs/00-analysis/*`, 12 quyết định kiến trúc `docs/01-decisions/ADR-0001..0012`, hồ sơ truy vết `docs/02-traceability/*`, mã nguồn `.NET 10` / `Angular 22`, 34 migrations và bộ kiểm thử tự động.
+Báo cáo này ghi nhận kết quả kiểm định độc lập và rà soát kỹ thuật (Independent Software Requirements Quality & Verification Review) cho bộ tài liệu **Software Requirements Specification (SRS)** của dự án **AI-Assisted BizFlow Platform**, cụ thể là **Đợt Rà soát Chuyên sâu (`v1.1-DRAFT`, ngày `2026-10-19`)** tập trung vào **Company Registration, Tenant Onboarding và Workspace Provisioning**.
 
-> [!NOTE]
-> Tài liệu áp dụng các nguyên tắc kỹ nghệ yêu cầu của ISO/IEC/IEEE 29148:2018 để thiết lập cấu trúc và tiêu chí chất lượng, nhưng **không tuyên bố chứng nhận hợp chuẩn hình thức tuyệt đối** khi các mục quyết định của Chủ sở hữu sản phẩm (`OD-001`..`OD-018`) vẫn đang chờ phê duyệt chính thức.
-
----
-
-## 2. Kết quả Đánh giá theo Danh mục Kiểm tra Chất lượng (12-Point Quality Gate Assessment)
-
-| TT | Tiêu chí Kiểm tra Chất lượng | Kết quả | Bằng chứng Xác minh Cụ thể |
-|---:|---|:---:|---|
-| 1 | **Mọi requirement có ID duy nhất, đúng chuẩn phân loại** | **ĐẠT (`PASS`)** | Đã kiểm chứng tự động: **116 yêu cầu nguyên tử** (`62 FR`, `12 IR`, `15 DR`, `15 NFR`, `12 SEC`) cùng `8 BG`, `22 BR`, `12 UC`, `30 TST`, `18 OD`, `36 SRC` có mã định danh duy nhất 100% (`Duplicate IDs = 0`). |
-| 2 | **Không có requirement gộp nhiều nghĩa vụ không liên quan (Atomic)** | **ĐẠT (`PASS`)** | Mỗi `FR-*`, `IR-*`, `DR-*`, `NFR-*`, `SEC-*` chỉ quy định một nghĩa vụ chức năng, giao diện, dữ liệu, chất lượng hoặc bảo mật xác định theo đúng phân rã chuẩn của hệ thống. |
-| 3 | **Không sử dụng từ ngữ mơ hồ không định nghĩa** | **ĐẠT (`PASS`)** | Đã loại bỏ các tính từ cảm tính ("nhanh", "thân thiện", "tối ưu", "linh hoạt", "đầy đủ" không định lượng); thay bằng điều kiện trạng thái cụ thể, kích thước byte (`524,288,000` bytes), mã HTTP, hoặc ngưỡng đo kèm nhãn `TBD — OPEN`. |
-| 4 | **Mọi FR có Điều kiện Nghiệm thu (Acceptance Criteria) kiểm thử được** | **ĐẠT (`PASS`)** | Toàn bộ 62 FR đều có Acceptance Criteria theo cấu trúc *Given / When / Then*, bao phủ cả luồng thành công (Happy Path), luồng lỗi/biên (Negative/Boundary Path) và luồng cách ly phân quyền. |
-| 5 | **Mọi NFR có đơn vị đo hoặc ghi rõ `TBD — OPEN` kèm `PROPOSED TARGET — NOT APPROVED`** | **ĐẠT (`PASS`)** | Cả 15 NFR đều phân biệt rõ con số trích từ SSS v1.2 (`500 ms`, `2,000 ms`, `100 users`, `500 MB`) với các điều kiện tải/phân vị/timeout/RPO/RTO chưa phê duyệt được gắn nhãn `TBD — OPEN` + `PROPOSED TARGET — NOT APPROVED` (`OD-013`..`OD-017`). |
-| 6 | **Máy trạng thái đầy đủ trạng thái, chuyển tiếp hợp lệ/bất hợp lệ và đồng bộ ADR** | **ĐẠT (`PASS`)** | Máy trạng thái `Task` (10 trạng thái) và `Request` (12 trạng thái) có cả sơ đồ Mermaid lẫn bảng ma trận chuyển tiếp chi tiết, tích hợp đầy đủ `ADR-0003`, `ADR-0009`, `ADR-0010` và `ADR-0012`. |
-| 7 | **Mọi tác nhân (`A01`–`A05`) được kiểm tra trong Ma trận RBAC và 5 cấp phạm vi** | **ĐẠT (`PASS`)** | Chương 3 phân định rõ 5 tác nhân (`PLATFORM_ADMIN`, `COMPANY_ADMIN`, `MANAGER`, `EMPLOYEE`, `AI_AGENT`), 5 cấp độ phạm vi (`Platform`, `Tenant`, `Department`, `ManagementScope`, `Self`) và bảng 33+ mã quyền RBAC. |
-| 8 | **Cách ly đa thuê bao (Multi-Tenant Isolation) phủ xuyên suốt mọi tầng** | **ĐẠT (`PASS`)** | Được quy định xuyên suốt tại `FR-TEN-004`, `BR-002`, `DR-001`, `NFR-SEC-002` và `SEC-004..009`, `SEC-012` (API, DB Query Filter, Persistence Guard, Cache, Background Jobs, Object Storage, SignalR, Search, AI Context, Audit). |
-| 9 | **Phân biệt rõ SRS ("Cần làm gì") với Thiết kế/Code ("Làm như thế nào")** | **ĐẠT (`PASS`)** | Nội dung yêu cầu quy định hành vi và ràng buộc hệ thống; các tham chiếu tới `BizFlowDbContext`, Controller hay Migration chỉ nằm ở trường *Trạng thái triển khai* và *Truy vết bằng chứng*. |
-| 10 | **Không có xung đột giữa các nguồn bị bỏ qua âm thầm** | **ĐẠT (`PASS`)** | Toàn bộ 12 xung đột nguồn (`CONF-01`..`CONF-12`) đã được lập hồ sơ tại `SOURCE_REGISTER.md` (Mục 4), chỉ rõ mục nào đã giải quyết qua `ADR-0001..0012` và mục nào còn mở tại `OD-001..018`. |
-| 11 | **Mọi mục `CONFIRMED`, `PROPOSED`, `OPEN`, `IMPLEMENTED` được gắn nhãn trung thực** | **ĐẠT (`PASS`)** | Không có mục `PROPOSED` hoặc `OPEN` nào bị tự ý nâng lên `CONFIRMED`. Đặc biệt, đã khắc phục hoàn toàn sai lệch của bản nháp cũ (`documents/SRS/`), xác minh chính xác **37 FR `IMPLEMENTED`**, **7 FR `PARTIAL`**, **18 FR `NOT_IMPLEMENTED`**. |
-| 12 | **Đồng bộ 100% giữa SRS, Ma trận Truy vết (RTM) và Danh mục CSV** | **ĐẠT (`PASS`)** | Đã chạy script kiểm tra chéo: 116/116 yêu cầu khớp 1-1 giữa `SRS_v1.0_DRAFT.md`, `REQUIREMENTS_TRACEABILITY.md` và `REQUIREMENTS_CATALOG.csv` (`Missing = 0`). |
+Quá trình kiểm định đánh giá bộ SRS theo 10 mục tiêu bắt buộc:
+1. **Ranh giới Đặc tả Phần mềm (Software Requirements Boundary Enforcement)**: Tuân thủ chuẩn mực ISO/IEC/IEEE 29148:2018; phân định rõ ràng giữa yêu cầu nghiệp vụ (RDS), đặc tả hành vi phần mềm/hợp đồng giao diện/dữ liệu/kiểm thử (SRS) và giải pháp kiến trúc kỹ thuật (SSS).
+2. **Kiểm tra 7 Điểm kiểm soát Vòng đời Onboarding (7 Onboarding Lifecycle Checkpoints)**:
+   - (1) Điểm vào đăng ký công khai / Landing page (`/register-company`, liên kết CTA từ `/login` `UI-01`).
+   - (2) Đăng ký tài khoản người dùng đại diện / chủ sở hữu ban đầu (`Representative Account Registration`).
+   - (3) Khởi tạo hồ sơ doanh nghiệp (`Company Creation`).
+   - (4) Xác minh địa chỉ email người đại diện (`Email Verification`).
+   - (5) Khởi tạo thuê bao (`Tenant Initialization`).
+   - (6) Tạo Không gian làm việc chính duy nhất trong MVP (`1 Company = 1 Primary Workspace/Tenant` theo `DEC-WS-001`, không thêm multi-workspace, billing hoặc subscription management theo `DEC-WS-002`).
+   - (7) Cấp quyền `COMPANY_ADMIN` ban đầu (`Initial Owner/Admin Role Assignment`).
+3. **Đối chiếu Tài liệu với Giao diện & Mã nguồn Thực tế (Ground-Truth Codebase Cross-Reference)**: Phân biệt rõ yêu cầu đã xác nhận (`CONFIRMED`), yêu cầu đề xuất (`PROPOSED — NOT APPROVED`), yêu cầu chờ quyết định (`OPEN`), chức năng đã triển khai (`IMPLEMENTED`), triển khai một phần (`PARTIAL`), chưa triển khai (`NOT_IMPLEMENTED`) và chưa được xác minh (`UNVERIFIED`).
+4. **Bảo toàn Quyết định Hiện hành & Đề xuất Self-Service Onboarding Trung lập**: Xem **Self-Service Company Registration** (`FR-TEN-005`, `IR-UI-004`, `UC-013`) là phương án đề xuất (`PROPOSED — NOT APPROVED` theo `OD-021`) dựa trên định hướng multi-tenant SaaS, đồng thời giữ nguyên mô hình cơ sở đã xác nhận (`PLATFORM_ADMIN` phê duyệt tại `FR-TEN-001`, `FR-TEN-002`, `UC-001`) và nêu rõ sự khác biệt mà không tự ý ghi đè.
+5. **Kiểm tra 6 Tình huống Lỗi & Biên Bắt buộc (6 Mandatory Onboarding Failure & Edge Cases)**:
+   - (1) Đăng ký thất bại (`Registration Failure` — lỗi xác thực dữ liệu `422` hoặc lỗi cơ sở dữ liệu `500`).
+   - (2) Email hoặc mã doanh nghiệp/`TenantKey` trùng lặp (`Duplicate Email / Company Code / TenantKey` — `409 Conflict`).
+   - (3) Email chưa xác minh (`Unverified Email` — chặn kích hoạt workspace và chặn đăng nhập với `403 AUTH.EMAIL_NOT_VERIFIED`).
+   - (4) Người dùng đăng ký lại (`User Re-registration` sau khi đơn cũ bị `REJECTED` hoặc token xác minh hết hạn `TTL`, bảo toàn lịch sử theo `BR-021` / `OD-023`).
+   - (5) Tạo `Primary Tenant` / dữ liệu cấu hình không hoàn tất (`Incomplete Tenant/Workspace Creation` — bắt buộc `Atomic Rollback` theo `BR-023` / `OD-024`).
+   - (6) Cấp quyền `COMPANY_ADMIN` ban đầu không thành công (`Failed Initial Owner/Admin Role Assignment` — bắt buộc `Atomic Rollback` theo `BR-023` / `OD-024`).
+6. **Đồng bộ Truy vết Đa tầng (`RDS` $\leftrightarrow$ `SRS` $\leftrightarrow$ `SSS`) và Bảo toàn Mã nguồn (`0` Source Code Changes)**.
 
 ---
 
-## 3. Phát hiện Quan trọng Từ Quá trình Khảo sát Bằng chứng Thực tế (Key Findings & Corrections)
+## 2. Báo cáo Rà soát Chuyên sâu: Company Registration, Tenant Onboarding & Workspace Provisioning
 
-### 3.1. Hiệu chỉnh Nhận định về Hiện trạng Repository so với Bản nháp Tiền nhiệm (`documents/SRS/` & `documents/SSS/`)
-- **Vấn đề trong bản nháp tiền nhiệm (`2026-10-16` / `2026-10-17`):** Các tài liệu trong `documents/SRS/` và `documents/SSS/` được sinh ra trong một môi trường trước đó chỉ nhìn thấy một repo Django không liên quan (`ThangHoQuoc/f`), dẫn đến việc kết luận rằng toàn bộ 62 FR đều ở trạng thái `NOT VERIFIED` và chưa có bất kỳ mã nguồn BizFlow nào tồn tại.
-- **Sự thật được xác minh trong đợt rà soát này (`2026-10-18`):** Workspace hiện tại (`d:\FA26\AI-Assisted-BizFlow-Platform`) **chính là mã nguồn thực tế của AI-Assisted BizFlow Platform** trên đúng ngăn xếp `.NET 10` + `Angular 22` + `PostgreSQL 18`:
-  - Đã có **36 / 43 bảng** trong `BizFlowDbContext` qua **34 bản di trú (Migrations)**.
-  - Đã có **17 API Controllers**, **404 bài kiểm thử đơn vị (Unit Tests)**, **~280 bài kiểm thử tích hợp PostgreSQL (Integration Tests)** và **196 bài kiểm thử giao diện Angular (Vitest)**.
-  - Đã hoàn thành **37 / 62 FR (`IMPLEMENTED`)**, **7 / 62 FR (`PARTIAL`)**, và còn **18 / 62 FR (`NOT_IMPLEMENTED`)**.
-- **Tác động:** Bộ SRS v1.0 tại `docs/requirements/srs/` đã cập nhật chính xác trạng thái thực tế của từng yêu cầu, giúp nhóm dự án và giảng viên đánh giá đúng tiến độ thực chất của hệ thống.
+### 2.1. Đối chiếu 7 Điểm kiểm soát Vòng đời giữa Tài liệu SRS và Hiện trạng Triển khai
 
-### 3.2. Phân tích 18 Yêu cầu Chức năng Chưa Triển khai (`NOT_IMPLEMENTED`) và 7 Yêu cầu Một phần (`PARTIAL`)
-Các yêu cầu chưa hoàn tất trong mã nguồn tập trung vào 4 nhóm chức năng rõ rệt:
-1. **Nhóm Đăng ký Công ty & Quản trị Vòng đời Tenant (`M02` — 3 FR):** `FR-TEN-001`, `FR-TEN-002`, `FR-TEN-003` (mới có hàng đợi đọc `GET`, chưa có API gửi đơn, duyệt/khởi tạo tự động và đổi trạng thái).
-2. **Nhóm Quản trị Ghi Người dùng & Phòng ban (`M03` — 3 FR + 1 Partial):** `FR-ORG-001`, `FR-ORG-002`, `FR-ORG-003`, `FR-ORG-004` (đã có API đọc và `RolesController`, chưa có API tạo/sửa/khóa người dùng và phòng ban, liên kết `OD-004`, `OD-006`, `OD-007`).
-3. **Nhóm Cấu hình Nâng cao Dịch vụ, Thực thi Workflow Đã ghim & Phê duyệt (`M04` & `M07` — 6 FR + 1 Partial):** `FR-SVC-002`, `FR-SVC-003`, `FR-SVC-004`, `FR-WF-001` (partial), `FR-WF-002`, `FR-WF-003`, `FR-WF-004` (thiếu 5 bảng `RoutingRule`, `ApprovalRule`, `ApprovalRuleVersion`, `ApprovalInstance`, `ApprovalStepInstance` và API phát hành/chạy quy trình động, liên kết `OD-008`, `OD-011`).
-4. **Nhóm Đồng hồ SLA Thời gian thực & Các Hành động Phụ của Task/Request (`M08`, `M05`, `M06` — 6 FR + 4 Partial):**
-   - `M08`: `FR-SLA-001` (partial), `FR-SLA-002`, `FR-SLA-003`, `FR-SLA-004` (thiếu 2 bảng `SLAState`, `SLAEvent` và background worker tính giờ/leo thang, liên kết `OD-010`, `OD-012`).
-   - `M05`: `FR-TASK-003` (partial — thiếu `/reject`), `FR-TASK-005` (partial), `FR-TASK-006` (partial), `FR-TASK-009` (`reassign`), `FR-TASK-010` (`cancel`), liên kết `OD-001`, `OD-002`.
-   - `M06`: `FR-REQ-002` (`WAITING_FOR_INFO`), `FR-REQ-005` (partial — liên kết bước chờ duyệt), liên kết `OD-003`.
+| # | Điểm kiểm soát Vòng đời (Lifecycle Checkpoint) | Trạng thái Đặc tả SRS | Trạng thái Mã nguồn (`backend/` & `frontend/`) | Bằng chứng Thực tế trong Repository (`Ground-Truth Evidence`) |
+| :---: | :--- | :--- | :--- | :--- |
+| **1** | **Landing Page / Điểm vào đăng ký công khai (`/register-company` & CTA trên `/login`)** | `PROPOSED — NOT APPROVED` (`IR-UI-004`, `UC-013`, `OD-021`) | **`NOT_IMPLEMENTED`** | Trong [`frontend/src/app/app.routes.ts`](../../../frontend/src/app/app.routes.ts), tuyến đường gốc `''` chuyển hướng về `/login`; hoàn toàn chưa có route `/register-company`. Trong [`frontend/src/app/pages/login/login.html`](../../../frontend/src/app/pages/login/login.html) (`UI-01`), giao diện chỉ có text tĩnh *"Need access? Contact your company administrator."*, chưa có liên kết CTA mở form đăng ký. |
+| **2** | **Đăng ký tài khoản người dùng đại diện / chủ sở hữu ban đầu (`Initial Representative`)** | `CONFIRMED` (`FR-TEN-001`) & `PROPOSED` (`FR-TEN-005`) | **`NOT_IMPLEMENTED`** | [`backend/.../Entities/Company.cs`](../../../backend/src/Modules/Identity/BizFlow.Modules.Identity.Domain/Entities/Company.cs) chỉ chứa `Id, Code, Name, ContactEmail, Status, CreatedAt, UpdatedAt`. Chưa có trường lưu tài khoản đại diện ban đầu (`FullName`, `EmployeeCode`, `PasswordHash`) trước khi cấp Tenant. |
+| **3** | **Tạo hồ sơ doanh nghiệp (`Company Creation`)** | `CONFIRMED` (`FR-TEN-001`, `DR-002`) | **`PARTIAL` (`GET` only)** | Thực thể `Company` và bảng `companies` đã được cấu hình trong [`IdentityModelConfiguration.cs`](../../../backend/src/Modules/Identity/BizFlow.Modules.Identity.Persistence/Configurations/IdentityModelConfiguration.cs), nhưng [`CompanyRegistrationsController.cs`](../../../backend/src/Api/BizFlow.Api/Controllers/Platform/CompanyRegistrationsController.cs) mới chỉ hỗ trợ `GET /api/v1/platform/company-registrations`. Chưa có endpoint tiếp nhận `POST` đăng ký. |
+| **4** | **Xác minh địa chỉ email người đại diện (`Email Verification`)** | `OPEN` / `PROPOSED — NOT APPROVED` (`BR-024`, `FR-TEN-001`, `FR-TEN-005`, `IR-EXT-002`, `OD-022`) | **`NOT_IMPLEMENTED` & `UNVERIFIED`** | Chưa có trường `EmailVerified`, `EmailVerificationTokenHash`, `EmailVerificationExpiresAt` trên `Company`/`UserAccount`. Dịch vụ gửi email SMTP mới chỉ tồn tại ở dạng khung hạ tầng (`IR-EXT-002`), việc gửi thư xác minh thực tế chưa được nối vào luồng đăng ký (`UNVERIFIED`). |
+| **5** | **Khởi tạo thuê bao (`Tenant Initialization`)** | `CONFIRMED` (`FR-TEN-002`, `DR-001`, `DR-002`) & `PROPOSED` (`FR-TEN-005`) | **`NOT_IMPLEMENTED` (ở luồng nghiệp vụ)** | Bảng `tenants` và thực thể `Tenant` đã tồn tại trong Persistence, nhưng luồng nghiệp vụ kích hoạt tự động hoặc phê duyệt từ `CompanyRegistrationsController` chưa được hiện thực hóa (mới chỉ là controller tra cứu read-only). |
+| **6** | **Tạo Không gian làm việc chính duy nhất trong MVP (`DEC-WS-001`)** | `CONFIRMED` (`DEC-WS-001`, `FR-TEN-002`, `DR-002`, `OD-018`) | **`IMPLEMENTED` (ở tầng CSDL) & `NOT_IMPLEMENTED` (ở tầng Service)** | Trong [`IdentityModelConfiguration.cs`](../../../backend/src/Modules/Identity/BizFlow.Modules.Identity.Persistence/Configurations/IdentityModelConfiguration.cs), cấu hình `b.HasIndex(x => x.CompanyId).IsUnique();` bảo đảm tại tầng CSDL mỗi Company chỉ có đúng 1 Tenant. Tuy nhiên, logic nghiệp vụ provisioning chuỗi 5 bước chưa được cài đặt. |
+| **7** | **Cấp quyền `COMPANY_ADMIN` ban đầu (`Initial Role Assignment`)** | `CONFIRMED` (`FR-TEN-002`, `DR-004`) & `PROPOSED` (`FR-TEN-005`, `OD-024`) | **`NOT_IMPLEMENTED`** | Seed data đã có sẵn vai trò hệ thống `COMPANY_ADMIN` (`IsSystem = true`), nhưng luồng tự động tạo `UserRole` gắn với `UserAccount` đại diện khi khởi tạo Tenant chưa được viết mã. |
 
 ---
 
-## 4. Kết quả Kiểm chứng Tự động Liên Tệp (Automated Cross-File Verification Log)
+### 2.2. Kiểm tra & Xử lý 6 Tình huống Lỗi và Trường hợp Biên (Failure & Edge Cases)
 
-Nhóm biên soạn đã thực thi kịch bản kiểm tra tự động bằng PowerShell trên toàn bộ thư mục `docs/requirements/srs/` với kết quả đạt tuyệt đối:
+SRS v1.1-DRAFT đã chuẩn hóa đặc tả hành vi của hệ thống cho toàn bộ 6 tình huống lỗi và biên trong `FR-TEN-001`, `FR-TEN-002`, `FR-TEN-005`, `BR-023`, `BR-024` và §10 Error Handling:
 
-| Hạng mục Kiểm chứng Tự động | Giá trị Kỳ vọng | Giá trị Thực tế Đo được | Kết quả |
-|---|---:|---:|:---:|
-| Tổng số yêu cầu trong `REQUIREMENTS_CATALOG.csv` | `116` (`62 FR + 12 IR + 15 DR + 15 NFR + 12 SEC`) | `116` | **PASS** |
-| Số mã yêu cầu bị trùng lặp (`Duplicate Requirement IDs`) | `0` | `0` | **PASS** |
-| Số yêu cầu trong Catalog bị thiếu trong `SRS_v1.0_DRAFT.md` | `0` | `0` | **PASS** |
-| Số yêu cầu trong Catalog bị thiếu trong `REQUIREMENTS_TRACEABILITY.md` | `0` | `0` | **PASS** |
-| Độ phủ 22 Quy tắc nghiệp vụ (`BR-001`..`BR-022`) trong SRS | `22 / 22` | `22 / 22` | **PASS** |
-| Độ phủ 12 Ca sử dụng (`UC-001`..`UC-012`) trong SRS | `12 / 12` | `12 / 12` | **PASS** |
-| Độ phủ 30 Kịch bản kiểm thử (`TST-001`..`TST-030`) trong SRS | `30 / 30` | `30 / 30` | **PASS** |
-| Độ phủ 18 Quyết định còn mở (`OD-001`..`OD-018`) trong `OPEN_DECISIONS.md` | `18 / 18` | `18 / 18` | **PASS** |
-| Độ phủ 36 Nguồn bằng chứng (`SRC-001`..`SRC-036`) trong `SOURCE_REGISTER.md` | `36 / 36` | `36 / 36` | **PASS** |
-| Kiểm tra không sửa đổi mã nguồn sản phẩm hoặc tài liệu ngoài `docs/requirements/srs/` | `0` tệp bị sửa đổi | `0` tệp bị sửa đổi | **PASS** |
+1. **Đăng ký thất bại (`Registration Failure`):**
+   - Lỗi dữ liệu đầu vào không hợp lệ: Trả về mã lỗi HTTP `422 Unprocessable Entity` với mảng chi tiết trường vi phạm (`ValidationProblemDetails`).
+   - Lỗi hạ tầng hoặc cơ sở dữ liệu: Trả về mã lỗi `500 Internal Server Error` kèm mã tương quan truy vết (`CorrelationId`). Không có dữ liệu rác nào được lưu lại.
+2. **Email hoặc mã doanh nghiệp / `TenantKey` trùng lặp (`Duplicate Conflict`):**
+   - Trả về mã lỗi `409 Conflict` với mã lỗi chuẩn `COMPANY.DUPLICATE_CODE_OR_KEY` hoặc `IDENTITY.DUPLICATE_EMAIL`.
+   - Hệ thống phản hồi rõ ràng mà không ghi đè dữ liệu của tenant khác và không tiết lộ dữ liệu nhạy cảm của tài khoản đã tồn tại.
+3. **Email chưa xác minh (`Unverified Email`):**
+   - Khi người dùng đăng nhập bằng tài khoản chưa xác minh email, hệ thống trả về mã lỗi `403 Forbidden` (`AUTH.EMAIL_NOT_VERIFIED`).
+   - Chặn hoàn toàn việc truy cập vào Tenant Plane và chặn kích hoạt Primary Tenant cho đến khi token xác minh được xác thực hợp lệ. Hỗ trợ gửi lại email xác minh với rate limit (`3 lần / 15 phút`).
+4. **Người dùng đăng ký lại (`User Re-registration`):**
+   - Cho phép người dùng đăng ký lại bằng cùng địa chỉ email và mã công ty nếu đơn đăng ký trước đó đã bị `PLATFORM_ADMIN` từ chối (`REJECTED`) hoặc token xác minh email đã quá hạn (`EXPIRED`) sau khi sửa đổi thông tin hợp lệ.
+   - Bảo toàn lịch sử các lần từ chối trong `AuditLog` để phục vụ đối soát (`BR-021`, `OD-023`).
+5. **Khởi tạo Tenant / Workspace không hoàn tất (`Incomplete Provisioning Rollback`):**
+   - Áp dụng nguyên tắc giao dịch ACID Tất-cả-hoặc-Không-gì (`All-or-Nothing Unit of Work` theo `BR-023` và `OD-024`).
+   - Nếu việc tạo `Primary Tenant`, khởi tạo `TenantSettings` hoặc seeding `BusinessCalendar` thất bại, toàn bộ giao dịch bị `ROLLBACK 100%`, hồ sơ công ty giữ nguyên trạng thái `PENDING`, mã lỗi `ONBOARDING.PROVISIONING_ROLLED_BACK`.
+6. **Cấp quyền `COMPANY_ADMIN` ban đầu không thành công (`Failed Role Assignment Rollback`):**
+   - Điều kiện kiểm tra sau khởi tạo (`Post-Provisioning Invariant Check` theo `BR-023` và `OD-024`): Hệ thống xác minh tồn tại đúng 01 Tenant (ACTIVE) và ít nhất 01 UserAccount (ACTIVE) được gắn vai trò `COMPANY_ADMIN`.
+   - Nếu việc gán vai trò `COMPANY_ADMIN` thất bại, hệ thống hủy bỏ toàn bộ giao dịch, ngăn chặn tuyệt đối tình trạng "Workspace mồ côi không người quản trị" (Adminless Workspace).
 
 ---
 
-## 5. Khuyến nghị Hành động Tiếp theo (Recommended Next Steps)
+### 2.3. So sánh Hai Mô hình Tiếp nhận Doanh nghiệp: Admin-Approved vs. Self-Service
 
-1. **Tổ chức Phiên Rà soát Quyết định Mở (30–45 phút):** Product Owner và Kiến trúc sư trưởng xem xét **7 Câu hỏi Khám phá Ưu tiên Cao nhất** tại Mục 3 của [OPEN_DECISIONS.md](file:///d:/FA26/AI-Assisted-BizFlow-Platform/docs/requirements/srs/OPEN_DECISIONS.md) để phê duyệt các khuyến nghị `PROPOSED — NOT APPROVED` cho `OD-001`..`OD-018` và ban hành các ADR tiếp theo (`ADR-0013+`).
-2. **Đóng băng Baseline SRS v1.0:** Sau khi cập nhật quyết định của Stakeholder cho các mục `OD-*`, chuyển trạng thái tài liệu từ `1.0-DRAFT` sang `1.0-APPROVED`.
-3. **Triển khai các Lát cắt Dọc Còn lại:** Sử dụng trực tiếp các Điều kiện Nghiệm thu (Acceptance Criteria) và Ma trận Chuyển trạng thái trong [SRS_v1.0_DRAFT.md](file:///d:/FA26/AI-Assisted-BizFlow-Platform/docs/requirements/srs/SRS_v1.0_DRAFT.md) để hoàn thiện 7 bảng dữ liệu còn thiếu và 18 FR chưa triển khai theo đúng thứ tự ưu tiên `P0` $\rightarrow$ `P1`.
+| Tiêu chí | Mô hình `CONFIRMED` Hiện hành (Admin-Approved) | Mô hình `PROPOSED — NOT APPROVED` (Self-Service Onboarding) |
+| :--- | :--- | :--- |
+| **Cơ sở xác lập** | `FR-TEN-001`, `FR-TEN-002`, `UC-001`, `SRC-002` | `FR-TEN-005`, `IR-UI-004`, `UC-013`, `OD-021`, `SRC-001` |
+| **Quy trình tiếp nhận** | Gửi đơn $\rightarrow$ Chờ duyệt $\rightarrow$ `PLATFORM_ADMIN` duyệt tại `UI-02` $\rightarrow$ Khởi tạo Tenant | Đăng ký trực tuyến $\rightarrow$ Xác minh Email $\rightarrow$ Hệ thống tự động khởi tạo Tenant & cấp quyền |
+| **Trạng thái phê duyệt** | `CONFIRMED` — Là baseline chuẩn hiện tại của hệ thống | `PROPOSED — NOT APPROVED` — Cần Stakeholder / PO phê duyệt tại `OD-021` |
+| **Thời gian kích hoạt** | Phụ thuộc vào thời gian thao tác thủ công của `PLATFORM_ADMIN` | Tức thời ngay sau khi người dùng bấm liên kết xác minh email |
+| **Khuyến nghị kiến trúc** | Giữ nguyên khả năng phê duyệt thủ công trên `UI-02` khi cần kiểm soát chặt | Hỗ trợ cờ cấu hình linh hoạt `Onboarding:ApprovalMode = "SelfService" \| "PlatformAdminApproval"` |
+
+---
+
+## 3. Danh mục Hồ sơ Tài liệu SRS Đã Cập nhật và Bổ sung
+
+| Tên tệp | Vị trí | Tóm tắt Thay đổi trong Đợt Rà soát `v1.1-DRAFT` |
+| :--- | :--- | :--- |
+| [`SRS_v1.0_DRAFT.md`](./SRS_v1.0_DRAFT.md) | `docs/requirements/srs/` | Nâng cấp toàn diện lên `BIZFLOW-SRS-v1.1` (`v1.1-DRAFT`). Cập nhật Sections 0, 1, 2.6, 2.7, 4.2 (`BR-023`, `BR-024`), 4.3.2 (Sequence Diagram so sánh 2 luồng), 5.0 (`UC-001`, `UC-013`), 5.2 (`FR-TEN-001`, `FR-TEN-002`, `FR-TEN-005`), 6.1 (`IR-UI-004`), 6.3 (`IR-EXT-002`), 7 (`DR-002`), 10 (Mã lỗi onboarding), 12 (`TST-004`, `TST-031`), 13 (Thống kê 63 FR, 13 IR, 15 DR, 15 NFR, 12 SEC), 14 (`OD-001`..`OD-024`). |
+| [`REQUIREMENTS_CATALOG.csv`](./REQUIREMENTS_CATALOG.csv) | `docs/requirements/srs/` | Cập nhật chính xác `118` mục yêu cầu (63 FR, 13 IR, 15 DR, 15 NFR, 12 SEC). Bổ sung dòng `FR-TEN-005` và `IR-UI-004`; cập nhật trạng thái `PARTIAL` và truy vết cho `IR-EXT-002` và `DR-002`. |
+| [`OPEN_DECISIONS.md`](./OPEN_DECISIONS.md) | `docs/requirements/srs/` | Nâng cấp lên `BIZFLOW-SRS-OD-v1.1` (`v1.1-DRAFT`). Bổ sung Câu hỏi Khám phá số 8 và đặc tả chi tiết 6 quyết định mở: `OD-019`, `OD-020`, `OD-021`, `OD-022`, `OD-023`, `OD-024`. |
+| [`REQUIREMENTS_TRACEABILITY.md`](./REQUIREMENTS_TRACEABILITY.md) | `docs/requirements/srs/` | Nâng cấp lên `BIZFLOW-SRS-RTM-v1.1` (`v1.1-DRAFT`). Đồng bộ ma trận truy vết hai chiều cho `FR-TEN-005`, `IR-UI-004`, `TST-031`, cập nhật liên kết `BG-006` với `BR-023`, `BR-024`, `UC-013`. |
+| [`SRS_REVIEW_REPORT.md`](./SRS_REVIEW_REPORT.md) | `docs/requirements/srs/` | Tạo mới báo cáo rà soát độc lập `BF-SRS-REV-2026-002` ghi nhận bằng chứng đối chiếu mã nguồn, 7 checkpoint, 6 failure cases và quản trị quyết định mở. |
+
+---
+
+## 4. Bảng Tổng hợp Yêu cầu SRS Được Bổ sung và Cập nhật
+
+| Mã Yêu cầu | Loại | Tiêu đề | Trạng thái Đặc tả | Trạng thái Code | Phương pháp & Kịch bản Xác minh | Quyết định Mở Liên quan |
+| :--- | :---: | :--- | :---: | :---: | :---: | :---: |
+| `FR-TEN-001` | FR | Gửi Hồ sơ Đăng ký Doanh nghiệp Mới và Thông tin Tài khoản Đại diện Ban đầu | `CONFIRMED` | `NOT_IMPLEMENTED` | `T;D` (`TST-004`, `TST-031`) | `OD-009`, `OD-022`, `OD-023` |
+| `FR-TEN-002` | FR | Phê duyệt hoặc Từ chối Đăng ký Doanh nghiệp và Khởi tạo Nguyên tử Primary Tenant + COMPANY_ADMIN | `CONFIRMED` | `NOT_IMPLEMENTED` | `T;D` (`TST-004`, `TST-031`) | `OD-005`, `OD-024` |
+| `FR-TEN-005` | FR | Tự đăng ký Doanh nghiệp, Xác minh Email và Khởi tạo Tự động Primary Tenant (Self-Service Onboarding) | `PROPOSED — NOT APPROVED` | `NOT_IMPLEMENTED` | `T;D` (`TST-031`) | `OD-021`, `OD-022`, `OD-023`, `OD-024` |
+| `IR-UI-004` | IR | Giao diện Điểm Vào Đăng ký Doanh nghiệp Công khai (`/register-company`), Liên kết CTA từ `/login` và Màn hình Xác minh Email | `PROPOSED — NOT APPROVED` | `NOT_IMPLEMENTED` | `T;D` (`TST-031`) | `OD-021`, `OD-022` |
+| `IR-EXT-002` | IR | Giao diện Dịch vụ Gửi Thư điện tử Giao dịch (Transactional Email / SMTP Interface) | `CONFIRMED` | `PARTIAL` | `T` (`TST-003`, `TST-031`) | `OD-022` |
+| `DR-002` | DR | Dữ liệu Doanh nghiệp, Thuê bao và Thiết lập Cấu hình Cấp Tenant | `CONFIRMED` | `PARTIAL` | `T;I` (`TST-004`, `TST-005`, `TST-031`) | `OD-005`, `OD-018`, `OD-022`, `OD-023`, `OD-024` |
+| `TST-031` | TST | Kịch bản Kiểm thử Vòng đời Onboarding, Xác minh Email, Tính Nguyên tử Provisioning và Khả năng Đăng ký Lại | `CONFIRMED` | `NOT_IMPLEMENTED` | `T;D` (Integration & E2E) | `OD-021`..`OD-024` |
+
+---
+
+## 5. Kết luận Kiểm định & Khuyến nghị Hành động
+
+1. **Kết luận Kiểm định (Validation Verdict):**
+   - Bộ tài liệu SRS v1.1-DRAFT đã đạt độ chín muồi cao, bao phủ đầy đủ 7 điểm kiểm soát vòng đời Onboarding và 6 kịch bản lỗi/biên.
+   - Sự phân định giữa mô hình đã xác nhận (`CONFIRMED` — Admin-Approved) và mô hình đề xuất (`PROPOSED — NOT APPROVED` — Self-Service) được tuân thủ nghiêm ngặt, không tự ý chọn chính sách nghiệp vụ chưa được phê duyệt.
+   - Quy tắc 1 Doanh nghiệp = 1 Workspace chính (`DEC-WS-001`) và loại trừ billing/subscription (`DEC-WS-002`) được bảo vệ xuyên suốt từ tầng yêu cầu đến kiểm thử.
+2. **Cam kết Bảo toàn Mã nguồn (Codebase Integrity):**
+   - **Tuyệt đối không có bất kỳ dòng mã nguồn nào trong `backend/`, `frontend/`, hoặc `tests/` bị chỉnh sửa trong đợt rà soát tài liệu này.**
+3. **Các Bước Tiếp theo:**
+   - Hoàn tất đồng bộ bộ tài liệu Software System Specification (SSS) tại `docs/specifications/sss/`.
+   - Trình duyệt 24 Quyết định Còn Mở (`OD-001` đến `OD-024`) tới Product Owner / Stakeholder để chính thức phê duyệt baseline cho giai đoạn triển khai tiếp theo.

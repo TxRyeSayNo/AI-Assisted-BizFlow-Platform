@@ -3,10 +3,11 @@ FR-AUTH-001,FR,M01,"Đăng nhập Người dùng Doanh nghiệp bằng Mã nhân
 FR-AUTH-002,FR,M01,"Đăng nhập Quản trị viên Nền tảng (PLATFORM_ADMIN)",P0,CONFIRMED,IMPLEMENTED,"T;D",TST-001,BG-006,BR-001,UC-002,"SRC-002;ADR-0002;SRC-033",
 FR-AUTH-003,FR,M01,"Duy trì Phiên, Xoay vòng Refresh Token và Đăng xuất Thu hồi Phiên",P0,CONFIRMED,IMPLEMENTED,T,TST-002,BG-006,,UC-002,"SRC-002;ADR-0002;SRC-033",
 FR-AUTH-004,FR,M01,"Khôi phục Mật khẩu qua Email hoặc Mật khẩu Tạm thời do Quản trị viên Cấp",P0,OPEN,PARTIAL,"T;I",TST-003,BG-006,BR-001,UC-002,"SRC-002;ADR-0002;SRC-020","OD-004;OD-007"
-FR-TEN-001,FR,M02,"Gửi Hồ sơ Đăng ký Doanh nghiệp Mới",P0,CONFIRMED,NOT_IMPLEMENTED,"T;D",TST-004,BG-006,,UC-001,"SRC-002;SRC-020;SRC-033",OD-009
-FR-TEN-002,FR,M02,"Phê duyệt hoặc Từ chối Đăng ký Doanh nghiệp và Khởi tạo Tenant Mặc định",P0,CONFIRMED,NOT_IMPLEMENTED,"T;D",TST-004,BG-006,BR-022,UC-001,"SRC-002;DEC-WS-001",OD-005
+FR-TEN-001,FR,M02,"Gửi Hồ sơ Đăng ký Doanh nghiệp Mới và Thông tin Tài khoản Đại diện Ban đầu",P0,CONFIRMED,NOT_IMPLEMENTED,"T;D","TST-004;TST-031",BG-006,BR-024,UC-001,"SRC-002;SRC-020;SRC-033","OD-009;OD-022;OD-023"
+FR-TEN-002,FR,M02,"Phê duyệt hoặc Từ chối Đăng ký Doanh nghiệp và Khởi tạo Nguyên tử Primary Tenant + COMPANY_ADMIN",P0,CONFIRMED,NOT_IMPLEMENTED,"T;D","TST-004;TST-031",BG-006,"BR-022;BR-023",UC-001,"SRC-002;DEC-WS-001;OD-024","OD-005;OD-024"
 FR-TEN-003,FR,M02,"Quản lý Trạng thái Hoạt động của Doanh nghiệp và Thuê bao",P1,CONFIRMED,NOT_IMPLEMENTED,T,TST-005,BG-006,,UC-001,"SRC-002;SRC-020",
 FR-TEN-004,FR,M02,"Thực thi Cách ly Dữ liệu Đa thuê bao Tuyệt đối theo TenantId",P0,CONFIRMED,IMPLEMENTED,"T;I",TST-006,BG-006,BR-002,UC-001,"SRC-002;SRC-031",
+FR-TEN-005,FR,M02,"Tự đăng ký Doanh nghiệp, Xác minh Email và Khởi tạo Tự động Primary Tenant (Self-Service Onboarding)",P1,PROPOSED,NOT_IMPLEMENTED,"T;D",TST-031,BG-006,"BR-023;BR-024",UC-013,"SRC-001;SRC-002;DEC-WS-001","OD-021;OD-022;OD-023;OD-024"
 FR-ORG-001,FR,M03,"Tạo mới Tài khoản Người dùng trong Doanh nghiệp",P0,CONFIRMED,NOT_IMPLEMENTED,"T;D",TST-007,BG-006,BR-001,UC-003,"SRC-002;SRC-020","OD-004;OD-007"
 FR-ORG-002,FR,M03,"Cập nhật Thông tin Hồ sơ, Phòng ban và Vai trò của Người dùng",P0,CONFIRMED,NOT_IMPLEMENTED,T,TST-007,BG-006,,UC-003,"SRC-002;SRC-020",
 FR-ORG-003,FR,M03,"Vô hiệu hóa hoặc Kích hoạt lại Tài khoản Người dùng",P0,CONFIRMED,NOT_IMPLEMENTED,T,TST-007,BG-006,,UC-003,"SRC-002;SRC-020",
@@ -64,17 +65,18 @@ FR-AI-010,FR,M12,"Tổng hợp Nhận định Thông minh trên Bảng điều k
 IR-UI-001,IR,UI,"Phân tách Giao diện Mặt phẳng Quản trị Nền tảng và Không gian làm việc Tenant",P0,CONFIRMED,IMPLEMENTED,"T;D",TST-029,BG-006,BR-002,"UC-001;UC-002","SRC-004;ADR-0001;SRC-030",
 IR-UI-002,IR,UI,"Đáp ứng 4 Trạng thái Hiển thị Bắt buộc trên Toàn bộ 16 Màn hình Chuẩn",P0,CONFIRMED,IMPLEMENTED,"T;D",TST-029,"BG-001;BG-002;BG-008",,"UC-001;UC-012","SRC-002;SRC-004;SRC-030",
 IR-UI-003,IR,UI,"Hiển thị Nhãn Nhận diện Đề xuất AI và Điều khiển Xác nhận của Con người",P0,CONFIRMED,IMPLEMENTED,"T;D","TST-026;TST-029",BG-005,"BR-017;BR-018",UC-011,"SRC-004;SRC-022",
+IR-UI-004,IR,UI,"Giao diện Điểm Vào Đăng ký Doanh nghiệp Công khai (/register-company), Liên kết CTA từ /login và Màn hình Xác minh Email",P1,PROPOSED,NOT_IMPLEMENTED,"T;D",TST-031,BG-006,"BR-023;BR-024",UC-013,"SRC-004;SRC-030","OD-021;OD-022"
 IR-API-001,IR,API,"Giao thức RESTful JSON API Phiên bản hóa (/api/v1/*) và Cấu trúc Phản hồi Chuẩn",P0,CONFIRMED,IMPLEMENTED,T,TST-001,BG-001,,UC-002,"SRC-003;SRC-033",
 IR-API-002,IR,API,"Kiểm soát Tương tranh Lạc quan (ETag / If-Match) và Khóa Chống Trùng lặp (Idempotency-Key)",P0,CONFIRMED,IMPLEMENTED,T,"TST-009;TST-011","BG-001;BG-002",,"UC-004;UC-007","ADR-0008;ADR-0012",
 IR-API-003,IR,API,"Chuẩn hóa Phân trang, Sắp xếp và Chống Lộ Thông tin trên các Truy vấn Danh sách/Chi tiết",P0,CONFIRMED,IMPLEMENTED,T,"TST-006;TST-011",BG-006,BR-002,UC-007,"SRC-003;ADR-0012",
 IR-EXT-001,IR,EXT,"Giao diện Tích hợp Nhà cung cấp Mô hình Ngôn ngữ Lớn (OpenAI / LLM Provider Adapter)",P1,CONFIRMED,IMPLEMENTED,T,TST-026,BG-005,BR-019,UC-011,"SRC-002;SRC-022",OD-014
-IR-EXT-002,IR,EXT,"Giao diện Dịch vụ Gửi Thư điện tử Giao dịch (Transactional Email / SMTP Interface)",P0,CONFIRMED,IMPLEMENTED,T,TST-003,BG-006,BR-001,UC-002,SRC-003,
+IR-EXT-002,IR,EXT,"Giao diện Dịch vụ Gửi Thư điện tử Giao dịch (Transactional Email / SMTP Interface)",P0,CONFIRMED,PARTIAL,T,"TST-003;TST-031",BG-006,"BR-001;BR-024","UC-002;UC-013",SRC-003,OD-022
 IR-FILE-001,IR,FILE,"Giao diện Lưu trữ Đối tượng Tương thích S3/MinIO theo Phiên Tải lên 3 Bước",P0,CONFIRMED,IMPLEMENTED,T,TST-023,BG-002,BR-020,UC-008,"SRC-023;SRC-033",
 IR-FILE-002,IR,FILE,"Kiểm tra Kích thước 500 MB, Kiểu MIME, Toàn vẹn SHA-256 và Tải xuống Được Ủy quyền",P0,CONFIRMED,IMPLEMENTED,T,TST-023,"BG-002;BG-007",BR-020,UC-008,"SRC-023;SRC-033",
 IR-NOTIF-001,IR,NOTIF,"Giao diện Hộp thư Thông báo Nội bộ và Đẩy Tín hiệu Thời gian thực qua SignalR",P0,CONFIRMED,IMPLEMENTED,"T;D",TST-022,"BG-002;BG-003",,"UC-007;UC-010","SRC-003;SRC-033",OD-009
 IR-NOTIF-002,IR,NOTIF,"Giao diện Phát Thông báo Nhắc việc, Cảnh báo Sớm và Leo thang SLA từ Tác vụ Nền",P1,CONFIRMED,NOT_IMPLEMENTED,T,TST-021,BG-003,BR-015,UC-010,"SRC-002;ADR-0006",
 DR-001,DR,DATA,"Định danh Thuê bao Bắt buộc (TenantId) và Cách ly Logic Toàn cục",P0,CONFIRMED,IMPLEMENTED,"T;I","TST-006;TST-028",BG-006,BR-002,UC-001,"ADR-0002;SRC-031",
-DR-002,DR,DATA,"Dữ liệu Doanh nghiệp, Thuê bao và Thiết lập Cấu hình Cấp Tenant",P0,CONFIRMED,IMPLEMENTED,"T;I","TST-004;TST-005",BG-006,,UC-001,"DEC-WS-001;SRC-031","OD-005;OD-018"
+DR-002,DR,DATA,"Dữ liệu Doanh nghiệp, Thuê bao và Thiết lập Cấu hình Cấp Tenant",P0,CONFIRMED,PARTIAL,"T;I","TST-004;TST-005;TST-031",BG-006,"BR-023;BR-024","UC-001;UC-013","DEC-WS-001;SRC-031","OD-005;OD-018;OD-022;OD-023;OD-024"
 DR-003,DR,DATA,"Dữ liệu Cơ cấu Phòng ban Phân cấp, Người dùng và Phạm vi Quản lý",P0,CONFIRMED,IMPLEMENTED,"T;I",TST-007,BG-006,"BR-001;BR-003",UC-003,SRC-031,"OD-004;OD-006"
 DR-004,DR,DATA,"Dữ liệu Vai trò, Quyền hạn RBAC và Phiên Xác thực Có Thu hồi",P0,CONFIRMED,IMPLEMENTED,"T;I","TST-001;TST-002;TST-008",BG-006,,"UC-002;UC-003","ADR-0002;SRC-031",
 DR-005,DR,DATA,"Dữ liệu Danh mục Dịch vụ Nội bộ, Phân loại và Quy tắc Định tuyến",P0,CONFIRMED,PARTIAL,"T;I","TST-009;TST-010",BG-001,BR-008,UC-004,"SRC-003;SRC-031",

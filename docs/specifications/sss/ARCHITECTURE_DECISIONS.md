@@ -1,12 +1,13 @@
 # Hồ sơ Quyết định Kiến trúc Hệ thống (System Architecture Decisions)
 
-- **Mã tài liệu:** `SSS-ADR-v1.0`
+- **Mã tài liệu:** `SSS-ADR-v1.1`
+- **Phiên bản:** `1.1-DRAFT`
 - **Thuộc bộ tài liệu:** [SSS_v1.0_DRAFT.md](SSS_v1.0_DRAFT.md) — Mục 21
-- **Ngày lập:** `2026-10-18`
+- **Ngày lập:** `2026-10-18` (Cập nhật rà soát Onboarding: `2026-10-19`)
 - **Cấu trúc tài liệu:**
   1. **Phần I:** `2` Quyết định Phạm vi Sản phẩm & Kiến trúc đã Xác nhận (`DEC-WS-001` .. `DEC-WS-002`)
   2. **Phần II:** `12` Quyết định Kiến trúc Nền tảng đã Xác nhận và Triển khai trong Repository (`ADR-0001` .. `ADR-0012`)
-  3. **Phần III:** `6` Quyết định Kiến trúc Hệ thống Cấp SSS (`ADR-SSS-001` .. `ADR-SSS-006` — đánh dấu rõ `PROPOSED — NOT APPROVED` đối với các mục đề xuất lấp khoảng trống triển khai)
+  3. **Phần III:** `7` Quyết định Kiến trúc Hệ thống Cấp SSS (`ADR-SSS-001` .. `ADR-SSS-007` — đánh dấu rõ `PROPOSED — NOT APPROVED` đối với các mục đề xuất lấp khoảng trống triển khai)
 
 ---
 
@@ -80,3 +81,14 @@ Các quyết định dưới đây tổng hợp các cơ chế bảo vệ cấp 
 ### `ADR-SSS-006`: Chuẩn hóa Từ vựng Mã Quyền hạn (Permission Codes) giữa Đặc tả Hệ thống, Frontend Router và Backend Seed
 - **Trạng thái:** `PROPOSED — NOT APPROVED` (Theo dõi tại `OD-019`)
 - **Quyết định Đề xuất (`PROPOSED — NOT APPROVED`):** Chọn tập mã quyền đang hoạt động thực tế trong Backend & [app.routes.ts](../../../frontend/src/app/app.routes.ts) (`roles.configure`, `workflows.read`, `platform.company-registrations.read`, `platform.audit.read`, `reports.manager`, `reports.company`, `reports.workload`, `reports.sla`) làm chuẩn chính thức trong SSS để đồng bộ hóa hoàn toàn giữa tài liệu và mã nguồn.
+
+---
+
+### `ADR-SSS-007`: Tính Nguyên tử Giao dịch, Kiểm tra Bất biến Sau Khởi tạo và Rollback Khép kín khi Cấp phát Tenant / Workspace (`Transactional Provisioning & Post-Provisioning Invariant Guard`)
+- **Trạng thái:** `PROPOSED — NOT APPROVED` (Theo dõi tại `OD-021`, `OD-024`, `BR-023`)
+- **Nguồn phát sinh:** Rà soát Onboarding & Workspace Provisioning; đối chiếu `IdentityModelConfiguration.cs` (`Tenant.CompanyId` unique index, `CK_Role_Scope`) và `BizFlowDbContext.cs`.
+- **Quyết định Đề xuất (`PROPOSED — NOT APPROVED`):**
+  1. Toàn bộ chuỗi 5 bước provisioning: (1) `Company` activation (`ACTIVE`), (2) `Primary Tenant / Workspace` creation (ràng buộc `Unique(CompanyId)` theo `DEC-WS-001`), (3) `TenantSettings` & `BusinessCalendar` seeding, (4) Initial Representative `UserAccount` creation (`Status = Active`), (5) Initial `COMPANY_ADMIN` role assignment + `AuditLog` bắt buộc phải được đóng gói trong **một giao dịch cơ sở dữ liệu ACID duy nhất** (`All-or-Nothing Unit of Work`).
+  2. Bổ sung bước kiểm tra bất biến sau khởi tạo (**Post-Provisioning Invariant Guard**): Trước khi commit giao dịch, hệ thống bắt buộc kiểm tra điều kiện bất biến: Tồn tại đúng `01 Primary Tenant (ACTIVE)` gắn với `CompanyId` và tồn tại ít nhất `01 UserAccount (ACTIVE)` thuộc `Tenant` đó được gán vai trò `COMPANY_ADMIN`. Nếu bất kỳ bước nào lỗi hoặc invariant check thất bại, hệ thống tự động **Rollback 100%**, giữ đơn đăng ký ở trạng thái an toàn (`PENDING`), trả về mã lỗi `500 ONBOARDING.PROVISIONING_ROLLED_BACK` kèm `CorrelationId`, không tạo bản ghi mồ côi.
+  3. Tác vụ gửi email thông báo kích hoạt/xác minh được tách khỏi giao dịch DB (qua Transactional Outbox hoặc Message Queue) để lỗi mạng/SMTP không làm rollback giao dịch hợp lệ.
+

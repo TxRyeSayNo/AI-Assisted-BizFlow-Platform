@@ -20,7 +20,7 @@ services:
     restart: unless-stopped
 
   redis:
-    image: redis:alpine
+    image: redis:7-alpine
     ports:
       - "127.0.0.1:${REDIS_PORT:-6379}:6379"
     volumes:
@@ -33,7 +33,7 @@ services:
     restart: unless-stopped
 
   minio:
-    image: minio/minio:latest
+    image: pgsty/silo:latest
     command: server /data --console-address ":9001"
     environment:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER:-bizflow}

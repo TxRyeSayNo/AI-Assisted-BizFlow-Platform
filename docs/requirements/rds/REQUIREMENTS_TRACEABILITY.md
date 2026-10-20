@@ -1,27 +1,27 @@
 # MA TRẬN TRUY VẾT YÊU CẦU HAI CHIỀU TOÀN DIỆN (END-TO-END BIDIRECTIONAL REQUIREMENTS TRACEABILITY MATRIX)
 
 - **Dự án:** AI-Assisted BizFlow Platform
-- **Mã tài liệu:** `BIZFLOW-RDS-RTM-v1.0`
-- **Phiên bản:** `1.0-DRAFT`
-- **Ngày lập:** `2026-10-18`
-- **Trạng thái:** `DRAFT — 100% COVERAGE VERIFIED`
+- **Mã tài liệu:** `BIZFLOW-RDS-RTM-v1.1`
+- **Phiên bản:** `1.1-DRAFT`
+- **Ngày lập:** `2026-10-18` (Cập nhật: `2026-10-19`)
+- **Trạng thái:** `DRAFT — 100% COVERAGE VERIFIED (111 RDS IDs <-> 118 SRS IDs <-> SSS <-> AC/TST)`
 - **Tài liệu liên quan:** [RDS_v1.0_DRAFT.md](./RDS_v1.0_DRAFT.md), [REQUIREMENTS_CATALOG.csv](./REQUIREMENTS_CATALOG.csv), [USE_CASES.md](./USE_CASES.md), [OPEN_DECISIONS.md](./OPEN_DECISIONS.md), [SOURCE_REGISTER.md](./SOURCE_REGISTER.md), [SRS_v1.0_DRAFT.md](../srs/SRS_v1.0_DRAFT.md), [SSS_v1.0_DRAFT.md](../../specifications/sss/SSS_v1.0_DRAFT.md)
 
 ---
 
 ## 1. Kiến trúc Truy vết Đa tầng (`RDS` $\leftrightarrow$ `SRS` $\leftrightarrow$ `SSS` $\leftrightarrow$ `AC/TST`)
 
-Ma trận truy vết này đảm bảo không có bất kỳ mục tiêu kinh doanh nào bị bỏ rơi, không có yêu cầu nào không rõ nguồn gốc ("mồ côi" — orphan requirement) và mọi yêu cầu trong RDS đều kết nối hai chiều với toàn bộ **116 yêu cầu phần mềm nguyên tử** trong [SRS_v1.0_DRAFT.md](../srs/SRS_v1.0_DRAFT.md) cũng như **13 mô-đun kiến trúc** trong [SSS_v1.0_DRAFT.md](../../specifications/sss/SSS_v1.0_DRAFT.md):
+Ma trận truy vết này đảm bảo không có bất kỳ mục tiêu kinh doanh nào bị bỏ rơi, không có yêu cầu nào không rõ nguồn gốc ("mồ côi" — orphan requirement) và mọi yêu cầu trong RDS đều kết nối hai chiều với toàn bộ **118 yêu cầu phần mềm nguyên tử** trong [SRS_v1.0_DRAFT.md](../srs/SRS_v1.0_DRAFT.md) cũng như **13 mô-đun kiến trúc** trong [SSS_v1.0_DRAFT.md](../../specifications/sss/SSS_v1.0_DRAFT.md):
 
 ```mermaid
 flowchart LR
     P["Vấn đề Kinh doanh<br/>(PROB-01..06)"] --> BG["Mục tiêu Kinh doanh<br/>(BG-001..008)"]
     BG --> STKN["Stakeholder & Nhu cầu<br/>(STK-001..008 / STKN-001..014)"]
-    STKN --> BIZ["Quy tắc & Yêu cầu Nghiệp vụ<br/>(BR-001..022 / BIZ-001..026)"]
-    BIZ --> CAP["Năng lực, Ca sử dụng, Thông tin & Chất lượng<br/>(CAP-001..013 / UC-001..012 / INFO-001..012 / QREQ-001..015)"]
-    CAP --> SRS["116 Yêu cầu Phần mềm SRS<br/>(62 FR, 12 IR, 15 DR, 15 NFR, 12 SEC)"]
-    SRS --> SSS["Kiến trúc Hệ thống SSS<br/>(MOD-001..013, INT-001..005)"]
-    SRS --> AC["Tiêu chí Nghiệm thu & Kiểm thử<br/>(AC-001..030 / TST-001..030)"]
+    STKN --> BIZ["Quy tắc & Yêu cầu Nghiệp vụ<br/>(BR-001..024 / BIZ-001..028)"]
+    BIZ --> CAP["Năng lực, Ca sử dụng, Thông tin & Chất lượng<br/>(CAP-001..013 / UC-001..013 / INFO-001..012 / QREQ-001..015)"]
+    CAP --> SRS["118 Yêu cầu Phần mềm SRS<br/>(63 FR, 13 IR, 15 DR, 15 NFR, 12 SEC)"]
+    SRS --> SSS["Kiến trúc Hệ thống SSS<br/>(MOD-001..013, INT-001..005, SEQ-001..007)"]
+    SRS --> AC["Tiêu chí Nghiệm thu & Kiểm thử<br/>(AC-001..032 / TST-001..031)"]
 ```
 
 ---
@@ -35,15 +35,15 @@ flowchart LR
 | `PROB-04` | **`BG-003`** (Kiểm soát SLA, cảnh báo sớm & leo thang) | `STK-003`, `STK-004`<br/>`STKN-008` | `BR-014`, `BR-015`, `BR-016` | `BIZ-018`, `BIZ-019`, `BIZ-020`, `BIZ-025` | `CAP-008`, `CAP-009`, `CAP-011`<br/>`UC-004`, `UC-010`, `UC-012` | `INFO-008`, `INFO-012`<br/>`QREQ-004`, `QREQ-007`, `QREQ-014` |
 | `PROB-03`, `PROB-05` | **`BG-004`** (Tự động hóa quy trình & phê duyệt bất biến) | `STK-003`, `STK-004`, `STK-007`<br/>`STKN-009` | `BR-012`, `BR-013`, `BR-022` | `BIZ-007`, `BIZ-008`, `BIZ-016`, `BIZ-017` | `CAP-004`, `CAP-007`<br/>`UC-004`, `UC-009` | `INFO-004`, `INFO-007`<br/>`QREQ-007`, `QREQ-012` |
 | `PROB-06` | **`BG-005`** (Tăng năng suất bằng AI có kiểm soát con người) | `STK-001`, `STK-003`..`007`<br/>`STKN-010`, `STKN-011` | `BR-017`, `BR-018`, `BR-019` | `BIZ-021`, `BIZ-022` | `CAP-012`<br/>`UC-011` | `INFO-010`, `EXT-002`<br/>`QREQ-008`, `QREQ-009` |
-| `PROB-05` | **`BG-006`** (Cách ly đa thuê bao & phân quyền theo phạm vi) | `STK-001`..`007`<br/>`STKN-001`..`004` | `BR-001`, `BR-002`, `BR-003`, `BR-022` | `BIZ-001`, `BIZ-002`, `BIZ-003`, `BIZ-004`, `BIZ-005`, `BIZ-006` | `CAP-001`, `CAP-002`, `CAP-003`<br/>`UC-001`, `UC-002`, `UC-003` | `INFO-001`, `INFO-002`, `INFO-003`<br/>`QREQ-005`, `QREQ-006` |
+| `PROB-05` | **`BG-006`** (Cách ly đa thuê bao, tiếp nhận doanh nghiệp nguyên tử & phân quyền theo phạm vi) | `STK-001`..`007`<br/>`STKN-001`..`004` | `BR-001`, `BR-002`, `BR-003`, `BR-022`, `BR-023`, `BR-024` | `BIZ-001`, `BIZ-002`, `BIZ-003`, `BIZ-004`, `BIZ-005`, `BIZ-006`, `BIZ-027`, `BIZ-028` | `CAP-001`, `CAP-002`, `CAP-003`<br/>`UC-001`, `UC-002`, `UC-003`, `UC-013` | `INFO-001`, `INFO-002`, `INFO-003`, `EXT-001`, `EXT-003`<br/>`QREQ-005`, `QREQ-006`, `QREQ-007` |
 | `PROB-03`, `PROB-05` | **`BG-007`** (Tuân thủ kiểm toán & bảo toàn lịch sử bằng chứng) | `STK-001`..`003`, `STK-007`<br/>`STKN-012`, `STKN-014` | `BR-020`, `BR-021` | `BIZ-023`, `BIZ-024`, `BIZ-026` | `CAP-010`, `CAP-013`<br/>`UC-008`, `UC-012` | `INFO-009`, `INFO-011`<br/>`QREQ-007`, `QREQ-011`, `QREQ-015` |
 | `PROB-04`, `PROB-06` | **`BG-008`** (Giám sát điều hành & báo cáo hiệu suất) | `STK-003`, `STK-004`<br/>`STKN-013` | `BR-002`, `BR-003` | `BIZ-021`, `BIZ-025` | `CAP-011`, `CAP-012`<br/>`UC-011`, `UC-012` | `INFO-012`<br/>`QREQ-002`, `QREQ-003`, `QREQ-013` |
 
 ---
 
-## 3. Ma trận Truy vết Hai chiều Chi tiết: Từ 116 Yêu cầu Phần mềm SRS Ngược Lên RDS và Xuôi Sang SSS & Nghiệm thu (`116/116 SRS IDs Mapped`)
+## 3. Ma trận Truy vết Hai chiều Chi tiết: Từ 118 Yêu cầu Phần mềm SRS Ngược Lên RDS và Xuôi Sang SSS & Nghiệm thu (`118/118 SRS IDs Mapped`)
 
-### 3.1. Truy vết 62 Yêu cầu Chức năng (`FR-*` $\leftrightarrow$ `RDS` $\leftrightarrow$ `SSS` $\leftrightarrow$ `AC/TST`)
+### 3.1. Truy vết 63 Yêu cầu Chức năng (`FR-*` $\leftrightarrow$ `RDS` $\leftrightarrow$ `SSS` $\leftrightarrow$ `AC/TST`)
 
 | Mã SRS (`FR-*`) | Tên Yêu cầu Chức năng SRS | Yêu cầu Nghiệp vụ RDS (`BIZ-*`) | Nhu cầu & Quy tắc RDS (`STKN-*` / `BR-*`) | Năng lực & Ca sử dụng (`CAP-*` / `UC-*`) | Mô-đun SSS (`MOD-*`) | Tiêu chí Nghiệm thu (`AC-*` / `TST-*`) | Trạng thái Hiện thực |
 |---|---|---|---|---|---|---|---|
@@ -51,10 +51,11 @@ flowchart LR
 | `FR-AUTH-002` | Đăng nhập Quản trị viên Nền tảng (`PLATFORM_ADMIN`) | `BIZ-001` | `STKN-003`, `BR-001`, `ADR-0002` | `CAP-001`, `UC-002` | `MOD-001` | `AC-003` / `TST-001` | `IMPLEMENTED` |
 | `FR-AUTH-003` | Duy trì Phiên, Xoay vòng Refresh Token và Đăng xuất Thu hồi Phiên | `BIZ-001` | `STKN-003`, `ADR-0002` | `CAP-001`, `UC-002` | `MOD-001` | `AC-003` / `TST-002` | `IMPLEMENTED` |
 | `FR-AUTH-004` | Khôi phục Mật khẩu qua Email hoặc Mật khẩu Tạm thời do Admin Cấp | `BIZ-002` | `STKN-003`, `BR-001`, `OD-004`, `OD-007` | `CAP-001`, `UC-002` | `MOD-001` | `AC-004` / `TST-003` | `PARTIAL` |
-| `FR-TEN-001` | Gửi Hồ sơ Đăng ký Doanh nghiệp Mới | `BIZ-003` | `STKN-001`, `OD-009` | `CAP-002`, `UC-001` | `MOD-002` | `AC-001` / `TST-004` | `NOT_IMPLEMENTED` |
-| `FR-TEN-002` | Phê duyệt/Từ chối Đăng ký Doanh nghiệp & Khởi tạo Tenant Mặc định | `BIZ-003` | `STKN-001`, `BR-022`, `DEC-WS-001`, `OD-005` | `CAP-002`, `UC-001` | `MOD-002` | `AC-001` / `TST-004` | `NOT_IMPLEMENTED` |
+| `FR-TEN-001` | Gửi Hồ sơ Đăng ký Doanh nghiệp Mới, Kiểm tra Trùng lặp & Xác minh Email Người đại diện | `BIZ-003`, `BIZ-028` | `STKN-001`, `BR-024`, `OD-009`, `OD-022`, `OD-023` | `CAP-002`, `UC-001` | `MOD-001`, `MOD-002` | `AC-001`, `AC-032` / `TST-004`, `TST-031` | `PARTIAL` (`GET` only) |
+| `FR-TEN-002` | Phê duyệt/Từ chối Đăng ký Doanh nghiệp & Khởi tạo Nguyên tử `Primary Tenant` + `COMPANY_ADMIN` | `BIZ-003`, `BIZ-028` | `STKN-001`, `BR-022`, `BR-023`, `DEC-WS-001`, `OD-005`, `OD-024` | `CAP-002`, `UC-001` | `MOD-002`, `MOD-003` | `AC-001`, `AC-032` / `TST-004`, `TST-031` | `NOT_IMPLEMENTED` |
 | `FR-TEN-003` | Quản lý Trạng thái Hoạt động của Doanh nghiệp và Thuê bao | `BIZ-003` | `STKN-001` | `CAP-002`, `UC-001` | `MOD-002` | `AC-001` / `TST-005` | `NOT_IMPLEMENTED` |
-| `FR-TEN-004` | Thực thi Cách ly Dữ liệu Đa thuê bao Tuyệt đối theo `TenantId` | `BIZ-004` | `STKN-002`, `BR-002` | `CAP-002`, `UC-001` | `MOD-002` | `AC-002` / `TST-006` | `IMPLEMENTED` |
+| `FR-TEN-004` | Thực thi Cách ly Dữ liệu Đa thuê bao Tuyệt đối theo `TenantId` | `BIZ-004` | `STKN-002`, `BR-002` | `CAP-002`, `UC-001`, `UC-013` | `MOD-002` | `AC-002` / `TST-006` | `IMPLEMENTED` |
+| `FR-TEN-005` | Tự đăng ký Doanh nghiệp (`Self-Service Onboarding`), Xác minh Email & Cấp phát Nguyên tử `Primary Tenant` + `COMPANY_ADMIN` (`PROPOSED`) | `BIZ-027`, `BIZ-028` | `STKN-001`, `BR-023`, `BR-024`, `DEC-WS-001`, `OD-021`..`024` | `CAP-002`, `UC-013` | `MOD-001`, `MOD-002`, `MOD-003` | `AC-031`, `AC-032` / `TST-031` | `NOT_IMPLEMENTED` |
 | `FR-ORG-001` | Tạo mới Tài khoản Người dùng trong Doanh nghiệp | `BIZ-005` | `STKN-004`, `BR-001`, `OD-004`, `OD-007` | `CAP-003`, `UC-003` | `MOD-003` | `AC-005` / `TST-007` | `NOT_IMPLEMENTED` |
 | `FR-ORG-002` | Cập nhật Thông tin Hồ sơ, Phòng ban và Vai trò của Người dùng | `BIZ-005` | `STKN-004` | `CAP-003`, `UC-003` | `MOD-003` | `AC-005` / `TST-007` | `NOT_IMPLEMENTED` |
 | `FR-ORG-003` | Vô hiệu hóa hoặc Kích hoạt lại Tài khoản Người dùng | `BIZ-005` | `STKN-004`, `BR-021` | `CAP-003`, `UC-003` | `MOD-003` | `AC-005` / `TST-007` | `NOT_IMPLEMENTED` |
@@ -110,24 +111,25 @@ flowchart LR
 | `FR-AI-009` | Hỏi đáp Trạng thái Hồ sơ bằng Ngôn ngữ Tự nhiên | `BIZ-021` | `STKN-010`, `BR-017`..`019` | `CAP-012`, `UC-011` | `MOD-012` | `AC-022`, `AC-024` / `TST-026`, `TST-027` | `IMPLEMENTED` |
 | `FR-AI-010` | Tổng hợp Nhận định Thông minh trên Bảng điều khiển Quản lý | `BIZ-021` | `STKN-010`, `BR-017`..`019` | `CAP-012`, `UC-011` | `MOD-012` | `AC-022` / `TST-026` | `IMPLEMENTED` |
 
-### 3.2. Truy vết 12 Yêu cầu Giao diện (`IR-*`) và 15 Yêu cầu Dữ liệu (`DR-*`) Ngược Lên RDS (`EXT-*`, `INFO-*`, `BIZ-*`)
+### 3.2. Truy vết 13 Yêu cầu Giao diện (`IR-*`) và 15 Yêu cầu Dữ liệu (`DR-*`) Ngược Lên RDS (`EXT-*`, `INFO-*`, `BIZ-*`)
 
 | Mã SRS (`IR-*` / `DR-*`) | Tên Yêu cầu Giao diện / Dữ liệu SRS | Yêu cầu RDS Liên kết (`EXT-*` / `INFO-*` / `BIZ-*` / `QREQ-*`) | Quy tắc / ADR Liên kết | Tiêu chí Nghiệm thu (`AC-*` / `TST-*`) | Trạng thái Hiện thực |
 |---|---|---|---|---|---|
-| `IR-UI-001` | Phân tách Giao diện Mặt phẳng Quản trị Nền tảng và Không gian làm việc Tenant | `EXT-001`, `BIZ-003`, `QREQ-010` | `BR-002`, `ADR-0001` | `AC-029` / `TST-029` | `IMPLEMENTED` |
+| `IR-UI-001` | Phân tách Giao diện Mặt phẳng Quản trị Nền tảng và Không gian làm việc Tenant | `EXT-001`, `BIZ-003`, `QREQ-010` | `BR-002`, `ADR-0001` | `AC-029` / `TST-029` | `IMPLEMENTED` (`UI-02` Read-only) |
 | `IR-UI-002` | Đáp ứng 4 Trạng thái Hiển thị Bắt buộc trên Toàn bộ 16 Màn hình Chuẩn | `EXT-001`, `QREQ-010` | `ADR-0001` | `AC-029` / `TST-029` | `IMPLEMENTED` |
 | `IR-UI-003` | Hiển thị Nhãn Nhận diện Đề xuất AI và Điều khiển Xác nhận của Con người | `EXT-001`, `BIZ-022`, `CAP-012` | `BR-017`, `BR-018` | `AC-022`, `AC-029` / `TST-026`, `TST-029` | `IMPLEMENTED` |
+| `IR-UI-004` | Giao diện Điểm Vào Đăng ký Doanh nghiệp Công khai (`/register-company`), Liên kết CTA từ `/login` (`UI-01`) & Xác minh Email (`PROPOSED`) | `EXT-001`, `BIZ-027`, `BIZ-028`, `CAP-002` | `DEC-WS-001`, `BR-023`, `BR-024`, `OD-021`, `OD-022` | `AC-031`, `AC-032` / `TST-031` | `NOT_IMPLEMENTED` |
 | `IR-API-001` | Giao thức RESTful JSON API Phiên bản hóa (`/api/v1/*`) và Cấu trúc Phản hồi Chuẩn | `EXT-001`, `QREQ-012` | `ADR-0008`, `ADR-0012` | `AC-003` / `TST-001` | `IMPLEMENTED` |
 | `IR-API-002` | Kiểm soát Tương tranh Lạc quan (`ETag / If-Match`) và Khóa Chống Trùng lặp (`Idempotency-Key`) | `EXT-001`, `BIZ-007`, `QREQ-012` | `ADR-0008`, `ADR-0012` | `AC-008`, `AC-030` / `TST-009`, `TST-011` | `IMPLEMENTED` |
 | `IR-API-003` | Chuẩn hóa Phân trang, Sắp xếp và Chống Lộ Thông tin trên Truy vấn Danh sách/Chi tiết | `EXT-001`, `BIZ-004`, `QREQ-006` | `BR-002`, `ADR-0012` | `AC-002` / `TST-006`, `TST-011` | `IMPLEMENTED` |
 | `IR-EXT-001` | Giao diện Tích hợp Nhà cung cấp Mô hình Ngôn ngữ Lớn (LLM Provider Adapter) | `EXT-002`, `BIZ-021`, `CAP-012` | `BR-019`, `OD-014` | `AC-022`, `AC-023` / `TST-026` | `IMPLEMENTED` |
-| `IR-EXT-002` | Giao diện Dịch vụ Gửi Thư điện tử Giao dịch (Transactional Email / SMTP) | `EXT-003`, `BIZ-002` | `BR-001` | `AC-004` / `TST-003` | `IMPLEMENTED` |
+| `IR-EXT-002` | Giao diện Dịch vụ Gửi Thư điện tử Giao dịch (Transactional Email / SMTP — Xác minh Email, Onboarding & Khôi phục Mật khẩu) | `EXT-003`, `BIZ-002`, `BIZ-003`, `BIZ-027`, `BIZ-028` | `BR-001`, `BR-024`, `OD-022` | `AC-004`, `AC-031`, `AC-032` / `TST-003`, `TST-031` | `PARTIAL` |
 | `IR-FILE-001` | Giao diện Lưu trữ Đối tượng Tương thích S3/MinIO theo Phiên Tải lên 3 Bước | `EXT-004`, `BIZ-023`, `CAP-010` | `BR-020` | `AC-021` / `TST-023` | `IMPLEMENTED` |
 | `IR-FILE-002` | Kiểm tra Kích thước 500 MB, Kiểu MIME, Toàn vẹn SHA-256 và Tải xuống Được Ủy quyền | `EXT-004`, `BIZ-023`, `CAP-010` | `BR-020` | `AC-021` / `TST-023` | `IMPLEMENTED` |
 | `IR-NOTIF-001` | Giao diện Hộp thư Thông báo Nội bộ và Đẩy Tín hiệu Thời gian thực qua SignalR | `EXT-005`, `BIZ-023`, `CAP-009` | `OD-009` | `AC-021` / `TST-022` | `IMPLEMENTED` |
 | `IR-NOTIF-002` | Giao diện Phát Thông báo Nhắc việc, Cảnh báo Sớm và Leo thang SLA từ Tác vụ Nền | `EXT-005`, `BIZ-019`, `BIZ-020`, `CAP-009` | `BR-015`, `ADR-0006` | `AC-020` / `TST-021` | `NOT_IMPLEMENTED` |
 | `DR-001` | Định danh Thuê bao Bắt buộc (`TenantId`) và Cách ly Logic Toàn cục | `INFO-001`, `BIZ-004`, `STKN-002` | `BR-002`, `ADR-0002` | `AC-002` / `TST-006`, `TST-028` | `IMPLEMENTED` |
-| `DR-002` | Dữ liệu Doanh nghiệp, Thuê bao và Thiết lập Cấu hình Cấp Tenant | `INFO-001`, `BIZ-003` | `DEC-WS-001`, `OD-005`, `OD-018` | `AC-001` / `TST-004`, `TST-005` | `IMPLEMENTED` |
+| `DR-002` | Dữ liệu Doanh nghiệp, Xác minh Email, `Primary Tenant` và Thiết lập Cấu hình Cấp Tenant | `INFO-001`, `BIZ-003`, `BIZ-027`, `BIZ-028` | `DEC-WS-001`, `BR-023`, `BR-024`, `OD-005`, `OD-018`, `OD-021`..`024` | `AC-001`, `AC-031`, `AC-032` / `TST-004`, `TST-005`, `TST-031` | `PARTIAL` |
 | `DR-003` | Dữ liệu Cơ cấu Phòng ban Phân cấp, Người dùng và Phạm vi Quản lý | `INFO-002`, `BIZ-005`, `BIZ-006` | `BR-001`, `BR-003`, `OD-004`, `OD-006` | `AC-005`, `AC-006` / `TST-007` | `IMPLEMENTED` |
 | `DR-004` | Dữ liệu Vai trò, Quyền hạn RBAC và Phiên Xác thực Có Thu hồi | `INFO-003`, `BIZ-001`, `BIZ-006` | `ADR-0002` | `AC-003`, `AC-007` / `TST-001`, `TST-002`, `TST-008` | `IMPLEMENTED` |
 | `DR-005` | Dữ liệu Danh mục Dịch vụ Nội bộ, Phân loại và Quy tắc Định tuyến | `INFO-004`, `BIZ-007`, `BIZ-008` | `BR-008`, `ADR-0008` | `AC-008`, `AC-009` / `TST-009`, `TST-010` | `PARTIAL` |
@@ -183,9 +185,9 @@ flowchart LR
 | Vấn đề Kinh doanh (`PROB-01`..`06`) $\rightarrow$ Mục tiêu Kinh doanh (`BG-*`) | `6` | `6` | `0` | **100%** |
 | Mục tiêu Kinh doanh (`BG-001`..`008`) $\rightarrow$ Nhu cầu & Yêu cầu Nghiệp vụ (`STKN-*`, `BIZ-*`) | `8` | `8` | `0` | **100%** |
 | Bên liên quan (`STK-001`..`008`) $\rightarrow$ Nhu cầu Stakeholder (`STKN-001`..`014`) | `8 STK` / `14 STKN` | `8 STK` / `14 STKN` | `0` | **100%** |
-| Quy tắc Nghiệp vụ (`BR-001`..`022`) $\rightarrow$ Yêu cầu Nghiệp vụ & Ca sử dụng (`BIZ-*`, `UC-*`) | `22` | `22` | `0` | **100%** |
-| Yêu cầu Nghiệp vụ (`BIZ-001`..`026`) $\rightarrow$ Năng lực, Ca sử dụng, SRS & Tiêu chí Nghiệm thu (`AC-*`) | `26` | `26` | `0` | **100%** |
-| Năng lực Sản phẩm (`CAP-001`..`013`) & Ca sử dụng (`UC-001`..`012`) | `13 CAP` / `12 UC` | `13 CAP` / `12 UC` | `0` | **100%** |
+| Quy tắc Nghiệp vụ (`BR-001`..`024`) $\rightarrow$ Yêu cầu Nghiệp vụ & Ca sử dụng (`BIZ-*`, `UC-*`) | `24` | `24` | `0` | **100%** |
+| Yêu cầu Nghiệp vụ (`BIZ-001`..`028`) $\rightarrow$ Năng lực, Ca sử dụng, SRS & Tiêu chí Nghiệm thu (`AC-*`) | `28` | `28` | `0` | **100%** |
+| Năng lực Sản phẩm (`CAP-001`..`013`) & Ca sử dụng (`UC-001`..`013`) | `13 CAP` / `13 UC` | `13 CAP` / `13 UC` | `0` | **100%** |
 | Yêu cầu Thông tin (`INFO-001`..`012`), Tích hợp (`EXT-001`..`005`) & Chất lượng (`QREQ-001`..`015`) | `12 INFO` / `5 EXT` / `15 QREQ` | `12 INFO` / `5 EXT` / `15 QREQ` | `0` | **100%** |
-| **Yêu cầu Phần mềm SRS (`62 FR + 12 IR + 15 DR + 15 NFR + 12 SEC`)** | **`116`** | **`116`** | **`0`** | **100%** |
-| Tiêu chí Nghiệm thu RDS (`AC-001`..`030`) $\leftrightarrow$ Kịch bản Kiểm thử SRS (`TST-001`..`030`) | `30` | `30` | `0` | **100%** |
+| **Yêu cầu Phần mềm SRS (`63 FR + 13 IR + 15 DR + 15 NFR + 12 SEC`)** | **`118`** | **`118`** | **`0`** | **100%** |
+| Tiêu chí Nghiệm thu RDS (`AC-001`..`032`) $\leftrightarrow$ Kịch bản Kiểm thử SRS (`TST-001`..`TST-031`) | `32 AC` / `31 TST` | `32 AC` / `31 TST` | `0` | **100%** |

@@ -8,13 +8,13 @@
 | Thuộc tính | Giá trị |
 | :--- | :--- |
 | **Tên tài liệu** | Software System Specification (SSS) — AI-Assisted BizFlow Platform |
-| **Mã tài liệu** | `BIZFLOW-SSS-v1.0-DRAFT` |
-| **Phiên bản** | `1.0-DRAFT` |
-| **Ngày phát hành** | `2026-10-18` |
-| **Trạng thái tài liệu** | `DRAFT — EVIDENCE-VERIFIED BASELINE` |
+| **Mã tài liệu** | `BIZFLOW-SSS-v1.1` |
+| **Phiên bản** | `1.1-DRAFT` |
+| **Ngày phát hành** | `2026-10-18` (Cập nhật rà soát Onboarding: `2026-10-19`) |
+| **Trạng thái tài liệu** | `DRAFT — EVIDENCE-VERIFIED BASELINE (AWAITING OWNER SIGN-OFF ON 24 ODs)` |
 | **Nhóm biên soạn** | Principal Software Architect, Senior Systems Analyst, Senior Technical Analyst, Senior Backend Architect, Senior Frontend Architect, Senior Security Architect, Senior AI Systems Architect, Senior QA & Reliability Engineer, Senior Technical Writer |
 | **Tài liệu đầu vào trực tiếp** | [SRS_v1.0_DRAFT.md](../../requirements/srs/SRS_v1.0_DRAFT.md), [01-system-understanding.md](../../00-analysis/01-system-understanding.md), [02-architecture.md](../../00-analysis/02-architecture.md), [05-assumptions-and-ambiguities.md](../../00-analysis/05-assumptions-and-ambiguities.md), `ADR-0001` .. `ADR-0012` |
-| **Bộ tài liệu thành phần** | 1. [SSS_v1.0_DRAFT.md](SSS_v1.0_DRAFT.md) (Tài liệu chính)<br>2. [SOURCE_REGISTER.md](SOURCE_REGISTER.md) (`SRC-001..038`)<br>3. [MODULE_CATALOG.md](MODULE_CATALOG.md) (`MOD-001..013`, `MOD-FE-001`, `MOD-BG-001`)<br>4. [INTERFACE_CATALOG.md](INTERFACE_CATALOG.md) (`INT-001..028`)<br>5. [ARCHITECTURE_DECISIONS.md](ARCHITECTURE_DECISIONS.md) (`DEC-WS-001..002`, `ADR-0001..0012`, `ADR-SSS-001..006`)<br>6. [OPEN_DECISIONS.md](OPEN_DECISIONS.md) (`OD-001..020`)<br>7. [SSS_TRACEABILITY.md](SSS_TRACEABILITY.md) (Ma trận truy vết toàn diện)<br>8. [SSS_REVIEW_REPORT.md](SSS_REVIEW_REPORT.md) (Báo cáo kiểm định độc lập)<br>9. Thư mục sơ đồ: [01-system-context.md](diagrams/01-system-context.md), [02-container-runtime.md](diagrams/02-container-runtime.md), [03-module-dependencies.md](diagrams/03-module-dependencies.md), [04-sequence-workflows.md](diagrams/04-sequence-workflows.md), [05-deployment-view.md](diagrams/05-deployment-view.md), [06-data-and-integration-flow.md](diagrams/06-data-and-integration-flow.md) |
+| **Bộ tài liệu thành phần** | 1. [SSS_v1.0_DRAFT.md](SSS_v1.0_DRAFT.md) (Tài liệu chính)<br>2. [SOURCE_REGISTER.md](SOURCE_REGISTER.md) (`SRC-001..038`)<br>3. [MODULE_CATALOG.md](MODULE_CATALOG.md) (`MOD-001..013`, `MOD-FE-001`, `MOD-BG-001`)<br>4. [INTERFACE_CATALOG.md](INTERFACE_CATALOG.md) (`INT-001..028`)<br>5. [ARCHITECTURE_DECISIONS.md](ARCHITECTURE_DECISIONS.md) (`DEC-WS-001..002`, `ADR-0001..0012`, `ADR-SSS-001..007`)<br>6. [OPEN_DECISIONS.md](OPEN_DECISIONS.md) (`OD-001..024`)<br>7. [SSS_TRACEABILITY.md](SSS_TRACEABILITY.md) (Ma trận truy vết toàn diện)<br>8. [SSS_REVIEW_REPORT.md](SSS_REVIEW_REPORT.md) (Báo cáo kiểm định độc lập `BF-SSS-REV-2026-002`)<br>9. Thư mục sơ đồ: [01-system-context.md](diagrams/01-system-context.md), [02-container-runtime.md](diagrams/02-container-runtime.md), [03-module-dependencies.md](diagrams/03-module-dependencies.md), [04-sequence-workflows.md](diagrams/04-sequence-workflows.md) (`SEQ-001..007`), [05-deployment-view.md](diagrams/05-deployment-view.md), [06-data-and-integration-flow.md](diagrams/06-data-and-integration-flow.md) |
 
 ### Lịch sử Phiên bản (Revision History)
 
@@ -22,6 +22,7 @@
 | :--- | :--- | :--- | :--- |
 | `0.9-LEGACY` | `2026-10-17` | Nhóm Kiến trúc (Phiên trước tại `documents/SSS/`) | Bản thảo SSS đầu tiên; tuy nhiên tại thời điểm sinh `documents/SSS/IMPLEMENTATION_GAP_ANALYSIS.md`, môi trường chạy chưa truy cập được mã nguồn `.NET 10` / `Angular 22` nên đánh dấu `GAP-001..017` là `NOT VERIFIED`. |
 | `1.0-DRAFT` | `2026-10-18` | Nhóm Chuyên gia Cấp Senior (`docs/specifications/sss/`) | Xây dựng bộ SSS chuẩn hóa dựa trên đối chiếu trực tiếp với [SRS_v1.0_DRAFT.md](../../requirements/srs/SRS_v1.0_DRAFT.md), 12 ADR (`ADR-0001..0012`), 19 REST Controllers, `Program.cs`, `BizFlowDbContext.cs` (36 bảng / 34 migrations), `frontend/src/app/app.routes.ts` (28 routes) và bộ kiểm thử tự động. |
+| `1.1-DRAFT` | `2026-10-19` | Nhóm Chuyên gia Cấp Senior (`docs/specifications/sss/`) | Rà soát chuyên sâu Company Registration, Tenant Onboarding và Workspace Provisioning: Bổ sung `ADR-SSS-007` (khởi tạo nguyên tử & post-provisioning invariant guard), sơ đồ luồng `SEQ-007`, mở rộng `OD-021`..`OD-024`, làm rõ mô hình Self-Service Onboarding (`PROPOSED — NOT APPROVED`) song song với Admin-Approved Onboarding (`CONFIRMED`), cập nhật mã lỗi và ma trận truy vết 118 yêu cầu SRS. |
 
 ---
 
@@ -36,10 +37,10 @@ SSS đóng vai trò là **cầu nối kỹ thuật trực tiếp** từ tài li�
 
 | Loại Tài liệu | Vị trí trong Workspace | Câu hỏi Trọng tâm | Vai trò so với SSS |
 | :--- | :--- | :--- | :--- |
-| **System Analysis & Scope Decisions** | [01-system-understanding.md](../../00-analysis/01-system-understanding.md), [05-assumptions-and-ambiguities.md](../../00-analysis/05-assumptions-and-ambiguities.md) | *Bài toán kinh doanh, quy tắc nghiệp vụ (`BR-001..022`) và phạm vi sản phẩm là gì?* | Cung cấp bối cảnh nghiệp vụ, mục tiêu kinh doanh (`BG-01..08`) và ràng buộc phạm vi MVP (`DEC-WS-001..002`). |
-| **Software Requirements Specification (SRS)** | [SRS_v1.0_DRAFT.md](../../requirements/srs/SRS_v1.0_DRAFT.md) | *Hệ thống cần làm gì (`What`) và tiêu chí nghiệm thu là gì?* | Đầu vào trực tiếp của SSS (`116` yêu cầu nguyên tử: `62 FR`, `12 IR`, `15 DR`, `15 NFR`, `12 SEC`). |
+| **System Analysis & Scope Decisions** | [01-system-understanding.md](../../00-analysis/01-system-understanding.md), [05-assumptions-and-ambiguities.md](../../00-analysis/05-assumptions-and-ambiguities.md) | *Bài toán kinh doanh, quy tắc nghiệp vụ (`BR-001..024`) và phạm vi sản phẩm là gì?* | Cung cấp bối cảnh nghiệp vụ, mục tiêu kinh doanh (`BG-01..08`) và ràng buộc phạm vi MVP (`DEC-WS-001..002`). |
+| **Software Requirements Specification (SRS)** | [SRS_v1.0_DRAFT.md](../../requirements/srs/SRS_v1.0_DRAFT.md) | *Hệ thống cần làm gì (`What`) và tiêu chí nghiệm thu là gì?* | Đầu vào trực tiếp của SSS (`118` yêu cầu nguyên tử: `63 FR`, `13 IR`, `15 DR`, `15 NFR`, `12 SEC`). |
 | **Architecture Decision Records (ADRs)** | `docs/01-decisions/ADR-0001..0012` & [ARCHITECTURE_DECISIONS.md](ARCHITECTURE_DECISIONS.md) | *Tại sao hệ thống chọn giải pháp thiết kế này và các bất biến kiến trúc nào không được phép vi phạm?* | Định nghĩa các ranh giới thẩm quyền và quy tắc thiết kế bắt buộc mà SSS hiện thực hóa. |
-| **Software System Specification (SSS — Tài liệu này)** | [SSS_v1.0_DRAFT.md](SSS_v1.0_DRAFT.md) | *Hệ thống được cấu trúc, phân rã, giao tiếp, bảo vệ dữ liệu và vận hành như thế nào ở mức hệ thống (`System-Level How`)?* | Ánh xạ mọi yêu cầu SRS sang kiến trúc container, 15 module, 28 giao diện, 6 luồng tuần tự và chiến thuật chất lượng (`ARCH-*`). |
+| **Software System Specification (SSS — Tài liệu này)** | [SSS_v1.0_DRAFT.md](SSS_v1.0_DRAFT.md) | *Hệ thống được cấu trúc, phân rã, giao tiếp, bảo vệ dữ liệu và vận hành như thế nào ở mức hệ thống (`System-Level How`)?* | Ánh xạ mọi yêu cầu SRS sang kiến trúc container, 15 module, 28 giao diện, 7 luồng tuần tự và chiến thuật chất lượng (`ARCH-*`). |
 | **Database / API / Code Implementation** | `backend/` (`.NET 10`) & `frontend/` (`Angular 22`) | *Hệ thống được cài đặt cụ thể trong mã nguồn và lược đồ vật lý ra sao?* | Thực thi cụ thể các quy tắc của SSS và được kiểm chứng ngược lại qua [SSS_REVIEW_REPORT.md](SSS_REVIEW_REPORT.md). |
 
 ### 1.3. Quy ước Thuật ngữ và Nhãn Trạng thái (Definitions, Acronyms, and Status Labels)
@@ -65,6 +66,9 @@ Tuân thủ tuyệt đối [05-assumptions-and-ambiguities.md](../../00-analysis
 1. **Mô hình Đa Thuê bao SaaS (`CONFIRMED`):** Phục vụ nhiều doanh nghiệp (`Company Tenants`) độc lập trên cùng hạ tầng triển khai; dữ liệu giữa các doanh nghiệp được cô lập nghiêm ngặt.
 2. **Giới hạn Workspace trong MVP (`DEC-WS-001` — `CONFIRMED`):** Mỗi doanh nghiệp được phê duyệt trong MVP có **duy nhất 1 Workspace chính (`1 Company = 1 Primary Workspace`)**. Khả năng đa Workspace trong một doanh nghiệp là định hướng nâng cấp Enterprise trong tương lai.
 3. **Loại trừ Thương mại & Thanh toán khỏi MVP (`DEC-WS-002` — `CONFIRMED`):** Billing, Payment Gateway, Subscription Management, Invoicing và Commercial Entitlements **không thuộc phạm vi MVP**.
+4. **Mô hình Tiếp nhận Doanh nghiệp (Onboarding Model Baseline vs. Proposal):**
+   - **Baseline Đã Xác nhận (`CONFIRMED` theo `FR-TEN-001`..`002`, `UC-001`):** Doanh nghiệp gửi đơn $\rightarrow$ đơn ở trạng thái `PENDING` $\rightarrow$ `PLATFORM_ADMIN` xem xét và phê duyệt thủ công tại `UI-02` $\rightarrow$ kích hoạt `Primary Tenant`.
+   - **Phương án Đề xuất Multi-Tenant SaaS (`PROPOSED — NOT APPROVED` theo `FR-TEN-005`, `IR-UI-004`, `UC-013`, `ADR-SSS-007`, `OD-021`):** Điểm vào công khai `/register-company` (liên kết CTA từ `/login` `UI-01`); đại diện đăng ký thông tin công ty và tài khoản quản trị đầu tiên; sau khi hoàn tất **Xác minh Email (`Email Verification`, `OD-022`)**, hệ thống tự động khởi tạo nguyên tử **01 Primary Tenant (`DEC-WS-001`)** và gán vai trò `COMPANY_ADMIN` (hỗ trợ cờ cấu hình `Onboarding:ApprovalMode = "SelfService" | "PlatformAdminApproval"`).
 
 ### 2.3. Đối chiếu Kiến trúc Mục tiêu và Hiện trạng Triển khai trong Repository (Target vs. Current Implementation Summary)
 
@@ -72,8 +76,9 @@ Tuân thủ tuyệt đối [05-assumptions-and-ambiguities.md](../../00-analysis
 | :--- | :--- | :--- | :--- |
 | **Cấu trúc Solution & Phân tầng** | Modular Monolith trên `.NET 10` (`Api`, `Application`, `Domain`, `Infrastructure`) + `Angular 22` SPA | Đã triển khai đầy đủ 6 project trong [BizFlow.slnx](../../../BizFlow.slnx) (`BizFlow.Api`, `BizFlow.Application`, `BizFlow.Domain`, `BizFlow.Infrastructure`, `BizFlow.UnitTests`, `BizFlow.IntegrationTests`) và `frontend/`. | `IMPLEMENTED` (100% khung kiến trúc) |
 | **Giao diện REST API & Real-Time** | Các nhóm endpoint nghiệp vụ + Kênh thông báo WebSocket thời gian thực | Đã triển khai **31 REST Controllers** trong `BizFlow.Api/Controllers/` và SignalR `NotificationHub` (`/hubs/notifications`). | `IMPLEMENTED` |
-| **Giao diện Người dùng (Frontend)** | Ứng dụng SPA phân quyền theo vai trò và ngữ cảnh Tenant | Đã triển khai **28 định tuyến (`app.routes.ts`)** cùng `sessionGuard`, `tenantGuard`, `permissionGuard`. | `IMPLEMENTED` |
+| **Giao diện Người dùng (Frontend)** | Ứng dụng SPA phân quyền theo vai trò và ngữ cảnh Tenant | Đã triển khai **28 định tuyến (`app.routes.ts`)** cùng `sessionGuard`, `tenantGuard`, `permissionGuard`. Tuyến `/register-company` và `/verify-email` đang ở mức đề xuất (`PROPOSED`). | `IMPLEMENTED` |
 | **Cơ sở dữ liệu Quan hệ (PostgreSQL)** | 43 bảng thực thể nghiệp vụ mục tiêu (`SRC-001`) | `BizFlowDbContext.cs` đã triển khai **36 `DbSet<T>`** qua **34 bản EF Core Migrations**; còn thiếu **7 bảng** (`RoutingRule`, `ApprovalRule`, `ApprovalRuleVersion`, `ApprovalInstance`, `ApprovalStepInstance`, `SLAState`, `SLAEvent`). | `PARTIAL` (36/43 bảng đã có) |
+| **Tiếp nhận & Cấp phát Tenant (`Onboarding`)** | Nộp đơn, xác minh email, cấp phát nguyên tử `Primary Tenant` + `COMPANY_ADMIN` kèm rollback (`ADR-SSS-007`) | Đã có thực thể `Company`, `Tenant`, cấu hình `HasIndex(CompanyId).IsUnique()` và `CompanyRegistrationsController` (`GET` queue); luồng tự động cấp phát và xác minh email đang ở mức đặc tả (`PROPOSED`). | `PARTIAL` (Schema `IMPLEMENTED`; Provisioning pipeline `PROPOSED`) |
 | **Cô lập Đa Thuê bao & Bảo vệ Bất biến** | Cô lập 5 lớp, bộ lọc truy vấn tự động và chống xóa cứng/sửa lịch sử | Đã triển khai `ClaimsTenantContext`, `TenantMembershipAuthorizer`, `ConfigureTenantFilter<T>` (fail-closed) và chốt chặn trong `BizFlowDbContext.SaveChangesAsync`. | `IMPLEMENTED` |
 | **Tích hợp AI có Kiểm soát (`ADR-0008`)** | 9 tính năng AI, lọc quyền qua `AiContextReader`, timeout `45s`, fallback an toàn, Human-in-the-Loop | Đã triển khai `AiAssistantService`, `AiContextReader`, `AiToolRegistry`, `AiActionDispatcher`, `OpenAiModelClient`. | `IMPLEMENTED` |
 | **Tiến trình Xử lý Ngầm (`MOD-BG-001`)** | Hangfire Server / Background Workers quét SLA, gửi SMTP từ `EmailQueueItems`, xử lý `ReportExportJobs` | Các bảng hàng đợi (`EmailQueueItems`, `NotificationQueueItems`, `ReportExportJobs`) đã có trong DB, nhưng `Program.cs` **chưa đăng ký** Hangfire hoặc `BackgroundService`. | `PROPOSED` / `NOT YET WIRED` (`OD-020`) |
@@ -234,7 +239,7 @@ Sơ đồ phụ thuộc vật lý và logic giữa các module được minh h�
 
 ## 8. Kiến trúc Runtime và Các Luồng Nghiệp vụ Trọng yếu (Runtime Architecture and Important Workflows)
 
-Toàn bộ 6 sơ đồ tuần tự chi tiết (`SEQ-001` .. `SEQ-006`) được đặc tả tại [04-sequence-workflows.md](diagrams/04-sequence-workflows.md):
+Toàn bộ 7 sơ đồ tuần tự chi tiết (`SEQ-001` .. `SEQ-007`) được đặc tả tại [04-sequence-workflows.md](diagrams/04-sequence-workflows.md):
 
 | Mã Luồng | Tên Luồng Runtime | Các Thành phần Tham gia Chính | Yêu cầu & ADR Liên quan | Hiện trạng trong Codebase |
 | :--- | :--- | :--- | :--- | :--- |
@@ -244,6 +249,7 @@ Toàn bộ 6 sơ đồ tuần tự chi tiết (`SEQ-001` .. `SEQ-006`) được 
 | `SEQ-004` | **Giao việc Phòng ban, Nhân viên Nhận việc (`Claim`) & Xác nhận Hoàn thành** | `TasksController` $\rightarrow$ `TaskWorkflowEngine` $\rightarrow$ `EvidenceController` $\rightarrow$ `ConfirmationsController` $\rightarrow$ `BizFlowDbContext` | `FR-TSK-002..006`, `FR-COL-003`, `ADR-0001..0004`, `ADR-0010` | `IMPLEMENTED` |
 | `SEQ-005` | **Ngăn chặn Truy cập Trái phép Liên Tenant (`Defense-in-Depth`)** | `TenantMembershipAuthorizer` $\rightarrow$ Scoped Read Policy $\rightarrow$ EF Core `HasQueryFilter` $\rightarrow$ `404 Not Found` | `SEC-TEN-001..003`, `ADR-0007`, `ADR-0011`, `ADR-0012` | `IMPLEMENTED` |
 | `SEQ-006` | **Xử lý Lỗi Nhà cung cấp Bên ngoài & Chế độ Suy giảm An toàn** | `AiAssistantService` $\rightarrow$ `OpenAiModelClient` (Timeout `45s`) $\rightarrow$ `AiExecutionLog` $\rightarrow$ Deterministic Fallback | `NFR-REL-002..003`, `IR-EXT-001`, `ADR-0008` | `IMPLEMENTED` |
+| `SEQ-007` | **Đăng ký Doanh nghiệp, Xác minh Email & Khởi tạo Nguyên tử Primary Tenant kèm Rollback** | `MOD-FE-001` (`/register-company`) $\rightarrow$ `BizFlow.Api` $\rightarrow$ `TenantOnboardingService` (`MOD-002`) $\rightarrow$ `BizFlowDbContext` (Unit of Work) $\rightarrow$ Post-Provisioning Invariant Guard $\rightarrow$ `EmailQueueItems` (`MOD-009`) | `FR-TEN-001..005`, `IR-UI-004`, `IR-EXT-002`, `BR-023`, `BR-024`, `DEC-WS-001`, `ADR-SSS-007`, `OD-021..024` | `PARTIAL` (Thực thể & DB Unique constraint `IMPLEMENTED`; Quy trình tự động cấp phát & kiểm tra bất biến `PROPOSED` per `ADR-SSS-007`) |
 
 ---
 
@@ -408,8 +414,10 @@ Mọi ngoại lệ phát sinh trong pipeline xử lý HTTP đều được bắt
 - Các thực thể có tranh chấp cao (như `WorkTask` khi nhiều nhân viên trong phòng ban cùng bấm `Claim`, hoặc hai quản lý cùng duyệt/xác nhận) được bảo vệ bằng kiểm tra phiên bản đồng thời (`Optimistic Concurrency`).
 - Nếu phiên bản dữ liệu đã thay đổi bởi một giao dịch khác, hệ thống từ chối ghi đè và trả về `409 Conflict` để client tải lại trạng thái mới nhất.
 
-### 15.3. Ranh giới Giao dịch và Hàng đợi Outbox (`Transaction Boundaries & Outbox`)
+### 15.3. Ranh giới Giao dịch, Khởi tạo Thuê bao Nguyên tử và Hàng đợi Outbox (`Transaction Boundaries, Atomic Provisioning & Outbox`)
 - **Giao dịch nguyên tử (`Atomic DB Transaction`):** Mọi thay đổi trạng thái nghiệp vụ + bản ghi lịch sử (`TaskHistory`/`RequestHistory`) + bản ghi kiểm toán (`AuditLog`) + bản ghi hàng đợi thông báo (`NotificationQueueItem`/`EmailQueueItem`) được cam kết trong **cùng một lần gọi `SaveChangesAsync()`** trên `BizFlowDbContext`.
+- **Khởi tạo Thuê bao và Workspace Nguyên tử (`Atomic Tenant & Workspace Provisioning` per `BR-023`, `ADR-SSS-007`, `OD-024`):** Toàn bộ quy trình kích hoạt doanh nghiệp (chuyển `Company` sang `Active`, khởi tạo `Tenant`, tạo 1 `Workspace` chính duy nhất theo `DEC-WS-001`, và gán vai trò `COMPANY_ADMIN` cho tài khoản người dùng đại diện) phải được bọc trong một Database Transaction nguyên tử (`IDbContextTransaction`). Nếu bất kỳ thao tác nào gặp lỗi (DB deadlock, trùng khóa, gán quyền thất bại), toàn bộ giao dịch lập tức rollback 100%, không để lại dữ liệu rác hay tình trạng Tenant mồ côi không có Workspace/Admin.
+- **Chốt chặn Bất biến Hậu Khởi tạo (`Post-Provisioning Invariant Guard` per `ADR-SSS-007`):** Trước khi `CommitTransactionAsync()`, hệ thống tự động kiểm tra điều kiện nghiệm thu: `Tenant` phải gắn với đúng 1 `Workspace` chính (`CompanyId` unique index) và có tối thiểu 1 người dùng sở hữu vai trò `COMPANY_ADMIN`. Nếu vi phạm bất biến, kích hoạt rollback và trả về lỗi `ONBOARDING.PROVISIONING_ROLLED_BACK`.
 - **Chịu lỗi thành phần ngoài (`Fault Isolation`):** Lỗi từ OpenAI API (`OpenAiModelClient`), Redis (`BizFlowRedisCacheService`) hoặc SMTP không được phép làm hỏng giao dịch cơ sở dữ liệu cốt lõi.
 
 ---
@@ -500,22 +508,23 @@ Hệ thống sở hữu kiến trúc kiểm thử tự động 2 tầng trong [B
 
 ## 21. Hồ sơ Quyết định Kiến trúc (Architecture Decision Records Summary)
 
-Chi tiết đầy đủ của toàn bộ 20 quyết định kiến trúc được lưu tại [ARCHITECTURE_DECISIONS.md](ARCHITECTURE_DECISIONS.md):
+Chi tiết đầy đủ của toàn bộ 21 quyết định kiến trúc được lưu tại [ARCHITECTURE_DECISIONS.md](ARCHITECTURE_DECISIONS.md):
 - **2 Quyết định Phạm vi Đã Xác nhận (`CONFIRMED`):** `DEC-WS-001` (1 Company = 1 Primary Workspace trong MVP), `DEC-WS-002` (Loại trừ Billing/Payment/Subscription khỏi MVP).
 - **12 Quyết định Kiến trúc Nền tảng Đã Xác nhận & Triển khai (`CONFIRMED` & `IMPLEMENTED`):** `ADR-0001` .. `ADR-0012`.
-- **6 Quyết định Kiến trúc Cấp Hệ thống trong SSS (`ADR-SSS-001` .. `ADR-SSS-006`):**
+- **7 Quyết định Kiến trúc Cấp Hệ thống trong SSS (`ADR-SSS-001` .. `ADR-SSS-007`):**
   - `ADR-SSS-001` (`CONFIRMED` & `IMPLEMENTED`): Cô lập đa thuê bao 5 lớp và bộ lọc EF Core Fail-Closed.
   - `ADR-SSS-002` (`PROPOSED — NOT APPROVED`): Xử lý bất đồng bộ qua bảng Outbox và tiến trình Background Worker (`MOD-BG-001`).
   - `ADR-SSS-003` (`PROPOSED — NOT APPROVED`): Hoàn thiện 5 bảng định tuyến (`RoutingRule`) và phê duyệt đa bước (`Approval*`).
   - `ADR-SSS-004` (`PROPOSED — NOT APPROVED`): Hoàn thiện 2 bảng trạng thái đồng hồ SLA (`SLAState`, `SLAEvent`).
   - `ADR-SSS-005` (`CONFIRMED` & `IMPLEMENTED`): Trừu tượng hóa lưu trữ tệp qua `IObjectStorageProvider` (`S3`/`MinIO` + `Local` fallback).
   - `ADR-SSS-006` (`PROPOSED — NOT APPROVED`): Chuẩn hóa từ vựng mã quyền hạn giữa tài liệu đặc tả và mã nguồn thực tế (`OD-019`).
+  - `ADR-SSS-007` (`PROPOSED — NOT APPROVED`): Khởi tạo Thuê bao và Workspace Nguyên tử kèm Chốt chặn Bất biến Hậu Khởi tạo (`OD-024`, `BR-023`).
 
 ---
 
 ## 22. Rủi ro Kiến trúc, Ràng buộc và Quyết định Mở (Risks, Constraints, and Open Decisions)
 
-### 22.1. Danh mục Rủi ro Kiến trúc Trọng yếu (`RSK-001` .. `RSK-006`)
+### 22.1. Danh mục Rủi ro Kiến trúc Trọng yếu (`RSK-001` .. `RSK-007`)
 
 | Mã Rủi ro | Mô tả Rủi ro Kiến trúc | Mức độ Ảnh hưởng | Biện pháp Giảm thiểu trong Kiến trúc (`Mitigation`) | Quyết định / Chiến thuật Liên quan |
 | :--- | :--- | :--- | :--- | :--- |
@@ -525,15 +534,16 @@ Chi tiết đầy đủ của toàn bộ 20 quyết định kiến trúc đượ
 | `RSK-004` | **Thiếu 7 bảng dữ liệu runtime của Routing, Approval và SLA** (`RoutingRule`, `Approval*`, `SLAState`, `SLAEvent`) trong `BizFlowDbContext`. | `MEDIUM` | Đã cô lập rõ phạm vi trong `MOD-007` và `MOD-008`; bổ sung migration theo thiết kế tại `ADR-SSS-003` và `ADR-SSS-004`. | `OD-001`, `OD-002`, `OD-003` |
 | `RSK-005` | **Sự cố hoặc độ trễ cao từ OpenAI API bên ngoài** làm ảnh hưởng trải nghiệm người dùng. | `MEDIUM` | Áp dụng timeout cứng `45s` tại `OpenAiModelClient`, Rate Limiter riêng và cơ chế `Deterministic Fallback` không chặn luồng thủ công. | `ADR-0008`, `SEQ-006`, `ARCH-REL-002` |
 | `RSK-006` | **Xung đột đồng thời khi nhiều nhân viên trong cùng phòng ban bấm `Claim` một công việc** cùng lúc. | `MEDIUM` | Áp dụng kiểm soát đồng thời lạc quan (`Optimistic Concurrency`) và kiểm tra trạng thái phân công hiện hành trong `TaskWorkflowEngine` (`ADR-0002`, `ADR-0006`). | `ADR-0002`, `ADR-0006`, `ARCH-REL-001` |
+| `RSK-007` | **Khởi tạo Tenant/Workspace dở dang hoặc cấp quyền Admin ban đầu thất bại** dẫn đến Tenant mồ côi, không có Workspace chính hoặc quản trị viên không thể đăng nhập. | `HIGH` | Bọc toàn bộ quy trình kích hoạt/onboarding trong 1 Transaction nguyên tử duy nhất; áp dụng cơ chế tự động rollback và chốt chặn Post-Provisioning Invariant Guard. | `ADR-SSS-007`, `BR-023`, `OD-024` |
 
-### 22.2. Tham chiếu Sổ đăng ký 20 Quyết định Mở (`OD-001` .. `OD-020`)
-Toàn bộ 20 quyết định mở (`OD-001` .. `OD-020`), bao gồm các phương án lựa chọn, phương án khuyến nghị (`PROPOSED — NOT APPROVED`), tác động và người chịu trách nhiệm phê duyệt được đặc tả đầy đủ tại [OPEN_DECISIONS.md](OPEN_DECISIONS.md).
+### 22.2. Tham chiếu Sổ đăng ký 24 Quyết định Mở (`OD-001` .. `OD-024`)
+Toàn bộ 24 quyết định mở (`OD-001` .. `OD-024`), bao gồm các phương án lựa chọn, phương án khuyến nghị (`PROPOSED — NOT APPROVED`), tác động và người chịu trách nhiệm phê duyệt được đặc tả đầy đủ tại [OPEN_DECISIONS.md](OPEN_DECISIONS.md).
 
 ---
 
 ## 23. Truy vết và Liên kết Đặc tả (Traceability and Specification Links)
 
-Ma trận truy vết hai chiều toàn diện từ **Mục tiêu Kinh doanh (`BG-01..08`) & Quy tắc Nghiệp vụ (`BR-001..022`)** $\rightarrow$ **116 Yêu cầu SRS (`FR`, `IR`, `DR`, `NFR`, `SEC`)** $\rightarrow$ **Thành phần Kiến trúc SSS (`MOD-*`, `INT-*`, `SEQ-*`, `ARCH-*`, `ADR-*`)** $\rightarrow$ **Phương pháp Xác minh & Kiểm thử (`TST-001..030`)** được lập tại tài liệu chuyên biệt [SSS_TRACEABILITY.md](SSS_TRACEABILITY.md).
+Ma trận truy vết hai chiều toàn diện từ **Mục tiêu Kinh doanh (`BG-01..08`) & Quy tắc Nghiệp vụ (`BR-001..024`)** $\rightarrow$ **118 Yêu cầu SRS (`63 FR`, `13 IR`, `15 DR`, `15 NFR`, `12 SEC`)** $\rightarrow$ **Thành phần Kiến trúc SSS (`MOD-*`, `INT-*`, `SEQ-*`, `ARCH-*`, `ADR-*`)** $\rightarrow$ **Phương pháp Xác minh & Kiểm thử (`TST-001..031`)** được lập tại tài liệu chuyên biệt [SSS_TRACEABILITY.md](SSS_TRACEABILITY.md).
 
 ---
 
@@ -545,23 +555,25 @@ Ma trận truy vết hai chiều toàn diện từ **Mục tiêu Kinh doanh (`BG
 | :--- | :--- | :--- | :--- |
 | `400 Bad Request` | Yêu cầu sai cú pháp hoặc tham số đầu vào không hợp lệ | `VALIDATION_ERROR`, `INVALID_REQUEST` | Hiển thị lỗi trường dữ liệu cho người dùng chỉnh sửa. |
 | `401 Unauthorized` | Chưa đăng nhập, JWT hết hạn/không hợp lệ hoặc phiên `UserSession` đã bị thu hồi | `AUTH.UNAUTHORIZED`, `AUTH.SESSION_REVOKED` | Thử làm mới qua `/api/auth/refresh` hoặc điều hướng về `/login`. |
-| `403 Forbidden` | Người dùng đã xác thực nhưng không có quyền truy cập chức năng/route hoặc `Tenant` đang bị `Suspended` | `AUTHZ.FORBIDDEN`, `TENANT_ACCESS_DENIED` | Điều hướng tới `/access-denied`; ghi nhận `SecurityEvent` nếu có dấu hiệu vượt ranh giới Tenant. |
+| `403 Forbidden` | Người dùng đã xác thực nhưng không có quyền truy cập chức năng/route, email chưa xác minh hoặc `Tenant` đang bị `Suspended` | `AUTHZ.FORBIDDEN`, `AUTH.EMAIL_NOT_VERIFIED`, `TENANT_ACCESS_DENIED` | Điều hướng tới `/access-denied` hoặc yêu cầu kiểm tra email xác minh; ghi nhận `SecurityEvent` nếu có dấu hiệu vượt ranh giới Tenant. |
 | `404 Not Found` | Bản ghi không tồn tại **hoặc** nằm ngoài phạm vi quyền đọc / thuộc Tenant khác (`ADR-0012`) | `RESOURCE_NOT_FOUND` | Không tiết lộ liệu ID đó có tồn tại ở phòng ban/công ty khác hay không. |
-| `409 Conflict` | Vi phạm máy trạng thái quy trình, xung đột đồng thời (`ADR-0006`) hoặc trùng lặp dữ liệu duy nhất | `WORKFLOW.INVALID_TRANSITION`, `CONCURRENCY_CONFLICT`, `PERSISTENCE.HARD_DELETE_DENIED`, `PERSISTENCE.IMMUTABLE_FIELD` | Thông báo trạng thái đã thay đổi và yêu cầu tải lại dữ liệu mới nhất. |
+| `409 Conflict` | Vi phạm máy trạng thái quy trình, xung đột đồng thời (`ADR-0006`) hoặc trùng lặp dữ liệu duy nhất (mã doanh nghiệp, tenant key, email) | `WORKFLOW.INVALID_TRANSITION`, `CONCURRENCY_CONFLICT`, `COMPANY.DUPLICATE_CODE_OR_KEY`, `IDENTITY.DUPLICATE_EMAIL`, `PERSISTENCE.HARD_DELETE_DENIED`, `PERSISTENCE.IMMUTABLE_FIELD` | Thông báo trạng thái đã thay đổi hoặc dữ liệu đã tồn tại; yêu cầu tải lại dữ liệu mới nhất (`BR-024`). |
 | `422 Unprocessable Entity` | Vi phạm quy tắc nghiệp vụ miền (ví dụ: thiếu trường biểu mẫu động bắt buộc hoặc thiếu `CompletionEvidence`) | `DOMAIN.RULE_VIOLATION`, `FORM.VALIDATION_FAILED` | Hiển thị rõ điều kiện nghiệp vụ cần hoàn thiện (ví dụ: cần tải lên bằng chứng). |
 | `429 Too Many Requests` | Vượt quá ngưỡng giới hạn tốc độ gọi API (`RateLimiter`) | `RATE_LIMIT_EXCEEDED` | Yêu cầu chờ theo thời gian `Retry-After`. |
-| `500 Internal Server Error` | Lỗi nội bộ không mong đợi (đã ẩn chi tiết nhạy cảm) | `INTERNAL_ERROR` | Hiển thị thông báo lỗi chung kèm `traceId` để hỗ trợ kỹ thuật tra cứu log Serilog. |
+| `500 Internal Server Error` | Lỗi nội bộ không mong đợi (đã ẩn chi tiết nhạy cảm) hoặc rollback giao dịch khởi tạo thuê bao | `INTERNAL_ERROR`, `ONBOARDING.PROVISIONING_ROLLED_BACK` | Hiển thị thông báo lỗi chung kèm `traceId` để hỗ trợ kỹ thuật tra cứu log Serilog (`BR-023`). |
 | `503 Service Unavailable` | Cơ sở dữ liệu chưa sẵn sàng (`/health/ready`) hoặc nhà cung cấp ngoài tạm ngưng | `SERVICE_UNAVAILABLE`, `AI.PROVIDER_UNAVAILABLE` | Kích hoạt chế độ fallback hoặc thử lại sau. |
 
 ---
 
 ### 24.2. Phụ lục B: Ánh xạ Định tuyến Frontend (`app.routes.ts`), Quyền hạn (`Permissions`) và Backend Controllers
 
-Bảng dưới đây được trích xuất trực tiếp từ [frontend/src/app/app.routes.ts](../../../frontend/src/app/app.routes.ts) và thư mục `backend/BizFlow.Api/Controllers/`:
+Bảng dưới đây được trích xuất trực tiếp từ [frontend/src/app/app.routes.ts](../../../frontend/src/app/app.routes.ts) và đối chiếu với các route mở rộng trong đặc tả:
 
 | Đường dẫn Route (Frontend) | Guards Áp dụng | Quyền hạn Yêu cầu trong Code (`app.routes.ts`) | Giao diện & Backend Controller Tương ứng | Module Sở hữu |
 | :--- | :--- | :--- | :--- | :--- |
 | `/login`, `/forgot-password`, `/reset-password` | Public | Không yêu cầu (Public) | `INT-001` (`AuthController`, `AccountController`) | `MOD-001`, `MOD-FE-001` |
+| `/register-company` | Public | Không yêu cầu (Public — `PROPOSED — NOT APPROVED`, `IR-UI-004`) | `INT-002` (`CompanyRegistrationsController`) | `MOD-002`, `MOD-FE-001` |
+| `/verify-email` | Public | Không yêu cầu (Public token verification — `PROPOSED — NOT APPROVED`, `IR-UI-004`) | `INT-002` (`CompanyRegistrationsController`) | `MOD-001`, `MOD-002`, `MOD-FE-001` |
 | `/workspace` | `sessionGuard` | Đã đăng nhập | `INT-002`, `INT-003` (`CompanyRegistrationsController`, `WorkspacesController`) | `MOD-002`, `MOD-FE-001` |
 | `/access-denied` | `sessionGuard` | Đã đăng nhập | Màn hình thông báo từ chối truy cập | `MOD-FE-001` |
 | `/platform/companies` | `sessionGuard`, `permissionGuard` | `platform.company-registrations.read` | `INT-002` (`CompanyRegistrationsController`, `PlatformTenantsController`) | `MOD-002` |

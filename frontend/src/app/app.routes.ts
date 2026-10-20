@@ -174,6 +174,11 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./features/platform/company-registrations').then((m) => m.CompanyRegistrations),
   },
+  {
+    path: 'register-company',
+    loadComponent: () =>
+      import('./features/auth/register-company').then((m) => m.RegisterCompany),
+  },
   { path: 'login', loadComponent: () => import('./features/auth/login').then((m) => m.Login) },
   {
     path: 'forgot-password',
