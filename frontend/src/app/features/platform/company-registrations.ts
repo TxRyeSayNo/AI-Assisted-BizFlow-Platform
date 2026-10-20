@@ -39,7 +39,9 @@ interface RegistrationPage {
   styleUrl: './company-registrations.scss',
   template: `
     <header class="public-header platform-header">
-      <a class="wordmark" routerLink="/workspace">BizFlow</a>
+      <a class="wordmark" routerLink="/workspace">
+        <span class="brand-mark" aria-hidden="true"></span> BizFlow
+      </a>
       <nav aria-label="Platform navigation">
         <a routerLink="/workspace">Home</a>
         <a routerLink="/platform/companies" aria-current="page">Companies</a>

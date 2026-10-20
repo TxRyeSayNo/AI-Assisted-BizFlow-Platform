@@ -1,11 +1,13 @@
 using BizFlow.Api.Errors;
 using BizFlow.Api;
 using BizFlow.Api.Security;
+using BizFlow.Application.Authentication;
 using BizFlow.Application.Security;
 using Microsoft.AspNetCore.Mvc;
 using Serilog;
 using Serilog.Formatting.Compact;
-LoadDotEnvIfExists();
+
+LoadDotEnvIfExists();
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Logging.ClearProviders();
@@ -151,6 +153,22 @@ if (app.Environment.IsDevelopment()) app.MapOpenApi();
 app.MapControllers();
 app.MapHub<BizFlow.Api.Realtime.NotificationHub>(BizFlow.Api.Realtime.NotificationHub.Path,
     options => options.CloseOnAuthenticationExpiration = true);
+
+// Pre-warm database connection, EF Core model compilation, and password hasher asynchronously
+_ = Task.Run(async () =>
+{
+    try
+    {
+        await Task.Delay(100);
+        using var scope = app.Services.CreateScope();
+        var store = scope.ServiceProvider.GetRequiredService<IAuthenticationStore>();
+        var verifier = scope.ServiceProvider.GetRequiredService<ICredentialVerifier>();
+        await store.FindCandidatesAsync("EMP001", "bizflow-corp", CancellationToken.None);
+        verifier.VerifyDummy("Password123!");
+    }
+    catch { /* Ignore background warmup errors */ }
+});
+
 app.Run();
 
 static void LoadDotEnvIfExists()

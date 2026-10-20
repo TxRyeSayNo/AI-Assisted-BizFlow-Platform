@@ -28,8 +28,10 @@ public sealed class AuthenticationService(IAuthenticationStore store, ICredentia
         await using var transaction = await store.BeginAsync(candidates[0], cancellationToken);
         if (transaction is null) { passwords.VerifyDummy(password); throw InvalidCredentials(); }
         var now = clock.GetUtcNow();
-        var check = passwords.Verify(transaction.User, password);
+        // Concurrently run CPU-intensive password verification and database Access Snapshot resolution
+        var verifyTask = Task.Run(() => passwords.Verify(transaction.User, password));
         var access = await transaction.ResolveAccessAsync(cancellationToken);
+        var check = await verifyTask;
         if (!check.Valid || !Allowed(transaction, access, now))
         {
             if (!check.Valid) transaction.User.RecordFailedLogin(now, policy.FailedAttemptLimit, TimeSpan.FromMinutes(policy.LockoutMinutes));

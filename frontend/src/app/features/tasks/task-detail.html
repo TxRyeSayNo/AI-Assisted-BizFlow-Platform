@@ -1,4 +1,8 @@
-<header class="public-header"><a class="wordmark" routerLink="/workspace">BizFlow</a></header>
+<header class="public-header">
+  <a class="wordmark" routerLink="/workspace">
+    <span class="brand-mark" aria-hidden="true"></span> BizFlow
+  </a>
+</header>
 <main id="main-content" class="page-content" tabindex="-1" [attr.aria-busy]="busy()">
   <nav aria-label="Breadcrumb"><a routerLink="/tasks">Tasks</a> / Task details</nav>
   @if (busy()) {
