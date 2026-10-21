@@ -1,9 +1,10 @@
 # View D: Sơ đồ Tuần tự các Luồng Nghiệp vụ và Kỹ thuật Trọng yếu (Key Sequence Diagrams)
 
 - **Mã tài liệu:** `SSS-DIAG-04`
-- **Phiên bản:** `1.1-DRAFT`
+- **Phiên bản:** `1.2-DRAFT`
 - **Thuộc bộ tài liệu:** [SSS_v1.0_DRAFT.md](../SSS_v1.0_DRAFT.md) — Mục 8, Mục 11, Mục 12, Mục 13 & Mục 15
-- **Danh mục luồng (`SEQ-001` .. `SEQ-007`):**
+- **Ngày lập:** `2026-10-18` (Cập nhật đồng bộ v1.2: `2026-10-21`)
+- **Danh mục luồng (`SEQ-001` .. `SEQ-010`):**
   1. `SEQ-001`: Xác thực, Thiết lập Ngữ cảnh Tenant và Kiểm tra Quyền hạn (`Authentication & Tenant Context Resolution`)
   2. `SEQ-002`: Tiếp nhận Yêu cầu Nội bộ, Kiểm tra Form Động và Định tuyến Quy trình (`Request Intake, Validation & Routing`)
   3. `SEQ-003`: Hỗ trợ Xử lý bằng AI có Kiểm soát Con người (`AI-Assisted Request/Task Processing & Human-in-the-Loop`)
@@ -11,6 +12,9 @@
   5. `SEQ-005`: Ngăn chặn Truy cập Trái phép Liên Tenant (`Cross-Tenant Resource Access Denial — Defense-in-Depth`)
   6. `SEQ-006`: Xử lý Lỗi Nhà cung cấp Bên ngoài và Chế độ Suy giảm An toàn (`External Provider Failure & Graceful Fallback`)
   7. `SEQ-007`: Đăng ký Doanh nghiệp, Xác minh Email và Khởi tạo Nguyên tử Primary Tenant kèm Rollback (`Company Registration, Email Verification & Atomic Provisioning Workflow`)
+  8. `SEQ-008`: Đăng nhập Hợp nhất & Đăng nhập Không Mật khẩu qua Email Link kèm Bộ chọn Workspace (`Unified Login & Passwordless Email-Link Flow with Workspace Selector Modal`)
+  9. `SEQ-009`: Trợ lý Robot Thông minh Nhúng UI & Quy trình Bóc tách Việc AI với Xác nhận Bắt buộc từ Con người (`Interactive Embedded Cute Robot Chatbot & AI Task Decomposition with Mandatory Human Confirmation Workflow`)
+  10. `SEQ-010`: Vòng đời Cấu hình & Phát Thông báo Nhắc Hạn Đa Kênh Tự động (`Deadline Reminder Lifecycle, Web Push Delivery & Deduplicated Multi-Channel Dispatching`)
 
 ---
 
@@ -341,4 +345,235 @@ sequenceDiagram
         SPA-->>Owner: Chuyển hướng vào Không gian làm việc chính (/tasks) với vai trò COMPANY_ADMIN
     end
 ```
+
+---
+
+## 8. `SEQ-008`: Đăng nhập Hợp nhất & Đăng nhập Không Mật khẩu qua Email Link kèm Bộ chọn Workspace
+
+Luồng này mô tả hai phương thức đăng nhập hợp nhất trên cùng một giao diện `/login` (`UI-01`):
+1. **Phương thức 1:** Đăng nhập bằng ID bắt buộc 3 trường (`ID`, `Mật khẩu`, `Mã Workspace`).
+2. **Phương thức 2:** Đăng nhập không mật khẩu qua email link, kiểm tra số lượng workspace và hiển thị `Workspace Selector Modal` (`IR-UI-005`) khi người dùng thuộc nhiều doanh nghiệp.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor User as Người dùng (Staff / Manager)
+    participant SPA as Angular 22 SPA (MOD-FE-001)
+    participant Modal as Workspace Selector Modal (IR-UI-005)
+    participant API as BizFlow.Api (AuthController / EmailLinkAuthController)
+    participant AuthSvc as AuthenticationService (MOD-001)
+    participant DB as PostgreSQL 18 (BizFlowDbContext)
+    participant SMTP as Transactional Email Service (IR-EXT-002)
+
+    Note over User,API: Phương thức 1: Đăng nhập Định danh 3 Trường Bắt buộc (FR-AUTH-001, BR-025)
+    User->>SPA: Nhập ID/Code, Password và Workspace Key tại /login
+    SPA->>API: POST /api/v1/auth/login (Identifier, Password, WorkspaceKey)
+    API->>AuthSvc: ValidateCredentialsAsync(Identifier, Password, WorkspaceKey)
+    AuthSvc->>DB: Truy vấn User + PasswordCredential + Tenant (Status = Active) đồng thời cả 3 trường
+    alt Thiếu hoặc sai bất kỳ trường nào trong 3 trường
+        DB-->>AuthSvc: Không tìm thấy hoặc mật khẩu/mã sai
+        AuthSvc-->>API: 401 Unauthorized (AUTH.INVALID_CREDENTIALS)
+        API-->>SPA: 401 Unauthorized (Thông tin đăng nhập không hợp lệ)
+        SPA-->>User: Hiển thị thông báo lỗi chung, bảo vệ chống dò quét
+    else Cả 3 trường khớp chính xác
+        DB-->>AuthSvc: Hợp lệ (UserAccount, Tenant, Roles)
+        AuthSvc->>DB: Tạo UserSession & RefreshToken
+        AuthSvc-->>API: JWT AccessToken + RefreshToken
+        API-->>SPA: 200 OK (AuthSessionResponse)
+        SPA-->>User: Đăng nhập thành công, chuyển hướng vào Workspace chính
+    end
+
+    Note over User,SMTP: Phương thức 2: Đăng nhập Không Mật khẩu qua Email Link (FR-AUTH-005, ADR-SSS-008)
+    User->>SPA: Chọn tab "Đăng nhập qua Email" & chỉ nhập Email
+    SPA->>API: POST /api/v1/auth/email-link/request (Email)
+    API->>AuthSvc: GenerateEmailLoginLinkAsync(Email)
+    AuthSvc->>DB: Tạo EmailLoginToken (HMAC-SHA256, TTL = 15m, Single-Use)
+    AuthSvc->>SMTP: Gửi email chứa liên kết đăng nhập (/auth/verify-link?token=raw_token)
+    SMTP-->>User: Nhận email có nút "Đăng nhập ngay vào BizFlow"
+    API-->>SPA: 200 OK (Email sent)
+    SPA-->>User: "Vui lòng kiểm tra hộp thư email của bạn"
+
+    Note over User,API: Giai đoạn Xác thực Liên kết Email & Định tuyến Workspace
+    User->>SPA: Nhấp vào liên kết trong email
+    SPA->>API: POST /api/v1/auth/email-link/verify (Token)
+    API->>AuthSvc: VerifyEmailLinkTokenAsync(Token)
+    AuthSvc->>DB: Kiểm tra token hợp lệ, chưa sử dụng, còn hạn (<= 15m)
+    AuthSvc->>DB: Truy vấn danh sách Tenant/Workspace mà Email thuộc về (Status = Active)
+
+    alt Trường hợp 0 Workspace (Chưa từng tham gia hoặc đã bị xóa)
+        DB-->>AuthSvc: Count == 0
+        AuthSvc-->>API: 404 Not Found (AUTH.USER_NOT_FOUND)
+        API-->>SPA: 404 Not Found kèm gợi ý
+        SPA-->>User: "Email chưa thuộc doanh nghiệp nào" + Nút điều hướng sang /register-company
+    else Trường hợp Đúng 1 Workspace
+        DB-->>AuthSvc: Count == 1 (WorkspaceId, TenantKey)
+        AuthSvc->>DB: Hủy token đã dùng + Tạo UserSession
+        AuthSvc-->>API: 200 OK (JWT AccessToken + RefreshToken)
+        API-->>SPA: 200 OK (AuthSessionResponse)
+        SPA-->>User: Vào thẳng Workspace chính
+    else Trường hợp >= 2 Workspaces (Thuộc nhiều doanh nghiệp)
+        DB-->>AuthSvc: Count >= 2 (Danh sách WorkspaceInfo)
+        AuthSvc->>DB: Tạo TemporarySessionToken (TTL = 5m, mục đích chọn workspace)
+        AuthSvc-->>API: 200 OK (TemporaryToken, WorkspacesList)
+        API-->>SPA: 200 OK (WorkspacesList)
+        SPA->>Modal: Mở Workspace Selector Modal (IR-UI-005)
+        User->>Modal: Chọn Workspace mong muốn làm việc
+        Modal->>API: POST /api/v1/auth/email-link/select-workspace (TemporaryToken, SelectedWorkspaceId)
+        API->>AuthSvc: CompleteWorkspaceSelectionAsync(...)
+        AuthSvc->>DB: Xác thực TemporaryToken & cấp JWT AccessToken chính thức
+        API-->>SPA: 200 OK (AuthSessionResponse)
+        SPA-->>User: Đăng nhập thành công vào Workspace đã chọn
+    end
+```
+
+---
+
+## 9. `SEQ-009`: Trợ lý Robot Thông minh Nhúng UI & Quy trình Bóc tách Việc AI với Xác nhận Bắt buộc từ Con người
+
+Luồng này mô tả vòng đời của widget robot trợ lý (`sessionStorage`), cơ chế vấn tin tự nhiên có kiểm soát quyền hạn (`AiContextReader`), và quy trình bóc tách đoạn văn bản thành việc cần làm với **xác nhận bắt buộc của con người** (`BR-028`).
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor User as Nhân viên / Quản trị viên
+    participant Widget as Robot Widget UI (MOD-014 / MOD-FE-001)
+    participant PreviewUI as Interactive Preview Checklist (IR-API-006)
+    participant API as BizFlow.Api (AiAssistantController / TasksController)
+    participant Reader as AiContextReader (MOD-012)
+    participant OpenAI as OpenAI API (IR-EXT-001)
+    participant Engine as TaskWorkflowEngine (MOD-005 / MOD-007)
+    participant DB as PostgreSQL 18 (BizFlowDbContext)
+
+    Note over User,Widget: Vòng đời Widget Robot: Mặc định Mở & Đóng theo Phiên (FR-AI-011, BR-029)
+    User->>Widget: Sau khi đăng nhập, Widget tự động hiển thị mở chào mừng
+    alt Người dùng muốn thu nhỏ
+        User->>Widget: Nhấp nút [X] ở góc trên bên phải
+        Widget->>Widget: sessionStorage.setItem('bizflow_robot_dismissed', 'true')
+        Widget->>Widget: Thu nhỏ / Ẩn widget trong phiên làm việc hiện tại
+        Note over User,Widget: Đăng xuất & đăng nhập lại hoặc mở tab mới -> Widget tự động mở lại
+    end
+
+    Note over User,OpenAI: Vấn tin Tiến độ & Báo cáo Tự nhiên Ràng buộc Quyền Hạn (FR-AI-012, BR-027)
+    User->>Widget: Nhập câu hỏi: "Có công việc nào thuộc phòng IT của tôi sắp trễ hạn không?"
+    Widget->>API: POST /api/v1/ai/assistant/query (Message, CurrentTenantId)
+    API->>Reader: BuildScopedContextAsync(CurrentUserId, CurrentTenantId, "tasks,deadlines")
+    Reader->>DB: Truy vấn WorkTasks lọc nghiêm ngặt theo TenantId, RBAC và ManagementScope (BR-003)
+    DB-->>Reader: Chỉ trả về các bản ghi thuộc quyền quản lý của người dùng
+    Reader-->>API: ScopedContextJson (Không chứa bất kỳ dữ liệu trái phép nào)
+    API->>OpenAI: POST /v1/chat/completions (SystemPrompt + ScopedContext + Query)
+    Note over OpenAI: Anti-Hallucination Guardrail (BR-027): Chỉ trả lời dựa trên bằng chứng ngữ cảnh
+    OpenAI-->>API: Phản hồi tổng hợp tiến độ và hạn chót
+    API->>DB: Lưu lịch sử hội thoại (RobotConversation, RobotMessage per DR-016)
+    API-->>Widget: 200 OK (AnswerText, RelevantRecordLinks)
+    Widget-->>User: Hiển thị câu trả lời thông minh kèm liên kết tới công việc
+
+    Note over User,DB: Quy trình Bóc tách Việc AI & Xác nhận Bắt buộc từ Con người (FR-AI-013, BR-028)
+    User->>Widget: Gõ lệnh: /task Chuẩn bị tài liệu kỹ thuật, họp phòng IT và kiểm thử hệ thống trước thứ 6
+    Widget->>API: POST /api/v1/ai/tasks/decompose (ParagraphText)
+    API->>OpenAI: Prompt bóc tách cấu trúc (Type, Title, TargetDept, Description, Checklist)
+    OpenAI-->>API: Danh sách 3 đầu việc đề xuất (JSON có cấu trúc)
+    Note over API: TUYỆT ĐỐI CHƯA GHI VÀO DB (BR-028: AI Non-Autonomy)
+    API-->>Widget: 200 OK (ProposedTasksList)
+    Widget->>PreviewUI: Mở Bảng Xem Trước Danh Sách Việc Tương Tác
+    PreviewUI-->>User: Hiển thị 3 việc kèm Checkbox, Tiêu đề chỉnh sửa được, Phòng ban nhận việc
+
+    User->>PreviewUI: Bỏ chọn 1 việc không cần thiết (chỉ giữ 2 việc)
+    User->>PreviewUI: Sửa lại hạn chót và tiêu đề của việc số 1
+    User->>PreviewUI: Nhấp nút "Xác nhận tạo việc" (Confirm Create Tasks)
+
+    PreviewUI->>API: POST /api/v1/tasks/ai-decomposition/confirm (ConfirmedTasksList)
+    API->>API: Xác thực quyền tạo việc (tasks.create / requests.create) trên từng phòng ban đích
+    API->>DB: BEGIN TRANSACTION
+    loop Với từng việc được xác nhận
+        API->>Engine: CreateTaskAsync(TaskPayload)
+        Engine->>DB: Thêm WorkTask, TaskAssignment, Checklist (Status = OPEN)
+        API->>DB: Ghi AuditLog (Action = "AI_DECOMPOSED_TASK_CONFIRMED")
+    end
+    API->>DB: COMMIT TRANSACTION
+    API-->>PreviewUI: 201 Created (CreatedTasksResult)
+    PreviewUI-->>User: Thông báo "Đã tạo thành công 02 công việc mới!", cập nhật danh sách công việc
+```
+
+---
+
+## 10. `SEQ-010`: Vòng đời Cấu hình & Phát Thông báo Nhắc Hạn Đa Kênh Tự động
+
+Luồng này mô tả việc người dùng cấu hình mốc nhắc hạn (`FR-NOTIF-003`), tiến trình nền quét lịch nhắc, cơ chế điều phối đa kênh thông minh (`In-App SignalR` $\rightarrow$ `Web Push VAPID` $\rightarrow$ `Fallback Email`), bộ lọc chống trùng lặp (`OD-032`), và tự động hủy nhắc hạn khi công việc hoàn thành.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor User as Nhân sự Nhận việc
+    participant SPA as Angular 22 SPA (MOD-FE-001)
+    participant API as BizFlow.Api (DeadlineReminderController)
+    participant Worker as DeadlineReminderWorker (MOD-015 / MOD-BG-001)
+    participant Hub as NotificationHub SignalR (INT-012)
+    participant WebPush as W3C Browser Push Service (RFC 8292 VAPID)
+    participant SMTP as Transactional Email Service (IR-EXT-002)
+    participant DB as PostgreSQL 18 (BizFlowDbContext)
+
+    Note over User,API: Giai đoạn 1: Cấu hình Mốc Nhắc Hạn Cá nhân hóa (FR-NOTIF-003, BR-030)
+    User->>SPA: Cấu hình nhắc hạn qua /notifications hoặc giao diện Task (Trước 24h, 4h, 1h, Overdue)
+    SPA->>API: POST /api/v1/notifications/reminders/config (TaskId, Triggers: [24h, 4h, 1h, Overdue])
+    API->>DB: Lưu các mốc vào DeadlineReminderSchedule (Status = Pending, ScheduledAt UTC)
+    API-->>SPA: 200 OK (ScheduleConfigured)
+
+    Note over User,API: Đăng ký Web Push Notification (Một lần khi người dùng cho phép)
+    User->>SPA: Cho phép nhận thông báo trình duyệt ("Allow Notifications")
+    SPA->>WebPush: Đăng ký PushSubscription với Browser Push Manager
+    WebPush-->>SPA: PushSubscription Object (Endpoint, P256DH Key, Auth Secret)
+    SPA->>API: POST /api/v1/notifications/push-subscriptions (PushSubscriptionDto)
+    API->>DB: Lưu vào PushSubscriptions (UserId, Endpoint, Keys)
+
+    Note over Worker,SMTP: Giai đoạn 2: Quét Định kỳ & Điều Phối Đa Kênh Thông minh (FR-NOTIF-004, OD-032)
+    Worker->>DB: Quét DeadlineReminderSchedule (ScheduledAt <= UtcNow AND Status = Pending)
+    DB-->>Worker: Danh sách lịch nhắc đến hạn kích hoạt
+
+    loop Với từng bản ghi nhắc hạn đến hạn
+        Worker->>DB: Kiểm tra NotificationLog (UNIQUE: TenantId, TaskId, UserId, TriggerType, ScheduledAt)
+        alt Đã có bản ghi gửi thành công trong NotificationLog (Chống trùng lặp tuyệt đối)
+            Worker->>Worker: Bỏ qua (Deduplication Guard)
+        else Chưa phát thông báo
+            Note over Worker,Hub: Kênh 1: Kiểm tra Người dùng Trực tuyến trên In-App SignalR
+            Worker->>Hub: IsUserConnected(UserId)
+            alt Người dùng ĐANG ONLINE trên ứng dụng
+                Hub-->>Worker: True (User is connected)
+                Worker->>Hub: SendAsync("ReceiveDeadlineReminder", ReminderPayload)
+                Hub-->>SPA: Toast thông báo nổi & cập nhật badge Notification Center
+                Worker->>DB: Ghi NotificationLog (Channel = "InAppSignalR", Status = "Sent")
+            else Người dùng OFFLINE (Không mở ứng dụng)
+                Hub-->>Worker: False (User is offline)
+                Note over Worker,WebPush: Kênh 2: Thử gửi Web Push Notification qua VAPID
+                Worker->>DB: Lấy PushSubscription của UserId
+                alt Có Web Push Subscription hợp lệ
+                    Worker->>WebPush: Gửi VAPID Web Push Payload có mã hóa ECE
+                    alt Gửi Web Push thành công
+                        WebPush-->>User: Hiển thị Native Browser Notification trên màn hình
+                        Worker->>DB: Ghi NotificationLog (Channel = "WebPush", Status = "Sent")
+                    else Gửi Web Push lỗi (410 Gone / Network Error)
+                        Note over Worker,SMTP: Kênh 3: Fallback Tự động sang Gửi Email HTML
+                        Worker->>SMTP: Gửi Email nhắc hạn HTML chuyên nghiệp có nút CTA "Xem công việc"
+                        SMTP-->>User: Nhận Email thông báo nhắc việc trong hộp thư
+                        Worker->>DB: Ghi NotificationLog (Channel = "EmailFallback", Status = "Sent")
+                    end
+                else Không có Web Push Subscription
+                    Note over Worker,SMTP: Kênh 3: Fallback Tự động sang Gửi Email HTML
+                    Worker->>SMTP: Gửi Email nhắc hạn HTML có nút CTA "Xem công việc"
+                    SMTP-->>User: Nhận Email thông báo nhắc việc trong hộp thư
+                    Worker->>DB: Ghi NotificationLog (Channel = "EmailDirect", Status = "Sent")
+                end
+            end
+            Worker->>DB: Cập nhật DeadlineReminderSchedule.Status = "Completed"
+        end
+    end
+
+    Note over User,DB: Giai đoạn 3: Tự động Hủy Nhắc Hạn khi Công việc Hoàn tất (OD-032)
+    User->>SPA: Nộp kết quả hoàn thành công việc (Submit Task Result)
+    SPA->>API: POST /api/v1/tasks/{id}/submit-result
+    API->>DB: Chuyển WorkTask sang trạng thái SUBMITTED
+    API->>DB: Cập nhật DeadlineReminderSchedule SET Status = 'CANCELLED' WHERE TaskId = {id} AND Status = 'Pending'
+    Note over DB: Toàn bộ các mốc nhắc hạn trong tương lai của công việc này bị hủy ngay lập tức
+    API-->>SPA: 200 OK (Task submitted, pending reminders cancelled)
+```
+
 

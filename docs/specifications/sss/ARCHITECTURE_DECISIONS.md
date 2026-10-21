@@ -1,13 +1,13 @@
 # Hồ sơ Quyết định Kiến trúc Hệ thống (System Architecture Decisions)
 
-- **Mã tài liệu:** `SSS-ADR-v1.1`
-- **Phiên bản:** `1.1-DRAFT`
+- **Mã tài liệu:** `SSS-ADR-v1.2`
+- **Phiên bản:** `1.2-DRAFT`
 - **Thuộc bộ tài liệu:** [SSS_v1.0_DRAFT.md](SSS_v1.0_DRAFT.md) — Mục 21
-- **Ngày lập:** `2026-10-18` (Cập nhật rà soát Onboarding: `2026-10-19`)
+- **Ngày lập:** `2026-10-18` (Cập nhật đồng bộ v1.2: `2026-10-21`)
 - **Cấu trúc tài liệu:**
   1. **Phần I:** `2` Quyết định Phạm vi Sản phẩm & Kiến trúc đã Xác nhận (`DEC-WS-001` .. `DEC-WS-002`)
   2. **Phần II:** `12` Quyết định Kiến trúc Nền tảng đã Xác nhận và Triển khai trong Repository (`ADR-0001` .. `ADR-0012`)
-  3. **Phần III:** `7` Quyết định Kiến trúc Hệ thống Cấp SSS (`ADR-SSS-001` .. `ADR-SSS-007` — đánh dấu rõ `PROPOSED — NOT APPROVED` đối với các mục đề xuất lấp khoảng trống triển khai)
+  3. **Phần III:** `10` Quyết định Kiến trúc Hệ thống Cấp SSS (`ADR-SSS-001` .. `ADR-SSS-010` — phân định rõ ràng giữa các cơ chế đã xác nhận `CONFIRMED` và các đề xuất `PROPOSED — NOT APPROVED`)
 
 ---
 
@@ -91,4 +91,63 @@ Các quyết định dưới đây tổng hợp các cơ chế bảo vệ cấp 
   1. Toàn bộ chuỗi 5 bước provisioning: (1) `Company` activation (`ACTIVE`), (2) `Primary Tenant / Workspace` creation (ràng buộc `Unique(CompanyId)` theo `DEC-WS-001`), (3) `TenantSettings` & `BusinessCalendar` seeding, (4) Initial Representative `UserAccount` creation (`Status = Active`), (5) Initial `COMPANY_ADMIN` role assignment + `AuditLog` bắt buộc phải được đóng gói trong **một giao dịch cơ sở dữ liệu ACID duy nhất** (`All-or-Nothing Unit of Work`).
   2. Bổ sung bước kiểm tra bất biến sau khởi tạo (**Post-Provisioning Invariant Guard**): Trước khi commit giao dịch, hệ thống bắt buộc kiểm tra điều kiện bất biến: Tồn tại đúng `01 Primary Tenant (ACTIVE)` gắn với `CompanyId` và tồn tại ít nhất `01 UserAccount (ACTIVE)` thuộc `Tenant` đó được gán vai trò `COMPANY_ADMIN`. Nếu bất kỳ bước nào lỗi hoặc invariant check thất bại, hệ thống tự động **Rollback 100%**, giữ đơn đăng ký ở trạng thái an toàn (`PENDING`), trả về mã lỗi `500 ONBOARDING.PROVISIONING_ROLLED_BACK` kèm `CorrelationId`, không tạo bản ghi mồ côi.
   3. Tác vụ gửi email thông báo kích hoạt/xác minh được tách khỏi giao dịch DB (qua Transactional Outbox hoặc Message Queue) để lỗi mạng/SMTP không làm rollback giao dịch hợp lệ.
+
+---
+
+### `ADR-SSS-008`: Kiến trúc Xác thực Đa Chế độ Hợp nhất, Đăng nhập Không Mật khẩu qua Email Link & Bộ chọn Workspace (`Unified Multi-Mode Authentication & Passwordless Email-Link Architecture with Workspace Selector Modal`)
+- **Trạng thái:** `CONFIRMED` (Theo `BR-025`, `OD-025`, `FR-AUTH-001`, `FR-AUTH-005`, `IR-UI-005`, `IR-API-004`)
+- **Nguồn phát sinh:** Rà soát yêu cầu xác thực hợp nhất và trải nghiệm người dùng đa doanh nghiệp.
+- **Quyết định Thiết kế:**
+  1. **Trang đăng nhập hợp nhất (`/login`, `UI-01`):** Cung cấp 2 lựa chọn độc lập trên cùng một giao diện:
+     - **Lựa chọn 1 (Đăng nhập bằng Định danh & Mật khẩu):** Yêu cầu chính xác 3 trường bắt buộc: `ID / Mã nhân viên / Tên đăng nhập`, `Mật khẩu`, và `Mã Workspace / Tenant Key`. Backend xác thực đồng thời cả 3 trường trong cùng 1 câu truy vấn; thiếu hoặc sai bất kỳ trường nào đều trả về mã lỗi tổng quát `401 AUTH.INVALID_CREDENTIALS` kèm gợi ý liên hệ Admin để chống tấn công dò quét tài khoản (`SEC-001`).
+     - **Lựa chọn 2 (Đăng nhập Không Mật khẩu qua Liên kết Email):** Người dùng chỉ cần nhập duy nhất địa chỉ `Email`. Tuyệt đối không yêu cầu mật khẩu và không yêu cầu mã Workspace ở bước gửi yêu cầu.
+  2. **Vòng đời Mã Xác thực Email Link (`EmailLoginToken`):** Khi người dùng gửi yêu cầu, hệ thống tạo một token mật mã ngẫu nhiên bảo mật cao (HMAC-SHA256, thời gian sống `TTL = 15 phút`, sử dụng một lần duy nhất). Token được gửi tới email của người dùng qua dịch vụ thư giao dịch (`IR-EXT-002`).
+  3. **Quy trình Định tuyến Không gian Làm việc (`Workspace Routing Flow`):**
+     - Khi người dùng nhấp vào liên kết trong email (`/auth/verify-link?token=...`) hoặc gọi `POST /api/v1/auth/email-link/verify`:
+     - **Trường hợp 0 Workspace:** Nếu địa chỉ email không thuộc bất kỳ Tenant nào đang hoạt động (`ACTIVE`), hệ thống từ chối đăng nhập với thông báo lỗi rõ ràng kèm liên kết điều hướng trực tiếp sang màn hình đăng ký doanh nghiệp mới `/register-company` (`IR-UI-004`).
+     - **Trường hợp 1 Workspace:** Hệ thống tự động xác thực, cấp phát phiên làm việc (JWT Access Token + Refresh Token) và điều hướng thẳng vào Dashboard của Workspace chính đó.
+     - **Trường hợp $\ge$ 2 Workspaces:** Hệ thống trả về token phiên tạm thời và danh sách các Workspace hợp lệ (`WorkspaceId`, `WorkspaceName`, `TenantKey`, `RoleName`). Giao diện Frontend hiển thị ngay `Modal Chọn Không Gian Làm Việc` (`Workspace Selector Modal` — `IR-UI-005`). Người dùng chọn Workspace đích, Frontend gửi `POST /api/v1/auth/email-link/select-workspace` để hoàn tất phát hành JWT phiên chính thức.
+
+---
+
+### `ADR-SSS-009`: Trợ lý Robot Thông minh Nhúng UI, Giới hạn Quyền Hạn Thực Tế và Quy trình Bóc tách Việc Có Xác nhận Con người Bắt buộc (`Interactive Embedded Cute Robot Chatbot, Scoped Natural Language Assistance & Mandatory Explicit Human Confirmation AI Workflow`)
+- **Trạng thái:** `CONFIRMED` (Theo `BR-027`, `BR-028`, `BR-029`, `OD-028`, `OD-029`, `OD-030`, `FR-AI-011`..`013`, `IR-API-006`, `DR-016`)
+- **Nguồn phát sinh:** Yêu cầu nâng cao trải nghiệm tác nghiệp thông minh thông qua Trợ lý Robot nhúng UI và tự động hóa bóc tách việc.
+- **Quyết định Thiết kế:**
+  1. **Vòng đời Widget Robot Trợ lý Nhúng UI (`Interactive Cute Robot Widget Lifecycle`):**
+     - Widget robot thông minh được nhúng sẵn ở góc dưới bên phải giao diện ứng dụng và **mặc định mở** sau khi người dùng đăng nhập thành công.
+     - Widget cung cấp nút thu nhỏ/đóng [X] ở góc trên bên phải. Khi người dùng bấm [X], widget được ẩn đi và lưu trạng thái vào `sessionStorage` của trình duyệt (`sessionStorage.setItem('bizflow_robot_dismissed', 'true')`).
+     - **Quy tắc phiên (`BR-029`):** Trạng thái đóng chỉ có hiệu lực trong phạm vi phiên làm việc hiện tại của trình duyệt. Khi người dùng đăng xuất và đăng nhập lại, hoặc mở phiên làm việc mới trên tab/cửa sổ mới, widget trợ lý robot tự động mở lại ở trạng thái sẵn sàng đón chào.
+     - Lịch sử hội thoại được duy trì tại bảng `RobotConversation` và `RobotMessage` (`DR-016`), phân vùng theo `TenantId` và `UserId`.
+  2. **Cơ chế Vấn tin Tiến độ & Báo cáo Tự nhiên Ràng buộc Theo Quyền Hạn (`Scoped Natural Language Queries`):**
+     - Trợ lý robot tiếp nhận các câu hỏi tự nhiên về tiến độ, hạn chót, danh sách công việc trễ hạn, việc chờ xử lý/phê duyệt, và phân bổ công việc phòng ban.
+     - Tầng `AiContextReader` bắt buộc lọc dữ liệu đầu vào theo đúng `CurrentTenantId`, `CurrentUserId`, các quyền RBAC cụ thể và phạm vi quản lý `ManagementScope` của người dùng (`BR-003`, `ADR-0011`).
+     - **Chốt chặn chống ảo giác (`Anti-Hallucination Guardrail` — `BR-027`):** AI chỉ được phép tổng hợp và trả lời dựa trên tập dữ liệu ngữ cảnh thực tế đã được lọc quyền. Tuyệt đối không được suy diễn số liệu hoặc hiển thị thông tin công việc, nhân sự thuộc phạm vi ngoài quyền của người dùng. Nếu không tìm thấy dữ liệu phù hợp trong ngữ cảnh, bot phản hồi thông báo rõ ràng "Tôi không tìm thấy dữ liệu công việc trong phạm vi được phân quyền của bạn".
+  3. **Lệnh Điều khiển Slash Commands (`/task` & `/notifications`):**
+     - Hỗ trợ cú pháp lệnh nhanh ngay trong khung chat: `/task <đoạn văn bản mô tả>` và `/notifications`.
+  4. **Quy trình Bóc tách Việc AI với Xác nhận Con người Bắt buộc (`AI Task Decomposition & Mandatory Human Confirmation` — `BR-028`):**
+     - Khi người dùng nhập đoạn văn bản mô tả công việc (qua chat hoặc `/task`), dịch vụ AI phân tích đoạn văn và bóc tách thành danh sách các đầu việc có cấu trúc: phân loại rõ `Support Request` (Yêu cầu Hỗ trợ Dịch vụ) hay `Task Assignment` (Giao việc Trực tiếp), tiêu đề, phòng ban nhận việc, nội dung chi tiết và checklist các bước thực hiện.
+     - Giao diện Frontend hiển thị bảng xem trước tương tác (`Interactive Preview Checklist Modal/Panel`): Người dùng có thể chọn hoặc bỏ chọn từng đầu việc (checkbox), sửa đổi tiêu đề, điều chỉnh phòng ban nhận việc, hoặc xóa các đầu việc không phù hợp.
+     - **Bất biến Kiến trúc Bắt buộc (`BR-028`): AI TUYỆT ĐỐI KHÔNG ĐƯỢC GHI TRỰC TIẾP VÀO CƠ SỞ DỮ LIỆU KHI CHƯA CÓ SỰ XÁC NHẬN CỦA CON NGƯỜI.**
+     - Chỉ khi người dùng nhấp vào nút "Xác nhận tạo việc" (`Confirm Create Tasks`), Frontend mới gửi yêu cầu tạo hàng loạt `POST /api/v1/tasks/ai-decomposition/confirm` (`IR-API-006`).
+     - Backend kiểm tra thẩm quyền tạo việc/yêu cầu của người dùng đối với từng phòng ban mục tiêu (`TenantMembershipAuthorizer`, `tasks.create`, `requests.create`). Toàn bộ danh sách công việc được phê duyệt được ghi vào cơ sở dữ liệu trong cùng một giao dịch an toàn kèm ghi nhận `AuditLog`.
+
+---
+
+### `ADR-SSS-010`: Kiến trúc Phát Thông báo Nhắc Hạn Đa Kênh: In-App SignalR, Web Push VAPID & Fallback Email Tự động với Bộ Lọc Chống Trùng lặp (`Multi-Channel Deadline Notification Dispatching: In-App SignalR, Web Push & Email Fallback with Deduplication Guard`)
+- **Trạng thái:** `CONFIRMED` (Theo `BR-030`, `OD-031`, `OD-032`, `FR-NOTIF-003`, `FR-NOTIF-004`, `IR-API-007`, `IR-EXT-003`, `DR-017`)
+- **Nguồn phát sinh:** Yêu cầu nhắc nhở hạn chót công việc kịp thời, giảm thiểu tỷ lệ trễ hạn và tối ưu hóa tỷ lệ tiếp cận thông báo đối với nhân viên không thường trực trên ứng dụng.
+- **Quyết định Thiết kế:**
+  1. **Cấu hình Mốc Nhắc Hạn Cá nhân hóa (`Configurable Personalized Reminders`):**
+     - Hệ thống hỗ trợ người dùng cấu hình lịch nhắc hạn linh hoạt cho từng công việc hoặc thiết lập mặc định cá nhân: trước 24 giờ, 4 giờ, 1 giờ và ngay khi quá hạn (`OVERDUE`).
+     - Cấu hình có thể thực hiện trên giao diện chi tiết công việc hoặc qua lệnh điều khiển `/notifications` trên widget trợ lý robot (`FR-NOTIF-003`).
+     - Dữ liệu lịch nhắc được lập chỉ mục trong bảng `DeadlineReminderSchedule` (`DR-017`).
+  2. **Cơ chế Điều phối Đa Kênh Thông minh (`Smart Multi-Channel Notification Dispatcher` — `BR-030`):**
+     - Tiến trình nền `DeadlineReminderWorker` (`MOD-015` / `MOD-BG-001`) định kỳ quét các mốc nhắc hạn đến kỳ phát.
+     - **Kênh 1 — In-App SignalR (Ưu tiên cao nhất khi Online):** Hệ thống kiểm tra trạng thái kết nối trực tuyến của người dùng tại `NotificationHub` (`INT-012`). Nếu người dùng đang mở ứng dụng, hệ thống lập tức phát Toast thông báo nổi trên màn hình và cập nhật số lượng badge thông báo chưa đọc.
+     - **Kênh 2 — Web Push qua Trình duyệt (Khi Offline / Không mở tab):** Nếu người dùng không kết nối SignalR, hệ thống kiểm tra bảng `PushSubscription` của người dùng. Nếu có đăng ký Web Push hợp lệ (chuẩn W3C Push API / RFC 8292 VAPID), hệ thống gửi thông báo đẩy trực tiếp tới trình duyệt máy tính hoặc thiết bị di động của người dùng (`IR-EXT-003`).
+     - **Kênh 3 — Fallback Email Tự động:** Nếu người dùng chưa cấp quyền Web Push hoặc tiến trình gửi Web Push trả về lỗi (hết hạn subscription `410 Gone` hoặc lỗi mạng), hệ thống tự động kích hoạt kênh dự phòng gửi Email thông báo HTML chuyên nghiệp chứa đầy đủ thông tin: Tiêu đề công việc, Hạn chót còn lại, Người giao việc, và nút CTA đưa thẳng vào chi tiết công việc trong hệ thống.
+  3. **Bộ Lọc Chống Trùng lặp Tuyệt đối (`Deduplication & Cancellation Guard` — `OD-032`):**
+     - Bảng `NotificationLog` áp dụng ràng buộc duy nhất kết hợp: `UNIQUE (TenantId, TaskId, UserId, TriggerType, ScheduledAt)`. Bất kỳ yêu cầu phát trùng lặp nào cho cùng một mốc nhắc hạn của cùng một công việc đều bị loại bỏ ở tầng lưu trữ.
+     - **Cơ chế Hủy tự động khi Hoàn tất Công việc:** Khi một `WorkTask` chuyển sang trạng thái hoàn thành (`SUBMITTED`, `CONFIRMED` hoặc `CLOSED`), hệ thống tự động cập nhật trạng thái của tất cả các bản ghi nhắc hạn chưa phát thuộc công việc đó trong `DeadlineReminderSchedule` thành `CANCELLED`, ngăn chặn tuyệt đối tình trạng gửi thông báo nhắc việc cho công việc đã hoàn thành.
 

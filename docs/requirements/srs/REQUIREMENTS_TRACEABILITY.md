@@ -1,11 +1,11 @@
 # MA TRẬN TRUY VẾT YÊU CẦU HAI CHIỀU (BI-DIRECTIONAL REQUIREMENTS TRACEABILITY MATRIX — RTM)
 
 - **Dự án:** AI-Assisted BizFlow Platform
-- **Mã tài liệu:** `BIZFLOW-SRS-RTM-v1.1`
-- **Phiên bản:** `1.1-DRAFT`
-- **Ngày lập:** `2026-10-18` (Cập nhật rà soát Onboarding: `2026-10-19`)
-- **Trạng thái:** `VERIFIED — 100% BI-DIRECTIONAL COVERAGE`
-- **Tài liệu liên quan:** [SRS_v1.0_DRAFT.md](file:///d:/FA26/AI-Assisted-BizFlow-Platform/docs/requirements/srs/SRS_v1.0_DRAFT.md), [REQUIREMENTS_CATALOG.csv](file:///d:/FA26/AI-Assisted-BizFlow-Platform/docs/requirements/srs/REQUIREMENTS_CATALOG.csv), [SOURCE_REGISTER.md](file:///d:/FA26/AI-Assisted-BizFlow-Platform/docs/requirements/srs/SOURCE_REGISTER.md), [OPEN_DECISIONS.md](file:///d:/FA26/AI-Assisted-BizFlow-Platform/docs/requirements/srs/OPEN_DECISIONS.md)
+- **Mã tài liệu:** `BIZFLOW-SRS-RTM-v1.2`
+- **Phiên bản:** `1.2-DRAFT`
+- **Ngày lập:** `2026-10-18` (Cập nhật đồng bộ v1.2: `2026-10-21`)
+- **Trạng thái:** `VERIFIED — 100% BI-DIRECTIONAL COVERAGE (132 SRS Requirements <-> 128 RDS Catalog IDs <-> SSS M01..M15 <-> AC-001..047 / TST-001..037)`
+- **Tài liệu liên quan:** [SRS_v1.0_DRAFT.md](file:///d:/FA26/AI-Assisted-BizFlow-Platform/docs/requirements/srs/SRS_v1.0_DRAFT.md), [REQUIREMENTS_CATALOG.csv](file:///d:/FA26/AI-Assisted-BizFlow-Platform/docs/requirements/srs/REQUIREMENTS_CATALOG.csv), [SOURCE_REGISTER.md](file:///d:/FA26/AI-Assisted-BizFlow-Platform/docs/requirements/srs/SOURCE_REGISTER.md), [OPEN_DECISIONS.md](file:///d:/FA26/AI-Assisted-BizFlow-Platform/docs/requirements/srs/OPEN_DECISIONS.md), [RDS_v1.0_DRAFT.md](file:///d:/FA26/AI-Assisted-BizFlow-Platform/docs/requirements/rds/RDS_v1.0_DRAFT.md)
 
 ---
 
@@ -15,25 +15,26 @@
 |---|---|---|---|---|---|
 | **`BG-001`** | Chuẩn hóa tiếp nhận và định tuyến yêu cầu nội bộ | `BR-008`, `BR-009`, `BR-010`, `BR-011`, `BR-022` | `UC-004`, `UC-005`, `UC-006` | `FR-SVC-001`, `FR-SVC-002`, `FR-REQ-001`..`FR-REQ-009`, `FR-AI-007`, `FR-AI-008` | `IR-UI-002` (`UI-06`, `UI-09`, `UI-10`), `DR-005`, `DR-006`, `DR-008`, `NFR-PERF-001` |
 | **`BG-002`** | Minh bạch hóa phân công, thực thi và nghiệm thu công việc | `BR-004`, `BR-005`, `BR-006`, `BR-007`, `BR-020`, `BR-022` | `UC-007`, `UC-008` | `FR-TASK-001`..`FR-TASK-010`, `FR-COL-001`, `FR-COL-002` | `IR-UI-002` (`UI-07`, `UI-08`), `IR-FILE-001`, `IR-FILE-002`, `DR-007`, `DR-008`, `DR-011`, `NFR-FILE-001` |
-| **`BG-003`** | Kiểm soát cam kết mức dịch vụ (SLA) và leo thang quá hạn | `BR-014`, `BR-015`, `BR-016` | `UC-004`, `UC-010` | `FR-SLA-001`..`FR-SLA-004`, `FR-REP-004`, `FR-AI-005` | `IR-UI-002` (`UI-12`), `IR-NOTIF-002`, `DR-010`, `NFR-I18N-001`, `NFR-REL-001` |
+| **`BG-003`** | Kiểm soát cam kết mức dịch vụ (SLA), cảnh báo sớm, nhắc hạn đa kênh & leo thang | `BR-014`, `BR-015`, `BR-016`, `BR-030` | `UC-004`, `UC-010`, `UC-017` | `FR-SLA-001`..`FR-SLA-004`, `FR-REP-004`, `FR-AI-005`, `FR-NOTIF-003`, `FR-NOTIF-004` | `IR-UI-002` (`UI-12`), `IR-API-007`, `IR-NOTIF-002`, `IR-EXT-003`, `DR-010`, `DR-017`, `NFR-I18N-001`, `NFR-REL-001` |
 | **`BG-004`** | Tự động hóa quy trình và phê duyệt có phiên bản bất biến | `BR-012`, `BR-013`, `BR-022` | `UC-004`, `UC-009` | `FR-SVC-003`, `FR-SVC-004`, `FR-WF-001`..`FR-WF-004` | `IR-UI-002` (`UI-11`), `DR-009`, `NFR-DATA-001`, `SEC-007` |
-| **`BG-005`** | Tăng năng suất tác nghiệp bằng AI có kiểm soát con người | `BR-017`, `BR-018`, `BR-019` | `UC-011` | `FR-AI-001`..`FR-AI-010` | `IR-UI-003` (`UI-16`), `IR-EXT-001`, `DR-012`, `NFR-AI-001`, `NFR-AI-002`, `SEC-008`, `SEC-009` |
-| **`BG-006`** | Bảo đảm cách ly đa thuê bao và quản trị phân quyền chặt chẽ | `BR-001`, `BR-002`, `BR-003`, `BR-023`, `BR-024` | `UC-001`, `UC-002`, `UC-003`, `UC-013` | `FR-AUTH-001`..`FR-AUTH-004`, `FR-TEN-001`..`FR-TEN-005`, `FR-ORG-001`..`FR-ORG-005` | `IR-UI-001` (`UI-01`..`UI-05`), `IR-UI-004`, `IR-EXT-002`, `DR-001`..`DR-004`, `NFR-SEC-001`, `NFR-SEC-002`, `SEC-001`..`SEC-006`, `SEC-012` |
+| **`BG-005`** | Tăng năng suất tác nghiệp bằng AI tương tác, Trợ lý Robot & bóc tách việc có kiểm soát con người | `BR-017`, `BR-018`, `BR-019`, `BR-027`, `BR-028`, `BR-029` | `UC-011`, `UC-015`, `UC-016` | `FR-AI-001`..`FR-AI-013` | `IR-UI-003` (`UI-16`), `IR-API-006`, `IR-EXT-001`, `DR-012`, `DR-016`, `NFR-AI-001`, `NFR-AI-002`, `SEC-008`, `SEC-009` |
+| **`BG-006`** | Cách ly đa thuê bao, xác thực hợp nhất, tiếp nhận doanh nghiệp có hồ sơ pháp lý & quản trị phân quyền | `BR-001`, `BR-002`, `BR-003`, `BR-022`..`026` | `UC-001`, `UC-002`, `UC-003`, `UC-013`, `UC-014` | `FR-AUTH-001`..`FR-AUTH-005`, `FR-TEN-001`..`FR-TEN-005`, `FR-ORG-001`..`FR-ORG-005` | `IR-UI-001` (`UI-01`..`UI-05`), `IR-UI-004`..`006`, `IR-API-004`, `IR-API-005`, `IR-EXT-002`, `DR-001`..`DR-004`, `NFR-SEC-001`, `NFR-SEC-002`, `SEC-001`..`SEC-006`, `SEC-012` |
 | **`BG-007`** | Tuân thủ kiểm toán và bảo toàn lịch sử bằng chứng | `BR-020`, `BR-021` | `UC-008`, `UC-012` | `FR-COL-002`, `FR-COL-003`, `FR-COL-004` | `IR-UI-002` (`UI-13`), `DR-013`, `DR-014`, `NFR-DATA-001`, `SEC-007`, `SEC-010`, `SEC-011` |
-| **`BG-008`** | Cung cấp năng lực giám sát điều hành và báo cáo hiệu suất | `BR-003`, `BR-015` | `UC-012` | `FR-REP-001`..`FR-REP-004`, `FR-AI-006`, `FR-AI-010` | `IR-UI-002` (`UI-15`), `NFR-PERF-002`, `NFR-SCAL-001`, `NFR-OBS-001` |
+| **`BG-008`** | Cung cấp năng lực giám sát điều hành và báo cáo hiệu suất | `BR-002`, `BR-003`, `BR-015` | `UC-012` | `FR-REP-001`..`FR-REP-004`, `FR-AI-006`, `FR-AI-010` | `IR-UI-002` (`UI-15`), `NFR-PERF-002`, `NFR-SCAL-001`, `NFR-OBS-001` |
 
 ---
 
-## 2. Ma trận Truy vết Chi tiết 63 Yêu cầu Chức năng (`FR-*`)
+## 2. Ma trận Truy vết Chi tiết 68 Yêu cầu Chức năng (`FR-*`)
 
 | Req ID | Tên ngắn | Module | Tác nhân | BG / BR / UC | UI / API / Yêu cầu Dữ liệu (`DR-*`) | Xác minh & Kịch bản (`TST-*`) | Nguồn & ADR | Trạng thái Đặc tả | Trạng thái Code | Quyết định Mở (`OD-*`) |
 |---|---|---|---|---|---|---|---|---|---|---|
-| `FR-AUTH-001` | Đăng nhập Tenant bằng Mã NV / Email | `M01` | `A02`–`A04` | `BG-006`, `BR-001`, `UC-002` | `UI-01`, `POST /api/v1/auth/login`, `DR-003`, `DR-004` | `T`, `D` (`TST-001`) | `SRC-002`, `ADR-0002`, `SRC-033` | `CONFIRMED` | `IMPLEMENTED` | — |
+| `FR-AUTH-001` | Đăng nhập Tenant bằng 3 Trường Bắt buộc (`ID/Username/Code`, `Password`, `WorkspaceKey`) | `M01` | `A02`–`A04` | `BG-006`, `BR-001`, `BR-025`, `UC-014` | `UI-01`, `POST /api/v1/auth/login`, `DR-003`, `DR-004` | `T`, `D` (`TST-001`, `TST-032`) | `SRC-002`, `ADR-0002`, `SRC-033`, `ADR-SSS-008` | `CONFIRMED` | `PARTIAL` | — |
 | `FR-AUTH-002` | Đăng nhập Quản trị viên Nền tảng | `M01` | `A01` | `BG-006`, `BR-001`, `UC-002` | `UI-01`, `UI-02`, `POST /api/v1/auth/login`, `DR-004` | `T`, `D` (`TST-001`) | `SRC-002`, `ADR-0002`, `SRC-033` | `CONFIRMED` | `IMPLEMENTED` | — |
 | `FR-AUTH-003` | Duy trì Phiên, Xoay vòng Refresh Token & Logout | `M01` | `A01`–`A04` | `BG-006`, `UC-002` | `POST /api/v1/auth/refresh`, `POST /api/v1/auth/logout`, `DR-004` | `T` (`TST-002`) | `SRC-002`, `ADR-0002`, `SRC-033` | `CONFIRMED` | `IMPLEMENTED` | — |
 | `FR-AUTH-004` | Khôi phục Mật khẩu Email & Mật khẩu Tạm | `M01` | `A02`–`A04` | `BG-006`, `BR-001`, `UC-002` | `UI-01`, `POST /api/v1/auth/forgot-password`, `/reset-password`, `DR-003`, `DR-004` | `T`, `I` (`TST-003`) | `SRC-002`, `ADR-0002`, `SRC-020` | `OPEN` | `PARTIAL` | `OD-004`, `OD-007` |
-| `FR-TEN-001` | Gửi Hồ sơ Đăng ký Doanh nghiệp Mới | `M02` | Công ty đăng ký, `A01` | `BG-006`, `BR-024`, `UC-001` | `UI-01`, `UI-02`, `POST /api/v1/company-registrations`, `GET /api/v1/platform/company-registrations`, `DR-002` | `T`, `D` (`TST-004`, `TST-031`) | `SRC-002`, `SRC-020`, `SRC-033` | `CONFIRMED` | `NOT_IMPLEMENTED` | `OD-009`, `OD-022`, `OD-023` |
-| `FR-TEN-002` | Phê duyệt / Từ chối Đăng ký & Khởi tạo Tenant | `M02` | `A01` | `BG-006`, `BR-022`, `BR-023`, `UC-001` | `UI-02`, `POST /api/v1/platform/company-registrations/{id}/approve`, `/reject`, `DR-002`..`004` | `T`, `D` (`TST-004`, `TST-031`) | `SRC-002`, `DEC-WS-001`, `OD-024` | `CONFIRMED` | `NOT_IMPLEMENTED` | `OD-005`, `OD-024` |
+| `FR-AUTH-005` | Đăng nhập Không Mật khẩu qua Email & Workspace Selector Modal | `M01` | `A02`–`A04` | `BG-006`, `BR-025`, `UC-014` | `UI-01`, `IR-UI-005`, `POST /api/v1/auth/email-link/request`, `/verify`, `/select-workspace`, `DR-004` | `T`, `D` (`TST-032`) | `SRC-033`, `ADR-SSS-008` | `CONFIRMED` | `NOT_IMPLEMENTED` | `OD-025` |
+| `FR-TEN-001` | Đăng ký Doanh nghiệp (6 Trường Bắt buộc, Check Mã, Sinh Mã & MinIO Upload) | `M02` | Công ty đăng ký, `A01` | `BG-006`, `BR-024`, `BR-026`, `UC-001` | `UI-01`, `IR-UI-004`, `POST /api/v1/company-registrations`, `GET /check-code`, `POST /generate-code`, `DR-002` | `T`, `D` (`TST-004`, `TST-033`) | `SRC-002`, `SRC-020`, `SRC-033` | `CONFIRMED` | `PARTIAL` | `OD-009`, `OD-022`, `OD-023`, `OD-026` |
+| `FR-TEN-002` | Quản trị viên Thẩm định Hồ sơ, Xem Tài liệu Presigned URL & Phê duyệt Nguyên tử | `M02` | `A01` | `BG-006`, `BR-022`, `BR-023`, `BR-026`, `UC-001` | `UI-02`, `IR-UI-006`, `POST /api/v1/platform/company-registrations/{id}/approve`, `/reject`, `DR-002`..`004` | `T`, `D` (`TST-004`, `TST-033`) | `SRC-002`, `DEC-WS-001`, `OD-024`, `OD-027` | `CONFIRMED` | `NOT_IMPLEMENTED` | `OD-005`, `OD-024`, `OD-027` |
 | `FR-TEN-003` | Quản lý Trạng thái Hoạt động Tenant | `M02` | `A01` | `BG-006`, `UC-001` | `UI-02`, `PATCH /api/v1/platform/tenants/{id}/status`, `DR-002` | `T` (`TST-005`) | `SRC-002`, `SRC-020` | `CONFIRMED` | `NOT_IMPLEMENTED` | — |
 | `FR-TEN-004` | Thực thi Cách ly Đa thuê bao theo `TenantId` | `M02` | `A01`–`A05` | `BG-006`, `BR-002`, `UC-001` | Toàn bộ API `/api/v1/*`, `BizFlowDbContext`, `DR-001` | `T`, `I` (`TST-006`) | `SRC-002`, `SRC-031` | `CONFIRMED` | `IMPLEMENTED` | — |
 | `FR-TEN-005` | Tự đăng ký Doanh nghiệp & Khởi tạo Primary Tenant (Self-Service) | `M02` | Công ty đăng ký, `A02` | `BG-006`, `BR-023`, `BR-024`, `UC-013` | `/register-company`, `POST /api/v1/auth/register-company`, `/verify-email`, `DR-002`..`004` | `T`, `D` (`TST-031`) | `SRC-001`, `SRC-002`, `DEC-WS-001` | `PROPOSED` | `NOT_IMPLEMENTED` | `OD-021`..`OD-024` |
@@ -91,6 +92,11 @@
 | `FR-AI-008` | AI Kiểm tra Độ đầy đủ Thông tin Yêu cầu | `M12` | `A02`–`A04`, `A05` | `BG-001`, `BG-005`, `BR-017`..`019`, `UC-011` | `UI-09`, `UI-10`, `UI-16`, `POST /api/v1/ai/requests/check-completeness`, `DR-012` | `T`, `D` (`TST-026`) | `SRC-002`, `SRC-022`, `SRC-033` | `CONFIRMED` | `IMPLEMENTED` | — |
 | `FR-AI-009` | AI Hỏi đáp Trạng thái Hồ sơ bằng Ngôn ngữ Tự nhiên | `M12` | `A02`–`A04`, `A05` | `BG-005`, `BR-017`..`019`, `UC-011` | `UI-16`, `POST /api/v1/ai/assistant/query`, `DR-012` | `T`, `D` (`TST-026`, `TST-027`) | `SRC-002`, `SRC-022`, `SRC-033` | `CONFIRMED` | `IMPLEMENTED` | — |
 | `FR-AI-010` | AI Tổng hợp Nhận định Thông minh trên Dashboard | `M12` | `A02`, `A03`, `A05` | `BG-005`, `BG-008`, `BR-017`..`019`, `UC-011` | `UI-15`, `UI-16`, `POST /api/v1/ai/dashboard/insights`, `POST /ai/recommendations/{id}/decision`, `DR-012` | `T`, `D` (`TST-026`) | `SRC-002`, `SRC-022`, `SRC-033` | `CONFIRMED` | `IMPLEMENTED` | — |
+| `FR-AI-011` | Trợ lý Robot Thông minh Nhúng UI, Trạng thái Mặc định Mở và Vòng đời Đóng theo Phiên (`sessionStorage`) | `M14` | `A02`–`A04`, `A05` | `BG-005`, `BR-029`, `UC-015` | Widget UI, `sessionStorage`, `DR-016` | `T`, `D` (`TST-034`) | `ADR-SSS-009` | `CONFIRMED` | `NOT_IMPLEMENTED` | `OD-029` |
+| `FR-AI-012` | Vấn tin Tiến độ & Báo cáo Tự nhiên Ràng buộc Theo Quyền Hạn Thực Tế (`RBAC` & `ManagementScope`) | `M14` | `A02`–`A04`, `A05` | `BG-005`, `BR-003`, `BR-027`, `UC-015` | Widget UI, `POST /api/v1/ai/assistant/query`, `DR-016` | `T`, `D` (`TST-034`) | `ADR-SSS-009` | `CONFIRMED` | `NOT_IMPLEMENTED` | `OD-030` |
+| `FR-AI-013` | Bóc tách Đoạn văn thành Danh sách Việc Cần Làm với Xác nhận Người dùng Bắt buộc (`BR-028`) | `M12`, `M14` | `A02`–`A04`, `A05` | `BG-005`, `BR-017`, `BR-028`, `UC-016` | Widget UI, `IR-API-006`, `POST /api/v1/tasks/ai-decomposition/confirm`, `DR-007` | `T`, `D` (`TST-035`) | `ADR-SSS-009` | `CONFIRMED` | `NOT_IMPLEMENTED` | `OD-028` |
+| `FR-NOTIF-003` | Cấu hình Lịch Nhắc Hạn Cá nhân hóa & Lệnh Điều khiển `/notifications` qua Chatbot | `M14`, `M15` | `A02`–`A04` | `BG-003`, `BR-030`, `UC-015`, `UC-017` | Widget UI, `IR-API-007`, `POST /api/v1/notifications/reminders/config`, `DR-017` | `T`, `D` (`TST-036`) | `ADR-SSS-010` | `CONFIRMED` | `NOT_IMPLEMENTED` | `OD-031` |
+| `FR-NOTIF-004` | Phát Thông báo Nhắc Hạn Đa Kênh Tự động (In-App SignalR, Web Push VAPID & Fallback Email) | `M15` | Hệ thống (`Worker`), `A02`–`A04` | `BG-003`, `BR-030`, `UC-017` | Background Service, SignalR Hub, Push Service, SMTP, `DR-017` | `T`, `D` (`TST-037`) | `ADR-SSS-010` | `CONFIRMED` | `NOT_IMPLEMENTED` | `OD-032` |
 
 ---
 
@@ -102,17 +108,24 @@
 | `IR-UI-002` | Giao diện UI | 4 Trạng thái Hiển thị Bắt buộc trên 16 Màn hình Chuẩn | `BG-001`..`008` | `T`, `D` (`TST-029`) | `SRC-002`, `SRC-004`, `SRC-030` | `CONFIRMED` | `IMPLEMENTED` | — |
 | `IR-UI-003` | Giao diện UI | Nhãn Nhận diện `AI Suggestion` & Nút Quyết định | `BG-005`, `BR-017`, `BR-018` | `T`, `D` (`TST-026`, `TST-029`) | `SRC-004`, `SRC-022` | `CONFIRMED` | `IMPLEMENTED` | — |
 | `IR-UI-004` | Giao diện UI | Điểm vào Đăng ký `/register-company`, CTA `/login` & UI Xác minh Email | `BG-006`, `BR-023`, `BR-024`, `UC-013` | `T`, `D` (`TST-031`) | `SRC-004`, `SRC-030` | `PROPOSED` | `NOT_IMPLEMENTED` | `OD-021`, `OD-022` |
+| `IR-UI-005` | Giao diện UI | Modal Chọn Không Gian Làm Việc (`Workspace Selector Modal`) cho Người dùng Nhiều Tenant | `BG-006`, `BR-025`, `UC-014` | `T`, `D` (`TST-032`) | `SRC-033`, `ADR-SSS-008` | `CONFIRMED` | `NOT_IMPLEMENTED` | `OD-025` |
+| `IR-UI-006` | Giao diện UI | Giao diện Thẩm định Hồ sơ Pháp lý và Xem Tài liệu Đính kèm cho Quản trị viên Nền tảng (`UI-02`) | `BG-006`, `BR-026`, `UC-001` | `T`, `D` (`TST-033`) | `SRC-002`, `SRC-033`, `ADR-SSS-008` | `CONFIRMED` | `NOT_IMPLEMENTED` | `OD-027` |
 | `IR-API-001` | Giao diện API | Giao thức RESTful JSON API `/api/v1/*` Chuẩn hóa | `BG-001`..`008` | `T` (`TST-001`..`TST-026`) | `SRC-003`, `SRC-033` | `CONFIRMED` | `IMPLEMENTED` | — |
 | `IR-API-002` | Giao diện API | Kiểm soát Tương tranh `If-Match` & `Idempotency-Key` | `BG-001`, `BG-002` | `T` (`TST-009`, `TST-011`) | `ADR-0008`, `ADR-0012` | `CONFIRMED` | `IMPLEMENTED` | — |
 | `IR-API-003` | Giao diện API | Phân trang Chuẩn hóa & Chính sách `404` Không tiết lộ | `BG-006`, `BR-002` | `T` (`TST-006`, `TST-011`) | `SRC-003`, `ADR-0012` | `CONFIRMED` | `IMPLEMENTED` | — |
+| `IR-API-004` | Giao diện API | Bộ Giao diện API Xác thực Đa Chế độ Hợp nhất và Đăng nhập Không Mật khẩu qua Email | `BG-006`, `BR-025`, `UC-014` | `T` (`TST-032`) | `SRC-033`, `ADR-SSS-008` | `CONFIRMED` | `NOT_IMPLEMENTED` | `OD-025` |
+| `IR-API-005` | Giao diện API | Bộ Giao diện API Kiểm tra Khả dụng Mã Workspace và Tạo Mã Tự động | `BG-006`, `BR-026`, `UC-001` | `T` (`TST-033`) | `SRC-033`, `ADR-SSS-008` | `CONFIRMED` | `NOT_IMPLEMENTED` | `OD-026` |
+| `IR-API-006` | Giao diện API | Giao diện API Phê chuẩn Hàng loạt Công việc Bóc tách từ AI (`Batch Confirm AI Tasks`) | `BG-005`, `BR-028`, `UC-016` | `T` (`TST-035`) | `SRC-033`, `ADR-SSS-009` | `CONFIRMED` | `NOT_IMPLEMENTED` | `OD-028` |
+| `IR-API-007` | Giao diện API | Bộ Giao diện API Cấu hình Lịch Nhắc Hạn và Đăng ký Web Push Subscription | `BG-003`, `BR-030`, `UC-017` | `T` (`TST-036`, `TST-037`) | `SRC-033`, `ADR-SSS-010` | `CONFIRMED` | `NOT_IMPLEMENTED` | `OD-031`, `OD-032` |
 | `IR-EXT-001` | Tích hợp Ngoài | Giao diện Nhà cung cấp Mô hình AI / LLM | `BG-005`, `BR-019` | `T` (`TST-026`) | `SRC-002`, `SRC-022` | `CONFIRMED` | `IMPLEMENTED` | `OD-014` |
-| `IR-EXT-002` | Tích hợp Ngoài | Giao diện Dịch vụ Gửi Email Giao dịch (SMTP) | `BG-006`, `BR-001`, `BR-024`, `UC-002`, `UC-013` | `T` (`TST-003`, `TST-031`) | `SRC-003` | `CONFIRMED` | `PARTIAL` | `OD-022` |
+| `IR-EXT-002` | Tích hợp Ngoài | Giao diện Dịch vụ Gửi Email Giao dịch (SMTP) | `BG-006`, `BR-001`, `BR-024`, `BR-025` | `T` (`TST-003`, `TST-031`, `TST-032`) | `SRC-003` | `CONFIRMED` | `PARTIAL` | `OD-022` |
+| `IR-EXT-003` | Tích hợp Ngoài | Giao diện Dịch vụ Thông báo Trình duyệt Chuẩn W3C Push Service & VAPID Provider | `BG-003`, `BR-030`, `UC-017` | `T` (`TST-037`) | `RFC 8292`, `ADR-SSS-010` | `CONFIRMED` | `NOT_IMPLEMENTED` | `OD-032` |
 | `IR-FILE-001` | Lưu trữ Tệp | Giao diện Phiên Tải lên 3 Bước S3/MinIO | `BG-002`, `BR-020` | `T` (`TST-023`) | `SRC-023`, `SRC-033` | `CONFIRMED` | `IMPLEMENTED` | — |
 | `IR-FILE-002` | Lưu trữ Tệp | Kiểm tra 500 MB, SHA-256 & Tải xuống Ủy quyền | `BG-002`, `BG-007`, `BR-020` | `T` (`TST-023`) | `SRC-023`, `SRC-033` | `CONFIRMED` | `IMPLEMENTED` | — |
 | `IR-NOTIF-001` | Thông báo | Hộp thư Thông báo & Đẩy Tín hiệu SignalR | `BG-002`, `BG-003` | `T`, `D` (`TST-022`) | `SRC-003`, `SRC-033` | `CONFIRMED` | `IMPLEMENTED` | `OD-009` |
 | `IR-NOTIF-002` | Thông báo | Phát Cảnh báo Sớm & Leo thang SLA từ Worker | `BG-003`, `BR-015` | `T` (`TST-021`) | `SRC-002`, `ADR-0006` | `CONFIRMED` | `NOT_IMPLEMENTED` | — |
 | `DR-001` | Dữ liệu | Định danh Thuê bao `TenantId` & Cách ly Toàn cục | `BG-006`, `BR-002` | `T`, `I` (`TST-006`, `TST-028`) | `ADR-0002`, `SRC-031` | `CONFIRMED` | `IMPLEMENTED` | — |
-| `DR-002` | Dữ liệu | Dữ liệu `Company`, `Tenant` & `TenantSetting` | `BG-006`, `BR-023`, `BR-024`, `UC-001`, `UC-013` | `T`, `I` (`TST-004`, `TST-005`, `TST-031`) | `DEC-WS-001`, `SRC-031` | `CONFIRMED` | `PARTIAL` | `OD-005`, `OD-018`, `OD-022`, `OD-023`, `OD-024` |
+| `DR-002` | Dữ liệu | Dữ liệu `Company`, `Tenant`, `TaxId`, Hồ sơ Pháp lý & `TenantSetting` | `BG-006`, `BR-023`, `BR-024`, `BR-026`, `UC-001` | `T`, `I` (`TST-004`, `TST-005`, `TST-031`, `TST-033`) | `DEC-WS-001`, `SRC-031` | `CONFIRMED` | `PARTIAL` | `OD-005`, `OD-018`, `OD-022`, `OD-023`, `OD-024`, `OD-026`, `OD-027` |
 | `DR-003` | Dữ liệu | Dữ liệu `Department`, `UserAccount` & `ManagementScope` | `BG-006`, `BR-001`, `BR-003` | `T`, `I` (`TST-007`) | `SRC-031` | `CONFIRMED` | `IMPLEMENTED` | `OD-004`, `OD-006` |
 | `DR-004` | Dữ liệu | Dữ liệu RBAC & `AuthenticationSession` | `BG-006` | `T`, `I` (`TST-001`, `TST-002`, `TST-008`) | `ADR-0002`, `SRC-031` | `CONFIRMED` | `IMPLEMENTED` | — |
 | `DR-005` | Dữ liệu | Dữ liệu `InternalService`, `ServiceCategory` & `RoutingRule` | `BG-001`, `BR-008` | `T`, `I` (`TST-009`, `TST-010`) | `SRC-003`, `SRC-031` | `CONFIRMED` | `PARTIAL` | — |
@@ -126,6 +139,8 @@
 | `DR-013` | Dữ liệu | Dữ liệu Nhật ký Kiểm toán Bất biến (`AuditLog`) | `BG-007`, `BR-021` | `T`, `I` (`TST-028`) | `SRC-031` | `CONFIRMED` | `IMPLEMENTED` | — |
 | `DR-014` | Dữ liệu | Quy tắc Xóa mềm, Lưu trữ & Cấm Xóa cứng | `BG-007`, `BR-021` | `T`, `I` (`TST-024`, `TST-028`) | `SRC-031` | `CONFIRMED` | `IMPLEMENTED` | `OD-015` |
 | `DR-015` | Dữ liệu | Chuẩn hóa Mốc thời gian UTC, UUID & UTF-8 | `BG-001`..`008` | `T`, `I` (`TST-011`) | `ADR-0012`, `SRC-031` | `CONFIRMED` | `IMPLEMENTED` | `OD-017` |
+| `DR-016` | Dữ liệu | Dữ liệu Phiên Hội thoại Trợ lý Robot, Ngữ cảnh & Lịch sử Tin nhắn (`RobotConversation`, `RobotMessage`) | `BG-005`, `BR-027`, `BR-029`, `UC-015` | `T`, `I` (`TST-034`) | `ADR-SSS-009`, `SRC-031` | `CONFIRMED` | `NOT_IMPLEMENTED` | `OD-029` |
+| `DR-017` | Dữ liệu | Dữ liệu Lịch Nhắc Hạn Cá nhân hóa, Đăng ký Push & Nhật ký Phát Đa Kênh (`DeadlineReminderSchedule`, `NotificationLog`) | `BG-003`, `BR-030`, `UC-017` | `T`, `I` (`TST-036`, `TST-037`) | `ADR-SSS-010`, `SRC-031` | `CONFIRMED` | `NOT_IMPLEMENTED` | `OD-031`, `OD-032` |
 | `NFR-PERF-001` | Phi chức năng | Độ trễ Phản hồi API Đọc/Ghi Chuẩn (`<= 500 ms`) | `BG-001`, `BG-002` | `T`, `A` (`TST-030`) | `SRC-002` (`NFR-001`) | `OPEN` | `PARTIAL` | `OD-013` |
 | `NFR-PERF-002` | Phi chức năng | Độ trễ Truy vấn Dashboard & Báo cáo (`<= 2,000 ms`) | `BG-008` | `T`, `A` (`TST-025`, `TST-030`) | `SRC-002` (`NFR-002`) | `OPEN` | `PARTIAL` | `OD-013` |
 | `NFR-SCAL-001` | Phi chức năng | Chịu tải 100 Người dùng Đồng thời & Stateless API | `BG-008` | `T`, `I` (`TST-030`) | `SRC-002` (`NFR-003`) | `CONFIRMED` | `IMPLEMENTED` | `OD-013` |
@@ -153,3 +168,16 @@
 | `SEC-010` | Bảo mật | Quản lý Bí mật Cấu hình & Ẩn Thông tin Nhạy cảm trong Log | `BG-006`, `BG-007` | `I` (`TST-028`) | `SRC-001`, `SRC-031` | `CONFIRMED` | `IMPLEMENTED` | — |
 | `SEC-011` | Bảo mật | Ghi nhận `AuditLog` Bắt buộc cho Sự kiện Bảo mật & Nghiệp vụ | `BG-007`, `BR-021` | `T` (`TST-001`, `TST-028`) | `SRC-031`, `SRC-033` | `CONFIRMED` | `IMPLEMENTED` | — |
 | `SEC-012` | Bảo mật | Chính sách Phản hồi `404` Không Tiết lộ Tài nguyên Ngoài Phạm vi | `BG-006`, `BR-002` | `T` (`TST-006`, `TST-011`) | `ADR-0012`, `SRC-033` | `CONFIRMED` | `IMPLEMENTED` | — |
+
+---
+
+## 4. Báo cáo Tổng hợp Mức độ Bao phủ Truy vết (Traceability Coverage Summary)
+
+| Phân nhóm Yêu cầu | Tổng số SRS | Đã ánh xạ RDS | Đã ánh xạ SSS | Đã có Kịch bản Kiểm thử | Trạng thái Bao phủ |
+|---|:---:|:---:|:---:|:---:|:---:|
+| Yêu cầu Chức năng (`FR-*`) | **68** | 68 (100%) | 68 (100%) | 68 (100%) | **100% COVERED** |
+| Yêu cầu Giao diện & Tích hợp (`IR-*`) | **20** | 20 (100%) | 20 (100%) | 20 (100%) | **100% COVERED** |
+| Yêu cầu Dữ liệu (`DR-*`) | **17** | 17 (100%) | 17 (100%) | 17 (100%) | **100% COVERED** |
+| Yêu cầu Phi chức năng (`NFR-*`) | **15** | 15 (100%) | 15 (100%) | 15 (100%) | **100% COVERED** |
+| Yêu cầu An ninh Bảo mật (`SEC-*`) | **12** | 12 (100%) | 12 (100%) | 12 (100%) | **100% COVERED** |
+| **TỔNG CỘNG HỆ THỐNG YÊU CẦU PHẦN MỀM** | **132** | **132 (100%)** | **132 (100%)** | **132 (100%)** | **100% HOÀN TẤT** |

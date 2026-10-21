@@ -1,19 +1,19 @@
 # Danh mục Phân rã Module Hệ thống (System Module Catalog)
 
-- **Mã tài liệu:** `SSS-MOD-v1.1`
-- **Phiên bản:** `1.1-DRAFT`
+- **Mã tài liệu:** `SSS-MOD-v1.2`
+- **Phiên bản:** `1.2-DRAFT`
 - **Thuộc bộ tài liệu:** [SSS_v1.0_DRAFT.md](SSS_v1.0_DRAFT.md) — Mục 6, Mục 7 & Mục 10
-- **Ngày lập:** `2026-10-18` (Cập nhật rà soát Onboarding: `2026-10-19`)
-- **Tổng số module đặc tả:** `15` module hệ thống (`MOD-001` .. `MOD-013` cho 13 miền nghiệp vụ Backend, `MOD-FE-001` cho ứng dụng Frontend Angular 22 SPA, và `MOD-BG-001` cho tiến trình Background Worker).
+- **Ngày lập:** `2026-10-18` (Cập nhật đồng bộ v1.2: `2026-10-21`)
+- **Tổng số module đặc tả:** `17` module hệ thống (`MOD-001` .. `MOD-015` cho 15 miền nghiệp vụ Backend, `MOD-FE-001` cho ứng dụng Frontend Angular 22 SPA, và `MOD-BG-001` cho tiến trình Background Worker).
 
 ---
 
-## 1. Bảng Tổng quan 15 Module của Hệ thống
+## 1. Bảng Tổng quan 17 Module của Hệ thống
 
 | Mã Module | Tên Module | Phân tầng Kiến trúc | Bảng Dữ liệu Sở hữu (`Target` / `Implemented`) | Trạng thái Kiến trúc | Trạng thái Triển khai (`Current Repo`) |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| `MOD-001` | Identity & Authentication | Tier 1 — Foundation | `PasswordCredential`, `UserSession`, `RefreshToken`, `PasswordResetToken` (4/4) | `CONFIRMED` | `IMPLEMENTED` |
-| `MOD-002` | Tenant & Workspace Management | Tier 1 — Foundation | `Tenant`, `Workspace`, `TenantSetting`, `CompanyRegistrationRequest` (4/4) | `CONFIRMED` | `IMPLEMENTED` |
+| `MOD-001` | Identity & Authentication | Tier 1 — Foundation | `PasswordCredential`, `UserSession`, `RefreshToken`, `PasswordResetToken` (4/4) | `CONFIRMED` | `IMPLEMENTED` (ID Login `PARTIAL`; Email-Link `NOT_IMPLEMENTED`) |
+| `MOD-002` | Tenant & Workspace Management | Tier 1 — Foundation | `Tenant`, `Workspace`, `TenantSetting`, `CompanyRegistrationRequest` (`Company`), `CompanyRegistrationDocument` (5/5) | `CONFIRMED` | `PARTIAL` (Read queue `IMPLEMENTED`; 6-field reg + code check + MinIO docs `NOT_IMPLEMENTED`) |
 | `MOD-003` | Organization & Access Control (RBAC) | Tier 2 — Configuration | `User`, `Department`, `Role`, `Permission`, `RolePermission`, `UserRole`, `DepartmentMembership` (7/7) | `CONFIRMED` | `IMPLEMENTED` |
 | `MOD-004` | Service Catalog & Dynamic Form Builder | Tier 2 — Configuration | `ServiceCategory`, `ServiceType`, `FormDefinition`, `FormField` (4/4) | `CONFIRMED` | `IMPLEMENTED` |
 | `MOD-005` | Task Management & Execution | Tier 3 — Execution | `WorkTask`, `TaskAssignment`, `TaskBlocker`, `TaskHistory`, `Confirmation` (5/5) | `CONFIRMED` | `IMPLEMENTED` |
@@ -25,8 +25,10 @@
 | `MOD-011` | Reporting, Analytics & Dashboard | Tier 4 — Intelligence | `ReportExportJob`, `ReportSnapshot` (2/2) | `CONFIRMED` | `IMPLEMENTED` |
 | `MOD-012` | AI Assistant & Governance | Tier 4 — Intelligence | `AiSuggestion`, `AiConfig`, `AiExecutionLog` (3/3) | `CONFIRMED` | `IMPLEMENTED` |
 | `MOD-013` | Audit & Security Compliance | Tier 1 — Cross-Cutting | `AuditLog`, `SecurityEvent` (2/2) | `CONFIRMED` | `IMPLEMENTED` |
-| `MOD-FE-001` | Frontend Single-Page Application (Angular 22) | Presentation Tier | Trạng thái phiên cục bộ (`AuthSession`), Router State, UI View State | `CONFIRMED` | `IMPLEMENTED` |
-| `MOD-BG-001` | Background Job & Timer Worker Host | Infrastructure / Worker Tier | Thực thi trên các bảng hàng đợi của `MOD-008`, `MOD-009`, `MOD-011` | `PROPOSED` (`ADR-SSS-002`) | `NOT YET WIRED` (Chưa đăng ký Hangfire/`BackgroundService` trong `Program.cs`) |
+| `MOD-014` | Robot Chatbot & Natural Language Assistance | Tier 4 — Intelligence | `RobotConversation`, `RobotMessage` (2/2) | `CONFIRMED` | `NOT YET IMPLEMENTED` |
+| `MOD-015` | Deadline Reminder & Multi-Channel Dispatcher | Tier 1 — Cross-Cutting | `DeadlineReminderSchedule`, `PushSubscription`, `NotificationLog` (3/3) | `CONFIRMED` | `NOT YET IMPLEMENTED` |
+| `MOD-FE-001` | Frontend Single-Page Application (Angular 22) | Presentation Tier | Trạng thái phiên cục bộ (`AuthSession`), Router State, UI View State, Robot Session State (`sessionStorage`) | `CONFIRMED` | `IMPLEMENTED` |
+| `MOD-BG-001` | Background Job & Timer Worker Host | Infrastructure / Worker Tier | Thực thi trên các bảng hàng đợi của `MOD-008`, `MOD-009`, `MOD-011`, `MOD-015` | `PROPOSED` (`ADR-SSS-002`) | `NOT YET WIRED` (Chưa đăng ký Hangfire/`BackgroundService` trong `Program.cs`) |
 
 ---
 
@@ -35,9 +37,11 @@
 ### 2.1. `MOD-001`: Identity & Authentication (Định danh và Xác thực)
 - **Module ID:** `MOD-001`
 - **Module Name:** Identity & Authentication
-- **Purpose:** Xác thực danh tính người dùng, cấp phát và xoay vòng JWT Access Token / Refresh Token, quản lý vòng đời phiên đăng nhập (`UserSession`), quy trình khôi phục/đổi mật khẩu an toàn và chặn đăng nhập đối với tài khoản chưa xác minh email.
+- **Purpose:** Xác thực danh tính người dùng theo 2 phương thức hợp nhất (Đăng nhập Định danh 3 trường bắt buộc và Đăng nhập Không Mật khẩu qua Email Link), điều phối bộ chọn Workspace (`Workspace Selector`), cấp phát và xoay vòng JWT Access Token / Refresh Token, quản lý vòng đời phiên đăng nhập (`UserSession`), quy trình khôi phục/đổi mật khẩu an toàn và chặn đăng nhập đối với tài khoản chưa xác minh email.
 - **Key Responsibilities:**
-  - Xác thực thông tin đăng nhập bằng Email/Mã nhân viên và mật khẩu băm (`PasswordCredential`).
+  - **Phương thức 1 (Đăng nhập Định danh & Mật khẩu — `FR-AUTH-001`, `BR-025`):** Xác thực thông tin đăng nhập yêu cầu chính xác 3 trường: `ID / Mã NV / Tên đăng nhập`, `Mật khẩu` và `Mã Workspace / Tenant Key`. Backend thực thi truy vấn kiểm tra đồng thời cả 3 trường; nếu thiếu hoặc sai bất kỳ trường nào, trả về mã lỗi tổng quát `401 AUTH.INVALID_CREDENTIALS` để phòng chống dò quét tài khoản.
+  - **Phương thức 2 (Đăng nhập Không Mật khẩu qua Email Link — `FR-AUTH-005`, `ADR-SSS-008`):** Tiếp nhận yêu cầu chỉ bằng địa chỉ `Email` (không yêu cầu mật khẩu và không yêu cầu mã Workspace ở bước gửi); phát hành mã xác thực mật mã `EmailLoginToken` (HMAC-SHA256, `TTL = 15 phút`, sử dụng một lần) gửi qua Transactional Email (`IR-EXT-002`).
+  - **Điều phối Định tuyến Workspace (`Workspace Selector Flow`):** Khi người dùng xác thực token email: nếu thuộc 0 workspace $\rightarrow$ trả về `404 AUTH.USER_NOT_FOUND` kèm link sang `/register-company`; nếu thuộc đúng 1 workspace $\rightarrow$ cấp JWT và vào thẳng; nếu thuộc $\ge 2$ workspaces $\rightarrow$ trả về danh sách workspace hợp lệ để Frontend hiển thị `Workspace Selector Modal` (`IR-UI-005`) cho người dùng lựa chọn trước khi cấp phát JWT phiên chính thức.
   - Kiểm tra trạng thái xác minh email (`EmailVerified` flag); từ chối đăng nhập với mã lỗi `403 AUTH.EMAIL_NOT_VERIFIED` nếu tài khoản đại diện chưa xác thực email hợp lệ (`BR-024`, `OD-022`).
   - Phát hành JWT Access Token có nhúng các claim bắt buộc (`sub`, `tenant_id`, `workspace_id`, `session_id`) theo `ADR-0009`.
   - Quản lý làm mới token (`RefreshToken`), thu hồi phiên đơn lẻ hoặc thu hồi toàn bộ phiên khi đổi mật khẩu / khóa tài khoản.
@@ -45,44 +49,43 @@
 - **Non-Responsibilities:**
   - Không quản lý sơ đồ cây phòng ban hay định nghĩa ma trận quyền RBAC (thuộc `MOD-003`).
   - Không hỗ trợ SSO/SAML/OIDC doanh nghiệp trong phạm vi MVP.
-- **Inputs:** Yêu cầu đăng nhập (`LoginRequest`), yêu cầu làm mới phiên (`RefreshTokenRequest`), yêu cầu quên/đặt lại/đổi mật khẩu, HTTP Header `Authorization: Bearer <token>`.
-- **Outputs:** `AuthSessionResponse` (AccessToken, RefreshToken, thông tin hồ sơ phiên), đối tượng `ITenantContext` đã xác thực, bản ghi `SecurityEvent` khi đăng nhập thành công/thất bại hoặc bị chặn do chưa xác minh email.
-- **Data Ownership:** `PasswordCredentials`, `UserSessions`, `RefreshTokens`, `PasswordResetTokens`.
-- **Dependencies:** `MOD-002` (kiểm tra trạng thái `Tenant` và `Workspace`), `MOD-009` (xếp hàng gửi email đặt lại mật khẩu), `MOD-013` (ghi `SecurityEvents` và `AuditLogs`).
-- **Public Interfaces:** `INT-001` (`AuthController`, `AccountController`, `SessionsController`), `INT-015` (`ITenantContext`).
-- **Security/Tenant Requirements:** Áp dụng giới hạn tốc độ (`RateLimiter`) cho các endpoint đăng nhập và khôi phục mật khẩu; mật khẩu phải được băm một chiều có salt; thu hồi ngay lập tức mọi phiên (`UserSessions`) khi người dùng bị vô hiệu hóa hoặc Tenant bị đình chỉ (`BR-001`, `BR-024`).
-- **Related SRS Requirements:** `FR-AUTH-001`, `FR-AUTH-002`, `FR-AUTH-003`, `FR-AUTH-004`, `FR-AUTH-005`, `BR-001`, `BR-024`, `SEC-AUTH-001`, `SEC-AUTH-002`, `DR-002`.
-- **Testing Approach:** Unit tests kiểm tra phát hành/thu hồi token và hết hạn phiên; Integration tests (`AuthAndSessionIntegrationTests`) xác minh chặn phiên đã thu hồi, chặn đăng nhập chưa xác minh email và kiểm tra `ClaimsTenantContext`.
-- **Status:** `CONFIRMED` | `IMPLEMENTED` (`AuthController.cs`, `AccountController.cs`, `SessionsController.cs`, `ClaimsTenantContext.cs`).
+- **Inputs:** Yêu cầu đăng nhập 3 trường (`LoginRequest`), yêu cầu đăng nhập email link (`EmailLinkRequest`), token xác nhận email link, yêu cầu chọn workspace (`SelectWorkspaceRequest`), yêu cầu làm mới phiên (`RefreshTokenRequest`), yêu cầu quên/đặt lại/đổi mật khẩu, HTTP Header `Authorization: Bearer <token>`.
+- **Outputs:** `AuthSessionResponse` (AccessToken, RefreshToken, thông tin hồ sơ phiên), danh sách workspace cho email link, đối tượng `ITenantContext` đã xác thực, bản ghi `SecurityEvent` khi đăng nhập thành công/thất bại hoặc bị chặn do chưa xác minh email.
+- **Data Ownership:** `PasswordCredentials`, `UserSessions`, `RefreshTokens`, `PasswordResetTokens`, `EmailLoginTokens`.
+- **Dependencies:** `MOD-002` (kiểm tra trạng thái `Tenant` và `Workspace`), `MOD-009` (xếp hàng gửi email liên kết đăng nhập và đặt lại mật khẩu), `MOD-013` (ghi `SecurityEvents` và `AuditLogs`).
+- **Public Interfaces:** `INT-001` (`AuthController`, `AccountController`, `SessionsController`), `INT-015` (`ITenantContext`), `INT-029` (`EmailLinkAuthController`).
+- **Security/Tenant Requirements:** Áp dụng giới hạn tốc độ (`RateLimiter`) cho các endpoint đăng nhập và khôi phục mật khẩu; mật khẩu phải được băm một chiều có salt; thu hồi ngay lập tức mọi phiên (`UserSessions`) khi người dùng bị vô hiệu hóa hoặc Tenant bị đình chỉ (`BR-001`, `BR-024`, `BR-025`).
+- **Related SRS Requirements:** `FR-AUTH-001`, `FR-AUTH-002`, `FR-AUTH-003`, `FR-AUTH-004`, `FR-AUTH-005`, `IR-UI-005`, `IR-API-004`, `BR-001`, `BR-024`, `BR-025`, `SEC-AUTH-001`, `SEC-AUTH-002`, `DR-002`, `DR-004`.
+- **Testing Approach:** Unit tests kiểm tra phát hành/thu hồi token và hết hạn phiên; Integration tests kiểm tra đăng nhập 3 trường bắt buộc (`TST-001`), đăng nhập qua liên kết email và bộ chọn workspace (`TST-032`).
+- **Status:** `CONFIRMED` | `PARTIAL` (`AuthController.cs` cơ bản đã có; luồng email-link & workspace selector đang ở mức thiết kế chi tiết).
 
 ---
 
 ### 2.2. `MOD-002`: Tenant & Workspace Management (Quản trị Thuê bao và Không gian Làm việc)
 - **Module ID:** `MOD-002`
 - **Module Name:** Tenant & Workspace Management
-- **Purpose:** Quản lý vòng đời đăng ký doanh nghiệp mới (cả Admin-Approved và Self-Service Onboarding), xác minh email, cấp phát nguyên tử Không gian làm việc chính duy nhất trong MVP (`1 Company = 1 Primary Workspace` theo `DEC-WS-001`), gán quyền quản trị viên ban đầu và quản lý cấu hình cấp công ty.
+- **Purpose:** Quản lý vòng đời đăng ký doanh nghiệp mới với 6 trường bắt buộc và hồ sơ pháp lý đính kèm, kiểm tra khả dụng mã workspace theo thời gian thực và sinh mã ngẫu nhiên, thẩm định hồ sơ qua Presigned URL, cấp phát nguyên tử Không gian làm việc chính duy nhất trong MVP (`1 Company = 1 Primary Workspace` theo `DEC-WS-001`), gán quyền quản trị viên ban đầu và quản lý cấu hình cấp công ty.
 - **Key Responsibilities:**
-  - Tiếp nhận hồ sơ đăng ký doanh nghiệp công khai từ khách truy cập (`POST /api/v1/auth/register-company` hoặc `/api/v1/company-registrations`).
-  - Kiểm tra tính duy nhất chống trùng lặp (`Duplicate Check`): kiểm tra `Company.Code`, `Tenant.TenantKey` và `AdminEmail`. Trả về `409 Conflict` nếu trùng dữ liệu đang hoạt động/chờ duyệt (`BR-024`, `OD-023`).
-  - Hỗ trợ người dùng đăng ký lại (`Re-registration`): cho phép đăng ký lại sau khi đơn cũ bị `REJECTED` hoặc token xác minh hết hạn `TTL`, bảo toàn lịch sử từ chối trong `AuditLog` (`BR-021`, `OD-023`).
-  - Quản lý mã/token xác minh email (`Email Verification Token`, TTL `24 giờ`, băm SHA-256); phối hợp với `MOD-009` qua Transactional Outbox.
-  - Thực thi giao dịch cấp phát nguyên tử Tất-cả-hoặc-Không-gì (`All-or-Nothing Unit of Work` theo `ADR-SSS-007` & `BR-023`): Kích hoạt `Company (ACTIVE)` + Tạo đúng 01 `Primary Tenant (ACTIVE)` gắn với `CompanyId` (`Unique(CompanyId)` theo `DEC-WS-001`) + Khởi tạo cấu hình hạt giống (`TenantSettings`, `BusinessCalendar`) + Tạo tài khoản đại diện ban đầu (`UserAccount`, `Status = Active`) + Gán vai trò hệ thống `COMPANY_ADMIN` (`UserRole`) + Ghi `AuditLog`.
-  - Thực thi kiểm tra bất biến sau khởi tạo (**Post-Provisioning Invariant Guard**): Xác minh `Count(PrimaryTenant) == 1 && Count(CompanyAdmin) >= 1`; nếu có bất kỳ lỗi nào hoặc bước gán quyền thất bại, **Rollback 100% giao dịch**, giữ đơn ở trạng thái `PENDING`, trả về mã lỗi `500 ONBOARDING.PROVISIONING_ROLLED_BACK` kèm `CorrelationId`, không sinh workspace mồ côi.
-  - Cho phép `Platform Super Admin` phê duyệt hoặc từ chối đơn đăng ký thủ công tại `UI-02` (`CONFIRMED` theo `FR-TEN-001`..`002`).
+  - **Tiếp nhận Hồ sơ Đăng ký Doanh nghiệp (`FR-TEN-001`, `BR-026`):** Thu thập chính xác 6 trường bắt buộc: Mã số thuế (`TaxId`), Tên công ty (`CompanyName`), Mã workspace mong muốn (`DesiredWorkspaceCode`), Tên người phụ trách (`ContactPersonName`), Email (`ContactEmail`), Số điện thoại (`ContactPhone`).
+  - **Kiểm tra Mã Workspace Real-time & Nút Sinh Mã Ngẫu nhiên (`FR-TEN-001`, `IR-API-005`):** Cung cấp API `GET /api/v1/tenants/check-code?code=...` kiểm tra ngay khi người dùng gõ phím; cung cấp nút "Tạo mã ngẫu nhiên" sinh slug từ tên công ty kết hợp hậu tố ngẫu nhiên (định dạng `^[a-z0-9-]{3,30}$`). Tái kiểm tra tính khả dụng tại thời điểm bấm submit để ngăn ngừa tranh chấp (race condition).
+  - **Tải Lên Tài liệu Pháp lý Đính kèm (`FR-TEN-001`, `MOD-010`):** Cho phép tải lên các tệp tài liệu hỗ trợ thẩm định (Giấy chứng nhận đăng ký kinh doanh, giấy phép thành lập...) trực tiếp lên MinIO/S3 bucket riêng biệt `company-documents` (định dạng PDF/PNG/JPG, tối đa 10 MB/tệp, tối đa 50 MB tổng cộng). Lưu vết tham chiếu trong bảng `CompanyRegistrationDocument`.
+  - **Thẩm định Hồ sơ cho Platform Admin (`FR-TEN-002`, `IR-UI-006`):** Cung cấp giao diện cho Platform Admin xem chi tiết thông tin pháp lý doanh nghiệp, tạo Presigned URL an toàn có thời hạn ngắn (`TTL = 15 phút`) để tải/xem tài liệu đính kèm trước khi ra quyết định phê duyệt hoặc từ chối (bắt buộc nêu lý do theo `BR-022`).
+  - **Thực thi Giao dịch Cấp phát Nguyên tử Kèm Rollback Khép kín (`ADR-SSS-007`, `BR-023`):** Khi phê duyệt, thực thi chuỗi 5 bước trong một giao dịch ACID duy nhất: Kích hoạt `Company (ACTIVE)` + Tạo đúng 01 `Primary Tenant (ACTIVE)` gắn với `CompanyId` (`Unique(CompanyId)` theo `DEC-WS-001`) + Khởi tạo cấu hình hạt giống (`TenantSettings`, `BusinessCalendar`) + Tạo tài khoản đại diện ban đầu (`UserAccount`, `Status = Active`) + Gán vai trò hệ thống `COMPANY_ADMIN` (`UserRole`) + Ghi `AuditLog`.
+  - **Kiểm tra Bất biến Sau Khởi tạo (Post-Provisioning Invariant Guard):** Xác minh `Count(PrimaryTenant) == 1 && Count(CompanyAdmin) >= 1`; nếu có bất kỳ bước nào lỗi hoặc bước gán quyền thất bại, **Rollback 100% giao dịch**, giữ đơn ở trạng thái `PENDING`, trả về mã lỗi `500 ONBOARDING.PROVISIONING_ROLLED_BACK` kèm `CorrelationId`, không sinh workspace mồ côi.
   - Cho phép `Platform Super Admin` tạm ngưng (`Suspended`) hoặc kích hoạt lại (`Active`) một doanh nghiệp.
   - Cung cấp bộ lọc `TenantMembershipAuthorizer` xác minh tính hợp lệ của thành viên và trạng thái hoạt động của Tenant trên mọi request.
 - **Non-Responsibilities:**
   - Không xử lý thanh toán, gói cước, hóa đơn hoặc giới hạn thương mại (`DEC-WS-002`).
   - Không cho phép tạo nhiều Workspace độc lập trong cùng một Company ở giai đoạn MVP (`DEC-WS-001`).
-- **Inputs:** Đơn đăng ký doanh nghiệp, token xác minh email, lệnh duyệt/từ chối/đình chỉ/kích hoạt lại từ Platform Admin, yêu cầu cập nhật `TenantSetting` từ Company Admin.
-- **Outputs:** Bản ghi `Tenant`, `Workspace`, `TenantSetting`, `UserAccount`, `UserRole (COMPANY_ADMIN)` đã khởi tạo nguyên tử; email thông báo xác minh/chào mừng; phản hồi kiểm tra thành viên từ `TenantMembershipAuthorizer`.
-- **Data Ownership:** `Tenants`, `Workspaces`, `TenantSettings`, `CompanyRegistrationRequests` (`Companies`), `EmailVerificationTokens`.
-- **Dependencies:** `MOD-001` (khởi tạo thông tin xác thực cho Company Admin đầu tiên), `MOD-003` (khởi tạo vai trò mặc định của Tenant), `MOD-009` (gửi email xác minh/chào mừng), `MOD-013` (ghi nhật ký kiểm toán cấp Platform và Tenant).
-- **Public Interfaces:** `INT-002` (`CompanyRegistrationsController`, `PlatformTenantsController`, `PlatformAuditController`), `INT-003` (`WorkspacesController`, `TenantSettingsController`), `INT-018` (`Public Onboarding & Registration Contract`).
-- **Security/Tenant Requirements:** Chỉ `Platform Super Admin` mới được gọi các API `/api/v1/platform/*`; khi `Tenant.Status != Active`, `TenantMembershipAuthorizer` phải chặn ngay lập tức mọi thao tác nghiệp vụ của người dùng thuộc Tenant đó (`BR-001`, `BR-023`, `SEC-TEN-001..003`).
-- **Related SRS Requirements:** `FR-TEN-001`, `FR-TEN-002`, `FR-TEN-003`, `FR-TEN-004`, `FR-TEN-005`, `IR-UI-004`, `IR-EXT-002`, `BR-023`, `BR-024`, `SEC-TEN-001`, `SEC-TEN-002`, `SEC-TEN-003`, `DR-001`, `DR-002`, `TST-004`, `TST-031`.
-- **Testing Approach:** Integration tests kiểm tra quy trình nộp đơn $\rightarrow$ xác minh email $\rightarrow$ sinh Tenant/Workspace/Admin nguyên tử (`TST-031`), kiểm thử rollback 100% khi cấp quyền thất bại, và kiểm thử chặn truy cập khi Tenant bị chuyển sang `Suspended`.
-- **Status:** `CONFIRMED` & `PROPOSED (Self-Service)` | `PARTIAL` (`CompanyRegistrationsController.cs`, `PlatformTenantsController.cs`, `WorkspacesController.cs`, `TenantSettingsController.cs`, `TenantMembershipAuthorizer.cs` đã có; Self-service provisioning pipeline & verification flow đang ở mức đặc tả thiết kế).
+- **Inputs:** Đơn đăng ký doanh nghiệp 6 trường kèm tệp hồ sơ pháp lý, mã kiểm tra khả dụng, token xác minh email, lệnh duyệt/từ chối/đình chỉ/kích hoạt lại từ Platform Admin, yêu cầu cập nhật `TenantSetting` từ Company Admin.
+- **Outputs:** Bản ghi `Tenant`, `Workspace`, `TenantSetting`, `UserAccount`, `UserRole (COMPANY_ADMIN)`, `CompanyRegistrationDocument` đã khởi tạo nguyên tử; Presigned URL xem tài liệu; email thông báo xác minh/chào mừng; phản hồi kiểm tra thành viên từ `TenantMembershipAuthorizer`.
+- **Data Ownership:** `Tenants`, `Workspaces`, `TenantSettings`, `CompanyRegistrationRequests` (`Companies`), `CompanyRegistrationDocuments`, `EmailVerificationTokens`.
+- **Dependencies:** `MOD-001` (khởi tạo thông tin xác thực cho Company Admin đầu tiên), `MOD-003` (khởi tạo vai trò mặc định của Tenant), `MOD-009` (gửi email xác minh/chào mừng), `MOD-010` (lưu trữ tệp hồ sơ pháp lý lên MinIO/S3), `MOD-013` (ghi nhật ký kiểm toán cấp Platform và Tenant).
+- **Public Interfaces:** `INT-002` (`CompanyRegistrationsController`, `PlatformTenantsController`, `PlatformAuditController`), `INT-003` (`WorkspacesController`, `TenantSettingsController`), `INT-030` (`TenantCodeAndDocumentController`).
+- **Security/Tenant Requirements:** Chỉ `Platform Super Admin` mới được gọi các API `/api/v1/platform/*`; tài liệu pháp lý phải được lưu trong bucket cô lập `company-documents` và chỉ truy cập được qua Presigned URL có thời hạn; khi `Tenant.Status != Active`, `TenantMembershipAuthorizer` chặn ngay lập tức mọi thao tác nghiệp vụ (`BR-001`, `BR-023`, `BR-026`).
+- **Related SRS Requirements:** `FR-TEN-001`, `FR-TEN-002`, `FR-TEN-003`, `FR-TEN-004`, `FR-TEN-005`, `IR-UI-004`, `IR-UI-006`, `IR-API-005`, `IR-EXT-002`, `BR-023`, `BR-024`, `BR-026`, `DR-001`, `DR-002`, `TST-004`, `TST-031`, `TST-033`.
+- **Testing Approach:** Integration tests kiểm tra đăng ký 6 trường + kiểm tra mã trùng lặp + tải lên MinIO (`TST-033`), kiểm thử phê duyệt Platform Admin qua Presigned URL và cấp phát nguyên tử có rollback 100% khi lỗi (`TST-004`, `TST-031`).
+- **Status:** `CONFIRMED` & `PROPOSED (Self-Service)` | `PARTIAL` (`CompanyRegistrationsController.cs` cơ bản đã có; phần mở rộng 6 trường, kiểm tra mã real-time, upload hồ sơ pháp lý và Presigned URL review đang ở mức thiết kế).
 
 ---
 
@@ -350,7 +353,63 @@
 
 ---
 
-### 2.14. `MOD-FE-001`: Frontend Single-Page Application (Ứng dụng Giao diện Web Angular 22)
+### 2.14. `MOD-014`: Robot Chatbot & Natural Language Assistance (Trợ lý Robot Thông minh & Vấn tin Tự nhiên)
+- **Module ID:** `MOD-014`
+- **Module Name:** Robot Chatbot & Natural Language Assistance
+- **Purpose:** Quản lý vòng đời hiển thị và phiên làm việc của Trợ lý Robot nhúng UI (`sessionStorage`), thực thi các truy vấn tiến độ/báo cáo bằng ngôn ngữ tự nhiên ràng buộc theo quyền hạn thực tế (`RBAC` & `ManagementScope`), điều phối các lệnh nhanh slash commands (`/task`, `/notifications`), và chuyển đổi đoạn văn bản tự nhiên thành danh sách công việc đề xuất có cấu trúc phục vụ quy trình bóc tách việc có xác nhận con người bắt buộc (`BR-028`).
+- **Key Responsibilities:**
+  - **Quản lý Vòng đời Widget Robot UI (`FR-AI-011`, `BR-029`, `OD-029`):** Cung cấp cấu hình mặc định mở khi người dùng đăng nhập; khi người dùng nhấn nút đóng [X], lưu cờ `bizflow_robot_dismissed = true` trong `sessionStorage` của trình duyệt; tự động mở lại khi đăng nhập mới hoặc mở phiên làm việc mới trên trình duyệt.
+  - **Duy trì Lịch sử Hội thoại Robot (`DR-016`):** Quản lý thực thể `RobotConversation` và `RobotMessage` phân vùng theo `TenantId` và `UserId`; hỗ trợ tải lại lịch sử tin nhắn gần nhất và xóa lịch sử khi người dùng yêu cầu.
+  - **Vấn tin Tiến độ & Báo cáo Tự nhiên Ràng buộc Quyền Hạn (`FR-AI-012`, `BR-027`, `OD-030`):** Phối hợp với `MOD-012` (`AiContextReader`) để trích xuất dữ liệu công việc, hạn chót, công việc quá hạn, việc chờ duyệt dựa trên đúng quyền hạn RBAC và phạm vi quản lý `ManagementScope` của người gọi.
+  - **Chốt chặn Chống Ảo giác (`Anti-Hallucination Guardrail` — `BR-027`):** Cưỡng chế prompt hệ thống và logic kiểm tra: bot chỉ trả lời các thông tin có bằng chứng xác thực trong tập ngữ cảnh đã lọc quyền; nghiêm cấm tự suy diễn hoặc tiết lộ dữ liệu ngoài phạm vi quyền; phản hồi từ chối rõ ràng khi không tìm thấy dữ liệu phù hợp.
+  - **Điều phối Slash Commands (`/task`, `/notifications`):** Bắt và phân tích cú pháp lệnh `/task <đoạn văn>` để khởi chạy quy trình bóc tách việc AI, và `/notifications` để mở giao diện/hội thoại cấu hình mốc nhắc hạn.
+  - **Bóc tách Đoạn văn thành Việc Cần Làm (`FR-AI-013`, `BR-028`, `OD-028`):** Gọi dịch vụ AI phân tích đoạn văn thành danh sách các đầu việc có cấu trúc: phân biệt `Support Request` và `Task Assignment`, trích xuất tiêu đề, phòng ban nhận việc, mô tả chi tiết và checklist; trả về dữ liệu đề xuất cho Angular UI hiển thị bảng xem trước tương tác (preview checklist) với checkbox và khả năng chỉnh sửa trực tiếp.
+  - **Cưỡng chế Xác nhận Bắt buộc từ Con người (`BR-028`):** Tuyệt đối không lưu dữ liệu vào bảng `WorkTask` hay `RequestRecord` nếu chưa nhận được lệnh xác nhận `POST /api/v1/tasks/ai-decomposition/confirm` (`IR-API-006`) từ người dùng.
+- **Non-Responsibilities:**
+  - Không tự ý ghi trực tiếp vào cơ sở dữ liệu mà không có xác nhận con người (`BR-028`).
+  - Không cấp quyền vượt quá quyền RBAC của người dùng đang đăng nhập.
+- **Inputs:** Tin nhắn ngôn ngữ tự nhiên từ người dùng, lệnh `/task` và `/notifications`, xác nhận tạo việc hàng loạt từ preview checklist UI.
+- **Outputs:** Phản hồi hội thoại tự nhiên từ bot, danh sách công việc đề xuất (JSON), các bản ghi `WorkTask`/`RequestRecord` được commit sau khi người dùng xác nhận.
+- **Data Ownership:** `RobotConversations`, `RobotMessages`.
+- **Dependencies:** `MOD-001` (ngữ cảnh phiên `ITenantContext`), `MOD-003` (kiểm tra RBAC & `ManagementScope`), `MOD-005` (tạo `WorkTask`), `MOD-006` (tạo `RequestRecord`), `MOD-012` (`AiAssistanceService`, `AiContextReader`), `MOD-013` (`AuditLog`).
+- **Public Interfaces:** `INT-014` (`AiAssistantController`), `INT-031` (`AiTaskDecompositionController`).
+- **Security/Tenant Requirements:** Cách ly hội thoại tuyệt đối theo `TenantId` và `UserId`; áp dụng `Fail-Closed` nếu thiếu ngữ cảnh người dùng; kiểm tra quyền tạo việc của người dùng đối với từng phòng ban mục tiêu khi xác nhận tạo hàng loạt (`SEC-008`, `SEC-009`).
+- **Related SRS Requirements:** `FR-AI-011`, `FR-AI-012`, `FR-AI-013`, `IR-API-006`, `BR-027`, `BR-028`, `BR-029`, `DR-016`, `TST-034`, `TST-035`.
+- **Testing Approach:** Kiểm thử vòng đời widget robot trong `sessionStorage` (`TST-034`); kiểm thử an toàn câu hỏi hạn chót có ràng buộc `ManagementScope` và chống ảo giác (`TST-034`); kiểm thử bóc tách đoạn văn và xác nhận tạo việc bắt buộc (`TST-035`).
+- **Status:** `CONFIRMED` | `NOT YET IMPLEMENTED` (Đặc tả thiết kế chi tiết sẵn sàng triển khai).
+
+---
+
+### 2.15. `MOD-015`: Deadline Reminder & Multi-Channel Notification Dispatcher (Điều phối Thông báo Nhắc Hạn Đa Kênh)
+- **Module ID:** `MOD-015`
+- **Module Name:** Deadline Reminder & Multi-Channel Notification Dispatcher
+- **Purpose:** Quản lý lịch nhắc hạn công việc cá nhân hóa, điều phối phát thông báo tự động đa kênh theo thứ tự ưu tiên (In-App SignalR $\rightarrow$ Web Push VAPID $\rightarrow$ Fallback HTML Email), thực thi bộ lọc chống trùng lặp tuyệt đối và tự động hủy lịch nhắc khi công việc đã hoàn thành.
+- **Key Responsibilities:**
+  - **Quản lý Cấu hình Lịch Nhắc Hạn Cá nhân hóa (`FR-NOTIF-003`, `BR-030`, `OD-031`):** Cung cấp API tiếp nhận cấu hình các mốc nhắc nhở của người dùng (trước 24 giờ, 4 giờ, 1 giờ và ngay khi quá hạn `OVERDUE`) hoặc xử lý lệnh `/notifications` từ robot widget. Lưu vết tại bảng `DeadlineReminderSchedule`.
+  - **Quản lý Đăng ký Web Push Subscription (`IR-EXT-003`):** Lưu trữ và quản lý thông tin đăng ký nhận thông báo đẩy W3C Push API / RFC 8292 VAPID của từng trình duyệt/thiết bị người dùng tại bảng `PushSubscription`.
+  - **Quét Định kỳ và Phát Hiện Mốc Nhắc Hạn (`MOD-BG-001` Integration):** Tiến trình nền định kỳ quét các bản ghi nhắc hạn đến hạn kích hoạt (`ScheduledAt <= UtcNow` và `Status = Pending`).
+  - **Cơ chế Phát Đa Kênh Thông minh (`Smart Multi-Channel Dispatcher` — `FR-NOTIF-004`, `BR-030`):**
+    - **Bước 1 (In-App SignalR):** Kiểm tra trạng thái trực tuyến của người dùng tại `NotificationHub` (`INT-012`). Nếu đang kết nối, phát Toast thông báo nổi và cập nhật Notification Center.
+    - **Bước 2 (Web Push VAPID):** Nếu người dùng offline hoặc không mở tab ứng dụng, gửi Web Push qua dịch vụ đẩy của trình duyệt (`IR-EXT-003`).
+    - **Bước 3 (Fallback HTML Email):** Nếu người dùng chưa cấp quyền Web Push hoặc gửi Web Push thất bại (`410 Gone`, lỗi mạng), tự động gửi Email thông báo HTML chuyên nghiệp kèm nút CTA đưa thẳng vào công việc.
+  - **Bộ Lọc Chống Trùng lặp Tuyệt đối (`Deduplication Guard` — `OD-032`):** Cưỡng chế chỉ mục duy nhất kết hợp `UNIQUE (TenantId, TaskId, UserId, TriggerType, ScheduledAt)` trên bảng `NotificationLog`.
+  - **Tự động Hủy Nhắc Hạn khi Công việc Hoàn tất (`OD-032`):** Lắng nghe sự kiện chuyển đổi trạng thái công việc sang `SUBMITTED`, `CONFIRMED` hoặc `CLOSED` để đánh dấu `CANCELLED` toàn bộ các bản ghi nhắc hạn chưa phát thuộc công việc đó.
+- **Non-Responsibilities:**
+  - Không quản lý logic tính toán đồng hồ SLA (thuộc `MOD-008`).
+  - Không gửi email tiếp thị hoặc email quảng cáo.
+- **Inputs:** Cấu hình nhắc hạn từ người dùng, thông tin đăng ký PushSubscription, sự kiện đến hạn từ timer/worker, sự kiện hoàn tất công việc từ `TaskWorkflowEngine`.
+- **Outputs:** Tín hiệu WebSocket qua SignalR, thông báo Web Push tới trình duyệt, thư điện tử HTML qua SMTP, bản ghi `NotificationLog`.
+- **Data Ownership:** `DeadlineReminderSchedules`, `PushSubscriptions`, `NotificationLogs`.
+- **Dependencies:** `MOD-001` (`ITenantContext`), `MOD-005` (theo dõi `WorkTask`), `MOD-009` (`NotificationHub`), `MOD-BG-001` (host worker), SMTP Relay, W3C Push Service (VAPID).
+- **Public Interfaces:** `INT-011` (`NotificationsController`), `INT-012` (`NotificationHub`), `INT-032` (`DeadlineReminderController`).
+- **Security/Tenant Requirements:** Mọi thông báo nhắc việc phải cô lập nghiêm ngặt theo `TenantId`; Web Push sử dụng cặp khóa VAPID bảo mật; thông tin tóm tắt trong push/email không chứa dữ liệu nhạy cảm (`SEC-005`, `SEC-010`).
+- **Related SRS Requirements:** `FR-NOTIF-003`, `FR-NOTIF-004`, `IR-API-007`, `IR-EXT-003`, `BR-030`, `DR-017`, `TST-036`, `TST-037`.
+- **Testing Approach:** Kiểm thử cấu hình nhắc hạn qua API và `/notifications` (`TST-036`); kiểm thử phát thông báo đa kênh theo thứ tự ưu tiên và kiểm tra không gửi trùng lặp qua `NotificationLog` (`TST-037`); kiểm thử tự động hủy nhắc hạn khi công việc hoàn thành trước hạn.
+- **Status:** `CONFIRMED` | `NOT YET IMPLEMENTED` (Đặc tả thiết kế chi tiết sẵn sàng triển khai).
+
+---
+
+### 2.16. `MOD-FE-001`: Frontend Single-Page Application (Ứng dụng Giao diện Web Angular 22)
 - **Module ID:** `MOD-FE-001`
 - **Module Name:** Frontend Single-Page Application (Angular 22 SPA)
 - **Purpose:** Cung cấp giao diện người dùng tương tác cho toàn bộ các vai trò (Applicant, Platform Admin, Company Admin, Department Manager, Approver, Staff, Internal Auditor) trên trình duyệt web hiện đại.
@@ -375,7 +434,7 @@
 
 ---
 
-### 2.15. `MOD-BG-001`: Background Job & Timer Worker Host (Tiến trình Xử lý Ngầm và Định kỳ)
+### 2.17. `MOD-BG-001`: Background Job & Timer Worker Host (Tiến trình Xử lý Ngầm và Định kỳ)
 - **Module ID:** `MOD-BG-001`
 - **Module Name:** Background Job & Timer Worker Host
 - **Purpose:** Thực thi các tác vụ bất đồng bộ ngoài luồng HTTP request chính, bao gồm quét đồng hồ SLA định kỳ, xử lý hàng đợi gửi email/thông báo (`Transactional Outbox`), kết xuất báo cáo lớn và dọn dẹp phiên hết hạn.
