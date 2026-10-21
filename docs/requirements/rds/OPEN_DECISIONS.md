@@ -1,9 +1,9 @@
 # SỔ ĐĂNG KÝ QUYẾT ĐỊNH CÒN MỞ, KHOẢNG TRỐNG YÊU CẦU VÀ CÂU HỎI KHÁM PHÁ (OPEN DECISIONS & REQUIREMENTS GAPS)
 
 - **Dự án:** AI-Assisted BizFlow Platform
-- **Mã tài liệu:** `BIZFLOW-RDS-OD-v1.1`
-- **Phiên bản:** `1.1-DRAFT`
-- **Ngày lập:** `2026-10-18` (Cập nhật rà soát Onboarding: `2026-10-19`)
+- **Mã tài liệu:** `BIZFLOW-RDS-OD-v1.2`
+- **Phiên bản:** `1.2-DRAFT`
+- **Ngày lập:** `2026-10-18` (Cập nhật đồng bộ v1.2: `2026-10-21`)
 - **Trạng thái:** `ACTIVE — AWAITING STAKEHOLDER SIGN-OFF`
 - **Tài liệu liên quan:** [RDS_v1.0_DRAFT.md](./RDS_v1.0_DRAFT.md), [SOURCE_REGISTER.md](./SOURCE_REGISTER.md), [USE_CASES.md](./USE_CASES.md), [REQUIREMENTS_TRACEABILITY.md](./REQUIREMENTS_TRACEABILITY.md), [SRS OPEN_DECISIONS.md](../srs/OPEN_DECISIONS.md)
 
@@ -15,7 +15,7 @@ Theo chuẩn mực Kỹ nghệ Yêu cầu (Requirements Engineering — tham chi
 
 1. **Tuyệt đối không tự bịa phê duyệt:** Mọi mâu thuẫn giữa các tài liệu gốc, khoảng trống nghiệp vụ hoặc chỉ tiêu định lượng chưa được Product Owner / Stakeholder xác nhận chính thức đều phải giữ trạng thái `OPEN`.
 2. **Tách biệt rõ Sự thật Đã Xác nhận (`CONFIRMED`) và Khuyến nghị Đề xuất (`PROPOSED — NOT APPROVED`):** Mỗi mục mở đều trình bày tối thiểu 2 phương án khả thi, phân tích tác động nghiệp vụ/kỹ thuật và nêu một khuyến nghị chuyên môn được gắn nhãn rõ ràng là **`PROPOSED — NOT APPROVED`**.
-3. **Truy vết hai chiều đầy đủ:** Mọi yêu cầu trong [RDS_v1.0_DRAFT.md](./RDS_v1.0_DRAFT.md) và [REQUIREMENTS_CATALOG.csv](./REQUIREMENTS_CATALOG.csv) bị ảnh hưởng bởi quyết định mở đều tham chiếu trực tiếp tới mã `OD-001`..`OD-024` tại tài liệu này.
+3. **Truy vết hai chiều đầy đủ:** Mọi yêu cầu trong [RDS_v1.0_DRAFT.md](./RDS_v1.0_DRAFT.md) và [REQUIREMENTS_CATALOG.csv](./REQUIREMENTS_CATALOG.csv) bị ảnh hưởng bởi quyết định mở đều tham chiếu trực tiếp tới mã `OD-001`..`OD-032` tại tài liệu này.
 
 ---
 
@@ -42,9 +42,9 @@ Các quyết định dưới đây đã có bằng chứng phê duyệt chính t
 
 ---
 
-## 3. Bộ 7 Câu hỏi Khám phá Ưu tiên Cao nhất Dành cho Stakeholder (Top 7 High-Priority Discovery Questions)
+## 3. Bộ 10 Câu hỏi Khám phá Ưu tiên Cao nhất Dành cho Stakeholder (Top 10 High-Priority Discovery Questions)
 
-Bộ 7 câu hỏi dưới đây được chắt lọc theo nguyên tắc **tác động cao nhất tới việc đóng băng baseline yêu cầu (Requirements Baseline Sign-off)** nhưng **ít làm phiền Stakeholder nhất**:
+Bộ 10 câu hỏi dưới đây được chắt lọc theo nguyên tắc **tác động cao nhất tới việc đóng băng baseline yêu cầu (Requirements Baseline Sign-off)** nhưng **ít làm phiền Stakeholder nhất**:
 
 1. **[Câu hỏi 1 — Quyền từ chối việc cấp phòng ban & Báo cáo tiến độ khi quá hạn (`OD-001`, `OD-002`)]:**
    Khi một Công việc (`Task`) được giao cho hàng đợi chung của một Phòng ban (chưa giao đích danh cá nhân), một nhân viên bình thường trong phòng ban có được phép bấm **"Từ chối nhận việc"** làm hủy phân công của cả phòng ban không, hay chỉ Quản lý phòng ban / người được giao đích danh mới có quyền từ chối? Ngoài ra, khi công việc đang ở trạng thái `OVERDUE`, người thực hiện có phải bấm **"Tiếp tục xử lý" (`OVERDUE -> IN_PROGRESS`)** trước khi gửi báo cáo tiến độ không?
@@ -62,10 +62,19 @@ Bộ 7 câu hỏi dưới đây được chắt lọc theo nguyên tắc **tác 
    Stakeholder có đồng ý phê duyệt bộ chỉ tiêu nghiệm thu đề xuất cho giai đoạn MVP (Độ trễ API thông thường `p95 <= 500 ms`, Báo cáo/Dashboard `p95 <= 2000 ms` ở `100` người dùng đồng thời; AI timeout `15 giây` kèm cơ chế suy giảm an toàn không chặn thao tác thủ công; lưu trữ hồ sơ trực tuyến tối thiểu `365 ngày` không xóa cứng; mục tiêu giảm `>= 30%` thời gian điều phối yêu cầu nội bộ) làm cơ sở nghiệm thu chính thức không?
 8. **[Câu hỏi 8 — Mô hình Tiếp nhận Doanh nghiệp (Admin-Gated vs. Self-Service), Xác minh Email, Đăng ký lại và Rollback Khởi tạo Workspace (`OD-021`..`OD-024`)]:**
    Trong phạm vi MVP theo định hướng Multi-Tenant SaaS (`DEC-WS-001`: 1 Doanh nghiệp = 1 Workspace chính), Stakeholder muốn giữ mô hình **`PLATFORM_ADMIN` phê duyệt thủ công** (`CONFIRMED` tại `FR-TEN-001`..`002`) hay chuyển sang/hỗ trợ song song phương án **Tự đăng ký doanh nghiệp (`Self-Service Company Registration` — `PROPOSED — NOT APPROVED`)** tự động khởi tạo Workspace chính và cấp quyền `COMPANY_ADMIN` ngay sau khi người đại diện xác minh email? Đồng thời, xin xác nhận chính sách: (a) thời hạn hiệu lực mã xác minh email (đề xuất `24 giờ`), (b) cho phép người dùng đăng ký lại (`Re-register`) bằng cùng email/mã công ty khi đơn cũ đã bị từ chối (`REJECTED`) hoặc hết hạn xác minh, và (c) thực thi khởi tạo `Company + Primary Tenant/Workspace + Initial COMPANY_ADMIN` trong một giao dịch nguyên tử (rollback 100% nếu bất kỳ bước khởi tạo hay cấp quyền ban đầu nào thất bại).
+9. **[Câu hỏi 9 — Phương thức Đăng nhập Độc lập bằng Email-Link & Trải nghiệm Chọn Không gian làm việc (`OD-025`)]:**
+   Tại trang Đăng nhập hợp nhất, bên cạnh phương thức đăng nhập bằng ID (bắt buộc nhập đủ 3 trường: ID, Mật khẩu, Mã workspace), hệ thống cung cấp tùy chọn Đăng nhập bằng Email-link (chỉ nhập Email, không cần mật khẩu hay mã workspace trước). Xin Stakeholder xác nhận:
+   (a) Thời hạn hiệu lực của Email-link dùng 1 lần (đề xuất: `15 phút`).
+   (b) Quy tắc điều hướng: Nếu người dùng thuộc đúng 01 Workspace thì tự động đăng nhập thẳng vào Workspace đó hay vẫn hiển thị màn hình chọn Workspace? Nếu người dùng thuộc $\ge 2$ Workspace thì hiển thị Workspace Selector để chọn. Nếu email chưa thuộc Workspace nào thì hiển thị thông báo từ chối hay điều hướng sang trang Đăng ký doanh nghiệp?
+10. **[Câu hỏi 10 — Trải nghiệm Chatbot Robot Mặc định Mở & Cơ chế Thông báo Ngoài Trang Web Push / Email (`OD-028`, `OD-029`, `OD-030`)]:**
+   Về giao diện Trợ lý ảo Robot và kênh Thông báo deadline:
+   (a) Xin Stakeholder xác nhận cơ chế widget Robot xuất hiện mặc định mở sau khi đăng nhập thành công; nút [X] ở góc trên bên phải đóng widget chỉ có hiệu lực trong phiên làm việc hiện tại (`sessionStorage`) và tự động mở lại ở lần đăng nhập tiếp theo.
+   (b) Xác nhận quy trình Phân rã công việc bằng AI (`/task` hoặc NL prompt): Bắt buộc người dùng phải xác nhận rõ ràng trên giao diện (xem lại, chỉnh sửa checklist, bấm nút "Xác nhận tạo việc") thì hệ thống mới được phép ghi vào DB (`BR-028`).
+   (c) Xác nhận quy tắc thông báo ngoài trang: Ưu tiên Web Push qua Service Worker trình duyệt khi người dùng cấp quyền; tự động fallback sang gửi Email thông báo khi người dùng offline hoặc chưa cấp quyền Web Push.
 
 ---
 
-## 4. Danh mục Chi tiết các Quyết định Còn Mở (`OD-001` đến `OD-024`)
+## 4. Danh mục Chi tiết các Quyết định Còn Mở (`OD-001` đến `OD-032`)
 
 ### `OD-001`: Thẩm quyền Từ chối Nhận việc đối với Công việc Giao cho Phòng ban
 - **Trạng thái:** `OPEN`
@@ -402,4 +411,141 @@ Bộ 7 câu hỏi dưới đây được chắt lọc theo nguyên tắc **tác 
   - **Phương án B:** Khởi tạo bất đồng bộ từng phần không dùng chung một giao dịch ACID, giữ `Tenant.Status = Provisioning` khi lỗi và yêu cầu `PLATFORM_ADMIN` chạy công cụ sửa lỗi thủ công.
 - **Phân tích tác động:** Phương án A loại bỏ hoàn toàn nguy cơ sinh ra Tenant mồ côi hoặc tài khoản chủ doanh nghiệp không có quyền `COMPANY_ADMIN`, đồng thời rất dễ kiểm thử tự động bằng Integration Test.
 - **Khuyến nghị (`PROPOSED — NOT APPROVED`):** Chọn **Phương án A**.
+
+---
+
+### `OD-025`: Cơ chế Bảo mật và Thời hạn Token Xác thực qua Email Link (`Magic Link Token Security & Expiration Policy`)
+- **Trạng thái:** `OPEN`
+- **Nguồn phát sinh:** Yêu cầu Đăng nhập hợp nhất (Group A), `BR-025`, `BIZ-029`, `UC-014`, `AC-033`, `AC-034`.
+- **Yêu cầu bị ảnh hưởng:** `BR-025`, `BIZ-029`, `UC-014`, `INFO-013`, `FR-AUTH-005`, `AC-033`, `AC-034`.
+- **Mô tả vấn đề:** Phương thức đăng nhập bằng Email-link yêu cầu người dùng chỉ cung cấp địa chỉ Email (không cần mật khẩu hay mã workspace trước). Hệ thống tạo token xác thực và gửi link đăng nhập. Cần xác định: thời hạn token, cơ chế chống replay attack, giới hạn gửi lại (rate limiting), và luồng xử lý khi email liên kết với 0, 1 hoặc nhiều workspace.
+- **Các phương án khả thi:**
+  - **Phương án A (`PROPOSED — NOT APPROVED`):**
+    1. Token ngẫu nhiên mật mã (CSPRNG 32 bytes), lưu băm SHA-256 trong DB/Redis với `TTL = 15 phút`, thu hồi ngay sau lần sử dụng đầu tiên (Single-use).
+    2. Giới hạn tối đa `3 email / 15 phút` trên mỗi IP và email đích để chống brute-force và spam SMTP.
+    3. Khi người dùng click link, backend xác thực token:
+       - Nếu email thuộc đúng 01 Workspace đang hoạt động: cấp phát JWT session trực tiếp.
+       - Nếu email thuộc $\ge 2$ Workspace: trả về token tạm thời (`SessionSelectToken` có `TTL = 5 phút`) và hiển thị Workspace Selector để người dùng chọn Workspace làm việc.
+       - Nếu email chưa liên kết với bất kỳ Workspace nào: thông báo lỗi rõ ràng kèm gợi ý liên kết hoặc đăng ký doanh nghiệp mới.
+  - **Phương án B:** Dùng JWT ký sẵn có thời hạn dài (24 giờ), không lưu trạng thái trên server, không có Workspace Selector (buộc người dùng phải nhập workspace code trước khi nhận link).
+- **Phân tích tác động:** Phương án A bảo đảm an toàn thông tin cao nhất, tránh lộ token trong logs/lịch sử duyệt web, ngăn chặn replay attack và mang lại trải nghiệm tiện lợi đúng yêu cầu.
+- **Khuyến nghị (`PROPOSED — NOT APPROVED`):** Chọn **Phương án A**.
+
+---
+
+### `OD-026`: Thuật toán và Định dạng Sinh Mã Workspace Tự động (`Auto-generated Workspace Code Format & Fallback`)
+- **Trạng thái:** `OPEN`
+- **Nguồn phát sinh:** Yêu cầu Đăng ký doanh nghiệp (Group B), `BR-026`, `BIZ-030`, `UC-001`, `AC-035`, `AC-036`.
+- **Yêu cầu bị ảnh hưởng:** `BR-026`, `BIZ-030`, `UC-001`, `INFO-001`, `FR-TEN-001`, `AC-035`, `AC-036`.
+- **Mô tả vấn đề:** Người dùng có thể tự nhập mã workspace mong muốn (`DesiredWorkspaceCode`) hoặc bấm nút "Tự động tạo mã" (`Generate Random Code`). Cần xác định quy tắc sinh mã tự động để bảo đảm tính duy nhất, thân thiện với URL/subdomain (`^[a-z0-9-]{3,30}$`) và không trùng lặp trong DB.
+- **Các phương án khả thi:**
+  - **Phương án A (`PROPOSED — NOT APPROVED`):**
+    1. Sinh mã tự động theo công thức slug từ Tên công ty (loại bỏ dấu tiếng Việt, ký tự đặc biệt, chuyển chữ thường) kết hợp hậu tố ngẫu nhiên gồm 4 chữ số, ví dụ: `acme-8492`, `bizflow-1024`.
+    2. Nếu tên công ty quá dài hoặc chưa nhập, sinh tiền tố mặc định `ws-` kèm chuỗi hex ngẫu nhiên 6 ký tự, ví dụ: `ws-a9b2c3`.
+    3. Trước khi điền vào form, frontend gọi API `/api/tenants/check-code` để xác nhận mã khả dụng; khi submit form, backend thực hiện kiểm tra lại (re-check) để chống race condition.
+  - **Phương án B:** Sinh chuỗi UUID thuần túy (ví dụ: `c8d19a3b-4f...`), khó đọc và khó nhớ đối với người dùng đăng nhập bằng ID.
+- **Phân tích tác động:** Phương án A tạo mã dễ nhớ, chuyên nghiệp và phản ánh thương hiệu doanh nghiệp trong khi vẫn đảm bảo tính duy nhất.
+- **Khuyến nghị (`PROPOSED — NOT APPROVED`):** Chọn **Phương án A**.
+
+---
+
+### `OD-027`: Chính sách Lưu trữ và Quét Mã độc Tài liệu Hồ sơ Doanh nghiệp trên MinIO/S3 (`Supporting Document Storage & Security Scan`)
+- **Trạng thái:** `OPEN`
+- **Nguồn phát sinh:** Yêu cầu Đăng ký doanh nghiệp (Group B), `BR-026`, `BIZ-030`, `UC-001`, `AC-037`.
+- **Yêu cầu bị ảnh hưởng:** `BR-026`, `BIZ-030`, `UC-001`, `INFO-001`, `FR-TEN-001`, `FR-TEN-002`, `AC-037`.
+- **Mô tả vấn đề:** Khi nộp đơn đăng ký, doanh nghiệp phải đính kèm tài liệu hỗ trợ/pháp lý (GPKD, giấy ủy quyền...) tải lên MinIO/S3 bucket `company-documents`. Cần quy định: dung lượng tối đa, định dạng cho phép, cơ chế quét mã độc (Antivirus scan), và thời hạn lưu trữ.
+- **Các phương án khả thi:**
+  - **Phương án A (`PROPOSED — NOT APPROVED`):**
+    1. Định dạng hỗ trợ: PDF, PNG, JPG, JPEG. Dung lượng tối đa 10 MB/tệp, tổng không quá 50 MB cho mỗi hồ sơ đăng ký.
+    2. Tài liệu được lưu trữ trong bucket riêng biệt `company-documents`, phân vùng theo đường dẫn an toàn: `companies/{registrationId}/docs/{uuid}_{filename}`.
+    3. Mã hóa lưu trữ (SSE-S3), kiểm tra định dạng MIME thực tế (Magic bytes) và quét mã độc (ClamAV hoặc async scanner) trước khi chuyển trạng thái tài liệu sang `Available`.
+    4. Cung cấp liên kết tải/xem cho `PLATFORM_ADMIN` thông qua Presigned URL có chữ ký tạm thời (`TTL = 15 phút`).
+  - **Phương án B:** Lưu file trực tiếp vào PostgreSQL dạng `bytea`, không kiểm tra mã độc.
+- **Phân tích tác động:** Phương án A tận dụng hạ tầng MinIO/S3 sẵn có trong dự án, đảm bảo hiệu năng database và bảo mật cấp doanh nghiệp.
+- **Khuyến nghị (`PROPOSED — NOT APPROVED`):** Chọn **Phương án A**.
+
+---
+
+### `OD-028`: Cơ chế Bắt buộc Xác nhận Rõ ràng trước khi Tạo Công việc từ AI (`Mandatory Human Confirmation Workflow for AI Task Decomposition`)
+- **Trạng thái:** `OPEN`
+- **Nguồn phát sinh:** Yêu cầu Phân rã công việc bằng AI (Group D), `BR-028`, `BIZ-032`, `UC-016`, `AC-041`, `AC-042`.
+- **Yêu cầu bị ảnh hưởng:** `BR-028`, `BIZ-032`, `UC-016`, `INFO-014`, `FR-AI-013`, `AC-041`, `AC-042`.
+- **Mô tả vấn đề:** Khi AI phân tích một đoạn văn bản và đề xuất danh sách công việc/yêu cầu, hệ thống tuyệt đối không được tự động ghi vào DB. Cần chuẩn hóa quy trình xem lại, chỉnh sửa (tiêu đề, loại việc Support Request vs Task Assignment, phòng ban tiếp nhận, mô tả chi tiết), chọn lọc từng mục (checkbox) và hành động bấm nút "Xác nhận tạo việc" (`Explicit Confirmation`).
+- **Các phương án khả thi:**
+  - **Phương án A (`PROPOSED — NOT APPROVED`):**
+    1. AI chỉ trả về cấu trúc JSON gồm danh sách tác vụ dự kiến hiển thị trên giao diện dưới dạng Checklist tương tác.
+    2. Mỗi mục trong Checklist hiển thị rõ: Tiêu đề, Loại (`Support Request` hoặc `Task Assignment`), Phòng ban tiếp nhận dự kiến, Mô tả chi tiết, Độ ưu tiên, Deadline dự kiến.
+    3. Người dùng có quyền: (a) Bỏ chọn từng mục không cần thiết, (b) Chỉnh sửa trực tiếp tiêu đề, phòng ban, mô tả, hạn chót của từng mục, (c) Thêm mới mục thủ công.
+    4. Chỉ khi người dùng bấm nút hành động rõ ràng **"Xác nhận tạo việc ([N] mục đã chọn)"**, frontend mới gửi payload danh sách đã xác nhận lên backend.
+    5. Backend kiểm tra quyền hạn của người dùng tại từng phòng ban đích trước khi ghi vào DB. Nếu không có quyền giao việc cho phòng ban nào, báo lỗi cụ thể cho mục đó và không ghi nhận mục đó.
+  - **Phương án B:** Cung cấp tùy chọn "Tự động tạo ngay không cần xem lại" cho người dùng có quyền Quản trị.
+- **Phân tích tác động:** Phương án B vi phạm nguyên tắc `BR-028` và rủi ro sinh rác dữ liệu do ảo giác AI; Phương án A đảm bảo quyền kiểm soát con người (Human-in-the-loop) tuyệt đối.
+- **Khuyến nghị (`PROPOSED — NOT APPROVED`):** Chọn **Phương án A**.
+
+---
+
+### `OD-029`: Định dạng Giao diện và Quản lý Trạng thái Thu gọn/Mở rộng của Robot Trợ lý Ảo (`Interactive Robot Widget Lifecycle & Session Storage`)
+- **Trạng thái:** `OPEN`
+- **Nguồn phát sinh:** Yêu cầu Robot Trợ lý Ảo (Group E), `BR-029`, `BIZ-033`, `UC-015`, `AC-043`, `AC-044`.
+- **Yêu cầu bị ảnh hưởng:** `BR-029`, `BIZ-033`, `UC-015`, `FR-AI-011`, `AC-043`, `AC-044`.
+- **Mô tả vấn đề:** Widget robot trợ lý thông minh xuất hiện mặc định mở sau khi người dùng đăng nhập. Có nút [X] ở góc trên bên phải để đóng. Cần xác định phạm vi lưu trạng thái đóng của nút [X] để đảm bảo trải nghiệm người dùng nhất quán.
+- **Các phương án khả thi:**
+  - **Phương án A (`PROPOSED — NOT APPROVED`):**
+    1. Sau khi người dùng đăng nhập thành công vào Workspace, widget robot hiển thị mặc định ở trạng thái mở tại góc dưới bên phải màn hình.
+    2. Khi người dùng bấm nút [X] ở góc trên bên phải của widget, widget thu gọn thành một biểu tượng robot nổi (floating avatar). Trạng thái thu gọn này được lưu trong **`sessionStorage`** của trình duyệt (`bizflow_robot_dismissed = true`).
+    3. Trong suốt phiên làm việc (kể cả khi chuyển trang/route), widget giữ nguyên trạng thái thu gọn và chỉ mở lại khi người dùng click vào biểu tượng robot.
+    4. Khi người dùng đăng xuất và đăng nhập lại, hoặc phiên làm việc hết hạn/mở tab phiên mới, cờ `sessionStorage` được reset và robot **tự động hiển thị ở trạng thái mở** theo mặc định.
+  - **Phương án B:** Lưu cờ đóng vào `localStorage` hoặc cấu hình tài khoản `UserPreferences` trong cơ sở dữ liệu vĩnh viễn.
+- **Phân tích tác động:** Phương án B làm mất tính năng "mặc định mở sau mỗi lần đăng nhập"; Phương án A đáp ứng chính xác 100% yêu cầu nghiệp vụ.
+- **Khuyến nghị (`PROPOSED — NOT APPROVED`):** Chọn **Phương án A**.
+
+---
+
+### `OD-030`: Chiến lược Điều phối Đa kênh cho Thông báo Deadline và Đẩy Tin Ngoài Trang (`Web Push vs. Fallback Email Delivery Strategy`)
+- **Trạng thái:** `OPEN`
+- **Nguồn phát sinh:** Yêu cầu Thông báo đa kênh (Group E), `BR-030`, `BIZ-033`, `UC-017`, `AC-046`, `AC-047`.
+- **Yêu cầu bị ảnh hưởng:** `BR-030`, `BIZ-033`, `UC-017`, `INFO-009`, `FR-NOTIF-004`, `AC-046`, `AC-047`.
+- **Mô tả vấn đề:** Thông báo deadline cần gửi cả khi người dùng đang trong ứng dụng (In-app) và ngoài ứng dụng (Off-site). Cần xác định giải pháp đẩy tin ngoài trang: Web Push qua Service Worker (VAPID keys) và fallback sang Email HTML.
+- **Các phương án khả thi:**
+  - **Phương án A (`PROPOSED — NOT APPROVED`):**
+    1. **Khi người dùng trực tuyến (In-app):** Phát thông báo đẩy thời gian thực qua SignalR Hub hiển thị Notification Toast và cập nhật Notification Center.
+    2. **Khi người dùng ngoại tuyến (Off-site):**
+       - **Kênh chính (Primary Off-site):** Gửi Web Push Notification qua Browser Service Worker (chuẩn W3C Push API / RFC 8292 VAPID). Trình duyệt hiển thị native system notification cho phép bấm vào để mở trực tiếp chi tiết công việc.
+       - **Kênh dự phòng (Fallback Off-site):** Nếu người dùng chưa đăng ký nhận Web Push, hoặc đăng ký không hợp lệ/hết hạn, hoặc trình duyệt không hỗ trợ Web Push, hệ thống tự động gửi Email thông báo định dạng HTML qua SMTP/SendGrid.
+  - **Phương án B:** Chỉ sử dụng duy nhất một kênh Email cho thông báo ngoài trang, không tích hợp Web Push.
+- **Phân tích tác động:** Phương án B gây độ trễ thông báo cao và làm giảm tính hiện đại của nền tảng SaaS; Phương án A mang lại trải nghiệm đa kênh toàn diện.
+- **Khuyến nghị (`PROPOSED — NOT APPROVED`):** Chọn **Phương án A**.
+
+---
+
+### `OD-031`: Cơ chế Kiểm soát Chi phí Token và Giới hạn Tần suất cho Lệnh AI (`Token Quota, Rate Limiting & Fallback for AI Commands`)
+- **Trạng thái:** `OPEN`
+- **Nguồn phát sinh:** Yêu cầu AI Chatbot & Task Decomposition (Group D, E), `BR-027`, `BR-028`, `BR-029`, `AC-039`, `AC-041`.
+- **Yêu cầu bị ảnh hưởng:** `BIZ-032`, `BIZ-033`, `CAP-014`, `FR-AI-012`, `FR-AI-013`.
+- **Mô tả vấn đề:** Các lệnh AI (`/task`, hỏi đáp tự nhiên) gọi trực tiếp tới OpenAI API phát sinh chi phí token. Cần kiểm soát chi phí cho mỗi tenant và phòng chống tấn công lạm dụng API.
+- **Các phương án khả thi:**
+  - **Phương án A (`PROPOSED — NOT APPROVED`):**
+    1. Áp dụng giới hạn tần suất (Rate Limiting) qua Redis: Tối đa `10 yêu cầu AI / phút / người dùng` và hạn ngạch `500 yêu cầu AI / ngày / workspace` cho phiên bản MVP.
+    2. Áp dụng cơ chế tóm tắt ngữ cảnh (Context Truncation) và schema JSON nghiêm ngặt để tối ưu lượng token tiêu thụ.
+    3. Khi gặp sự cố OpenAI API (timeout > 15s hoặc lỗi 429/500), hệ thống trả về thông báo lịch sự giải thích lỗi và hướng dẫn người dùng thực hiện thao tác thủ công, đảm bảo các chức năng thông thường không bị nghẽn.
+  - **Phương án B:** Không áp dụng giới hạn, cho phép người dùng gọi OpenAI API không giới hạn.
+- **Phân tích tác động:** Phương án A ngăn chặn rủi ro vượt ngân sách API của dự án và đảm bảo tính sẵn sàng của hạ tầng.
+- **Khuyến nghị (`PROPOSED — NOT APPROVED`):** Chọn **Phương án A**.
+
+---
+
+### `OD-032`: Chiến lược Khử trùng lặp và Lập lịch Nhắc nhở Deadline Hàng loạt (`Deadline Reminder Scheduling & Deduplication Policy`)
+- **Trạng thái:** `OPEN`
+- **Nguồn phát sinh:** Yêu cầu Thông báo deadline (Group E), `BR-030`, `BIZ-033`, `UC-017`, `AC-045`, `AC-046`.
+- **Yêu cầu bị ảnh hưởng:** `BR-030`, `BIZ-033`, `UC-017`, `INFO-009`, `FR-NOTIF-003`, `FR-NOTIF-004`, `AC-045`, `AC-046`.
+- **Mô tả vấn đề:** Lệnh `/notifications` cho phép người dùng tùy chỉnh lịch nhắc nhở (ví dụ: nhắc trước 24h, 4h, 1h, khi quá hạn). Cần có cơ chế lập lịch tập trung trên backend và khử trùng lặp để tránh việc nhiều worker/job quét lặp gây spam thông báo cho người dùng.
+- **Các phương án khả thi:**
+  - **Phương án A (`PROPOSED — NOT APPROVED`):**
+    1. Lập lịch tập trung bằng Background Worker (`IHostedService`) quét định kỳ mỗi 1 phút.
+    2. Khử trùng lặp bằng bảng nhật ký `NotificationLog` với ràng buộc duy nhất composite `(TaskId, UserId, ReminderType, ScheduledTriggerTime)`. Worker chỉ phát thông báo nếu bản ghi chưa được tạo.
+    3. Khi một công việc được hoàn thành (`COMPLETED`), hủy bỏ (`CANCELLED`) hoặc đóng (`CLOSED`), hệ thống đánh dấu hủy (`Invalidated`) toàn bộ các lịch nhắc nhở chưa kích hoạt còn lại của công việc đó.
+  - **Phương án B:** Khởi tạo `Task.Delay` hoặc bộ đếm giờ riêng lẻ trong bộ nhớ ứng dụng cho từng công việc.
+- **Phân tích tác động:** Phương án B mất toàn bộ bộ đếm giờ khi ứng dụng restart/crash; Phương án A bảo đảm tính bền vững và nhất quán trên môi trường phân tán.
+- **Khuyến nghị (`PROPOSED — NOT APPROVED`):** Chọn **Phương án A**.
+
 

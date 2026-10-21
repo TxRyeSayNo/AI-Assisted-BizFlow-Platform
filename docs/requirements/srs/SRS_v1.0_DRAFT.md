@@ -8,11 +8,11 @@
 | Thuộc tính | Giá trị |
 |---|---|
 | **Tên tài liệu** | Đặc tả Yêu cầu Phần mềm — Nền tảng Quản lý Công việc và Yêu cầu Nội bộ Hỗ trợ bởi AI (Software Requirements Specification — AI-Assisted BizFlow Platform) |
-| **Mã tài liệu** | `BIZFLOW-SRS-v1.1` |
-| **Phiên bản** | `1.1-DRAFT` |
-| **Ngày ban hành** | `2026-10-19` |
+| **Mã tài liệu** | `BIZFLOW-SRS-v1.2` |
+| **Phiên bản** | `1.2-DRAFT` |
+| **Ngày ban hành** | `2026-10-21` |
 | **Nhóm biên soạn** | Senior Business Analyst, Senior Requirements Engineer, Senior Software Architect, Senior QA/Test Engineer, Technical Writer |
-| **Trạng thái tài liệu** | `DRAFT — EVIDENCE-BASED & VERIFIED AGAINST REPOSITORY` |
+| **Trạng thái tài liệu** | `DRAFT — EVIDENCE-BASED & VERIFIED AGAINST REPOSITORY (5 NEW REQUIREMENT GROUPS SYNCHRONIZED)` |
 | **Tiêu chuẩn tham chiếu** | Áp dụng các nguyên tắc Kỹ nghệ Yêu cầu của ISO/IEC/IEEE 29148:2018 (không tuyên bố chứng nhận hợp chuẩn hình thức nếu chưa qua đánh giá độc lập) |
 | **Phạm vi áp dụng** | Toàn bộ sản phẩm AI-Assisted BizFlow Platform (Giai đoạn MVP và phân định ranh giới với Future Enterprise) |
 
@@ -23,6 +23,7 @@
 | `0.1-DRAFT` | `2026-10-16` | Nhóm phân tích tiền nhiệm (`documents/SRS/`) | Bản nháp khởi tạo ban đầu từ tài liệu đặc tả; chưa đối chiếu được với repository .NET 10 / Angular 22 thực tế. |
 | `1.0-DRAFT` | `2026-10-18` | Nhóm Chuyên gia Senior (BA / RE / Architect / QA / TW) | Tái cấu trúc toàn diện theo chuẩn 16 chương; tích hợp 12 ADR đã phê duyệt (`ADR-0001`..`ADR-0012`); đối chiếu trực tiếp với mã nguồn thực tế (36/43 bảng EF Core, 17 API Controllers, 404 Unit Tests, ~280 Integration Tests, 196 Angular Tests); chuẩn hóa 62 FR, 22 BR, 12 UC, 12 IR, 15 DR, 15 NFR, 12 SEC, 30 TST và 18 Open Decisions (`OD-001`..`OD-018`). |
 | `1.1-DRAFT` | `2026-10-19` | Nhóm Chuyên gia Senior (Requirements Review — Company Registration, Tenant Onboarding & Workspace Provisioning) | Rà soát chuyên sâu vòng đời **Company Registration, Tenant Onboarding & Workspace Provisioning** (7 điểm kiểm tra & 6 kịch bản lỗi/biên): bổ sung `BR-023`..`024`, `UC-013`, `FR-TEN-005` (`PROPOSED — NOT APPROVED` Self-Service Onboarding giữ nguyên baseline `CONFIRMED` `FR-TEN-001`..`002`), `IR-UI-004` (`/register-company` & CTA từ `/login`), `TST-031`; làm giàu `FR-TEN-001`..`002`, `IR-UI-001`, `IR-EXT-002`, `DR-002`, Mục 10 xử lý lỗi hoàn tác nguyên tử (`Atomic Rollback`) và đồng bộ `OD-001`..`OD-024` xuyên suốt RDS–SRS–SSS. |
+| `1.2-DRAFT` | `2026-10-21` | Nhóm Chuyên gia Senior (Goal Audit & Comprehensive Sync) | Đồng bộ toàn diện 5 nhóm yêu cầu mới: (1) Đăng nhập hợp nhất 2 tùy chọn độc lập (`FR-AUTH-001` 3 trường bắt buộc; `FR-AUTH-005` email-link & workspace selector); (2) Đăng ký doanh nghiệp 6 trường bắt buộc, kiểm tra/tự sinh mã workspace, tải hồ sơ MinIO (`FR-TEN-001`); (3) Duyệt doanh nghiệp & thẩm định hồ sơ (`FR-TEN-002`); (4) Phân rã công việc bằng AI bắt buộc xác nhận rõ ràng (`FR-AI-013`, `BR-028`); (5) Chatbot robot tương tác nhúng mặc định mở, đóng theo session (`FR-AI-011`, `FR-AI-012`), lệnh `/task` & `/notifications`, thông báo deadline đa kênh in-app & Web Push/Email fallback (`FR-NOTIF-003`, `FR-NOTIF-004`, `BR-029`, `BR-030`). Bổ sung `IR-UI-005`..`006`, `IR-API-004`..`007`, `IR-EXT-003`, `DR-016`..`017`, `TST-032`..`TST-037`, nâng tổng số lên 68 FR, 20 IR, 17 DR, 15 NFR, 12 SEC, 37 TST, 32 OD. |
 
 ### 0.2. Danh sách Tài liệu Liên kết trong Bộ Hồ sơ SRS
 
@@ -64,16 +65,16 @@ Tài liệu **Đặc tả Yêu cầu Phần mềm (Software Requirements Specifi
 |---|---|---|
 | `BG-xxx` | Mục tiêu Kinh doanh (Business Goal) | `BG-001` .. `BG-008` |
 | `Axx` | Tác nhân Hệ thống (Actor / Stakeholder Role) | `A01` .. `A05` |
-| `BR-xxx` | Quy tắc Nghiệp vụ (Business Rule) | `BR-001` .. `BR-024` (22 quy tắc `CONFIRMED` + 2 quy tắc `PROPOSED` cho Onboarding) |
-| `UC-xxx` | Ca sử dụng Đầu-cuối (End-to-End Use Case) | `UC-001` .. `UC-013` (12 UC `CONFIRMED` + 1 UC `PROPOSED` cho Self-Service Onboarding) |
-| `FR-<MOD>-xxx` | Yêu cầu Chức năng theo Mô-đun (Functional Requirement) | 63 yêu cầu thuộc 13 mô-đun (`FR-AUTH-*`, `FR-TEN-001..005`, `FR-ORG-*`, `FR-SVC-*`, `FR-TASK-*`, `FR-REQ-*`, `FR-WF-*`, `FR-SLA-*`, `FR-COL-*`, `FR-REP-*`, `FR-AI-*`) |
-| `IR-<TYPE>-xxx` | Yêu cầu Giao diện Ngoài (External Interface Requirement) | 13 yêu cầu (`IR-UI-001..004`, `IR-API-001..003`, `IR-EXT-001..002`, `IR-FILE-001..002`, `IR-NOTIF-001..002`) |
-| `DR-xxx` | Yêu cầu Dữ liệu Logic (Data Requirement) | `DR-001` .. `DR-015` |
+| `BR-xxx` | Quy tắc Nghiệp vụ (Business Rule) | `BR-001` .. `BR-030` (24 quy tắc nghiệp vụ cốt lõi + 6 quy tắc v1.2 đồng bộ) |
+| `UC-xxx` | Ca sử dụng Đầu-cuối (End-to-End Use Case) | `UC-001` .. `UC-017` (13 UC v1.1 + 4 UC mới: `UC-014`..`UC-017`) |
+| `FR-<MOD>-xxx` | Yêu cầu Chức năng theo Mô-đun (Functional Requirement) | 68 yêu cầu thuộc 15 mô-đun (`FR-AUTH-001..005`, `FR-TEN-001..005`, `FR-ORG-*`, `FR-SVC-*`, `FR-TASK-*`, `FR-REQ-*`, `FR-WF-*`, `FR-SLA-*`, `FR-COL-*`, `FR-REP-*`, `FR-AI-001..013`, `FR-NOTIF-001..004`) |
+| `IR-<TYPE>-xxx` | Yêu cầu Giao diện Ngoài (External Interface Requirement) | 20 yêu cầu (`IR-UI-001..006`, `IR-API-001..007`, `IR-EXT-001..003`, `IR-FILE-001..002`, `IR-NOTIF-001..002`) |
+| `DR-xxx` | Yêu cầu Dữ liệu Logic (Data Requirement) | `DR-001` .. `DR-017` |
 | `NFR-<CAT>-xxx` | Yêu cầu Phi chức năng (Non-Functional Requirement) | 15 yêu cầu (`NFR-PERF-*`, `NFR-SCAL-*`, `NFR-REL-*`, `NFR-SEC-*`, `NFR-DATA-*`, `NFR-AI-*`, `NFR-FILE-*`, `NFR-USAB-*`, `NFR-MAINT-*`, `NFR-OBS-*`, `NFR-I18N-*`, `NFR-BCDR-*`) |
 | `SEC-xxx` | Yêu cầu Bảo mật & Quyền riêng tư (Security & Privacy Requirement) | `SEC-001` .. `SEC-012` |
-| `TST-xxx` | Kịch bản Xác minh & Nghiệm thu Chuẩn (Verification & Acceptance Scenario) | `TST-001` .. `TST-031` |
+| `TST-xxx` | Kịch bản Xác minh & Nghiệm thu Chuẩn (Verification & Acceptance Scenario) | `TST-001` .. `TST-037` |
 | `ASM-xxx` / `DEP-xxx` / `RSK-xxx` | Giả định (Assumption) / Phụ thuộc (Dependency) / Rủi ro (Risk) | `ASM-001..014`, `DEP-001..006`, `RSK-001..010` |
-| `OD-xxx` | Quyết định Còn Mở (Open Decision) | `OD-001` .. `OD-024` |
+| `OD-xxx` | Quyết định Còn Mở (Open Decision) | `OD-001` .. `OD-032` |
 
 #### 1.2.3. Phân loại Trạng thái Yêu cầu và Trạng thái Triển khai
 Để phản ánh trung thực cả **trạng thái phê duyệt đặc tả** lẫn **trạng thái hiện thực hóa trong mã nguồn**, mỗi yêu cầu mang hai nhãn phân biệt rõ ràng:
@@ -338,6 +339,12 @@ Toàn bộ 22 quy tắc nghiệp vụ `BR-001`..`BR-022` dưới đây được 
 | **`BR-022`** | **Bắt buộc nhập lý do khi Từ chối, Hủy, Giao lại hoặc Yêu cầu làm lại** | Người dùng bắt buộc phải cung cấp lý do bằng văn bản không rỗng khi thực hiện các hành động: từ chối đăng ký công ty, từ chối nhận việc, từ chối kết quả công việc, từ chối yêu cầu, từ chối phê duyệt, hủy công việc/yêu cầu, giao lại việc hoặc yêu cầu bổ sung thông tin. | `CONFIRMED` & `IMPLEMENTED` | `FR-TEN-002`, `FR-TASK-003`, `FR-TASK-008`..`010`, `FR-REQ-002`, `FR-REQ-005`, `FR-REQ-008`, `FR-WF-004` |
 | **`BR-023`** | **Khởi tạo Nguyên tử Không gian làm việc Chính (`1 Company = 1 Primary Tenant`) và Cấp quyền `COMPANY_ADMIN` Ban đầu (`PROPOSED — NOT APPROVED`)** | Trong phạm vi MVP (`DEC-WS-001`), mỗi doanh nghiệp (`Company`) được kích hoạt **chỉ được khởi tạo đúng một Không gian làm việc / Thuê bao chính duy nhất (`Primary Tenant` với `UNIQUE(CompanyId)`)**. Quá trình kích hoạt doanh nghiệp, khởi tạo `Primary Tenant`, nạp dữ liệu hạt giống (`BusinessCalendar`, `TenantSetting`), tạo tài khoản chủ sở hữu ban đầu (`UserAccount`) và gán vai trò `COMPANY_ADMIN` (`UserRole`) **bắt buộc thực thi trong một giao dịch nguyên tử (`Atomic DB Transaction`)**. Nếu bất kỳ bước nào (tạo Tenant/Workspace hoặc cấp quyền `COMPANY_ADMIN` ban đầu) thất bại, hệ thống **phải hoàn tác toàn bộ (`Atomic Rollback`)** để tuyệt đối không sinh ra `Company(ACTIVE)` mồ côi không có `Tenant` hoặc `Tenant(ACTIVE)` không có `COMPANY_ADMIN`. | `PROPOSED` (`NOT_IMPLEMENTED` API; `UNIQUE(CompanyId)` đã `IMPLEMENTED` trong EF Core) | `FR-TEN-002`, `FR-TEN-005`, `DR-002`, `DEC-WS-001`, `OD-024` |
 | **`BR-024`** | **Kiểm tra Trùng lặp Đăng ký, Bắt buộc Xác minh Email Người đại diện và Quy tắc Đăng ký lại (`PROPOSED — NOT APPROVED`)** | (1) Hồ sơ đăng ký doanh nghiệp mới **phải** được kiểm tra tính duy nhất của `Company.Code`, `TenantKey` và `ContactEmail`/Email quản trị viên đối với các bản ghi đang hoạt động hoặc đang chờ xử lý (`409 Conflict`).<br>(2) Email của người đại diện đăng ký **phải** được xác minh (`EmailVerified = true`) qua liên kết/mã xác thực một lần có thời hạn (`OD-022`) trước khi Workspace chính được kích hoạt hoặc trước khi tài khoản `COMPANY_ADMIN` được phép đăng nhập.<br>(3) Nếu hồ sơ đăng ký trước đó đã bị từ chối (`REJECTED`) hoặc hết hạn xác minh email (`EXPIRED`), người đại diện được phép gửi hồ sơ đăng ký lại (`Re-registration`) với cùng email/mã doanh nghiệp sau khi hồ sơ cũ đã chuyển trạng thái kết thúc, đồng thời hệ thống bảo toàn nguyên vẹn lịch sử hồ sơ cũ và `AuditLog` (`BR-021`, `CON-03`). | `PROPOSED` (`NOT_IMPLEMENTED`) | `FR-TEN-001`, `FR-TEN-005`, `IR-UI-004`, `IR-EXT-002`, `DR-002`, `OD-021`..`023` |
+| **`BR-025`** | **Quy tắc Xác thực Hai Tùy chọn Độc lập tại Trang Đăng nhập Hợp nhất** | Trang đăng nhập hợp nhất (`/login`) phải cung cấp 2 tùy chọn xác thực độc lập: (1) Đăng nhập bằng ID bắt buộc nhập đủ 3 trường: ID người dùng/Mã nhân viên, Mật khẩu và Mã Workspace (`TenantKey`), backend xác minh đồng thời cả 3 trường; (2) Đăng nhập bằng Email-link (Magic link) chỉ cần nhập địa chỉ Email (không yêu cầu mật khẩu hay mã workspace trước). Khi người dùng nhấp liên kết xác thực: nếu email liên kết với 0 workspace thì từ chối kèm gợi ý đăng ký; nếu đúng 1 workspace thì tự động vào; nếu $\ge 2$ workspace thì hiển thị Bộ chọn Không gian làm việc (`Workspace Selector`) để người dùng chọn. | `CONFIRMED` | `FR-AUTH-001`, `FR-AUTH-005`, `IR-UI-005`, `IR-API-004`, `OD-025` |
+| **`BR-026`** | **Quy tắc Đăng ký Doanh nghiệp Đầy đủ 6 Trường, Khả dụng Mã Workspace và Tải lên Tài liệu** | Biểu mẫu đăng ký doanh nghiệp bắt buộc 6 trường: Mã số thuế (`TaxId`), Tên công ty (`CompanyName`), Mã workspace mong muốn (`DesiredWorkspaceCode`), Tên người phụ trách (`ContactPersonName`), Email (`ContactEmail`) và Số điện thoại (`ContactPhone`). Hệ thống phải có API kiểm tra khả dụng mã workspace theo thời gian thực và nút tự động tạo mã ngẫu nhiên hợp lệ; khi bấm Gửi đơn, backend phải kiểm tra lại tính khả dụng của mã workspace. Hồ sơ phải cho phép tải lên tài liệu đính kèm (giấy phép KD, ủy quyền...) lưu trên MinIO/S3 bucket `company-documents` để Platform Admin thẩm định. | `CONFIRMED` | `FR-TEN-001`, `IR-API-005`, `IR-FILE-001`, `DR-017`, `OD-026`, `OD-027` |
+| **`BR-027`** | **Giới hạn Quyền hạn và Phòng chống Ảo giác của Trợ lý AI** | Mọi câu trả lời của trợ lý AI đối với truy vấn ngôn ngữ tự nhiên (về deadline, công việc quá hạn, việc cần làm, độ ưu tiên, thông báo) phải được lọc nghiêm ngặt theo đúng phân quyền (RBAC) và phạm vi quản lý (`ManagementScope`) của người dùng gọi prompt. Câu trả lời phải dựa trên bằng chứng dữ liệu thực tế trích xuất từ database (Grounding), tuyệt đối không suy diễn hoặc tự sinh dữ liệu không có thật (Anti-hallucination). | `CONFIRMED` | `FR-AI-011`, `FR-AI-012`, `SEC-008`, `SEC-009`, `OD-031` |
+| **`BR-028`** | **Bắt buộc Xác nhận Rõ ràng trước khi Tạo Công việc từ AI** | Khi người dùng sử dụng lệnh `/task` hoặc nhập đoạn văn mô tả để AI phân rã thành các công việc/yêu cầu (bao gồm tiêu đề, loại việc `Support Request` hoặc `Task Assignment`, phòng ban tiếp nhận và mô tả chi tiết), hệ thống chỉ được hiển thị danh sách đề xuất để người dùng xem lại, chọn lọc (checkbox) và chỉnh sửa. Tuyệt đối **không được tự động tạo bản ghi trong DB** nếu chưa có hành động bấm nút **"Xác nhận tạo việc"** rõ ràng từ người dùng (`Explicit Confirmation`). Backend phải kiểm tra lại quyền hạn của người dùng tại các phòng ban đích trước khi commit. | `CONFIRMED` | `FR-AI-013`, `IR-API-006`, `OD-028` |
+| **`BR-029`** | **Vòng đời và Trạng thái Hiển thị của Widget Robot Trợ lý Ảo** | Widget robot trợ lý thông minh được nhúng sẵn trên giao diện người dùng và tự động hiển thị ở trạng thái mở theo mặc định ngay sau khi người dùng đăng nhập thành công vào Không gian làm việc. Nút đóng nhỏ [X] ở góc trên bên phải của widget chỉ có hiệu lực thu gọn widget trong phiên làm việc hiện tại (`sessionStorage`). Khi người dùng đăng xuất và đăng nhập lại, hoặc mở phiên làm việc mới, widget robot phải tự động mở lại theo mặc định. | `CONFIRMED` | `FR-AI-011`, `IR-UI-005`, `OD-029` |
+| **`BR-030`** | **Chiến lược Thông báo Deadline Đa kênh và Khử trùng lặp** | Hệ thống phải điều phối thông báo deadline và lời nhắc công việc theo cơ chế đa kênh: (1) Thông báo trong ứng dụng (In-app Notification qua SignalR Toast và Notification Center) khi người dùng trực tuyến; (2) Thông báo ngoài ứng dụng (Off-site Notification) thông qua Web Push Notification (qua Service Worker trình duyệt) khi người dùng ngoại tuyến/không mở trang; (3) Tự động fallback sang Email thông báo định dạng HTML nếu người dùng chưa cấp quyền Web Push hoặc gửi push thất bại. Bộ lập lịch tập trung phải khử trùng lặp thông báo và tự động hủy các lịch nhắc chưa kích hoạt khi công việc đã hoàn thành hoặc hủy bỏ. | `CONFIRMED` | `FR-NOTIF-003`, `FR-NOTIF-004`, `IR-EXT-003`, `IR-API-007`, `DR-016`, `OD-030`, `OD-032` |
 
 ### 4.3. Quy trình Nghiệp vụ Đầu-cuối Chuẩn (End-to-End Business Processes)
 
@@ -420,13 +427,29 @@ sequenceDiagram
 
 ## 5. Yêu cầu Chức năng (Functional Requirements)
 
-### 5.0. Danh mục 13 Ca sử dụng Đầu-cuối Chuẩn (Canonical End-to-End Use Cases — `UC-001` .. `UC-013`)
+### 5.0. Danh mục 17 Ca sử dụng Đầu-cuối Chuẩn (Canonical End-to-End Use Cases — `UC-001` .. `UC-017`)
 
-Trước khi đi vào đặc tả nguyên tử từng yêu cầu chức năng (`FR-*`), bảng dưới đây định nghĩa 13 Ca sử dụng đầu-cuối (`UC-001`..`UC-013`, gồm 12 UC `CONFIRMED` và 1 UC `PROPOSED — NOT APPROVED` cho Self-Service Onboarding) kết nối các tác nhân, tiền điều kiện, luồng chính, luồng ngoại lệ và hậu điều kiện:
+Trước khi đi vào đặc tả nguyên tử từng yêu cầu chức năng (`FR-*`), bảng dưới đây định nghĩa 17 Ca sử dụng đầu-cuối (`UC-001`..`UC-017`, gồm 16 UC `CONFIRMED` và 1 UC `PROPOSED — NOT APPROVED` cho Self-Service Onboarding) kết nối các tác nhân, tiền điều kiện, luồng chính, luồng ngoại lệ và hậu điều kiện:
 
 | Mã UC | Tên Ca sử dụng | Tác nhân chính | Tiền điều kiện (Preconditions) | Luồng sự kiện chính (Main Success Scenario) | Nhánh thay thế / Ngoại lệ chính (Alternates / Exceptions) | Hậu điều kiện (Postconditions) | FR liên quan |
 |---|---|---|---|---|---|---|---|
-| **`UC-001`** | Đăng ký doanh nghiệp, xét duyệt bởi `PLATFORM_ADMIN` và khởi tạo `Primary Tenant` mặc định (`CONFIRMED` Baseline) | `A01` (`PLATFORM_ADMIN`), Đại diện công ty đăng ký | Đại diện công ty truy cập điểm vào đăng ký công khai (`/register-company`); `A01` đã đăng nhập vào Platform Plane (`UI-02`). | 1. Đại diện công ty gửi hồ sơ doanh nghiệp + thông tin tài khoản chủ sở hữu ban đầu (`FR-TEN-001`).<br>2. Hệ thống kiểm tra trùng lặp (`BR-024`), lưu `Company(PENDING)`, gửi email xác minh (`OD-022`) và thông báo `A01`.<br>3. `A01` xem hàng đợi và phê duyệt (`FR-TEN-002`).<br>4. Hệ thống thực thi giao dịch nguyên tử (`BR-023`): kích hoạt `Company(ACTIVE)`, khởi tạo đúng **1 `Primary Tenant`** (`DEC-WS-001`), hạt giống RBAC/Calendar/Settings và tài khoản `COMPANY_ADMIN`. | - **E1:** `A01` từ chối đăng ký kèm lý do bắt buộc (`BR-022`) -> `Company.Status = REJECTED`; cho phép đăng ký lại về sau mà vẫn giữ `AuditLog` (`BR-024`, `OD-023`).<br>- **E2:** Trùng mã doanh nghiệp/`TenantKey`/email đang hoạt động hoặc đang chờ duyệt -> Trả lỗi `409 Conflict`.<br>- **E3:** Email chưa xác minh -> Chặn kích hoạt/đăng nhập (`403 AUTH.EMAIL_NOT_VERIFIED`).<br>- **E4:** Lỗi khởi tạo `Tenant`/Workspace hoặc gán `COMPANY_ADMIN` -> Hoàn tác nguyên tử (`Atomic Rollback`, `BR-023`). | `Company` và 1 `Primary Tenant` duy nhất ở trạng thái `ACTIVE`; `COMPANY_ADMIN` đăng nhập thành công; ghi `AuditLog`. | `FR-TEN-001`..`004`, `IR-UI-004` |
+| **`UC-001`** | Đăng ký doanh nghiệp 6 trường, tải hồ sơ MinIO, kiểm tra mã workspace và `PLATFORM_ADMIN` thẩm định phê duyệt (`CONFIRMED` Baseline) | `A01` (`PLATFORM_ADMIN`), Đại diện doanh nghiệp đăng ký | Đại diện doanh nghiệp truy cập `/register-company` (từ `/login`); `A01` đăng nhập Platform Plane (`UI-02`). | 1. Người đại diện nhập đủ 6 trường bắt buộc: TaxId, CompanyName, DesiredWorkspaceCode, ContactPersonName, ContactEmail, ContactPhone (`BR-026`, `FR-TEN-001`).<br>2. Người dùng kiểm tra mã workspace khả dụng hoặc bấm Tự động tạo mã ngẫu nhiên hợp lệ.<br>3. Người dùng tải lên tài liệu pháp lý lưu trên MinIO/S3 bucket `company-documents`.<br>4. Backend re-check mã khả dụng, lưu hồ sơ `Company(PENDING)`, sinh token xác minh email (`OD-022`) và thông báo `A01`.<br>5. `A01` mở giao diện thẩm định hồ sơ, xem/tải tài liệu MinIO qua Presigned URL và bấm Phê duyệt (`FR-TEN-002`).<br>6. Hệ thống thực thi giao dịch nguyên tử (`BR-023`): kích hoạt `Company(ACTIVE)`, tạo đúng 1 `Primary Tenant` (`DEC-WS-001`), gán `COMPANY_ADMIN` ban đầu. | - **E1:** `A01` từ chối kèm lý do bắt buộc (`BR-022`) -> `Company.Status = REJECTED`; cho phép đăng ký lại sau khi bảo toàn `AuditLog` (`OD-023`).<br>- **E2:** Trùng TaxId/TenantKey/Email -> Trả lỗi `409 Conflict` (`BR-024`).<br>- **E3:** Email chưa xác minh -> Chặn kích hoạt workspace (`403 AUTH.EMAIL_NOT_VERIFIED`).<br>- **E4:** Lỗi tạo Tenant hoặc cấp quyền ban đầu -> Hoàn tác nguyên tử 100% (`Atomic Rollback`, `BR-023`, `OD-024`). | Doanh nghiệp được kích hoạt với đúng 1 `Primary Tenant` và tài khoản `COMPANY_ADMIN` ban đầu sẵn sàng vận hành. | `FR-TEN-001`..`004`, `IR-UI-004`, `IR-UI-006`, `IR-API-005`, `IR-FILE-001`, `DR-017` |
+| **`UC-002`** | Xác thực người dùng, làm mới phiên và khôi phục mật khẩu | `A01`, `A02`, `A03`, `A04` | Tài khoản người dùng và Tenant (nếu là người dùng doanh nghiệp) đang `ACTIVE`. | 1. Người dùng gửi định danh (`EmployeeCode` hoặc `Email`) + mật khẩu (`FR-AUTH-001/002`).<br>2. Hệ thống xác thực Argon2id/BCrypt, tạo `AuthenticationSession`, trả `AccessToken` + `RefreshToken`.<br>3. Khi `AccessToken` hết hạn, trình khách gửi `RefreshToken` để xoay vòng phiên mới (`FR-AUTH-003`). | - **E1:** Sai thông tin đăng nhập -> Trả lỗi `401` không tiết lộ tài khoản tồn tại hay không (`SEC-001`).<br>- **E2:** Phát hiện dùng lại `RefreshToken` cũ (Replay) -> Thu hồi toàn bộ chuỗi phiên `FamilyId` (`SEC-002`).<br>- **E3:** Quên mật khẩu -> Đặt lại qua email token hoặc Admin cấp mật khẩu tạm (`FR-AUTH-004`). | Phiên xác thực hợp lệ được thiết lập hoặc thu hồi an toàn; mọi sự kiện ghi vào `AuditLog`. | `FR-AUTH-001`..`004` |
+| **`UC-003`** | Thiết lập cơ cấu tổ chức, phạm vi quản lý và vai trò tùy chỉnh | `A02` (`COMPANY_ADMIN`) | `A02` đã đăng nhập vào Tenant Workspace Plane. | 1. `A02` tạo cây phòng ban (`Department`, `FR-ORG-004`).<br>2. `A02` tạo tài khoản nhân viên, gán phòng ban và vai trò (`FR-ORG-001/002`).<br>3. `A02` gán phạm vi quản lý (`ManagementScope`) cho các `MANAGER` (`BR-003`).<br>4. `A02` tạo vai trò tùy chỉnh và gán các mã quyền (`FR-ORG-005`). | - **E1:** Vô hiệu hóa tài khoản nhân viên nghỉ việc (`FR-ORG-003`) -> Thu hồi ngay mọi phiên đăng nhập đang mở, giữ nguyên lịch sử hồ sơ.<br>- **E2:** Tạo vòng lặp phòng ban cha-con -> Chặn với lỗi `422`. | Cơ cấu tổ chức, `ManagementScope` và quyền RBAC có hiệu lực ngay cho các truy vấn tiếp theo. | `FR-ORG-001`..`005` |
+| **`UC-004`** | Cấu hình danh mục dịch vụ nội bộ, định tuyến, Workflow và SLA | `A02` (`COMPANY_ADMIN`) | Đã có phòng ban và người dùng hoạt động trong Tenant. | 1. `A02` tạo hồ sơ `SLAProfile`, `BusinessCalendar` và phát hành `SLAVersion` bất biến (`FR-SLA-001`).<br>2. `A02` thiết kế `Workflow`, cấu hình các bước và phát hành `WorkflowVersion` (`FR-WF-001`).<br>3. `A02` tạo `Service`, `ServiceCategory` (`FR-SVC-001`), cấu hình `RoutingRule` (`FR-SVC-002`), gắn `WorkflowVersion` (`FR-SVC-003`) và `ApprovalRule` (`FR-SVC-004`). | - **E1:** Đồ thị Workflow không có bước bắt đầu/kết thúc hoặc có bước cô lập -> Từ chối phát hành (`422`).<br>- **E2:** Xung đột ETag khi hai Admin cùng sửa `Service` -> Trả lỗi `412 Precondition Failed` (`ADR-0008`). | Dịch vụ sẵn sàng để nhân viên gửi yêu cầu; các phiên bản SLA và Workflow cũ được bảo toàn bất biến. | `FR-SVC-001`..`004`, `FR-WF-001`, `FR-SLA-001` |
+| **`UC-005`** | Gửi yêu cầu dịch vụ nội bộ, định tuyến tự động và tiếp nhận xử lý | `A04` (Requester), `A03`/`A04` (Receiver) | Dịch vụ và phân loại dịch vụ đang `ACTIVE`. | 1. Người gửi chọn dịch vụ (hoặc dùng AI gợi ý `FR-AI-007`), điền thông tin và gửi yêu cầu (`FR-REQ-001`).<br>2. Hệ thống chuyển `SUBMITTED -> ROUTED`, tạo bản ghi `RequestRouting` và gửi thông báo (`FR-REQ-003`).<br>3. Người/bộ phận nhận xác nhận tiếp nhận (`ROUTED -> RECEIVED`, `FR-REQ-004`) và bắt đầu xử lý (`RECEIVED -> IN_PROGRESS`, `FR-REQ-005`). | - **E1:** Thông tin chưa đủ -> Người xử lý chuyển sang `WAITING_FOR_INFO` kèm câu hỏi (`FR-REQ-002`); đồng hồ SLA tạm dừng (`FR-SLA-004`).<br>- **E2:** Yêu cầu không hợp lệ -> Từ chối (`REJECTED`) kèm lý do; người gửi có thể tạo bản sửa đổi (`FR-REQ-009`). | Yêu cầu được định tuyến chính xác, xác nhận tiếp nhận và bước vào giai đoạn xử lý. | `FR-REQ-001`..`005`, `FR-REQ-009` |
+| **`UC-006`** | Xử lý yêu cầu, tạo công việc liên kết, giải quyết và xác nhận đóng | `A03`/`A04` (Processor), `A04` (Requester) | Yêu cầu đang ở trạng thái `IN_PROGRESS`. | 1. Người xử lý tạo một hoặc nhiều `Task` liên kết với `Request` (`FR-REQ-006`).<br>2. Sau khi toàn bộ `Task` liên kết đạt `COMPLETED` hoặc `CANCELLED` (`BR-011`), người xử lý nhập tóm tắt giải quyết và chuyển yêu cầu sang `RESOLVED` (`FR-REQ-007`).<br>3. Người gửi kiểm tra kết quả và xác nhận hài lòng (`RESOLVED -> CONFIRMED -> CLOSED`, `FR-REQ-008`, `ADR-0009`). | - **E1:** Còn Task liên kết chưa hoàn tất -> Hệ thống chặn thao tác `Resolve` (`409 Conflict`, `BR-011`).<br>- **E2:** Người gửi không đồng ý kết quả -> Từ chối kèm lý do, chuyển `RESOLVED -> IN_PROGRESS` để xử lý lại (`ADR-0009`). | Yêu cầu kết thúc ở trạng thái `CLOSED` kèm bản ghi `RequestResolution` và `Confirmation`. | `FR-REQ-006`..`008` |
+| **`UC-007`** | Giao việc trực tiếp hoặc cho phòng ban, nhận việc và thực thi | `A03` (`MANAGER`), `A04` (`EMPLOYEE`) | `A03` có quyền `tasks.create` và `tasks.assign`; nhân viên/phòng ban đích đang `ACTIVE`. | 1. `A03` tạo Task kèm `Checklist` (`FR-TASK-001`) và giao cho cá nhân hoặc phòng ban (`DRAFT -> ASSIGNED`, `FR-TASK-002`).<br>2. `A04` bấm Nhận việc (`ASSIGNED -> ACCEPTED`, ghi `Confirmation(RECEIVE)`, nếu là việc phòng ban thì chiếm quyền sở hữu `UserId = actorId` theo `ADR-0010`, `FR-TASK-003`).<br>3. `A04` bắt đầu làm việc (`ACCEPTED -> IN_PROGRESS`, `FR-TASK-004`), đánh dấu checklist và gửi báo cáo tiến độ (`FR-TASK-005/006`). | - **E1:** Người được giao từ chối nhận việc kèm lý do (`ASSIGNED -> REJECTED`, `FR-TASK-003`).<br>- **E2:** Hai nhân viên cùng phòng ban bấm nhận việc đồng thời -> Chỉ 1 người thành công, người thứ hai nhận `409 Conflict` (`ADR-0010`).<br>- **E3:** Giao lại việc (`FR-TASK-009`) hoặc hủy việc (`FR-TASK-010`). | Công việc được thực thi đúng quy trình với lịch sử phân công và tiến độ đầy đủ. | `FR-TASK-001`..`006`, `FR-TASK-009`, `FR-TASK-010` |
+| **`UC-008`** | Nộp kết quả công việc, quản lý nghiệm thu hoặc yêu cầu làm lại | `A04` (Assignee), `A03` (`MANAGER`) | Task đang ở trạng thái `IN_PROGRESS` (nếu đang `OVERDUE` thì phải bấm tiếp tục sang `IN_PROGRESS` trước theo `ADR-0003`). | 1. `A04` đính kèm tệp bằng chứng (`FR-COL-002`) và nộp kết quả thực hiện (`IN_PROGRESS -> SUBMITTED`, tạo `TaskResult`, `FR-TASK-007`).<br>2. `A03` rà soát kết quả (có thể dùng AI kiểm tra chất lượng `FR-AI-004`) và xác nhận đạt yêu cầu (`SUBMITTED -> CONFIRMED -> COMPLETED`, tạo `Confirmation(RESULT)`, `FR-TASK-008`). | - **E1:** Kết quả chưa đạt -> `A03` từ chối kèm lý do bắt buộc; Task chuyển `SUBMITTED -> IN_PROGRESS` để `A04` làm lại (`ADR-0003`). | Task hoàn tất (`COMPLETED`) với đầy đủ bằng chứng `TaskResult` và `Confirmation`. | `FR-TASK-004`, `FR-TASK-007`, `FR-TASK-008`, `FR-COL-002` |
+| **`UC-009`** | Thực thi bước phê duyệt trong quy trình công việc | `A03` / Người phê duyệt (`Approver`) | Hồ sơ bước vào bước phê duyệt (`WAITING_APPROVAL`), tạo `ApprovalInstance` và `ApprovalStepInstance`. | 1. Hệ thống thông báo cho người phê duyệt của bước hiện hành (`FR-WF-003`).<br>2. Người phê duyệt xem chi tiết hồ sơ (có thể dùng AI tóm tắt `FR-AI-003`) và gửi quyết định Chấp thuận (`APPROVED`) hoặc Từ chối (`REJECTED` kèm lý do) (`FR-WF-004`).<br>3. Hệ thống cập nhật bước phê duyệt và chuyển hồ sơ sang bước tiếp theo (`FR-WF-002`). | - **E1:** Người phê duyệt từ chối -> Hồ sơ chuyển sang trạng thái bị từ chối hoặc quay lại bước chỉnh sửa theo cấu hình quy trình.<br>- **E2:** Người không nằm trong danh sách phê duyệt cố gọi API -> Chặn `403 Forbidden`. | Quyết định phê duyệt được lưu vết bất biến và mở khóa bước quy trình kế tiếp. | `FR-WF-002`..`004` |
+| **`UC-010`** | Theo dõi đồng hồ SLA, tạm dừng hợp lệ và leo thang khi quá hạn | Background Worker (`Hangfire`), `A03`, `A04` | Hồ sơ có gắn `SLAVersion` đang ở trạng thái hoạt động. | 1. Hệ thống tính thời gian làm việc đã trôi qua theo `BusinessCalendar` (`FR-SLA-002`).<br>2. Khi đạt `WarningMinutes` (`ADR-0005`), hệ thống phát thông báo cảnh báo sắp đến hạn.<br>3. Khi vượt `TargetMinutes`, hệ thống chuyển trạng thái sang `OVERDUE`, ghi `SLAEvent` và gửi thông báo leo thang theo các cấp trong `EscalationRulesJson` (`FR-SLA-003`, `ADR-0006`). | - **A1:** Hồ sơ chuyển sang `WAITING_FOR_INFO` hoặc `WAITING_APPROVAL` -> Tạm dừng đồng hồ SLA (`PAUSED`), khi quay lại `IN_PROGRESS` thì tiếp tục tính (`FR-SLA-004`). | Thời hạn SLA được giám sát tự động, cảnh báo và leo thang chính xác mà không làm mất chủ sở hữu hồ sơ. | `FR-SLA-002`..`004` |
+| **`UC-011`** | Tương tác trợ lý AI hỗ trợ tác nghiệp có kiểm soát con người | `A02`, `A03`, `A04`, `A05` (`AI_AGENT`) | Người dùng có quyền `ai.use` và cấu hình AI của Tenant đang bật (`BR-019`). | 1. Người dùng kích hoạt một trong 10 tính năng AI (`FR-AI-001`..`010`).<br>2. Hệ thống thu thập ngữ cảnh trong phạm vi quyền đọc của người gọi, gọi AI Provider, lưu `AIInteraction` / `AIRecommendation` / `AIAgentAction` và hiển thị kết quả kèm nhãn `AI Suggestion`.<br>3. Người dùng xem xét và chọn `ACCEPT`, `EDIT` hoặc `IGNORE` (`POST /api/v1/ai/recommendations/{id}/decision`). | - **E1:** AI Provider quá thời gian chờ hoặc lỗi -> Trả phản hồi suy giảm an toàn (`graceful degradation`), người dùng tiếp tục nhập liệu thủ công.<br>- **E2:** Tính năng AI bị tắt ở cấp Tenant -> Trả lỗi `403 AI.FEATURE_DISABLED`. | Người dùng nhận được hỗ trợ thông minh nhanh chóng; mọi đề xuất và quyết định của con người đều được kiểm toán. | `FR-AI-001`..`010` |
+| **`UC-012`** | Tra cứu bảng điều khiển, báo cáo, tìm kiếm hồ sơ và kiểm toán | `A01`, `A02`, `A03`, `A04` | Người dùng đã đăng nhập và có quyền đọc tương ứng. | 1. `A03` mở Bảng điều khiển quản lý (`FR-REP-001`), báo cáo khối lượng công việc (`FR-REP-003`) và báo cáo SLA (`FR-REP-004`) trong phạm vi quản lý.<br>2. `A02` xem báo cáo tổng hợp toàn công ty (`FR-REP-002`) và nhật ký kiểm toán Tenant (`AuditLog`).<br>3. Người dùng tìm kiếm hồ sơ hợp nhất (`FR-COL-004`) và lưu trữ hồ sơ đã hoàn tất (`FR-COL-003`). | - **E1:** Truy vấn ngoài phạm vi quản lý -> Hệ thống tự động lọc bỏ hoặc trả `403/404`. | Cung cấp số liệu điều hành chính xác, tức thời và bảo đảm khả năng truy vết lịch sử. | `FR-COL-003`, `FR-COL-004`, `FR-REP-001`..`004` |
+| **`UC-013`** | Tự đăng ký Doanh nghiệp, Xác minh Email và Khởi tạo Tự động `Primary Tenant` + `COMPANY_ADMIN` (`PROPOSED — NOT APPROVED`) | Đại diện công ty đăng ký (`A02` tương lai), `A01` (`PLATFORM_ADMIN` hậu kiểm) | Đại diện công ty truy cập `/register-company` từ liên kết CTA trên `/login` (`IR-UI-004`); cờ cấu hình Self-Service (`OD-021`) được bật. | 1. Đại diện công ty nhập thông tin doanh nghiệp + tài khoản quản trị viên ban đầu tại `/register-company` (`FR-TEN-005`).<br>2. Hệ thống kiểm tra không trùng lặp (`BR-024`), lưu hồ sơ `PENDING (EmailVerified = false)` và gửi email xác minh một lần (`IR-EXT-002`, `OD-022`).<br>3. Đại diện công ty xác minh email hợp lệ.<br>4. Hệ thống thực thi giao dịch nguyên tử (`BR-023`, `OD-024`): kích hoạt `Company(ACTIVE)`, tạo đúng **1 `Primary Tenant(ACTIVE)`** (`DEC-WS-001`), hạt giống `BusinessCalendar`/`TenantSetting`, tạo `UserAccount(ACTIVE)` và gán `UserRole(COMPANY_ADMIN)`. | - **E1 (Đăng ký thất bại):** Dữ liệu không hợp lệ (`422`) hoặc lỗi DB (`500` rollback).<br>- **E2 (Email/Mã trùng):** Trả `409 Conflict` (`BR-024`).<br>- **E3 (Email chưa xác minh):** Chặn kích hoạt Workspace và chặn đăng nhập (`403 AUTH.EMAIL_NOT_VERIFIED`).<br>- **E4 (Đăng ký lại):** Cho phép đăng ký lại khi hồ sơ cũ đã `REJECTED`/`EXPIRED`, giữ nguyên lịch sử `AuditLog` (`OD-023`).<br>- **E5 & E6 (Tạo Tenant/Workspace hoặc gán `COMPANY_ADMIN` thất bại):** Hoàn tác nguyên tử toàn bộ giao dịch (`Atomic Rollback`, `BR-023`, `OD-024`). | Doanh nghiệp có đúng 1 `Primary Tenant` hoạt động và ít nhất 1 `COMPANY_ADMIN` đã xác minh email sẵn sàng đăng nhập; không phát sinh multi-workspace hay billing (`DEC-WS-001`..`002`). | `FR-TEN-005`, `FR-TEN-001`, `FR-TEN-002`, `IR-UI-004`, `IR-EXT-002` |
+| **`UC-014`** | Đăng nhập hợp nhất: Xác thực bằng ID (3 trường bắt buộc) hoặc Đăng nhập qua Email-Link kèm Bộ chọn Không gian làm việc | Mọi người dùng (`A01`..`A04`) | Người dùng truy cập trang `/login` (`UI-01`). | 1. Người dùng chọn 1 trong 2 tùy chọn xác thực (`BR-025`):<br>- **Tùy chọn A (Đăng nhập ID):** Nhập đủ 3 trường: ID người dùng, Mật khẩu, Mã Workspace -> Backend xác minh cả 3 trường và cấp JWT session.<br>- **Tùy chọn B (Email-link):** Chỉ nhập địa chỉ Email -> Backend sinh magic link một lần (TTL 15m) gửi qua email.<br>2. Người dùng nhấp link trong email: Nếu thuộc 1 Workspace, đăng nhập thẳng; nếu thuộc $\ge 2$ Workspace, hiển thị `Workspace Selector` để chọn; nếu 0 Workspace, thông báo từ chối. | - **E1 (Thiếu trường ID login):** Thiếu 1 trong 3 trường -> Báo lỗi nhập liệu ngay trên UI.<br>- **E2 (Sai ID login):** Sai mật khẩu hoặc mã workspace không khớp -> Trả `401 Unauthorized` (`SEC-001`).<br>- **E3 (Magic link hết hạn/đã dùng):** Trả lỗi `401 Magic link expired or already used`. | Người dùng được cấp phiên xác thực hợp lệ gắn đúng với Workspace đã chọn; ghi `AuditLog`. | `FR-AUTH-001`, `FR-AUTH-005`, `IR-UI-005`, `IR-API-004` |
+| **`UC-015`** | Tương tác với Trợ lý Robot nhúng, Truy vấn Ngôn ngữ Tự nhiên và Quản lý Thu gọn theo Phiên | Người dùng đã đăng nhập (`A02`, `A03`, `A04`) | Đăng nhập thành công vào Workspace. | 1. Widget robot tự động mở mặc định tại góc dưới bên phải (`BR-029`, `FR-AI-011`).<br>2. Người dùng hỏi bằng ngôn ngữ tự nhiên về deadline, việc quá hạn, việc cần làm, ưu tiên.<br>3. Hệ thống lọc dữ liệu nghiêm ngặt theo RBAC/ManagementScope (`BR-027`), gọi LLM và trả lời chính xác dựa trên dữ liệu thực tế (grounding).<br>4. Nếu người dùng bấm nút [X] ở góc trên bên phải, widget thu gọn thành biểu tượng tròn và lưu trạng thái vào `sessionStorage`. | - **E1 (Truy vấn ngoài phạm vi):** Robot phản hồi lịch sự không có quyền hoặc không tìm thấy dữ liệu.<br>- **E2 (Đăng nhập lại/Phiên mới):** Trạng thái đóng trong `sessionStorage` bị hủy; widget robot tự động mở lại theo mặc định. | Người dùng nhận hỗ trợ thông minh nhanh chóng, không bị che khuất màn hình khi không cần; bảo toàn an toàn dữ liệu. | `FR-AI-011`, `FR-AI-012`, `IR-UI-005`, `DR-016` |
+| **`UC-016`** | Phân rã Công việc bằng AI qua Lệnh `/task` kèm Xác nhận Rõ ràng Bắt buộc từ Con người | `A02`, `A03`, `A04` | Robot widget đang mở, người dùng có quyền giao việc hoặc gửi yêu cầu. | 1. Người dùng nhập lệnh `/task <đoạn văn bản mô tả nội dung công việc>`.<br>2. AI phân tích và đề xuất cấu trúc phân rã gồm: Tiêu đề, Loại việc (`Support Request` hoặc `Task Assignment`), Phòng ban tiếp nhận dự kiến, Mô tả chi tiết (`FR-AI-013`).<br>3. Giao diện hiển thị danh sách đề xuất dạng checklist tương tác.<br>4. Người dùng xem lại, tick chọn các mục, chỉnh sửa trực tiếp thông tin từng mục.<br>5. Người dùng bấm nút **"Xác nhận tạo việc"** (`Explicit Confirmation`, `BR-028`).<br>6. Backend kiểm tra quyền tại từng phòng ban đích và tạo các bản ghi tương ứng trong DB. | - **E1 (Người dùng không xác nhận):** Đóng modal/chat -> Không có bất kỳ bản ghi nào được ghi vào DB.<br>- **E2 (Không có quyền tại phòng ban đích):** Báo lỗi cụ thể cho mục đó, cho phép người dùng đổi phòng ban hoặc bỏ chọn mục đó. | Các công việc/yêu cầu được tạo chính xác theo ý muốn người dùng; 100% tuân thủ quy tắc kiểm soát con người `BR-028`. | `FR-AI-013`, `IR-API-006`, `OD-028` |
+| **`UC-017`** | Cấu hình Lịch Nhắc việc Deadline qua Lệnh `/notifications` và Nhận Thông báo Đa kênh In-app / Web Push / Email | `A02`, `A03`, `A04` | Người dùng đã đăng nhập; có công việc hoặc yêu cầu có gắn deadline. | 1. Người dùng gõ lệnh `/notifications` trong robot widget để xem danh sách lịch nhắc nhở và tùy chỉnh mốc nhắc (ví dụ: trước 24h, 4h, 1h, khi quá hạn) (`FR-NOTIF-003`).<br>2. Hệ thống lưu cấu hình và lập lịch nhắc nhở trên backend worker (`Hangfire`).<br>3. Khi đến mốc nhắc nhở (`BR-030`, `FR-NOTIF-004`):<br>- Nếu người dùng online: Phát In-app Notification qua SignalR toast và cập nhật Notification Center.<br>- Nếu người dùng offline: Gửi Web Push Notification qua Browser Service Worker (nếu đã cấp quyền).<br>- Nếu chưa cấp Web Push hoặc push lỗi: Tự động gửi Email thông báo định dạng HTML. | - **E1 (Công việc hoàn thành/hủy sớm):** Hệ thống tự động hủy các lịch nhắc nhở còn lại của công việc đó.<br>- **E2 (Trùng lặp nhắc nhở):** Bộ lập lịch khử trùng lặp qua `NotificationLog` composite key để tránh spam. | Người dùng nắm bắt hạn chót kịp thời qua mọi kênh, nâng cao tỷ lệ hoàn thành đúng hạn. | `FR-NOTIF-003`, `FR-NOTIF-004`, `IR-EXT-003`, `IR-API-007`, `DR-016`, `OD-030`, `OD-032` |
 | **`UC-002`** | Xác thực người dùng, làm mới phiên và khôi phục mật khẩu | `A01`, `A02`, `A03`, `A04` | Tài khoản người dùng và Tenant (nếu là người dùng doanh nghiệp) đang `ACTIVE`. | 1. Người dùng gửi định danh (`EmployeeCode` hoặc `Email`) + mật khẩu (`FR-AUTH-001/002`).<br>2. Hệ thống xác thực Argon2id/BCrypt, tạo `AuthenticationSession`, trả `AccessToken` + `RefreshToken`.<br>3. Khi `AccessToken` hết hạn, trình khách gửi `RefreshToken` để xoay vòng phiên mới (`FR-AUTH-003`). | - **E1:** Sai thông tin đăng nhập -> Trả lỗi `401` không tiết lộ tài khoản tồn tại hay không (`SEC-001`).<br>- **E2:** Phát hiện dùng lại `RefreshToken` cũ (Replay) -> Thu hồi toàn bộ chuỗi phiên `FamilyId` (`SEC-002`).<br>- **E3:** Quên mật khẩu -> Đặt lại qua email token hoặc Admin cấp mật khẩu tạm (`FR-AUTH-004`). | Phiên xác thực hợp lệ được thiết lập hoặc thu hồi an toàn; mọi sự kiện ghi vào `AuditLog`. | `FR-AUTH-001`..`004` |
 | **`UC-003`** | Thiết lập cơ cấu tổ chức, phạm vi quản lý và vai trò tùy chỉnh | `A02` (`COMPANY_ADMIN`) | `A02` đã đăng nhập vào Tenant Workspace Plane. | 1. `A02` tạo cây phòng ban (`Department`, `FR-ORG-004`).<br>2. `A02` tạo tài khoản nhân viên, gán phòng ban và vai trò (`FR-ORG-001/002`).<br>3. `A02` gán phạm vi quản lý (`ManagementScope`) cho các `MANAGER` (`BR-003`).<br>4. `A02` tạo vai trò tùy chỉnh và gán các mã quyền (`FR-ORG-005`). | - **E1:** Vô hiệu hóa tài khoản nhân viên nghỉ việc (`FR-ORG-003`) -> Thu hồi ngay mọi phiên đăng nhập đang mở, giữ nguyên lịch sử hồ sơ.<br>- **E2:** Tạo vòng lặp phòng ban cha-con -> Chặn với lỗi `422`. | Cơ cấu tổ chức, `ManagementScope` và quyền RBAC có hiệu lực ngay cho các truy vấn tiếp theo. | `FR-ORG-001`..`005` |
 | **`UC-004`** | Cấu hình danh mục dịch vụ nội bộ, định tuyến, Workflow và SLA | `A02` (`COMPANY_ADMIN`) | Đã có phòng ban và người dùng hoạt động trong Tenant. | 1. `A02` tạo hồ sơ `SLAProfile`, `BusinessCalendar` và phát hành `SLAVersion` bất biến (`FR-SLA-001`).<br>2. `A02` thiết kế `Workflow`, cấu hình các bước và phát hành `WorkflowVersion` (`FR-WF-001`).<br>3. `A02` tạo `Service`, `ServiceCategory` (`FR-SVC-001`), cấu hình `RoutingRule` (`FR-SVC-002`), gắn `WorkflowVersion` (`FR-SVC-003`) và `ApprovalRule` (`FR-SVC-004`). | - **E1:** Đồ thị Workflow không có bước bắt đầu/kết thúc hoặc có bước cô lập -> Từ chối phát hành (`422`).<br>- **E2:** Xung đột ETag khi hai Admin cùng sửa `Service` -> Trả lỗi `412 Precondition Failed` (`ADR-0008`). | Dịch vụ sẵn sàng để nhân viên gửi yêu cầu; các phiên bản SLA và Workflow cũ được bảo toàn bất biến. | `FR-SVC-001`..`004`, `FR-WF-001`, `FR-SLA-001` |
@@ -444,18 +467,44 @@ Trước khi đi vào đặc tả nguyên tử từng yêu cầu chức năng (`
 
 ### 5.1. Mô-đun M01 — Quản lý Xác thực và Phiên đăng nhập (Authentication & Session Management)
 
-#### `FR-AUTH-001`: Đăng nhập Người dùng Doanh nghiệp bằng Mã nhân viên hoặc Email
-- **Tên ngắn:** Đăng nhập Tenant bằng Mã nhân viên / Email
-- **Nội dung yêu cầu:** Hệ thống **phải** cho phép người dùng thuộc một doanh nghiệp (`Tenant`) đăng nhập bằng tổ hợp **(Mã nhân viên `EmployeeCode` hoặc Địa chỉ Email `Email`) + Mật khẩu** trong phạm vi một mã định danh thuê bao (`TenantSlug` / `TenantCode`), xác minh mật khẩu bằng thuật toán băm một chiều kháng vét cạn (`Argon2id` hoặc `BCrypt`), và khi thành công thì cấp cặp `AccessToken` (JWT ngắn hạn) cùng `RefreshToken` (lưu băm trong `AuthenticationSession`).
-- **Lý do tồn tại (Rationale):** Đáp ứng `BR-001` cho phép cả nhân viên văn phòng (dùng email) và nhân viên vận hành nội bộ (dùng mã nhân viên) truy cập hệ thống an toàn.
-- **Nguồn tham chiếu:** `SRC-002` (SSS §5.1 `FR-AUTH-001`), `SRC-009` (`ADR-0002`), `SRC-033` (`AuthController.cs`).
+#### `FR-AUTH-001`: Đăng nhập Người dùng Doanh nghiệp bằng ID với Đúng 3 Trường Bắt buộc
+- **Tên ngắn:** Đăng nhập ID (3 Trường Bắt buộc: ID, Password, Workspace Key)
+- **Nội dung yêu cầu:** Hệ thống **phải** cung cấp phương thức xác thực đầu tiên tại trang Đăng nhập hợp nhất (`/login`): Đăng nhập theo ID. Biểu mẫu này bắt buộc người dùng phải nhập đầy đủ **chính xác 3 trường thông tin**:
+  1. **Định danh người dùng (`ID`):** Mã nhân viên (`EmployeeCode`) hoặc Tên tài khoản (`Username`) hoặc Địa chỉ Email (`Email`);
+  2. **Mật khẩu (`Password`):** Chuỗi ký tự mật khẩu của tài khoản;
+  3. **Mã Không gian làm việc (`Workspace Key` / `TenantKey`):** Mã định danh duy nhất của Workspace doanh nghiệp.
+  Backend **phải xác minh đồng thời cả 3 trường này**. Nếu người dùng bỏ trống bất kỳ trường nào trong 3 trường trên, giao diện và backend phải từ chối ngay lập tức. Nếu tổ hợp `(ID, Password, Workspace Key)` không khớp hoặc tài khoản/Workspace không ở trạng thái `ACTIVE`, backend trả về phản hồi từ chối chung (`401 Unauthorized`) để chống vét cạn định danh (`SEC-001`). Khi xác thực thành công, hệ thống cấp cặp `AccessToken` (JWT ngắn hạn gắn `tenant_id`) cùng `RefreshToken` (lưu băm trong `AuthenticationSession`).
+- **Lý do tồn tại (Rationale):** Đáp ứng `BR-001` và `BR-025` bảo đảm tính phân định rõ ràng giữa các Tenant trong mô hình SaaS, loại bỏ rủi ro nhầm lẫn Workspace khi đăng nhập bằng ID.
+- **Nguồn tham chiếu:** `SRC-002` (SSS §5.1 `FR-AUTH-001`), `SRC-009` (`ADR-0002`), `BR-001`, `BR-025`, `OD-025`.
 - **Mức ưu tiên:** `P0 (Must-have)`
-- **Trạng thái đặc tả:** `CONFIRMED` | **Trạng thái triển khai:** `IMPLEMENTED`
-- **Phụ thuộc:** `DR-003`, `DR-004`, `SEC-001`, `SEC-002`.
+- **Trạng thái đặc tả:** `CONFIRMED` | **Trạng thái triển khai:** `PARTIAL` (Mã nguồn hiện tại có toggle nhưng trường `tenantKey` là tùy chọn; cần bổ sung kiểm tra bắt buộc cả 3 trường trên backend và frontend).
+- **Phụ thuộc:** `DR-001`, `DR-003`, `DR-004`, `SEC-001`, `SEC-002`.
 - **Phương pháp xác minh:** `T` (Unit & Integration Test), `D` (Demonstration trên `UI-01`).
 - **Điều kiện nghiệm thu (Acceptance Criteria):**
-  - **AC1 (Happy Path):** *Given* một người dùng có `Status = ACTIVE` thuộc một `Tenant` có `Status = ACTIVE`, *When* người dùng gửi `POST /api/v1/auth/login` với `tenantSlug`, `identifier` (là `EmployeeCode` hoặc `Email` khớp không phân biệt hoa thường) và `password` đúng, *Then* hệ thống trả về `HTTP 200 OK` chứa `accessToken`, `refreshToken`, thông tin hồ sơ người dùng, tạo một bản ghi `AuthenticationSession` mới và ghi `AuditLog (Action = "AUTH.LOGIN_SUCCEEDED")`.
-  - **AC2 (Negative / Enumeration Defense):** *Given* một yêu cầu đăng nhập có `password` sai, hoặc `identifier` không tồn tại, hoặc tài khoản/Tenant đang bị khóa (`INACTIVE` / `SUSPENDED`), *When* gọi `POST /api/v1/auth/login`, *Then* hệ thống trả về `HTTP 401 Unauthorized` với thông điệp lỗi chung không tiết lộ trường nào sai và ghi `AuditLog (Action = "AUTH.LOGIN_FAILED")`.
+  - **AC1 (Happy Path - 3 Valid Fields):** *Given* một người dùng có `Status = ACTIVE` thuộc `Tenant` có `TenantKey` tương ứng đang `ACTIVE`, *When* người dùng gửi `POST /api/v1/auth/login` với đầy đủ 3 trường hợp lệ (`workspaceKey`, `id`, `password`), *Then* hệ thống trả về `HTTP 200 OK` chứa JWT token mang claim `tenant_id` tương ứng, tạo `AuthenticationSession` mới và ghi `AuditLog (Action = "AUTH.LOGIN_SUCCEEDED")`.
+  - **AC2 (Missing Any of 3 Mandatory Fields):** *Given* yêu cầu đăng nhập thiếu 1 trong 3 trường (ví dụ: có ID và password nhưng bỏ trống `workspaceKey`), *When* gửi đăng nhập, *Then* hệ thống từ chối (`HTTP 400 Bad Request` hoặc `HTTP 422 Unprocessable Entity`) kèm thông điệp lỗi chỉ rõ trường bắt buộc còn thiếu.
+  - **AC3 (Invalid Combination / Enumeration Defense):** *Given* yêu cầu có đủ 3 trường nhưng mật khẩu sai hoặc `workspaceKey` không khớp với tài khoản, *When* gửi đăng nhập, *Then* hệ thống trả về `HTTP 401 Unauthorized` với thông điệp chung `AUTH.INVALID_CREDENTIALS` và ghi `AuditLog (Action = "AUTH.LOGIN_FAILED")`.
+
+#### `FR-AUTH-005`: Đăng nhập bằng Email-Link và Bộ chọn Không gian làm việc
+- **Tên ngắn:** Đăng nhập qua Email-Link & Workspace Selector
+- **Nội dung yêu cầu:** Hệ thống **phải** cung cấp phương thức xác thực độc lập thứ hai tại trang Đăng nhập hợp nhất: Đăng nhập bằng Email-Link (Magic Link / Passwordless).
+  1. **Đầu vào tối giản:** Người dùng chỉ cần nhập duy nhất một địa chỉ Email (`Email`); tuyệt đối **không yêu cầu nhập mật khẩu và không yêu cầu nhập mã workspace** ở bước yêu cầu gửi liên kết đăng nhập.
+  2. **Tạo và gửi mã liên kết bảo mật:** Backend kiểm tra định dạng email, tạo token ngẫu nhiên bảo mật cao (CSPRNG 32 bytes, lưu băm SHA-256, thời hạn `TTL = 15 phút`, sử dụng một lần duy nhất theo `OD-025`), áp dụng giới hạn tần suất gửi email (tối đa `3 email / 15 phút / IP & email`), và gửi email chứa liên kết đăng nhập chứa token tới hộp thư người dùng qua `IR-EXT-002`.
+  3. **Xác thực token và điều hướng theo số lượng Workspace:** Khi người dùng nhấp vào liên kết (gọi `POST /api/v1/auth/email-link/verify` kèm token):
+     - **Trường hợp 1 (Email thuộc đúng 01 Workspace `ACTIVE`):** Hệ thống tự động xác thực thành công, cấp phiên JWT gắn với Workspace đó và chuyển hướng thẳng vào Bảng điều khiển Workspace.
+     - **Trường hợp 2 (Email thuộc từ 02 Workspace `ACTIVE` trở lên):** Hệ thống trả về token tạm thời chọn Workspace (`SessionSelectToken` có `TTL = 5 phút`) và kích hoạt giao diện Bộ chọn Không gian làm việc (`Workspace Selector Modal` theo `IR-UI-005`), liệt kê danh sách các Workspace hợp lệ mà người dùng là thành viên. Khi người dùng bấm chọn một Workspace (gọi `POST /api/v1/auth/email-link/select-workspace`), hệ thống mới cấp phiên JWT chính thức cho Workspace đó.
+     - **Trường hợp 3 (Email chưa thuộc bất kỳ Workspace nào):** Hệ thống hiển thị thông báo từ chối rõ ràng và cung cấp liên kết CTA dẫn tới trang Đăng ký doanh nghiệp mới (`/register-company`).
+- **Lý do tồn tại (Rationale):** Mang lại trải nghiệm đăng nhập không mật khẩu tiện lợi, nhanh chóng cho người dùng hiện đại trong khi giải quyết triệt để bài toán người dùng làm việc tại nhiều doanh nghiệp/Workspace khác nhau trên cùng nền tảng SaaS.
+- **Nguồn tham chiếu:** `BR-025`, `OD-025`, `IR-UI-005`, `IR-API-004`.
+- **Mức ưu tiên:** `P0 (Must-have)`
+- **Trạng thái đặc tả:** `CONFIRMED` | **Trạng thái triển khai:** `NOT_IMPLEMENTED` (Chưa có endpoint `POST /api/v1/auth/email-link/request`, `verify`, `select-workspace` và giao diện Workspace Selector trên frontend).
+- **Phụ thuộc:** `DR-001`, `DR-003`, `DR-004`, `IR-EXT-002`, `IR-UI-005`, `IR-API-004`, `SEC-001`, `OD-025`.
+- **Phương pháp xác minh:** `T` (Integration Test các trường hợp 0, 1, nhiều workspace, token hết hạn, replay), `D` (Demonstration trên UI).
+- **Điều kiện nghiệm thu (Acceptance Criteria):**
+  - **AC1 (Request Magic Link - No Password / Workspace Required):** *Given* người dùng tại `/login`, *When* nhập email hợp lệ và bấm "Gửi liên kết đăng nhập", *Then* hệ thống trả về thông báo xác nhận thành công (luôn trả `200 OK` đồng nhất để chống liệt kê tài khoản), lưu băm token bảo mật trong DB/Redis với `TTL = 15 phút` và gửi email chứa URL xác thực.
+  - **AC2 (Single Workspace Direct Entry):** *Given* một token hợp lệ gắn với email chỉ thuộc đúng 1 Workspace `ACTIVE`, *When* gọi xác thực token, *Then* hệ thống trả về phiên JWT hợp lệ gắn với `tenant_id` của Workspace đó và điều hướng người dùng vào ứng dụng.
+  - **AC3 (Multi-Workspace Selector Modal):** *Given* token hợp lệ gắn với email thuộc 2 Workspace trở lên, *When* xác thực token, *Then* hệ thống trả về danh sách các Workspace khả dụng kèm `sessionSelectToken`, frontend hiển thị modal chọn Workspace; khi người dùng chọn Workspace cụ thể, hệ thống cấp JWT chính thức.
+  - **AC4 (Token Expired / Reused / Invalid):** *Given* token đã hết hạn (> 15 phút) hoặc đã được sử dụng một lần trước đó, *When* gửi xác thực, *Then* hệ thống từ chối (`HTTP 401 Unauthorized - AUTH.MAGIC_LINK_EXPIRED_OR_INVALID`) và hướng dẫn người dùng yêu cầu liên kết mới.
 
 #### `FR-AUTH-002`: Đăng nhập Quản trị viên Nền tảng (`PLATFORM_ADMIN`)
 - **Tên ngắn:** Đăng nhập Quản trị viên Nền tảng
@@ -504,42 +553,56 @@ Trước khi đi vào đặc tả nguyên tử từng yêu cầu chức năng (`
 
 ### 5.2. Mô-đun M02 — Quản lý Đa thuê bao và Đăng ký Doanh nghiệp (Multi-Tenant & Company Onboarding)
 
-#### `FR-TEN-001`: Gửi Hồ sơ Đăng ký Doanh nghiệp Mới và Thông tin Tài khoản Đại diện Ban đầu
-- **Tên ngắn:** Đăng ký Doanh nghiệp & Tài khoản Đại diện (Company Registration Submission)
-- **Nội dung yêu cầu:** Hệ thống **phải** cho phép đại diện một doanh nghiệp mới gửi hồ sơ đăng ký sử dụng nền tảng thông qua biểu mẫu công khai (`/register-company`, xem `IR-UI-004`), bao gồm:
-  1. **Thông tin doanh nghiệp và Workspace đề xuất:** Tên doanh nghiệp (`CompanyName`), Mã định danh/Mã số thuế (`CompanyCode`), Khóa không gian làm việc chính đề xuất (`RequestedTenantKey` / `Slug`) và Múi giờ mặc định (`TimeZoneId`);
-  2. **Thông tin tài khoản người đại diện / chủ sở hữu ban đầu (`Initial Owner / Representative Account`):** Họ và tên (`FullName`), Địa chỉ Email liên hệ & quản trị (`ContactEmail`), Mã nhân viên quản trị mặc định (`EmployeeCode`, mặc định `ADMIN-001` nếu không nhập) và Mật khẩu khởi tạo (được băm `Argon2id`/`BCrypt` ngay khi tiếp nhận);
-  3. **Kiểm tra trùng lặp, xác minh email và lưu hồ sơ:** Hệ thống kiểm tra không trùng lặp với các doanh nghiệp/tài khoản đang `ACTIVE` hoặc `PENDING` (`BR-024`), lưu hồ sơ với trạng thái `PENDING` (`EmailVerified = false` ban đầu kèm mã băm token xác minh email theo `OD-022`), gửi email xác minh tới `ContactEmail` (`IR-EXT-002`) và thông báo cho `PLATFORM_ADMIN` (`OD-009`).
-- **Lý do tồn tại (Rationale):** Khởi đầu quy trình tiếp nhận khách hàng doanh nghiệp mới (Tenant Onboarding) trên nền tảng SaaS với đầy đủ thông tin để tạo cả `Company`, `Primary Tenant` và tài khoản `COMPANY_ADMIN` ban đầu.
-- **Nguồn tham chiếu:** `SRC-002` (SSS §5.2 `FR-TEN-001`), `SRC-020` (`implementation-status.md`), `BR-024`, `OD-009`, `OD-021`..`023`.
+#### `FR-TEN-001`: Gửi Hồ sơ Đăng ký Doanh nghiệp Đầy đủ 6 Trường, Kiểm tra Mã Workspace và Tải lên Tài liệu
+- **Tên ngắn:** Đăng ký Doanh nghiệp 6 Trường & Tải Hồ sơ MinIO
+- **Nội dung yêu cầu:** Hệ thống **phải** cho phép người đại diện doanh nghiệp gửi hồ sơ đăng ký sử dụng nền tảng thông qua biểu mẫu công khai tại `/register-company` (`IR-UI-004`), đáp ứng các tiêu chuẩn:
+  1. **Đầy đủ chính xác 6 trường thông tin bắt buộc:**
+     - Mã số thuế (`TaxId` / `CompanyCode`): Mã số thuế hợp lệ của doanh nghiệp (10 hoặc 13 chữ số);
+     - Tên công ty (`CompanyName`): Tên pháp nhân đầy đủ của doanh nghiệp;
+     - Mã workspace mong muốn (`DesiredWorkspaceCode` / `Slug`): Chuỗi định danh không gian làm việc (`^[a-z0-9-]{3,30}$`);
+     - Tên người phụ trách (`ContactPersonName` / `FullName`): Họ và tên của người đại diện;
+     - Email người phụ trách (`ContactEmail`): Địa chỉ thư điện tử để nhận liên kết xác minh và thông báo tài khoản;
+     - Số điện thoại (`ContactPhone`): Số điện thoại liên lạc của người phụ trách (10–11 chữ số).
+  2. **Kiểm tra khả dụng và Tự động sinh mã Workspace:**
+     - Cung cấp API kiểm tra thời gian thực `GET /api/v1/tenants/check-code?code={desiredCode}` (`IR-API-005`) để phản hồi mã đã tồn tại hay khả dụng;
+     - Cung cấp nút "Tự động tạo mã" trên giao diện: sinh mã ngẫu nhiên dựa trên tên công ty (slug hóa + 4 chữ số ngẫu nhiên) hoặc tiền tố `ws-` kèm chuỗi ngẫu nhiên (`OD-026`);
+     - Khi người dùng bấm nút Gửi đơn đăng ký, backend **phải kiểm tra lại lần thứ hai (re-check)** tính khả dụng của mã workspace để ngăn ngừa triệt để xung đột đồng thời (Race Condition).
+  3. **Tải lên tài liệu hồ sơ hỗ trợ (Supporting Documents):**
+     - Cho phép người dùng đính kèm tài liệu pháp lý (giấy phép kinh doanh, giấy ủy quyền...) tải trực tiếp lên Object Storage (MinIO/S3 bucket `company-documents` theo `IR-FILE-001`, `DR-017`, `OD-027`);
+     - Hỗ trợ định dạng PDF, PNG, JPG, JPEG; giới hạn tối đa `10 MB / tệp` và tổng dung lượng không quá `50 MB` cho mỗi hồ sơ đăng ký.
+  4. **Kiểm tra trùng lặp và xác minh email:** Hệ thống kiểm tra không trùng lặp TaxId/Code, DesiredWorkspaceCode và ContactEmail với các bản ghi đang `ACTIVE` hoặc `PENDING` (`BR-024`), lưu hồ sơ với `Status = PENDING (EmailVerified = false)`, sinh token xác minh email (`OD-022`) và gửi email xác minh tới `ContactEmail` (`IR-EXT-002`).
+- **Lý do tồn tại (Rationale):** Đáp ứng `BR-026` thu thập đầy đủ thông tin pháp nhân và hồ sơ thẩm định cho mô hình B2B SaaS, đồng thời tối ưu trải nghiệm chọn mã định danh Workspace.
+- **Nguồn tham chiếu:** `BR-024`, `BR-026`, `OD-022`, `OD-023`, `OD-026`, `OD-027`, `IR-API-005`, `IR-FILE-001`, `DR-017`.
 - **Mức ưu tiên:** `P0 (Must-have)`
-- **Trạng thái đặc tả:** `CONFIRMED` (chính sách xác minh email và đăng ký lại liên kết `OD-009`, `OD-022`, `OD-023`) | **Trạng thái triển khai:** `NOT_IMPLEMENTED` (Đã có bảng `Company` và API đọc hàng đợi `GET /api/v1/platform/company-registrations` trong `CompanyRegistrationsController.cs`; chưa có endpoint `POST /api/v1/company-registrations`, `POST /verify-email`, `POST /resend-verification` và `Company.cs` hiện chưa lưu các trường tài khoản đại diện ban đầu).
-- **Phụ thuộc:** `DR-002`, `IR-UI-004`, `IR-EXT-002`, `IR-NOTIF-001`, `OD-009`, `OD-022`, `OD-023`.
-- **Phương pháp xác minh:** `T` (Integration Test), `D` (Demonstration trên `UI-01` / `/register-company` / `UI-02`).
+- **Trạng thái đặc tả:** `CONFIRMED` | **Trạng thái triển khai:** `PARTIAL` (Mã nguồn hiện tại chỉ có biểu mẫu 3 trường `code, name, contactEmail`; chưa có 3 trường `TaxId, ContactPersonName, ContactPhone`, chưa có API check code/random generator và chưa có tải tài liệu MinIO).
+- **Phụ thuộc:** `DR-002`, `DR-017`, `IR-UI-004`, `IR-API-005`, `IR-FILE-001`, `IR-EXT-002`, `OD-026`, `OD-027`.
+- **Phương pháp xác minh:** `T` (Integration Test), `D` (Demonstration trên UI `/register-company`).
 - **Điều kiện nghiệm thu (Acceptance Criteria):**
-  - **AC1 (Valid Submission & Email Verification Trigger):** *Given* người dùng chưa đăng nhập cung cấp đầy đủ thông tin doanh nghiệp và tài khoản đại diện hợp lệ, chưa bị trùng lặp, *When* gửi `POST /api/v1/company-registrations`, *Then* hệ thống tạo bản ghi `Company` với `Status = PENDING`, băm mật khẩu người đại diện, sinh token xác minh email (`OD-022`), ghi `AuditLog (Action = "COMPANY.REGISTRATION_SUBMITTED")` và hiển thị hồ sơ trên danh sách của `PLATFORM_ADMIN` (`GET /api/v1/platform/company-registrations`).
-  - **AC2 (Duplicate Email / Code / TenantKey & Validation Failure):** *Given* hồ sơ đăng ký thiếu trường bắt buộc/sai định dạng (`400/422 VALIDATION.FAILED`) hoặc trùng `Company.Code`, `TenantKey` hay `ContactEmail` với bản ghi đang `ACTIVE` hoặc đang `PENDING` (`BR-024`), *When* gửi `POST /api/v1/company-registrations`, *Then* hệ thống từ chối với `HTTP 400/422` hoặc `HTTP 409 Conflict` (`COMPANY.DUPLICATE_CODE_OR_KEY` / `IDENTITY.DUPLICATE_EMAIL` / `COMPANY.REGISTRATION_ALREADY_PENDING`) kèm chi tiết trường lỗi và không tạo bản ghi trùng.
-  - **AC3 (Re-registration After Rejection or Expiry — `OD-023`):** *Given* một hồ sơ đăng ký trước đó có cùng `Company.Code` hoặc `ContactEmail` đã ở trạng thái kết thúc `REJECTED` (hoặc hết hạn xác minh `EXPIRED` theo `OD-022`/`OD-023`), *When* người đại diện gửi hồ sơ đăng ký mới hợp lệ, *Then* hệ thống cho phép tạo hồ sơ đăng ký mới (`201 Created`) mà không xóa hay ghi đè bản ghi lịch sử và `AuditLog` của lần đăng ký trước (`BR-021`, `CON-03`).
+  - **AC1 (Valid 6 Fields & Documents Submission):** *Given* người dùng điền đủ 6 trường bắt buộc hợp lệ và tải lên ít nhất 1 tài liệu hợp lệ, *When* gửi đăng ký, *Then* hệ thống lưu tài liệu vào MinIO bucket `company-documents`, lưu `Company` với `Status = PENDING`, phát sinh token xác minh email gửi qua email và trả về `HTTP 201 Created`.
+  - **AC2 (Real-time Code Availability & Random Generator):** *Given* người dùng nhập mã workspace mong muốn hoặc bấm nút "Tự động tạo mã", *When* giao diện gọi `GET /api/v1/tenants/check-code`, *Then* hệ thống trả về kết quả khả dụng `{ available: true/false }` trong vòng $\le 200\text{ ms}$; khi submit, backend kiểm tra lại để đảm bảo không bị trùng.
+  - **AC3 (Missing Any Mandatory Field or File Over Limit):** *Given* người dùng bỏ trống bất kỳ trường nào trong 6 trường bắt buộc hoặc tải tệp không đúng định dạng / vượt quá 10 MB, *When* gửi đăng ký, *Then* hệ thống từ chối ngay với mã lỗi `400/422` kèm thông điệp chi tiết.
 
-#### `FR-TEN-002`: Phê duyệt hoặc Từ chối Đăng ký Doanh nghiệp và Khởi tạo Nguyên tử `Primary Tenant` + `COMPANY_ADMIN`
-- **Tên ngắn:** Phê duyệt Đăng ký & Khởi tạo Nguyên tử Tenant (Company Approval & Atomic Tenant Provisioning)
-- **Nội dung yêu cầu:** Hệ thống **phải** cho phép `PLATFORM_ADMIN` phê duyệt hoặc từ chối một hồ sơ đăng ký doanh nghiệp đang ở trạng thái `PENDING`; khi phê duyệt, hệ thống **phải** thực thi trong một **giao dịch nguyên tử (`Atomic Transaction` theo `BR-023`, `OD-024`)** gồm:
-  1. Chuyển trạng thái `Company` sang `ACTIVE`;
-  2. Khởi tạo **đúng một Không gian làm việc / Thuê bao chính duy nhất (`1 Primary Tenant` với `Status = ACTIVE` và ràng buộc `UNIQUE(CompanyId)` theo `DEC-WS-001`)** — tuyệt đối không tạo đa workspace hay gói cước thanh toán (`DEC-WS-002`);
-  3. Khởi tạo bộ dữ liệu cấu hình hạt giống mặc định của Tenant (các vai trò hệ thống `Role`/`Permission`, thiết lập mặc định `TenantSetting`, lịch làm việc mặc định `BusinessCalendar`);
-  4. Tạo tài khoản người dùng chủ sở hữu ban đầu (`UserAccount` có `Status = ACTIVE`, `TenantId = newTenant.Id`) và gán vai trò quản trị viên doanh nghiệp (`UserRole = COMPANY_ADMIN`);
-  5. Kiểm tra bất biến hậu khởi tạo (`Post-Provisioning Invariant Check`): nếu việc tạo `Primary Tenant`/Workspace hoặc việc gán vai trò `COMPANY_ADMIN` ban đầu không hoàn tất, hệ thống **phải hoàn tác toàn bộ giao dịch (`Atomic Rollback`)**.
-  Khi từ chối, hệ thống **phải** bắt buộc nhập lý do từ chối (`BR-022`) và chuyển trạng thái công ty sang `REJECTED`.
-- **Lý do tồn tại (Rationale):** Đảm bảo mỗi doanh nghiệp được chấp thuận sẽ có ngay một môi trường làm việc chính (`Primary Workspace`) hoàn chỉnh, cách ly và có ít nhất 1 `COMPANY_ADMIN` hợp lệ mà không bao giờ rơi vào trạng thái khởi tạo dở dang.
-- **Nguồn tham chiếu:** `SRC-002` (SSS §5.2 `FR-TEN-002`), `DEC-WS-001`, `DEC-WS-002`, `BR-022`, `BR-023`, `OD-005`, `OD-022`..`024`.
+#### `FR-TEN-002`: Thẩm định Hồ sơ Doanh nghiệp, Phê duyệt/Từ chối và Khởi tạo Nguyên tử `Primary Tenant` + `COMPANY_ADMIN`
+- **Tên ngắn:** Thẩm định Hồ sơ & Khởi tạo Nguyên tử Tenant
+- **Nội dung yêu cầu:** Hệ thống **phải** cho phép `PLATFORM_ADMIN` thẩm định hồ sơ đăng ký doanh nghiệp tại màn hình quản trị `/platform/companies` (hoặc `/platform/registrations`, xem `UI-02` / `IR-UI-006`):
+  1. **Thẩm định hồ sơ và tài liệu hỗ trợ:** `PLATFORM_ADMIN` xem đầy đủ 6 trường thông tin pháp nhân và mở/tải về các tài liệu đính kèm từ MinIO/S3 thông qua Presigned URL bảo mật có thời hạn (`TTL = 15 phút` theo `OD-027`).
+  2. **Quyết định phê duyệt và Khởi tạo nguyên tử (`BR-023`, `OD-024`):** Khi `PLATFORM_ADMIN` bấm Phê duyệt, hệ thống **bắt buộc thực thi trong một giao dịch nguyên tử (`Atomic Transaction`) duy nhất**:
+     - Kích hoạt `Company (Status = ACTIVE)`;
+     - Khởi tạo **đúng một Không gian làm việc / Thuê bao chính duy nhất (`1 Primary Tenant` với `Status = ACTIVE`, `UNIQUE(CompanyId)` theo `DEC-WS-001`)** — tuyệt đối không khởi tạo đa workspace hay hệ thống thanh toán gói cước trong MVP (`DEC-WS-002`);
+     - Khởi tạo bộ dữ liệu hạt giống mặc định (`TenantSetting`, `BusinessCalendar` mặc định);
+     - Tạo tài khoản người quản trị ban đầu (`UserAccount` có `Status = ACTIVE`, gắn với `TenantId`) và gán vai trò `COMPANY_ADMIN` (`UserRole`);
+     - Kiểm tra điều kiện bất biến sau khởi tạo: nếu việc tạo Tenant hoặc gán vai trò `COMPANY_ADMIN` ban đầu thất bại, hệ thống **hoàn tác 100% toàn bộ giao dịch (`Atomic Rollback`)**.
+  3. **Quyết định từ chối:** Khi từ chối, `PLATFORM_ADMIN` bắt buộc phải nhập lý do từ chối bằng văn bản (`BR-022`), hệ thống chuyển `Company.Status = REJECTED` và gửi email thông báo lý do tới `ContactEmail`.
+- **Lý do tồn tại (Rationale):** Đảm bảo quy trình xét duyệt doanh nghiệp chặt chẽ, an toàn pháp lý cho nền tảng B2B SaaS, bảo đảm tính sẵn sàng 100% của Workspace và tài khoản quản trị viên ngay khi được kích hoạt.
+- **Nguồn tham chiếu:** `SRC-002` (SSS §5.2 `FR-TEN-002`), `DEC-WS-001`, `DEC-WS-002`, `BR-022`, `BR-023`, `OD-024`, `IR-UI-006`.
 - **Mức ưu tiên:** `P0 (Must-have)`
-- **Trạng thái đặc tả:** `CONFIRMED` (biểu diễn trạng thái trung gian liên kết `OD-005`, chính sách rollback nguyên tử liên kết `OD-024`) | **Trạng thái triển khai:** `NOT_IMPLEMENTED` (Chưa triển khai `POST /api/v1/platform/company-registrations/{id}/approve` và `/reject`; màn hình `UI-02` `company-registrations.ts` hiện chỉ đọc; `CompanyStatus` trong `Company.cs` chưa có giá trị `Rejected`).
-- **Phụ thuộc:** `FR-TEN-001`, `DR-002`, `DR-003`, `DR-004`, `BR-022`, `BR-023`, `OD-005`, `OD-024`.
-- **Phương pháp xác minh:** `T` (Integration Test kiểm tra tính nguyên tử và kịch bản Fault-Injection Rollback), `D` (`UI-02`).
+- **Trạng thái đặc tả:** `CONFIRMED` | **Trạng thái triển khai:** `PARTIAL` (Đã có giao diện danh sách và modal approve/reject cơ bản nhưng chưa có tính năng xem/tải tài liệu MinIO và chưa có logic kiểm tra tính nguyên tử giao dịch).
+- **Phụ thuộc:** `FR-TEN-001`, `DR-002`, `DR-017`, `IR-UI-006`, `IR-FILE-002`, `BR-022`, `BR-023`, `OD-024`.
+- **Phương pháp xác minh:** `T` (Integration Test kiểm tra atomic rollback), `D` (Demonstration trên `UI-02`).
 - **Điều kiện nghiệm thu (Acceptance Criteria):**
-  - **AC1 (Approve & Atomic Provision):** *Given* một bản ghi `Company` đang ở trạng thái `PENDING` (đã xác minh email theo `BR-024`/`OD-022`) và người gọi là `PLATFORM_ADMIN` có quyền `platform.companies.approve`, *When* gọi `POST /api/v1/platform/company-registrations/{id}/approve`, *Then* trong cùng một giao dịch nguyên tử hệ thống kích hoạt `Company` (`Status = ACTIVE`), tạo đúng 1 bản ghi `Tenant (Status = ACTIVE, CompanyId = Company.Id)`, khởi tạo `TenantSetting`, `BusinessCalendar` mặc định, tạo `UserAccount (ACTIVE)` và gán `UserRole (COMPANY_ADMIN)`, đồng thời ghi `AuditLog`.
-  - **AC2 (Reject with Mandatory Reason):** *Given* một bản ghi `Company` có `Status = PENDING`, *When* `PLATFORM_ADMIN` gọi `POST /api/v1/platform/company-registrations/{id}/reject` kèm lý do không rỗng (`BR-022`), *Then* `Company.Status` chuyển thành `REJECTED`, không có `Tenant` hay `UserAccount` nào được tạo, và lý do từ chối được lưu vết trong `AuditLog`. Nếu lý do rỗng, hệ thống trả về `HTTP 400/422`.
-  - **AC3 (Atomic Rollback on Incomplete Workspace or Role Assignment Failure — `BR-023`, `OD-024`):** *Given* quá trình phê duyệt/khởi tạo đang diễn ra, *When* xảy ra lỗi ở bước tạo `Tenant`, khởi tạo `BusinessCalendar`/`TenantSetting`, tạo `UserAccount` hoặc gán `UserRole(COMPANY_ADMIN)` (hoặc vi phạm ràng buộc `UNIQUE(CompanyId)`), *Then* hệ thống hoàn tác (`Rollback`) toàn bộ giao dịch, giữ `Company` ở trạng thái `PENDING` trước đó, không để lại `Tenant` mồ côi hay `Tenant` thiếu `COMPANY_ADMIN`, và trả về mã lỗi `ONBOARDING.PROVISIONING_ROLLED_BACK` để có thể thử lại an toàn.
+  - **AC1 (Inspect Documents & Approve):** *Given* hồ sơ công ty đang `PENDING` có tài liệu đính kèm trên MinIO, *When* `PLATFORM_ADMIN` xem tài liệu qua link an toàn và bấm Phê duyệt, *Then* giao dịch nguyên tử thực thi thành công, tạo đúng 1 `Primary Tenant` và 1 `COMPANY_ADMIN`, gửi email thông báo kích hoạt kèm thông tin đăng nhập.
+  - **AC2 (Reject with Mandatory Reason):** *Given* hồ sơ đang `PENDING`, *When* `PLATFORM_ADMIN` bấm Từ chối và nhập lý do, *Then* `Company.Status` chuyển sang `REJECTED`, lý do được lưu vào `AuditLog` và gửi email giải thích tới người nộp đơn.
+  - **AC3 (Atomic Rollback on Failure):** *Given* quá trình kích hoạt gặp lỗi tại bước tạo Workspace hoặc gán `COMPANY_ADMIN`, *When* giao dịch thất bại, *Then* toàn bộ dữ liệu hoàn tác về trạng thái `PENDING` ban đầu, không sinh ra Tenant mồ côi hay Workspace không có admin.
 
 #### `FR-TEN-003`: Quản lý Trạng thái Hoạt động của Doanh nghiệp và Thuê bao (Kích hoạt / Tạm ngưng / Ngừng hoạt động)
 - **Tên ngắn:** Quản trị Vòng đời Trạng thái Tenant (`ACTIVE` / `SUSPENDED` / `INACTIVE`)
@@ -1138,6 +1201,42 @@ Trước khi đi vào đặc tả nguyên tử từng yêu cầu chức năng (`
 - **Điều kiện nghiệm thu (Acceptance Criteria):**
   - **AC1:** *Given* người dùng có quyền `records.search` cùng các quyền đọc theo phạm vi, *When* gọi `GET /api/v1/records/search` với bộ lọc từ khóa, trạng thái và phân trang, *Then* hệ thống chỉ trả về các Task/Request thuộc cùng Tenant nằm trong phạm vi quyền đọc của người đó và khớp điều kiện lọc.
 
+#### `FR-NOTIF-003`: Lệnh Quản trị Nhắc việc và Cấu hình Lịch Thông báo (`/notifications Command & Reminder Configuration`)
+- **Tên ngắn:** Lệnh `/notifications` & Cấu hình Lịch Nhắc việc Deadline
+- **Nội dung yêu cầu:** Hệ thống **phải** cho phép người dùng tương tác với trợ lý ảo hoặc giao diện thông báo thông qua lệnh `/notifications` để xem và cấu hình lịch nhắc nhở hạn chót (Deadline) cho các công việc/yêu cầu mà mình được giao hoặc quản lý:
+  1. Hiển thị danh sách các mốc nhắc nhở đang hoạt động theo thứ tự thời gian.
+  2. Cho phép người dùng tùy chỉnh các mốc kích hoạt lời nhắc trước hạn chót: ví dụ trước 24 giờ, trước 4 giờ, trước 1 giờ, và khi công việc chuyển sang quá hạn (`OVERDUE`).
+  3. Lưu trữ cấu hình nhắc nhở vào cơ sở dữ liệu (`DeadlineReminderSchedule` theo `DR-016`) và đồng bộ vào lịch tác vụ nền (`Hangfire`).
+  4. Hỗ trợ bật/tắt nhận thông báo theo từng kênh: In-app, Web Push, Email.
+- **Lý do tồn tại (Rationale):** Trao quyền chủ động cho người dùng kiểm soát tần suất và thời điểm nhận nhắc nhở hạn chót, tránh tình trạng bỏ sót công việc hoặc bị quá tải thông báo.
+- **Nguồn tham chiếu:** `BR-030`, `OD-032`, `IR-API-007`, `DR-016`.
+- **Mức ưu tiên:** `P0 (Must-have)`
+- **Trạng thái đặc tả:** `CONFIRMED` | **Trạng thái triển khai:** `NOT_IMPLEMENTED`
+- **Phụ thuộc:** `FR-TASK-001`, `FR-REQ-001`, `DR-016`, `IR-API-007`, `OD-032`.
+- **Phương pháp xác minh:** `T` (Integration Test), `D` (Demonstration trong chatbot widget / UI).
+- **Điều kiện nghiệm thu (Acceptance Criteria):**
+  - **AC1 (View Active Reminders):** *Given* người dùng gõ `/notifications`, *When* hệ thống xử lý, *Then* trả về danh sách đầy đủ các deadline sắp tới và các mốc nhắc nhở đã lên lịch của người dùng đó.
+  - **AC2 (Configure Trigger Windows):** *Given* người dùng cấu hình mốc nhắc nhở mới (ví dụ: nhắc trước 2h), *When* lưu cấu hình qua `POST /api/v1/notifications/reminders/config`, *Then* hệ thống cập nhật cấu hình cá nhân và lập lịch tác vụ nền tương ứng.
+
+#### `FR-NOTIF-004`: Điều phối Thông báo Deadline Đa kênh Trong trang và Ngoài trang (`Multi-Channel Deadline Notification Dispatching`)
+- **Tên ngắn:** Thông báo Deadline Đa kênh (In-app, Web Push & Email Fallback)
+- **Nội dung yêu cầu:** Hệ thống **phải** điều phối phát thông báo deadline và cảnh báo quá hạn theo chiến lược đa kênh thông minh (`BR-030`):
+  1. **Kênh trong ứng dụng (In-app):** Khi người dùng đang mở ứng dụng (kết nối SignalR Hub đang hoạt động), phát ngay lập tức Notification Toast và cập nhật số lượng tin chưa đọc tại Notification Center (`UI-04`).
+  2. **Kênh đẩy ngoài ứng dụng (Off-site Web Push):** Khi người dùng ngoại tuyến (không có kết nối SignalR đang mở), hệ thống gửi Web Push Notification qua Browser Service Worker (chuẩn W3C Push API / RFC 8292 VAPID qua `IR-EXT-003`). Thông báo hiển thị ở cấp hệ điều hành/trình duyệt và cho phép nhấp vào để mở trực tiếp hồ sơ công việc.
+  3. **Kênh dự phòng thư điện tử (Off-site Fallback Email):** Nếu người dùng chưa cấp quyền Web Push, hoặc token push đã hết hạn/gặp lỗi mạng, hệ thống tự động fallback gửi Email thông báo định dạng HTML qua SMTP (`IR-EXT-002`).
+  4. **Khử trùng lặp và Hủy lịch tự động (`OD-032`):** Bộ lập lịch nền tập trung kiểm tra bảng `NotificationLog` với khóa duy nhất composite `(TaskId, UserId, TriggerType, TimeWindow)` để đảm bảo không bao giờ phát lặp thông báo cùng một mốc; tự động hủy toàn bộ các lịch nhắc nhở chưa kích hoạt khi công việc chuyển sang `COMPLETED`, `CANCELLED` hoặc `CLOSED`.
+- **Lý do tồn tại (Rationale):** Đảm bảo thông tin deadline quan trọng luôn tiếp cận được người chịu trách nhiệm dù đang trực tiếp thao tác trên ứng dụng hay làm việc ngoài trang.
+- **Nguồn tham chiếu:** `BR-030`, `OD-030`, `OD-032`, `IR-NOTIF-001`, `IR-EXT-003`, `IR-EXT-002`, `DR-016`.
+- **Mức ưu tiên:** `P0 (Must-have)`
+- **Trạng thái đặc tả:** `CONFIRMED` | **Trạng thái triển khai:** `PARTIAL` (Đã có SignalR Notification Hub và lưu thông báo in-app; chưa có Web Push Service Worker, fallback email và bộ lập lịch khử trùng lặp).
+- **Phụ thuộc:** `FR-NOTIF-003`, `DR-016`, `IR-NOTIF-001`, `IR-EXT-002`, `IR-EXT-003`, `OD-030`, `OD-032`.
+- **Phương pháp xác minh:** `T` (Integration Test mô phỏng online SignalR, offline Web Push và Fallback Email), `D` (Demonstration nhận push thông báo khi đóng tab).
+- **Điều kiện nghiệm thu (Acceptance Criteria):**
+  - **AC1 (Online Delivery via SignalR):** *Given* người dùng đang online trên trình duyệt, *When* đến mốc nhắc deadline, *Then* nhận ngay thông báo toast SignalR trong vòng $\le 1\text{ giây}$.
+  - **AC2 (Offline Web Push Delivery):** *Given* người dùng offline nhưng đã đăng ký Web Push, *When* đến mốc nhắc, *Then* Service Worker nhận push payload và hiển thị native browser notification.
+  - **AC3 (Offline Fallback to HTML Email):** *Given* người dùng offline và chưa đăng ký Web Push, *When* đến mốc nhắc, *Then* hệ thống phát email thông báo HTML chứa liên kết trực tiếp tới công việc.
+  - **AC4 (Deduplication & Auto-Cancellation):** *Given* một công việc được hoàn thành trước hạn, *When* kiểm tra hàng đợi nhắc nhở, *Then* toàn bộ các lịch nhắc chưa phát sinh của công việc đó bị hủy bỏ và không gửi bất kỳ thông báo thừa nào.
+
 ---
 
 ### 5.10. Mô-đun M11 — Bảng điều khiển và Báo cáo Hiệu suất (Dashboard & Reporting)
@@ -1322,6 +1421,66 @@ Trước khi đi vào đặc tả nguyên tử từng yêu cầu chức năng (`
   - **AC1 (Generate Insights):** *Given* người dùng có quyền xem báo cáo/dashboard và quyền `ai.use`, *When* gọi `POST /api/v1/ai/dashboard/insights`, *Then* hệ thống sinh bản nhận định dựa trên đúng số liệu trong phạm vi của người gọi và lưu `AIRecommendation`.
   - **AC2 (Human Decision Tracking on AI Recommendations):** *Given* bất kỳ `AIRecommendation` nào được tạo ra bởi `FR-AI-001..010` cho người dùng hiện tại, *When* người dùng gọi `POST /api/v1/ai/recommendations/{id}/decision` với quyết định `ACCEPTED`, `EDITED` hoặc `IGNORED`, *Then* hệ thống cập nhật trạng thái quyết định trên `AIRecommendation` và ghi `AuditLog`.
 
+#### `FR-AI-011`: Widget Robot Trợ lý Ảo Nhúng và Quản lý Vòng đời Phiên (`Embedded Robot Assistant Widget & Session Lifecycle`)
+- **Tên ngắn:** Widget Robot Trợ lý Nhúng (Mặc định Mở & Thu gọn theo Phiên)
+- **Nội dung yêu cầu:** Hệ thống **phải** tích hợp một widget robot trợ lý thông minh thân thiện trực tiếp trên giao diện người dùng của Không gian làm việc (`Workspace Plane`):
+  1. **Hiển thị mặc định khi đăng nhập:** Ngay sau khi người dùng đăng nhập thành công vào Workspace, widget robot phải tự động xuất hiện ở trạng thái mở tại góc dưới bên phải màn hình.
+  2. **Thu gọn theo phiên làm việc (`BR-029`):** Cung cấp nút đóng nhỏ [X] tại góc trên bên phải của widget. Khi người dùng bấm nút [X], widget thu gọn thành một biểu tượng robot nổi (floating button). Trạng thái thu gọn này được lưu trữ duy nhất trong `sessionStorage` của trình duyệt (`bizflow_robot_dismissed = true`).
+  3. **Vòng đời trạng thái:** Trong suốt phiên làm việc hiện tại, widget giữ nguyên trạng thái thu gọn khi người dùng chuyển trang. Khi người dùng đăng xuất và đăng nhập lại (hoặc mở phiên làm việc mới), cờ `sessionStorage` được giải phóng và widget robot **tự động mở lại theo mặc định**. Người dùng có thể bấm vào biểu tượng robot nổi bất kỳ lúc nào để mở lại widget.
+- **Lý do tồn tại (Rationale):** Tăng cường sự hiện diện trực quan của trợ lý AI để hỗ trợ nhân viên tức thì, đồng thời tôn trọng không gian làm việc của người dùng bằng cơ chế thu gọn linh hoạt trong phiên.
+- **Nguồn tham chiếu:** `BR-029`, `OD-029`, `IR-UI-005`.
+- **Mức ưu tiên:** `P0 (Must-have)`
+- **Trạng thái đặc tả:** `CONFIRMED` | **Trạng thái triển khai:** `PARTIAL` (Mã nguồn hiện tại có AI Drawer nhưng chưa có biểu tượng robot, chưa mở mặc định sau đăng nhập và chưa quản lý cờ session).
+- **Phụ thuộc:** `FR-AUTH-001`, `FR-AUTH-005`, `IR-UI-005`, `OD-029`.
+- **Phương pháp xác minh:** `T` (Angular Component Test kiểm tra `sessionStorage`), `D` (Demonstration trên trình duyệt).
+- **Điều kiện nghiệm thu (Acceptance Criteria):**
+  - **AC1 (Default Open on Login):** *Given* người dùng đăng nhập thành công vào Workspace, *When* giao diện chính tải xong, *Then* widget robot hiển thị mở sẵn sàng tương tác.
+  - **AC2 (Close Current Session via [X]):** *Given* widget robot đang mở, *When* người dùng click nút [X], *Then* widget thu gọn thành floating icon và cờ `sessionStorage.getItem('bizflow_robot_dismissed')` có giá trị `true`.
+  - **AC3 (Re-open on Next Login):** *Given* người dùng đã thu gọn widget, *When* đăng xuất và đăng nhập lại, *Then* widget tự động hiển thị ở trạng thái mở.
+
+#### `FR-AI-012`: Truy vấn Ngôn ngữ Tự nhiên Giới hạn theo Phân quyền và Chống Ảo giác (`Permission-Bounded NL Queries & Anti-Hallucination`)
+- **Tên ngắn:** Hỏi đáp Ngôn ngữ Tự nhiên Có Kiểm soát Phân quyền
+- **Nội dung yêu cầu:** Hệ thống **phải** cho phép người dùng nhập các câu hỏi bằng ngôn ngữ tự nhiên thông qua widget robot trợ lý (về hạn chót công việc, việc quá hạn, việc cần ưu tiên xử lý, thông báo chưa đọc, trạng thái yêu cầu...):
+  1. **Giới hạn phạm vi dữ liệu nghiêm ngặt (`BR-027`):** Backend chỉ trích xuất dữ liệu ngữ cảnh nằm trong đúng phân quyền RBAC và phạm vi quản lý (`ManagementScope`) của người dùng đang gọi API. Tuyệt đối không đưa vào context dữ liệu của các phòng ban hoặc Tenant khác.
+  2. **Cơ chế phòng chống ảo giác (Anti-hallucination / Grounding):** Prompt gửi tới OpenAI API phải áp dụng kỹ thuật Grounding nghiêm ngặt; AI chỉ được trả lời dựa trên sự thật trích xuất từ database và trích dẫn rõ mã định danh hồ sơ (`TaskId`, `RequestId`). Nếu dữ liệu không tồn tại hoặc ngoài phạm vi, AI phải thông báo rõ ràng thay vì tự bịa câu trả lời.
+  3. **Kiểm soát chi phí và giới hạn tần suất (`OD-031`):** Áp dụng rate limiting (tối đa 10 truy vấn/phút/người dùng) và cơ chế suy giảm an toàn khi quá tải hoặc mất kết nối OpenAI.
+- **Lý do tồn tại (Rationale):** Cho phép tra cứu thông tin nhanh gọn bằng ngôn ngữ tự nhiên mà vẫn đảm bảo an toàn bí mật dữ liệu nội bộ và tính chính xác 100% của câu trả lời.
+- **Nguồn tham chiếu:** `BR-027`, `OD-031`, `SEC-008`, `SEC-009`, `DR-016`.
+- **Mức ưu tiên:** `P0 (Must-have)`
+- **Trạng thái đặc tả:** `CONFIRMED` | **Trạng thái triển khai:** `PARTIAL` (Đã có `POST /api/v1/ai/assistant/query` cơ bản; cần hoàn thiện grounding context và rate limiting).
+- **Phụ thuộc:** `FR-AI-011`, `SEC-003`, `SEC-009`, `DR-016`, `OD-031`.
+- **Phương pháp xác minh:** `T` (Integration Test kiểm tra RBAC filtering và prompt grounding), `D` (Demonstration truy vấn deadline).
+- **Điều kiện nghiệm thu (Acceptance Criteria):**
+  - **AC1 (Scoped Answer):** *Given* nhân viên hỏi "Tôi có công việc nào sắp hết hạn trong hôm nay không?", *When* AI xử lý, *Then* chỉ liệt kê đúng các Task được gán cho nhân viên đó hoặc thuộc phòng ban của họ có deadline trong ngày, kèm liên kết mở chi tiết.
+  - **AC2 (Cross-Department Isolation):** *Given* nhân viên hỏi về công việc của phòng ban khác mà họ không có quyền xem, *When* AI xử lý, *Then* trả về thông báo không tìm thấy hoặc không có quyền truy cập, tuyệt đối không tiết lộ thông tin công việc của phòng ban đó.
+
+#### `FR-AI-013`: Phân rã Công việc Hỗ trợ bởi AI kèm Xác nhận Con người Bắt buộc (`AI-Assisted Task Decomposition with Mandatory Human Confirmation`)
+- **Tên ngắn:** Phân rã Công việc bằng AI (Lệnh `/task` & Xác nhận Con người Bắt buộc)
+- **Nội dung yêu cầu:** Hệ thống **phải** cho phép người dùng kích hoạt quy trình phân rã công việc bằng lệnh `/task <đoạn văn bản mô tả>` (hoặc nhập yêu cầu phân rã văn bản trong widget robot):
+  1. **Phân tích và Đề xuất cấu trúc:** AI phân tích đoạn văn mô tả công việc phức tạp và đề xuất danh sách các tác vụ con có cấu trúc, mỗi tác vụ gồm:
+     - Tiêu đề (`Title`);
+     - Phân loại nghiệp vụ (`Type`): phân định rõ giữa Yêu cầu Hỗ trợ (`Support Request`) và Giao việc Trực tiếp (`Task Assignment`);
+     - Phòng ban tiếp nhận dự kiến (`ReceivingDepartmentId`);
+     - Mô tả chi tiết nội dung công việc (`Description`);
+     - Độ ưu tiên (`Priority`) và Hạn chót dự kiến (`Deadline`).
+  2. **Giao diện Xem lại và Chỉnh sửa Tương tác:** Giao diện hiển thị danh sách đề xuất dưới dạng bảng checklist tương tác (`Interactive Checklist Modal`). Người dùng có toàn quyền:
+     - Tick chọn hoặc bỏ chọn từng tác vụ con;
+     - Chỉnh sửa trực tiếp tiêu đề, loại việc, phòng ban tiếp nhận, mô tả và hạn chót của từng tác vụ;
+     - Bổ sung thêm tác vụ thủ công.
+  3. **BẮT BUỘC XÁC NHẬN RÕ RÀNG TỪ CON NGƯỜI TRƯỚC KHI TẠO (`BR-028`):** AI tuyệt đối **không được tự động lưu bất kỳ bản ghi nào vào DB**. Chỉ khi người dùng bấm nút hành động rõ ràng **"Xác nhận tạo việc"** (`Confirm Create Tasks`), frontend mới gửi danh sách các tác vụ đã chọn/sửa lên API `POST /api/v1/tasks/ai-decomposition/confirm` (`IR-API-006`).
+  4. **Kiểm tra phân quyền máy chủ:** Backend xác thực quyền hạn của người dùng tại từng phòng ban đích (quyền `tasks.create` / `requests.create`). Nếu người dùng không có quyền tại phòng ban nào, báo lỗi cụ thể cho mục đó và không ghi nhận mục đó.
+- **Lý do tồn tại (Rationale):** Thực thi nghiêm ngặt nguyên tắc `BR-028` (Human-in-the-loop), tận dụng năng lực phân tích của LLM để tiết kiệm thời gian điều phối công việc mà loại bỏ hoàn toàn rủi ro sai lệch dữ liệu do ảo giác AI.
+- **Nguồn tham chiếu:** `BR-028`, `OD-028`, `IR-API-006`, `DR-016`.
+- **Mức ưu tiên:** `P0 (Must-have)`
+- **Trạng thái đặc tả:** `CONFIRMED` | **Trạng thái triển khai:** `NOT_IMPLEMENTED` (Mã nguồn hiện tại chỉ hỗ trợ gợi ý draft đơn lẻ trong drawer; chưa có parser lệnh `/task`, modal phân rã checklist tương tác và API batch confirm).
+- **Phụ thuộc:** `FR-AI-011`, `FR-TASK-001`, `FR-REQ-001`, `IR-API-006`, `DR-016`, `OD-028`.
+- **Phương pháp xác minh:** `T` (Integration Test kiểm tra không có bản ghi nào được tạo trước khi bấm confirm và kiểm tra server-side authorization), `D` (Demonstration luồng `/task` $\rightarrow$ review $\rightarrow$ edit $\rightarrow$ confirm).
+- **Điều kiện nghiệm thu (Acceptance Criteria):**
+  - **AC1 (Parse Command & Propose Structured Tasks):** *Given* người dùng nhập `/task Dự án Alpha cần thiết kế UI, dựng API auth và viết test`, *When* AI xử lý, *Then* trả về danh sách 3 tác vụ con có đầy đủ tiêu đề, loại việc, phòng ban dự kiến và mô tả.
+  - **AC2 (Interactive Review & Modification):** *Given* danh sách đề xuất hiển thị trên giao diện, *When* người dùng bỏ chọn tác vụ 3 và sửa phòng ban của tác vụ 1, *Then* giao diện cập nhật chính xác lựa chọn của người dùng.
+  - **AC3 (Strict Explicit Confirmation Guarantee - `BR-028`):** *Given* danh sách đề xuất đang mở, *When* người dùng đóng modal hoặc thoát trang mà không bấm "Xác nhận tạo việc", *Then* số lượng bản ghi Task/Request trong cơ sở dữ liệu không thay đổi (tuyệt đối không tạo tự động).
+  - **AC4 (Creation Upon Explicit Confirmation):** *Given* người dùng bấm "Xác nhận tạo việc", *When* backend xác thực hợp lệ, *Then* tạo chính xác các bản ghi Task/Request đã chọn trong DB và hiển thị thông báo thành công kèm danh sách liên kết tới từng công việc.
+
 ---
 
 ### 5.12. Mô-đun M13 — Kiểm toán và Tuân thủ Hệ thống (Audit Logging & Governance)
@@ -1390,6 +1549,27 @@ Các nghĩa vụ kiểm toán và tuân thủ của Mô-đun M13 là yêu cầu 
 - **Phương pháp xác minh:** `T` (Angular Component & Route Tests), `D` (Demonstration).
 - **Điều kiện nghiệm thu:** *Given* người dùng chưa đăng nhập mở `/login`, *When* bấm liên kết CTA đăng ký doanh nghiệp, *Then* ứng dụng điều hướng tới `/register-company`, hiển thị đầy đủ 4 trạng thái chuẩn (`IR-UI-002`), xử lý rõ ràng các lỗi `422` (dữ liệu không hợp lệ), `409` (email/mã trùng), `403 AUTH.EMAIL_NOT_VERIFIED` và `500 ONBOARDING.PROVISIONING_ROLLED_BACK`.
 
+#### `IR-UI-005`: Giao diện Robot Trợ lý Ảo và Bộ chọn Không gian làm việc (`Robot Widget UI & Workspace Selector UI`)
+- **Tên ngắn:** Giao diện Robot Widget & Modal Chọn Không gian làm việc
+- **Nội dung yêu cầu:** Giao diện người dùng **phải** cung cấp hai thành phần trực quan:
+  1. **Widget Robot Trợ lý Ảo Nhúng (`Robot Assistant Widget`):** Thiết kế biểu tượng chú robot đáng yêu, cố định tại góc dưới bên phải màn hình. Mặc định mở sau khi người dùng đăng nhập. Cung cấp nút đóng [X] ở góc trên bên phải để thu gọn vào floating icon (lưu cờ `sessionStorage.bizflow_robot_dismissed`). Hỗ trợ hộp nhập liệu tự nhiên, hiển thị lịch sử hội thoại, và tích hợp các lệnh gõ nhanh (`/task`, `/notifications`).
+  2. **Modal Bộ chọn Không gian làm việc (`Workspace Selector Modal`):** Hiển thị khi người dùng xác thực qua Email-link mà tài khoản liên kết với $\ge 2$ Workspace. Liệt kê danh sách Workspace gồm: Tên doanh nghiệp, Mã workspace (`slug`), Vai trò của người dùng trong workspace đó. Cho phép người dùng nhấp chọn để vào Workspace tương ứng.
+- **Nguồn tham chiếu:** `BR-025`, `BR-029`, `FR-AUTH-005`, `FR-AI-011`, `OD-025`, `OD-029`.
+- **Mức ưu tiên:** `P0` | **Trạng thái đặc tả:** `CONFIRMED` | **Trạng thái triển khai:** `NOT_IMPLEMENTED`
+- **Phương pháp xác minh:** `T` (Angular Component Test), `D` (Demonstration).
+- **Điều kiện nghiệm thu:** *Given* người dùng đăng nhập qua email-link có 2 workspace, *Then* modal Workspace Selector xuất hiện cho phép lựa chọn; *Given* người dùng trong Workspace, *Then* robot widget mở mặc định và thu gọn an toàn theo phiên khi bấm nút [X].
+
+#### `IR-UI-006`: Giao diện Xem và Kiểm tra Hồ sơ Pháp lý Doanh nghiệp cho Platform Admin (`Company Document Inspection Interface`)
+- **Tên ngắn:** Giao diện Thẩm định Hồ sơ Pháp lý Doanh nghiệp
+- **Nội dung yêu cầu:** Màn hình quản trị `/platform/companies` (hoặc `/platform/registrations`, `UI-02`) của `PLATFORM_ADMIN` **phải** được bổ sung khu vực thẩm định tài liệu đính kèm của hồ sơ đăng ký doanh nghiệp:
+  1. Hiển thị danh sách các tài liệu đã tải lên kèm tên tệp gốc, kích thước, định dạng và thời điểm tải lên.
+  2. Cung cấp nút xem trực tiếp (inline preview cho PDF/hình ảnh) hoặc tải xuống thông qua Presigned URL bảo mật phát sinh từ MinIO/S3 (`TTL = 15 phút` theo `OD-027`).
+  3. Tích hợp nút Phê duyệt (`Approve`) và Từ chối (`Reject` kèm modal bắt buộc nhập lý do `BR-022`) ngay tại giao diện thẩm định hồ sơ.
+- **Nguồn tham chiếu:** `BR-022`, `BR-026`, `FR-TEN-001`, `FR-TEN-002`, `OD-027`.
+- **Mức ưu tiên:** `P0` | **Trạng thái đặc tả:** `CONFIRMED` | **Trạng thái triển khai:** `NOT_IMPLEMENTED`
+- **Phương pháp xác minh:** `T` (Angular Component Test), `D` (Demonstration trên `UI-02`).
+- **Điều kiện nghiệm thu:** *Given* `PLATFORM_ADMIN` xem đơn đăng ký đang `PENDING`, *When* bấm vào tài liệu đính kèm, *Then* tệp được mở/tải về qua link bảo mật MinIO; nút Phê duyệt chỉ kích hoạt khi tài liệu đã sẵn sàng.
+
 ---
 
 ### 6.2. Giao diện Lập trình Ứng dụng (API / Service Interfaces — `IR-API-001` .. `IR-API-003`)
@@ -1418,9 +1598,48 @@ Các nghĩa vụ kiểm toán và tuân thủ của Mô-đun M13 là yêu cầu 
 - **Phương pháp xác minh:** `T` (Integration Tests).
 - **Điều kiện nghiệm thu:** *Given* một yêu cầu danh sách truyền `pageSize > 100` hoặc `<= 0`, *When* gọi API, *Then* hệ thống giới hạn hoặc trả lỗi `400 Bad Request`; *Given* yêu cầu đọc ID thuộc Tenant khác, *Then* hệ thống trả về `404 Not Found`.
 
+#### `IR-API-004`: API Xác thực Email-Link và Bộ chọn Workspace (`Email-Link Authentication & Workspace Selection API`)
+- **Tên ngắn:** Bộ API Đăng nhập qua Email-Link
+- **Nội dung yêu cầu:** Hệ thống **phải** cung cấp 3 endpoint API phục vụ luồng đăng nhập Email-Link:
+  1. `POST /api/v1/auth/email-link/request`: Tiếp nhận `email`, sinh token xác thực an toàn một lần (`TTL = 15m`) và phát email chứa link;
+  2. `POST /api/v1/auth/email-link/verify`: Tiếp nhận `token`, kiểm tra hợp lệ; trả về JWT session trực tiếp nếu người dùng thuộc đúng 1 workspace, hoặc trả về danh sách workspace kèm `sessionSelectToken` nếu thuộc $\ge 2$ workspace;
+  3. `POST /api/v1/auth/email-link/select-workspace`: Tiếp nhận `sessionSelectToken` và `tenantId` đã chọn; cấp phát JWT session chính thức cho Workspace đó.
+- **Nguồn tham chiếu:** `BR-025`, `FR-AUTH-005`, `OD-025`.
+- **Mức ưu tiên:** `P0` | **Trạng thái đặc tả:** `CONFIRMED` | **Trạng thái triển khai:** `NOT_IMPLEMENTED`
+- **Phương pháp xác minh:** `T` (Integration Tests).
+
+#### `IR-API-005`: API Kiểm tra Khả dụng và Sinh Mã Workspace Tự động (`Workspace Availability & Code Generator API`)
+- **Tên ngắn:** API Kiểm tra & Sinh Mã Workspace
+- **Nội dung yêu cầu:** Hệ thống **phải** cung cấp 2 endpoint hỗ trợ chọn mã định danh Workspace:
+  1. `GET /api/v1/tenants/check-code?code={desiredCode}`: Kiểm tra mã workspace mong muốn đã tồn tại hay chưa, trả về `{ available: true/false }` trong $\le 200\text{ ms}$;
+  2. `POST /api/v1/tenants/generate-code`: Nhận vào `companyName` (tùy chọn), sinh chuỗi mã slug hợp lệ ngẫu nhiên không trùng lặp và phản hồi cho client.
+- **Nguồn tham chiếu:** `BR-026`, `FR-TEN-001`, `OD-026`.
+- **Mức ưu tiên:** `P0` | **Trạng thái đặc tả:** `CONFIRMED` | **Trạng thái triển khai:** `NOT_IMPLEMENTED`
+- **Phương pháp xác minh:** `T` (Integration Tests).
+
+#### `IR-API-006`: API Tạo Công việc Hàng loạt từ Đề xuất AI Đã Xác nhận (`Batch Task Creation from Confirmed AI Proposals API`)
+- **Tên ngắn:** API Tạo Việc Hàng loạt từ Phân rã AI
+- **Nội dung yêu cầu:** Cung cấp endpoint `POST /api/v1/tasks/ai-decomposition/confirm`:
+  1. Tiếp nhận payload danh sách các công việc/yêu cầu đã được người dùng tick chọn và chỉnh sửa trên giao diện sau khi phân rã bằng AI (`BR-028`).
+  2. Xác thực quyền tạo việc/yêu cầu của người dùng tại từng phòng ban đích.
+  3. Thực thi tạo các bản ghi `Task` / `Request` trong cơ sở dữ liệu, ghi `AuditLog` và trả về danh sách kết quả kèm ID của từng bản ghi được tạo.
+- **Nguồn tham chiếu:** `BR-028`, `FR-AI-013`, `OD-028`.
+- **Mức ưu tiên:** `P0` | **Trạng thái đặc tả:** `CONFIRMED` | **Trạng thái triển khai:** `NOT_IMPLEMENTED`
+- **Phương pháp xác minh:** `T` (Integration Tests).
+
+#### `IR-API-007`: API Quản lý Lịch Nhắc việc và Đăng ký Web Push (`Reminder Schedule & Web Push Subscription API`)
+- **Tên ngắn:** API Quản trị Lịch Nhắc nhở & Đăng ký Push
+- **Nội dung yêu cầu:** Cung cấp các endpoint:
+  1. `GET /api/v1/notifications/reminders`: Lấy danh sách các mốc nhắc việc sắp tới của người dùng hiện tại;
+  2. `POST /api/v1/notifications/reminders/config`: Cấu hình các mốc thời gian nhắc trước deadline (ví dụ: 24h, 4h, 1h...);
+  3. `POST /api/v1/notifications/push-subscriptions`: Tiếp nhận và lưu trữ thông tin `PushSubscription` của trình duyệt phục vụ Web Push qua VAPID.
+- **Nguồn tham chiếu:** `BR-030`, `FR-NOTIF-003`, `FR-NOTIF-004`, `OD-030`, `OD-032`.
+- **Mức ưu tiên:** `P0` | **Trạng thái đặc tả:** `CONFIRMED` | **Trạng thái triển khai:** `NOT_IMPLEMENTED`
+- **Phương pháp xác minh:** `T` (Integration Tests).
+
 ---
 
-### 6.3. Giao diện Tích hợp Dịch vụ Bên thứ ba (External AI & Third-Party Interfaces — `IR-EXT-001` .. `IR-EXT-002`)
+### 6.3. Giao diện Tích hợp Dịch vụ Bên thứ ba (External AI & Third-Party Interfaces — `IR-EXT-001` .. `IR-EXT-003`)
 
 #### `IR-EXT-001`: Giao diện Tích hợp Nhà cung cấp Mô hình Ngôn ngữ Lớn (`OpenAI / LLM Provider Adapter`)
 - **Tên ngắn:** Giao diện Tích hợp AI / LLM Bên ngoài
@@ -1440,6 +1659,13 @@ Các nghĩa vụ kiểm toán và tuân thủ của Mô-đun M13 là yêu cầu 
 - **Mức ưu tiên:** `P0` | **Trạng thái đặc tả:** `CONFIRMED` (luồng email xác minh đăng ký liên kết `OD-022`) | **Trạng thái triển khai:** `PARTIAL` (Đã triển khai qua cổng trừu tượng cho thông báo reset mật khẩu; chưa triển khai mẫu email xác minh đăng ký doanh nghiệp).
 - **Phương pháp xác minh:** `T` (Integration Test).
 - **Điều kiện nghiệm thu:** *Given* người dùng yêu cầu đặt lại mật khẩu hoặc gửi đăng ký doanh nghiệp mới, *When* tạo token băm thành công, *Then* hệ thống chuyển yêu cầu gửi thư qua cổng dịch vụ Email với nội dung chứa token một lần và thời gian hết hạn rõ ràng (`TTL`).
+
+#### `IR-EXT-003`: Bộ Điều hợp Nhà cung cấp Dịch vụ Đẩy Tin Trình duyệt (`Web Push / VAPID Provider Adapter`)
+- **Tên ngắn:** Giao diện Đẩy Tin Web Push Bên ngoài (W3C Push API / RFC 8292)
+- **Nội dung yêu cầu:** Hệ thống **phải** tích hợp lớp điều hợp Web Push sử dụng cặp khóa VAPID (Voluntary Application Server Identification) theo chuẩn RFC 8292 để mã hóa và gửi thông điệp push tới Push Service của các trình duyệt (Google FCM, Mozilla Push Service, Apple APNs Web Push). Khi gửi thất bại hoặc thuê bao bị thu hồi (HTTP 404 / 410 Gone), hệ thống tự động gỡ bỏ subscription và kích hoạt kênh fallback gửi Email.
+- **Nguồn tham chiếu:** `BR-030`, `FR-NOTIF-004`, `OD-030`.
+- **Mức ưu tiên:** `P0` | **Trạng thái đặc tả:** `CONFIRMED` | **Trạng thái triển khai:** `NOT_IMPLEMENTED`
+- **Phương pháp xác minh:** `T` (Integration Tests với Mock Push Service).
 
 ---
 
@@ -1483,7 +1709,7 @@ Các nghĩa vụ kiểm toán và tuân thủ của Mô-đun M13 là yêu cầu 
 
 ---
 
-## 7. Yêu cầu Dữ liệu (Data Requirements — `DR-001` .. `DR-015`)
+## 7. Yêu cầu Dữ liệu (Data Requirements — `DR-001` .. `DR-017`)
 
 > [!NOTE]
 > Chương này quy định các **Yêu cầu Dữ liệu ở mức Logic và Nghiệp vụ (Logical Data Requirements)**, bao gồm các khái niệm dữ liệu, thuộc tính bắt buộc, quy tắc toàn vẹn, quyền sở hữu và vòng đời dữ liệu. Lược đồ mục tiêu của hệ thống gồm **43 bảng logic** (38 bảng gốc trong SSS Appendix C + 4 bảng bổ sung trong `02-architecture.md` + 1 bảng `AuthenticationSession` trong `ADR-0002`), trong đó **36 bảng đã được hiện thực hóa** trong `BizFlowDbContext` và **7 bảng đang chờ triển khai** (chi tiết đối chiếu tại Phụ lục 15.2).
@@ -1586,6 +1812,20 @@ Các nghĩa vụ kiểm toán và tuân thủ của Mô-đun M13 là yêu cầu 
   2. Tất cả các cột ngày giờ (`CreatedAt`, `UpdatedAt`, `Deadline`, `CompletedAt`, `ClosedAt`, `ExpiresAt`, `ConfirmedAt`, v.v.) **phải** được lưu trữ ở chuẩn **UTC (`TIMESTAMPTZ` / `DateTimeOffset` với offset `+00:00`)** và truyền qua API theo chuẩn ISO-8601 có hậu tố múi giờ (`ADR-0012` `TD-02`).
   3. Toàn bộ chuỗi văn bản và cột JSONB **phải** sử dụng bảng mã `UTF-8` hỗ trợ đầy đủ ký tự tiếng Việt có dấu.
 - **Trạng thái:** `CONFIRMED` & `IMPLEMENTED` | **Nguồn:** `ADR-0012`, `BizFlowDbContext.cs`.
+
+### `DR-016`: Dữ liệu Phiên Trợ lý Robot, Lịch sử Hội thoại và Lịch Nhắc việc Deadline
+- **Nội dung yêu cầu:**
+  1. **Thực thể `RobotConversation` và `RobotMessage`:** Lưu trữ lịch sử hỏi đáp giữa người dùng và robot trợ lý (`SessionId`, `UserId`, `TenantId`, `Role`: user/assistant, `Content`, `CommandType`: `/task`, `/notifications` hoặc `null`, `TokensUsed`, `CreatedAt`).
+  2. **Thực thể `DeadlineReminderSchedule`:** Lưu trữ các mốc nhắc nhở đã cấu hình cho từng Task/Request (`Id`, `TenantId`, `TaskId`, `UserId`, `TriggerType`: before_24h, before_4h, before_1h, overdue; `ScheduledAt`, `Status`: Pending, Sent, Cancelled, `SentAt`, `Channel`: InApp, WebPush, Email).
+  3. **Ràng buộc duy nhất khử trùng lặp:** Ràng buộc composite unique `(TenantId, TaskId, UserId, TriggerType, ScheduledAt)` để ngăn ngừa phát lặp thông báo.
+- **Trạng thái:** `CONFIRMED` | **Nguồn:** `BR-029`, `BR-030`, `FR-AI-011`, `FR-NOTIF-003`, `FR-NOTIF-004`, `OD-030`, `OD-032`.
+
+### `DR-017`: Dữ liệu Tài liệu Pháp lý Hồ sơ Doanh nghiệp trên MinIO/S3
+- **Nội dung yêu cầu:**
+  1. **Thực thể `CompanyRegistrationDocument`:** Lưu trữ thông tin tài liệu đính kèm khi doanh nghiệp nộp hồ sơ (`Id`, `RegistrationId` / `CompanyId`, `FileName`, `ContentType`, `FileSizeBytes`, `ObjectKey`, `ChecksumSha256`, `UploadedAt`, `Status`: Pending, Available, Rejected).
+  2. **Quy tắc phân vùng khóa lưu trữ đối tượng (Object Key Partitioning):** Đối tượng được lưu trữ trên MinIO/S3 bucket `company-documents` theo đường dẫn an toàn: `companies/{registrationId}/docs/{uuid}_{sanitizedFileName}`.
+  3. **Ràng buộc toàn vẹn:** Giới hạn `FileSizeBytes <= 10,485,760` (10 MB/tệp) và tổng dung lượng các tệp của một `RegistrationId` không vượt quá `52,428,800` (50 MB).
+- **Trạng thái:** `CONFIRMED` | **Nguồn:** `BR-026`, `FR-TEN-001`, `FR-TEN-002`, `IR-FILE-001`, `OD-027`.
 
 ---
 
@@ -1958,6 +2198,12 @@ Một bản phát hành của **AI-Assisted BizFlow Platform** chỉ được c�
 | **`TST-029`** | Kiểm tra 4 Trạng thái Giao diện trên 16 Màn hình Chuẩn Angular | `IR-UI-001`..`003`, `NFR-USAB-001` | `T`, `D` | Chạy bộ kiểm thử đơn vị giao diện Angular (Vitest) kiểm tra `loading`, `empty`, `error`, `permission-denied` và nhãn `AI Suggestion`. | Toàn bộ 196 bài kiểm thử giao diện vượt qua (`PASS`). | Đã có Automated Test (`PASS`) |
 | **`TST-030`** | Kiểm thử Tải và Độ trễ Hiệu năng API / Báo cáo ở mức 100 Người dùng Đồng thời | `NFR-PERF-001`, `NFR-PERF-002`, `NFR-SCAL-001`, `OD-013` | `T`, `A` | Chạy kịch bản kiểm thử tải với 100 virtual users đồng thời trên dữ liệu hạt giống đa thuê bao. | API đọc/ghi chuẩn đạt `p95 <= 500 ms`; API Dashboard/Report đạt `p95 <= 2,000 ms`; tỷ lệ lỗi hệ thống `5xx = 0%`. | Chờ chạy trên môi trường Staging (`OD-013`) |
 | **`TST-031`** | Kiểm thử Tự đăng ký Doanh nghiệp (`Self-Service Onboarding`), Xác minh Email, 6 Tình huống Lỗi/Biên và Hoàn tác Nguyên tử (`Atomic Rollback`) khi Khởi tạo `Primary Tenant` / Gán `COMPANY_ADMIN` Thất bại | `FR-TEN-001`, `FR-TEN-002`, `FR-TEN-005`, `IR-UI-004`, `BR-023`, `BR-024` | `T`, `D` | Thực hiện luồng tự đăng ký qua `/register-company` -> xác minh email token; giả lập các kịch bản lỗi: 1) Dữ liệu sai (`422`); 2) Trùng email/code/key (`409`); 3) Chưa xác minh email mà đăng nhập (`403`); 4) Đăng ký lại sau khi `REJECTED`/`EXPIRED`; 5) Lỗi khi tạo `Tenant`; 6) Lỗi khi gán `UserRole(COMPANY_ADMIN)`. | Luồng chuẩn tạo đúng 1 `Primary Tenant` + gán `COMPANY_ADMIN`; các lỗi 1–3 bị chặn đúng mã HTTP; lỗi 5–6 hoàn tác 100% không để lại Tenant mồ côi (`ONBOARDING.PROVISIONING_ROLLED_BACK`). | Chờ triển khai API & UI (`NOT_IMPLEMENTED`) |
+| **`TST-032`** | Kiểm thử Đăng nhập Hợp nhất: Đăng nhập ID 3 trường bắt buộc và Đăng nhập Email-link độc lập | `FR-AUTH-001`, `FR-AUTH-005`, `BR-025`, `IR-API-004` | `T`, `D` | 1) Đăng nhập ID: nhập thiếu 1 trong 3 trường (ID, Password, Workspace Key) -> chặn 400/422; nhập sai kết hợp -> chặn 401; nhập đúng cả 3 trường -> cấp JWT gắn tenant_id.<br>2) Đăng nhập Email-link: chỉ nhập email (không mật khẩu, không mã workspace) -> gửi magic link một lần (TTL 15m). | Đáp ứng đầy đủ quy tắc `BR-025` về hai tùy chọn xác thực độc lập trên trang đăng nhập hợp nhất. | Chờ triển khai (`NOT_IMPLEMENTED`) |
+| **`TST-033`** | Kiểm thử Bộ chọn Không gian làm việc (`Workspace Selector`) cho tài khoản đa Workspace qua Email-link | `FR-AUTH-005`, `IR-UI-005`, `IR-API-004` | `T`, `D` | Người dùng có tài khoản thuộc 2 Workspace nhấp vào magic link; hệ thống trả về modal Workspace Selector; người dùng chọn 1 workspace. | Người dùng được điều hướng vào đúng Workspace đã chọn với JWT mang tenant_id chính xác; trường hợp email thuộc 0 workspace bị từ chối rõ ràng kèm link đăng ký mới. | Chờ triển khai (`NOT_IMPLEMENTED`) |
+| **`TST-034`** | Kiểm thử Đăng ký Doanh nghiệp 6 trường bắt buộc, API kiểm tra mã workspace và tải tài liệu MinIO | `FR-TEN-001`, `BR-026`, `IR-API-005`, `IR-FILE-001`, `DR-017` | `T`, `D` | 1) Nhập thiếu bất kỳ trường nào trong 6 trường bắt buộc -> báo lỗi validation 422.<br>2) Gọi API check-code và nút sinh mã tự động -> trả kết quả khả dụng $\le 200\text{ ms}$.<br>3) Tải tài liệu pháp lý lên MinIO bucket `company-documents` (kiểm tra định dạng PDF/PNG/JPG và giới hạn 10 MB/tệp). | Hồ sơ lưu PENDING kèm ObjectKey tài liệu MinIO; sinh mã xác minh email và chặn tạo trùng khi submit. | Chờ triển khai (`NOT_IMPLEMENTED`) |
+| **`TST-035`** | Kiểm thử Platform Admin thẩm định tài liệu MinIO qua Presigned URL và Phê duyệt/Khởi tạo nguyên tử Workspace | `FR-TEN-002`, `IR-UI-006`, `BR-022`, `BR-023`, `OD-024` | `T`, `D` | Platform Admin mở màn hình `/platform/companies`, tải/xem tài liệu qua Presigned URL (TTL 15m), bấm Phê duyệt (hoặc Từ chối kèm lý do). | Khi duyệt: thực thi giao dịch nguyên tử tạo đúng 1 Primary Tenant + gán COMPANY_ADMIN; khi từ chối: chuyển REJECTED kèm lý do; khi lỗi: hoàn tác 100%. | Chờ triển khai (`PARTIAL` UI list) |
+| **`TST-036`** | Kiểm thử Phân rã Công việc bằng AI (`/task`), Modal Checklist Tương tác và Bắt buộc Xác nhận Rõ ràng (`BR-028`) | `FR-AI-013`, `BR-028`, `IR-API-006`, `OD-028` | `T`, `D` | 1) Nhập `/task <đoạn văn>` -> AI sinh danh sách đề xuất phân rã Support Request / Task Assignment.<br>2) Chỉnh sửa, chọn lọc checklist trên UI.<br>3) Đóng UI mà không bấm Confirm -> kiểm tra DB không có bản ghi nào.<br>4) Bấm "Xác nhận tạo việc" -> backend xác thực quyền và ghi nhận DB. | Tuân thủ tuyệt đối quy tắc `BR-028` không tạo tác vụ tự động khi chưa có xác nhận rõ ràng từ con người. | Chờ triển khai (`NOT_IMPLEMENTED`) |
+| **`TST-037`** | Kiểm thử Widget Robot nhúng (mở mặc định, đóng session), Lệnh `/notifications`, Thông báo Deadline Đa kênh và Khử trùng lặp | `FR-AI-011`, `FR-AI-012`, `FR-NOTIF-003`, `FR-NOTIF-004`, `BR-029`, `BR-030`, `IR-EXT-003` | `T`, `D` | 1) Đăng nhập -> robot widget mở mặc định; bấm [X] -> lưu sessionStorage và thu gọn; đăng nhập lại -> tự động mở lại.<br>2) Gõ `/notifications` -> cấu hình mốc nhắc deadline.<br>3) Giả lập mốc nhắc: người dùng online nhận SignalR toast; người dùng offline nhận Web Push (Service Worker); fallback sang email HTML nếu chưa cấp push; kiểm tra không gửi trùng lặp. | Đảm bảo trải nghiệm trợ lý robot thân thiện và thông báo deadline đa kênh tin cậy, không spam. | Chờ triển khai (`NOT_IMPLEMENTED`) |
 
 ---
 
@@ -1971,14 +2217,14 @@ $$\text{Mục tiêu Kinh doanh } (\texttt{BG-*}) \leftrightarrow \text{Quy tắc
 | Nhóm Phần tử Đặc tả | Mã Định danh | Tổng số | Đã Xác nhận (`CONFIRMED`) | Đề xuất (`PROPOSED`) | Còn Mở (`OPEN`) | Đã Triển khai (`IMPLEMENTED`) | Một phần (`PARTIAL`) | Chưa Triển khai (`NOT_IMPLEMENTED`) |
 |---|---|---:|---:|---:|---:|---:|---:|---:|
 | **Mục tiêu Kinh doanh** | `BG-001`..`BG-008` | 8 | 8 | 0 | 0 | — | — | — |
-| **Quy tắc Nghiệp vụ** | `BR-001`..`BR-024` | 24 | 22 | 2 | 0 | 17 | 1 | 6 |
-| **Ca sử dụng Đầu-cuối** | `UC-001`..`UC-013` | 13 | 12 | 1 | 0 | 6 | 4 | 3 |
-| **Yêu cầu Chức năng** | `FR-*` (M01–M13) | 63 | 58 | 1 | 4 | 37 | 7 | 19 |
-| **Yêu cầu Giao diện Ngoài** | `IR-*` | 13 | 12 | 1 | 0 | 11 | 1 | 1 |
-| **Yêu cầu Dữ liệu Logic** | `DR-001`..`DR-015` | 15 | 15 | 0 | 0 | 12 | 3 | 0 |
+| **Quy tắc Nghiệp vụ** | `BR-001`..`BR-030` | 30 | 28 | 2 | 0 | 17 | 1 | 12 |
+| **Ca sử dụng Đầu-cuối** | `UC-001`..`UC-017` | 17 | 16 | 1 | 0 | 6 | 4 | 7 |
+| **Yêu cầu Chức năng** | `FR-*` (M01–M15) | 68 | 63 | 1 | 4 | 37 | 8 | 23 |
+| **Yêu cầu Giao diện Ngoài** | `IR-*` | 20 | 19 | 1 | 0 | 11 | 1 | 8 |
+| **Yêu cầu Dữ liệu Logic** | `DR-001`..`DR-017` | 17 | 17 | 0 | 0 | 12 | 3 | 2 |
 | **Yêu cầu Phi chức năng** | `NFR-*` | 15 | 9 | 1 | 5 | 11 | 2 | 2 |
 | **Yêu cầu Bảo mật & Riêng tư** | `SEC-001`..`SEC-012` | 12 | 12 | 0 | 0 | 12 | 0 | 0 |
-| **Kịch bản Kiểm thử Chuẩn** | `TST-001`..`TST-031` | 31 | 30 | 1 | 0 | 21 | 4 | 6 |
+| **Kịch bản Kiểm thử Chuẩn** | `TST-001`..`TST-037` | 37 | 36 | 1 | 0 | 21 | 4 | 12 |
 
 > [!TIP]
 > Xem bảng ánh xạ chi tiết từng yêu cầu một tại [REQUIREMENTS_TRACEABILITY.md](file:///d:/FA26/AI-Assisted-BizFlow-Platform/docs/requirements/srs/REQUIREMENTS_TRACEABILITY.md) và tệp dữ liệu có thể lọc [REQUIREMENTS_CATALOG.csv](file:///d:/FA26/AI-Assisted-BizFlow-Platform/docs/requirements/srs/REQUIREMENTS_CATALOG.csv).
@@ -2032,9 +2278,9 @@ $$\text{Mục tiêu Kinh doanh } (\texttt{BG-*}) \leftrightarrow \text{Quy tắc
 | `RSK-009` | Mất dấu vết kiểm toán do thao tác xóa nhầm bản ghi lịch sử. | Cao | Chặn cứng mọi lệnh `EntityState.Deleted` tại `BizFlowDbContext` (`PERSISTENCE.HARD_DELETE_DENIED`, `SEC-007`). |
 | `RSK-010` | Phình phạm vi (Scope Creep) sang tính năng đa workspace hoặc thanh toán thương mại trong giai đoạn MVP. | Trung bình | Khóa chặt ranh giới phạm vi tại Mục 2.7 theo `DEC-WS-001` và `DEC-WS-002`. |
 
-### 14.4. Tóm tắt Danh mục Quyết định Còn Mở (`OD-001` .. `OD-024`)
+### 14.4. Tóm tắt Danh mục Quyết định Còn Mở (`OD-001` .. `OD-032`)
 
-Toàn bộ 24 quyết định còn mở (`OD-001` đến `OD-024`, bao gồm 4 quyết định bổ sung cho Onboarding: `OD-021` về mô hình Self-Service vs Manual Approval, `OD-022` về cơ chế xác minh email và TTL, `OD-023` về trạng thái Rejected và chính sách đăng ký lại, `OD-024` về chiến lược hoàn tác nguyên tử Atomic Rollback cho Provisioning) cùng phân tích phương án, đánh giá tác động và khuyến nghị `PROPOSED — NOT APPROVED` được trình bày đầy đủ tại [OPEN_DECISIONS.md](file:///d:/FA26/AI-Assisted-BizFlow-Platform/docs/requirements/srs/OPEN_DECISIONS.md).
+Toàn bộ 32 quyết định còn mở (`OD-001` đến `OD-032`, bao gồm 4 quyết định về Onboarding: `OD-021`..`OD-024` và 8 quyết định mới đồng bộ v1.2: `OD-025` về email-link token, `OD-026` về thuật toán sinh mã workspace, `OD-027` về lưu trữ tài liệu MinIO, `OD-028` về xác nhận rõ ràng khi AI phân rã việc, `OD-029` về session widget robot, `OD-030` về điều phối đa kênh Web Push/Email fallback, `OD-031` về kiểm soát token rate-limit, `OD-032` về lập lịch nhắc deadline và khử trùng lặp) cùng phân tích phương án, đánh giá tác động và khuyến nghị `PROPOSED — NOT APPROVED` được trình bày đầy đủ tại [OPEN_DECISIONS.md](file:///d:/FA26/AI-Assisted-BizFlow-Platform/docs/requirements/srs/OPEN_DECISIONS.md).
 
 ---
 

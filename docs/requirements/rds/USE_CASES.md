@@ -1,9 +1,9 @@
 # ĐẶC TẢ CHI TIẾT CÁC CA SỬ DỤNG NGHIỆP VỤ (BUSINESS USE CASE SPECIFICATIONS)
 
 - **Dự án:** AI-Assisted BizFlow Platform
-- **Mã tài liệu:** `BIZFLOW-RDS-UC-v1.1`
-- **Phiên bản:** `1.1-DRAFT`
-- **Ngày lập:** `2026-10-18` (Cập nhật rà soát Onboarding: `2026-10-19`)
+- **Mã tài liệu:** `BIZFLOW-RDS-UC-v1.2`
+- **Phiên bản:** `1.2-DRAFT`
+- **Ngày lập:** `2026-10-18` (Cập nhật kiểm tra Review v1.2: `2026-10-21`)
 - **Trạng thái:** `DRAFT — REQUIREMENTS BASELINE`
 - **Tài liệu liên quan:** [RDS_v1.0_DRAFT.md](./RDS_v1.0_DRAFT.md), [REQUIREMENTS_CATALOG.csv](./REQUIREMENTS_CATALOG.csv), [REQUIREMENTS_TRACEABILITY.md](./REQUIREMENTS_TRACEABILITY.md), [OPEN_DECISIONS.md](./OPEN_DECISIONS.md), [SOURCE_REGISTER.md](./SOURCE_REGISTER.md)
 
@@ -11,7 +11,7 @@
 
 ## 1. Tổng quan Mô hình Ca Sử dụng (Use Case Model Overview)
 
-Tài liệu này đặc tả chi tiết **13 Ca sử dụng nghiệp vụ đầu-cuối (`UC-001` đến `UC-013`)** của nền tảng **AI-Assisted BizFlow Platform** (bao gồm 12 ca sử dụng chuẩn đã xác nhận `UC-001`..`UC-012` và 01 ca sử dụng đề xuất cho mô hình Self-Service SaaS Onboarding `UC-013` gắn nhãn `PROPOSED — NOT APPROVED` tại `OD-021`). Mỗi Ca sử dụng mô tả cách các tác nhân con người (`A01`–`A04`) và tác nhân phần mềm (`A05` — Trợ lý AI) tương tác với hệ thống để đạt được một mục tiêu nghiệp vụ hoàn chỉnh, đồng thời làm rõ các nhánh thay thế, nhánh ngoại lệ, quy tắc nghiệp vụ (`BR-001`..`BR-024`), phạm vi phân quyền và điều kiện nghiệm thu (`AC-001`..`AC-032`).
+Tài liệu này đặc tả chi tiết **17 Ca sử dụng nghiệp vụ đầu-cuối (`UC-001` đến `UC-017`)** của nền tảng **AI-Assisted BizFlow Platform** (bao gồm 16 ca sử dụng chuẩn đã xác nhận `UC-001`..`UC-012`, `UC-014`..`UC-017` và 01 ca sử dụng đề xuất cho mô hình Self-Service SaaS Onboarding `UC-013` gắn nhãn `PROPOSED — NOT APPROVED` tại `OD-021`). Mỗi Ca sử dụng mô tả cách các tác nhân con người (`A01`–`A04`) và tác nhân phần mềm (`A05` — Trợ lý AI Robot) tương tác với hệ thống để đạt được mục tiêu nghiệp vụ hoàn chỉnh, đồng thời làm rõ các nhánh thay thế, nhánh ngoại lệ, quy tắc nghiệp vụ (`BR-001`..`BR-030`), phạm vi phân quyền và điều kiện nghiệm thu (`AC-001`..`AC-047`).
 
 ```mermaid
 flowchart TB
@@ -20,16 +20,17 @@ flowchart TB
         A02["A02: Company Admin (Initial Owner / Admin)"]
         A03["A03: Manager"]
         A04["A04: Employee (Requester / Assignee)"]
-        A05["A05: AI Agent (Advisory Only)"]
+        A05["A05: AI Agent & Cute Robot Chatbot"]
     end
 
     subgraph PlatformPlane["Mặt phẳng Quản trị Nền tảng & Onboarding (Platform & Onboarding)"]
-        UC01["UC-001: Đăng ký Doanh nghiệp, Xét duyệt bởi Platform Admin & Khởi tạo Workspace Chính (CONFIRMED)"]
-        UC13["UC-013: Tự Đăng ký Doanh nghiệp (Self-Service), Xác minh Email & Tự động Khởi tạo Workspace Chính (PROPOSED - OD-021)"]
+        UC01["UC-001: Đăng ký Doanh nghiệp (6 trường, MinIO Docs), Xét duyệt Platform Admin & Khởi tạo Workspace Chính"]
+        UC13["UC-013: Tự Đăng ký Doanh nghiệp (Self-Service), Xác minh Email & Tự động Khởi tạo Workspace Chính (PROPOSED)"]
     end
 
     subgraph TenantPlane["Mặt phẳng Không gian Làm việc Doanh nghiệp (Tenant Workspace)"]
-        UC02["UC-002: Xác thực Người dùng, Quản lý Phiên & Khôi phục Mật khẩu"]
+        UC02["UC-002: Quản lý Phiên & Khôi phục Mật khẩu Kép"]
+        UC14["UC-014: Đăng nhập Thống nhất (ID 3 trường & Email-link kèm Chọn Workspace)"]
         UC03["UC-003: Thiết lập Cơ cấu Tổ chức, Phạm vi Quản lý & Vai trò"]
         UC04["UC-004: Cấu hình Danh mục Dịch vụ, Định tuyến, Quy trình & SLA"]
         UC05["UC-005: Gửi Yêu cầu Dịch vụ, Định tuyến, Tiếp nhận & Sửa đổi"]
@@ -40,21 +41,25 @@ flowchart TB
         UC10["UC-010: Giám sát Đồng hồ SLA, Tạm dừng Hợp lệ & Leo thang Quá hạn"]
         UC11["UC-011: Hỗ trợ Tác nghiệp bằng AI Có Kiểm soát Con người"]
         UC12["UC-012: Giám sát Bảng điều khiển, Báo cáo, Tìm kiếm & Kiểm toán"]
+        UC15["UC-015: Tương tác Trợ lý AI Robot Nhúng UI & Khẩu lệnh Điều khiển"]
+        UC16["UC-016: Phân rã Công việc bằng AI với Bước Xác nhận Tường minh"]
+        UC17["UC-017: Cấu hình & Chuyển phát Nhắc nhở Hạn chót Đa Kênh"]
     end
 
     A01 --> UC01
-    A01 --> UC02
+    A01 --> UC14
     A01 --> UC12
 
     A02 --> UC01
     A02 --> UC13
-    A02 --> UC02
+    A02 --> UC14
     A02 --> UC03
     A02 --> UC04
     A02 --> UC11
     A02 --> UC12
+    A02 --> UC15
 
-    A03 --> UC02
+    A03 --> UC14
     A03 --> UC05
     A03 --> UC06
     A03 --> UC07
@@ -63,8 +68,11 @@ flowchart TB
     A03 --> UC10
     A03 --> UC11
     A03 --> UC12
+    A03 --> UC15
+    A03 --> UC16
+    A03 --> UC17
 
-    A04 --> UC02
+    A04 --> UC14
     A04 --> UC05
     A04 --> UC06
     A04 --> UC07
@@ -72,11 +80,13 @@ flowchart TB
     A04 --> UC10
     A04 --> UC11
     A04 --> UC12
+    A04 --> UC15
+    A04 --> UC16
+    A04 --> UC17
 
-    UC05 -.->|"Gợi ý & Kiểm tra"| A05
-    UC07 -.->|"Soạn nháp & Gợi ý giao"| A05
-    UC08 -.->|"Kiểm tra chất lượng"| A05
-    UC11 --> A05
+    UC15 <--> A05
+    UC16 <--> A05
+    UC11 <--> A05
 ```
 
 ---
@@ -95,17 +105,19 @@ flowchart TB
   1. Điểm vào đăng ký doanh nghiệp công khai (`/register-company`) đang hoạt động.
   2. Đối với bước xét duyệt: `A01` (`PLATFORM_ADMIN`) đã đăng nhập hợp lệ vào Mặt phẳng Quản trị Nền tảng (`Platform Governance Plane` — `/platform/companies` `UI-02`).
 - **Main Success Scenario (Mô hình `CONFIRMED` — Có Bước Phê duyệt của `PLATFORM_ADMIN`):**
-  1. **Truy cập điểm vào đăng ký & Khai báo hồ sơ:** Đại diện doanh nghiệp mở trang đăng ký doanh nghiệp mới (`/register-company` từ liên kết trên màn hình `/login` `UI-01`), nhập thông tin doanh nghiệp (`CompanyName`, `CompanyCode` viết hoa duy nhất, khóa định danh không gian làm việc đề xuất `TenantKey` dạng slug chữ thường, múi giờ `TimeZone`, `ContactEmail`) và thông tin tài khoản người quản trị ban đầu (`FullName`, `EmployeeCode`, `Email`, `Password` đạt chuẩn bảo mật) rồi gửi đơn đăng ký.
-  2. **Kiểm tra hợp lệ & Ghi nhận hồ sơ `PENDING`:** Hệ thống kiểm tra tính hợp lệ, định dạng và tính duy nhất của `CompanyCode`, `TenantKey` và `Email` (`BR-024`), lưu hồ sơ đăng ký doanh nghiệp ở trạng thái chờ duyệt (`PENDING`), ghi nhật ký kiểm toán (`COMPANY.REGISTRATION_SUBMITTED`) và gửi email xác minh địa chỉ thư điện tử cho người đăng ký (`OD-022`) đồng thời phát thông báo có đơn đăng ký mới cho `A01` (`OD-009`).
-  3. **Xác minh Email liên hệ (`OD-022`):** Đại diện doanh nghiệp mở thư điện tử và xác nhận liên kết/mã xác minh email hợp lệ; hệ thống đánh dấu email của hồ sơ đăng ký đã được xác minh (`EmailVerified = true`).
-  4. **Thẩm định và Phê duyệt (`Approve`):** `A01` (`PLATFORM_ADMIN`) mở hàng đợi quản trị đăng ký doanh nghiệp tại `/platform/companies` (`UI-02`), kiểm tra thông tin pháp nhân và chọn hành động **Phê duyệt (`Approve`)**.
-  5. **Khởi tạo Nguyên tử Tenant, Không gian làm việc Chính và Cấp quyền `COMPANY_ADMIN` ban đầu (`BR-023`, `OD-005`, `OD-024`):** Trong **một giao dịch cơ sở dữ liệu nguyên tử duy nhất (Single ACID Transaction)**:
-     - (5a) Chuyển trạng thái `Company` từ `PENDING` sang `ACTIVE`.
-     - (5b) Khởi tạo đúng **01 Không gian làm việc chính (`Primary Tenant / Workspace`)** gắn với `CompanyId` (`Unique(CompanyId)` theo `DEC-WS-001`) ở trạng thái `ACTIVE` với `TenantKey` và `TimeZone` đã cấu hình.
-     - (5c) Khởi tạo dữ liệu cấu hình hạt giống mặc định cho Workspace (`TenantSettings`, `BusinessCalendar` mặc định).
-     - (5d) Khởi tạo tài khoản người dùng đại diện đầu tiên (`UserAccount` gắn với `TenantId`, mật khẩu băm `Argon2id/BCrypt`, `Status = ACTIVE`).
-     - (5e) Cấp quyền chủ sở hữu/quản trị ban đầu bằng cách gán vai trò hệ thống `COMPANY_ADMIN` (`UserRole`) cho tài khoản vừa tạo và kiểm tra bất biến đảm bảo Workspace có ít nhất 01 `COMPANY_ADMIN` hợp lệ.
-  6. **Ghi kiểm toán & Thông báo hoàn tất:** Hệ thống ghi nhận sự kiện kiểm toán bất biến (`COMPANY.APPROVED`, `TENANT.PROVISIONED`, `USER.INITIAL_ADMIN_ASSIGNED`) và gửi email thông báo kích hoạt thành công để `A02` (`COMPANY_ADMIN`) đăng nhập vào Không gian làm việc chính của doanh nghiệp.
+  1. **Truy cập điểm vào đăng ký & Khai báo 6 trường bắt buộc (`BR-027`):** Đại diện doanh nghiệp mở trang đăng ký doanh nghiệp mới (`/register-company` từ liên kết trên màn hình `/login` `UI-01`). Biểu mẫu yêu cầu bắt buộc đủ đúng 6 trường dữ liệu: (1) Mã số thuế (`TaxId`), (2) Tên công ty (`CompanyName`), (3) Mã workspace mong muốn (`DesiredWorkspaceCode`), (4) Tên người phụ trách công ty (`ContactPersonName`), (5) Email liên hệ (`ContactEmail`), (6) Số điện thoại liên hệ (`ContactPhone`).
+  2. **Kiểm tra khả dụng hoặc tạo mã workspace ngẫu nhiên:** Người dùng có thể nhấn nút "Kiểm tra tính khả dụng" của mã workspace mong muốn; hệ thống gọi API xác thực tức thời và phản hồi kết quả. Người dùng cũng có thể bấm nút "Tạo mã ngẫu nhiên" để hệ thống tự động sinh một mã hợp lệ chưa bị chiếm dụng (`OD-026`).
+  3. **Tải lên tài liệu chứng minh doanh nghiệp lên MinIO/S3 (`DR-017`, `OD-027`):** Người dùng tải lên các tệp tài liệu chứng minh doanh nghiệp (giấy phép kinh doanh, văn bản ủy quyền hợp lệ dạng PDF, JPG, PNG với dung lượng `<= 500 MB`). Tệp được tải lên và lưu trữ an toàn trên kho đối tượng MinIO/S3, đồng thời gắn siêu dữ liệu liên kết với hồ sơ đăng ký.
+  4. **Kiểm tra hợp lệ & Ghi nhận hồ sơ `PENDING`:** Hệ thống kiểm tra tính hợp lệ toàn diện của 6 trường, kiểm tra lại tính khả dụng của mã workspace trên backend để chống race condition, lưu hồ sơ đăng ký doanh nghiệp ở trạng thái chờ duyệt (`PENDING`), ghi nhật ký kiểm toán (`COMPANY.REGISTRATION_SUBMITTED`) và gửi email xác minh địa chỉ thư điện tử cho người đăng ký (`OD-022`) đồng thời phát thông báo có đơn đăng ký mới cho `A01` (`OD-009`).
+  5. **Xác minh Email liên hệ (`OD-022`):** Đại diện doanh nghiệp mở thư điện tử và xác nhận liên kết/mã xác minh email hợp lệ; hệ thống đánh dấu email của hồ sơ đăng ký đã được xác minh (`EmailVerified = true`).
+  6. **Thẩm định tài liệu chứng minh và Phê duyệt (`Approve`):** `A01` (`PLATFORM_ADMIN`) mở hàng đợi quản trị đăng ký doanh nghiệp tại `/platform/companies` (`UI-02`), xem xét thông tin 6 trường, tải và thẩm định các tệp tài liệu chứng minh doanh nghiệp đính kèm, rồi chọn hành động **Phê duyệt (`Approve`)**.
+  7. **Khởi tạo Nguyên tử Tenant, Không gian làm việc Chính và Cấp quyền `COMPANY_ADMIN` ban đầu (`BR-023`, `OD-005`, `OD-024`):** Trong **một giao dịch cơ sở dữ liệu nguyên tử duy nhất (Single ACID Transaction)**:
+     - (7a) Chuyển trạng thái `Company` từ `PENDING` sang `ACTIVE`.
+     - (7b) Khởi tạo đúng **01 Không gian làm việc chính (`Primary Tenant / Workspace`)** gắn với `CompanyId` (`Unique(CompanyId)` theo `DEC-WS-001`) ở trạng thái `ACTIVE` với `TenantKey` đã duyệt.
+     - (7c) Khởi tạo dữ liệu cấu hình hạt giống mặc định cho Workspace (`TenantSettings`, `BusinessCalendar` mặc định).
+     - (7d) Khởi tạo tài khoản người dùng đại diện đầu tiên (`UserAccount` gắn với `TenantId`, mật khẩu băm `Argon2id/BCrypt`, `Status = ACTIVE`).
+     - (7e) Cấp quyền chủ sở hữu/quản trị ban đầu bằng cách gán vai trò hệ thống `COMPANY_ADMIN` (`UserRole`) cho tài khoản vừa tạo và kiểm tra bất biến đảm bảo Workspace có ít nhất 01 `COMPANY_ADMIN` hợp lệ.
+  8. **Ghi kiểm toán & Thông báo hoàn tất:** Hệ thống ghi nhận sự kiện kiểm toán bất biến (`COMPANY.APPROVED`, `TENANT.PROVISIONED`, `USER.INITIAL_ADMIN_ASSIGNED`) và gửi email thông báo kích hoạt thành công để `A02` (`COMPANY_ADMIN`) đăng nhập vào Không gian làm việc chính của doanh nghiệp.
 - **Alternative Flows:**
   - **A1 — Quản trị viên Nền tảng Từ chối Đơn đăng ký (`Reject`):** Tại bước 4, nếu hồ sơ không hợp lệ hoặc không đủ điều kiện, `A01` chọn **Từ chối (`Reject`)** và bắt buộc nhập lý do từ chối (`BR-022`). Hệ thống chuyển trạng thái đơn đăng ký sang `REJECTED` (`OD-023`), không khởi tạo Tenant/Workspace, ghi nhật ký kiểm toán và gửi thông báo kèm lý do từ chối cho người đăng ký.
   - **A2 — Quản trị viên Nền tảng Tạm ngưng hoặc Kích hoạt lại Doanh nghiệp (`FR-TEN-003`):** Sau khi doanh nghiệp đã `ACTIVE`, `A01` có thể chuyển trạng thái doanh nghiệp và Không gian làm việc chính sang `SUSPENDED` (kèm lý do bắt buộc) khi cần khóa quyền truy cập tạm thời, hoặc kích hoạt lại từ `SUSPENDED` sang `ACTIVE`.
@@ -118,7 +130,7 @@ flowchart TB
   - **E5 — Khởi tạo Tenant / Không gian Làm việc Chính Không Hoàn tất (`Incomplete Tenant/Workspace Provisioning` — `BR-023`, `OD-024`):** Tại bước 5, nếu quá trình tạo bản ghi `Primary Tenant`, khởi tạo cấu hình `TenantSettings` hoặc tạo `BusinessCalendar` mặc định gặp lỗi giữa chừng (ví dụ: vi phạm ràng buộc duy nhất `Unique(CompanyId)` hoặc lỗi cơ sở dữ liệu), hệ thống bắt buộc **Rollback 100% toàn bộ giao dịch** về trạng thái trước khi bấm duyệt (`PENDING`), tuyệt đối không để lại một `Company` ở trạng thái `ACTIVE` mà không có `Primary Tenant` hoặc một `Tenant` kẹt ở trạng thái `Provisioning` mồ côi.
   - **E6 — Cấp Quyền Chủ sở hữu / Quản trị Ban đầu (`COMPANY_ADMIN`) Không Thành công (`Failed Initial Owner/Admin Role Assignment` — `BR-023`, `OD-024`):** Tại bước 5d–5e, nếu việc tạo `UserAccount` đại diện ban đầu hoặc việc gán vai trò `COMPANY_ADMIN` (`UserRole`) thất bại (ví dụ: không tìm thấy vai trò hệ thống `COMPANY_ADMIN` hoặc lỗi ghi bảng phân quyền), hệ thống coi toàn bộ giao dịch khởi tạo là thất bại và **Rollback 100%** cả `Company`, `Tenant` và `UserAccount` vừa tạo trong giao dịch đó, ghi nhật ký lỗi hệ thống kèm `CorrelationId` và cho phép thử lại (`Idempotent Retry`) an toàn; tuyệt đối không cho phép tồn tại một Workspace `ACTIVE` mà không có tài khoản `COMPANY_ADMIN` nào có quyền quản trị.
   - **E7 — Từ chối Đơn đăng ký nhưng Không nhập Lý do (`BR-022`) hoặc Truy cập Chéo Giữa các Doanh nghiệp (`BR-002`):** Tại nhánh A1, nếu `A01` bỏ trống lý do từ chối thì hệ thống chặn thao tác (`400/422`). Sau khi khởi tạo, mọi truy cập chéo từ doanh nghiệp khác đều bị chặn và trả về `404 Not Found` (`ADR-0012`).
-- **Business Rules:** `BR-002` (Cách ly đa thuê bao tuyệt đối), `BR-021` (Nhật ký kiểm toán bất biến & cấm xóa cứng), `BR-022` (Bắt buộc nhập lý do khi từ chối), `BR-023` (Khởi tạo nguyên tử 01 Workspace chính & cấp quyền `COMPANY_ADMIN` ban đầu), `BR-024` (Kiểm soát trùng lặp định danh, xác minh email & đăng ký lại), `DEC-WS-001` (1 Công ty = 1 Không gian làm việc chính trong MVP), `DEC-WS-002` (Không bao gồm thanh toán/gói cước thương mại).
+- **Business Rules:** `BR-002` (Cách ly đa thuê bao tuyệt đối), `BR-021` (Nhật ký kiểm toán bất biến & cấm xóa cứng), `BR-022` (Bắt buộc nhập lý do khi từ chối), `BR-023` (Khởi tạo nguyên tử 01 Workspace chính & cấp quyền `COMPANY_ADMIN` ban đầu), `BR-024` (Kiểm soát trùng lặp định danh, xác minh email & đăng ký lại), `BR-027` (Biểu mẫu đăng ký 6 trường bắt buộc, kiểm tra khả dụng/sinh mã ngẫu nhiên & tải tài liệu chứng minh MinIO/S3), `DEC-WS-001` (1 Công ty = 1 Không gian làm việc chính trong MVP), `DEC-WS-002` (Không bao gồm thanh toán/gói cước thương mại).
 - **Permissions / Scope:**
   - Gửi đăng ký & Xác minh email: Công khai (`Public / Unauthenticated`).
   - Xem danh sách đăng ký, xét duyệt và quản lý trạng thái Tenant: Chỉ dành cho `A01` (`PLATFORM_ADMIN` với quyền `platform.company-registrations.read`, `platform.companies.approve`, `platform.tenants.manage` trong `Platform Scope`).
@@ -126,9 +138,9 @@ flowchart TB
   - Khi thành công: Doanh nghiệp (`Company`), đúng **01 Không gian làm việc chính (`Primary Tenant`)** và tài khoản `COMPANY_ADMIN` đầu tiên cùng ở trạng thái `ACTIVE`, có đầy đủ vai trò quản trị và cách ly hoàn toàn theo `TenantId`.
   - Khi bị từ chối hoặc lỗi khởi tạo: Không có `Tenant` hay `UserAccount` mồ côi nào được sinh ra; dấu vết kiểm toán được ghi nhận đầy đủ.
 - **Related Requirements:**
-  - RDS: `STKN-001`, `STKN-002`, `BR-023`, `BR-024`, `BIZ-003`, `BIZ-004`, `BIZ-027`, `BIZ-028`, `CAP-002`, `INFO-001`..`003`, `QREQ-006`.
-  - SRS: `FR-TEN-001`, `FR-TEN-002`, `FR-TEN-003`, `FR-TEN-004`, `FR-TEN-005`, `IR-UI-001`, `IR-UI-004`, `DR-001`..`004`, `SEC-004`, `SEC-012`.
-- **Acceptance Criteria:** `AC-001`, `AC-002`, `AC-031`, `AC-032`.
+  - RDS: `STKN-001`, `STKN-002`, `BR-023`, `BR-024`, `BR-027`, `BIZ-003`, `BIZ-004`, `BIZ-027`, `BIZ-028`, `CAP-002`, `INFO-001`, `INFO-013`, `QREQ-006`.
+  - SRS: `FR-TEN-001`, `FR-TEN-002`, `FR-TEN-003`, `FR-TEN-004`, `FR-TEN-005`, `IR-UI-001`, `IR-UI-004`, `DR-001`, `DR-002`, `DR-017`, `SEC-004`, `SEC-012`, `TST-004`, `TST-005`, `TST-034`.
+- **Acceptance Criteria:** `AC-001`, `AC-002`, `AC-031`, `AC-032`, `AC-037`, `AC-038`, `AC-039`, `AC-040`.
 - **Source:** `SRC-002`, `SRC-003`, `SRC-004`, `DEC-WS-001`, `DEC-WS-002`, `OD-005`, `OD-009`, `OD-018`, `OD-021`..`OD-024`.
 - **Status:** `CONFIRMED` cho luồng `PLATFORM_ADMIN` xét duyệt (`BIZ-003`); các chính sách chi tiết về Self-Service, xác minh email, đăng ký lại và rollback nguyên tử tham chiếu `OD-005`, `OD-009`, `OD-021`..`OD-024`.
 - **Current Implementation Reality Check (`Verified against Repo`):**
@@ -605,12 +617,165 @@ flowchart TB
 
 ---
 
+### `UC-014`: Đăng nhập Thống nhất với Hai Phương thức Độc lập (ID 3 Trường hoặc Liên kết Thư Điện tử kèm Chọn Workspace)
+
+- **Use Case ID:** `UC-014`
+- **Name:** Đăng nhập Thống nhất với Hai Phương thức Độc lập (ID 3 Trường hoặc Liên kết Thư Điện tử kèm Chọn Workspace)
+- **Goal:** Cung cấp cho người dùng một trang đăng nhập duy nhất (`/login`) với hai lựa chọn đăng nhập hoàn toàn độc lập: (1) Đăng nhập bằng ID yêu cầu đủ 3 trường bắt buộc (`ID`, `Password`, `Workspace Key`); (2) Đăng nhập bằng Email-link (không yêu cầu mật khẩu hoặc workspace key) kèm cơ chế chọn workspace khi tài khoản thuộc nhiều doanh nghiệp/workspace (`BR-025`, `BR-026`).
+- **Primary Actors:** `A01` (`PLATFORM_ADMIN`), `A02` (`COMPANY_ADMIN`), `A03` (`MANAGER`), `A04` (`EMPLOYEE`).
+- **Secondary Actors:** Dịch vụ gửi thư điện tử giao dịch (Email Service).
+- **Trigger:** Người dùng truy cập trang `/login` trên trình duyệt web.
+- **Preconditions:**
+  1. Người dùng có tài khoản hợp lệ trên hệ thống (đã kích hoạt).
+  2. Trang web `/login` đang hoạt động.
+- **Main Success Scenario — Phương thức 1: Đăng nhập bằng ID (3 trường bắt buộc):**
+  1. Người dùng chọn tab/chế độ "Đăng nhập bằng ID" trên màn hình `/login`.
+  2. Người dùng nhập đủ đúng 3 trường: Định danh tài khoản (`ID` / `EmployeeCode` / `Email`), Mật khẩu (`Password`), và Mã không gian làm việc (`Workspace Key`).
+  3. Hệ thống kiểm tra tính hợp lệ phía client; nếu đủ 3 trường, gửi yêu cầu xác thực `POST /api/v1/auth/login-id` lên Backend.
+  4. Backend băm mật khẩu, đối chiếu thông tin đăng nhập, xác minh người dùng thuộc `Workspace Key` tương ứng và tài khoản đang ở trạng thái `ACTIVE`.
+  5. Backend cấp phát Access Token (JWT) và Refresh Token, lưu phiên xác thực, và trả về thông tin người dùng kèm workspace.
+  6. Frontend lưu trữ token an toàn và điều hướng người dùng vào Không gian làm việc chính của Tenant.
+- **Main Success Scenario — Phương thức 2: Đăng nhập bằng Liên kết Thư điện tử (Email-link):**
+  1. Người dùng chọn tab/chế độ "Đăng nhập bằng liên kết thư điện tử" (`Email-link`) trên màn hình `/login`.
+  2. Giao diện chỉ hiển thị duy nhất trường `Email` (tuyệt đối không hiển thị/không yêu cầu `Password` hay `Workspace Key`).
+  3. Người dùng nhập địa chỉ `Email` và bấm "Gửi liên kết đăng nhập".
+  4. Backend kiểm tra sự tồn tại của Email, sinh một mã Token dùng một lần (`TTL = 15 phút` theo `OD-025`), lưu hash token và gửi email chứa liên kết xác thực tới hòm thư của người dùng; giao diện hiển thị thông báo chờ xác thực.
+  5. Người dùng mở email và nhấp vào liên kết xác thực (`/auth/verify-email-link?token=...`).
+  6. Backend xác thực token hợp lệ và truy vấn danh sách các Workspace/Tenant mà địa chỉ email này có tư cách thành viên hợp lệ (`BR-026`):
+     - **Nếu tài khoản chỉ thuộc đúng 01 Workspace:** Backend tự động cấp phát token cho Workspace đó và Frontend điều hướng thẳng vào hệ thống.
+     - **Nếu tài khoản thuộc từ 02 Workspace trở lên:** Backend trả về danh sách các Workspace hợp lệ kèm tên công ty; Frontend hiển thị modal/màn hình **Chọn Không gian làm việc (`Workspace Selector`)** để người dùng chủ động chọn workspace muốn làm việc; sau khi chọn, hệ thống cấp token cho workspace đã chọn và điều hướng vào màn hình chính.
+     - **Nếu tài khoản không thuộc Workspace nào:** Backend từ chối cấp quyền truy cập (`403 Forbidden`).
+- **Alternative / Error Flows:**
+  - **E1 — Thiếu trường khi đăng nhập bằng ID:** Nếu người dùng bỏ trống bất kỳ trường nào trong 3 trường (`ID`, `Password`, `Workspace Key`), hệ thống chặn gửi form ngay tại client và hiển thị thông báo lỗi cụ thể dưới trường bị thiếu (`AC-034`).
+  - **E2 — Sai mật khẩu hoặc không thuộc Workspace:** Backend trả về lỗi `401 Unauthorized` chung ("Thông tin đăng nhập hoặc mã không gian làm việc không chính xác") để không để lộ sự tồn tại của tài khoản.
+  - **E3 — Token Email-link hết hạn hoặc đã sử dụng:** Nếu token không hợp lệ, đã bị thu hồi hoặc đã quá 15 phút, hệ thống từ chối xác thực và hướng dẫn người dùng yêu cầu gửi lại liên kết mới.
+  - **E4 — Giới hạn tần suất gửi email (Rate Limit):** Nếu người dùng yêu cầu gửi liên kết email vượt quá 5 lần/giờ, hệ thống từ chối (`429 Too Many Requests`) và hiển thị thời gian chờ.
+- **Business Rules:** `BR-025` (Đăng nhập thống nhất với 2 lựa chọn độc lập), `BR-026` (Quy tắc chọn workspace sau xác thực email-link), `BR-001`, `BR-002`, `DEC-WS-001`.
+- **Related Requirements:**
+  - RDS: `STKN-003`, `STKN-015`, `BR-025`, `BR-026`, `BIZ-001`, `BIZ-029`, `CAP-001`, `INFO-003`, `OD-025`.
+  - SRS: `FR-AUTH-001`, `FR-AUTH-005`, `IR-UI-001`, `DR-004`, `SEC-001`, `SEC-002`, `TST-001`, `TST-032`, `TST-033`.
+- **Acceptance Criteria:** `AC-003`, `AC-033`, `AC-034`, `AC-035`, `AC-036`.
+- **Status:** `CONFIRMED`. Hiện trạng mã nguồn: `PARTIAL` (đã có đăng nhập ID + Password, chưa có kiểm tra bắt buộc 3 trường và chưa có luồng Email-link).
+
+---
+
+### `UC-015`: Tương tác Trợ lý AI Robot Nhúng Giao diện và Khẩu lệnh Điều khiển (Interactive Embedded AI Robot Assistant & Command Dispatch)
+
+- **Use Case ID:** `UC-015`
+- **Name:** Tương tác Trợ lý AI Robot Nhúng Giao diện và Khẩu lệnh Điều khiển
+- **Goal:** Cung cấp một widget Trợ lý AI Robot ngộ nghĩnh nhúng trực tiếp trên giao diện người dùng, tự động mở mỗi khi đăng nhập, đóng phiên qua nút X nhỏ, hỏi đáp tự nhiên về tiến độ/deadline theo phân quyền backend và tiếp nhận các khẩu lệnh điều khiển (`/task`, `/notifications`).
+- **Primary Actors:** `A02` (`COMPANY_ADMIN`), `A03` (`MANAGER`), `A04` (`EMPLOYEE`).
+- **Secondary Actors:** `A05` (Trợ lý AI / OpenAI Provider).
+- **Trigger:** Người dùng đăng nhập vào hệ thống hoặc nhấp vào biểu tượng Trợ lý Robot trên màn hình.
+- **Preconditions:**
+  1. Người dùng đã đăng nhập thành công vào Mặt phẳng Doanh nghiệp.
+  2. Tính năng AI của Tenant đang ở trạng thái Bật (`AIEnabled = true` theo `BR-019`).
+- **Main Success Scenario:**
+  1. **Tự động mở khi đăng nhập:** Khi người dùng đăng nhập thành công và giao diện tải xong, widget Trợ lý AI Robot ngộ nghĩnh tự động bung mở ở góc dưới bên phải màn hình (`AC-043`, `OD-029`).
+  2. **Chào đón và hiển thị tóm tắt:** Robot hiển thị lời chào kèm số lượng công việc khẩn/deadline trong ngày của người dùng và các nút gợi ý câu hỏi nhanh.
+  3. **Hỏi đáp bằng ngôn ngữ tự nhiên:** Người dùng nhập câu hỏi bằng văn bản (ví dụ: "Hôm nay tôi có deadline nào không?", "Có việc gì quá hạn không?", "Danh sách việc ưu tiên của tôi?").
+  4. **Xác thực phân quyền và chống ảo giác:** Backend tiếp nhận câu hỏi, gọi các API truy vấn nghiệp vụ nội bộ theo đúng danh tính và `ManagementScope` của người dùng (`BR-029`). Hệ thống tổng hợp dữ liệu thực tế và chuyển tới mô hình AI để định dạng câu trả lời thân thiện kèm liên kết trực tiếp tới hồ sơ công việc liên quan.
+  5. **Tiếp nhận khẩu lệnh `/task`:** Nếu người dùng gõ lệnh bắt đầu bằng `/task <mô tả>`, Robot kích hoạt luồng phân rã công việc có xác nhận (`UC-016`).
+  6. **Tiếp nhận khẩu lệnh `/notifications`:** Nếu người dùng gõ lệnh bắt đầu bằng `/notifications <yêu cầu>`, Robot kích hoạt luồng cấu hình nhắc nhở hạn chót (`UC-017`).
+  7. **Đóng widget trong phiên làm việc hiện tại:** Người dùng nhấp vào nút "X" nhỏ ở góc trên bên phải widget Robot. Hệ thống thu gọn widget và lưu trạng thái vào `sessionStorage`. Widget không tự mở lại trong suốt phiên làm việc hiện tại, nhưng sẽ tự động mở lại ở lần đăng nhập tiếp theo.
+- **Alternative / Error Flows:**
+  - **A1 — Người dùng chủ động mở lại Robot:** Trong cùng phiên làm việc sau khi đã bấm X, người dùng có thể nhấp vào biểu tượng Robot nổi nhỏ ở góc màn hình để mở lại bất cứ lúc nào.
+  - **E1 — Người dùng hỏi dữ liệu ngoài phạm vi quyền hạn hoặc của doanh nghiệp khác:** Backend chặn truy xuất dữ liệu ngoài phạm vi (`BR-002`, `BR-029`); Robot phản hồi lịch sự: "Tôi chỉ có thể cung cấp thông tin trong phạm vi công việc bạn được phân quyền phụ trách." và tuyệt đối không tạo số liệu giả (`AC-044`).
+  - **E2 — Dịch vụ AI bên ngoài gặp sự cố hoặc timeout:** Hệ thống chuyển sang chế độ suy giảm an toàn (`BR-019`), Robot hiển thị thông báo tạm thời không phản hồi bằng ngôn ngữ tự nhiên nhưng hiển thị danh sách công việc khẩn qua API truyền thống.
+- **Business Rules:** `BR-019`, `BR-028`, `BR-029`, `BR-030`.
+- **Related Requirements:**
+  - RDS: `STKN-010`, `STKN-016`, `BR-029`, `BIZ-030`, `CAP-014`, `INFO-014`, `OD-029`, `OD-031`.
+  - SRS: `FR-AI-011`, `FR-AI-012`, `IR-UI-005`, `DR-016`, `SEC-012`, `TST-036`.
+- **Acceptance Criteria:** `AC-043`, `AC-044`.
+- **Status:** `CONFIRMED`. Hiện trạng mã nguồn: `NOT_IMPLEMENTED`.
+
+---
+
+### `UC-016`: Phân rã Công việc Hỗ trợ bởi AI với Bước Xác nhận Tường minh (AI-Assisted Task Decomposition with Explicit User Confirmation)
+
+- **Use Case ID:** `UC-016`
+- **Name:** Phân rã Công việc Hỗ trợ bởi AI với Bước Xác nhận Tường minh
+- **Goal:** Hỗ trợ người dùng nhập một đoạn mô tả công việc (trên màn hình AI hoặc qua lệnh `/task` trong Robot), AI tự động phân tích và đề xuất danh sách các công việc cụ thể (Task hoặc Request kèm phòng ban tiếp nhận), và **BẮT BUỘC người dùng phải nhấn nút xác nhận tường minh trước khi hệ thống thực sự tạo công việc trong cơ sở dữ liệu** (`BR-028`).
+- **Primary Actors:** `A03` (`MANAGER`), `A04` (`EMPLOYEE`).
+- **Secondary Actors:** `A05` (Trợ lý AI / OpenAI Provider).
+- **Trigger:** Người dùng nhập yêu cầu phân rã việc trên màn hình AI hoặc gõ lệnh `/task <đoạn mô tả>` trong widget Trợ lý Robot.
+- **Preconditions:**
+  1. Người dùng đã đăng nhập và có quyền tạo công việc/yêu cầu (`tasks.create` hoặc `requests.create`).
+  2. AI đang ở trạng thái Bật (`AIEnabled = true`).
+- **Main Success Scenario:**
+  1. **Nhập mô tả công việc:** Người dùng nhập một đoạn văn bản mô tả khối lượng công việc cần triển khai (ví dụ: "Chuẩn bị sự kiện khai trương văn phòng mới bao gồm thiết kế backdrop, thuê âm thanh ánh sáng và mời khách").
+  2. **AI phân tích và sinh danh sách đề xuất:** AI bóc tách ngữ nghĩa thành danh sách các công việc cụ thể. Mỗi đề xuất bao gồm:
+     - Tiêu đề công việc (`Title`).
+     - Phân loại nghiệp vụ: Yêu cầu hỗ trợ nội bộ (`Request`) hoặc Giao việc vận hành (`Task Assignment`).
+     - Phòng ban tiếp nhận đề xuất (`TargetDepartment`).
+     - Mô tả chi tiết nội dung công việc (`Description`).
+  3. **Hiển thị đề xuất kèm nhãn nhận diện:** Giao diện hiển thị danh sách đề xuất dạng thẻ/danh mục có nhãn rõ ràng `AI Suggestion` (`BR-018`).
+  4. **Người dùng xem xét và tinh chỉnh:** Người dùng có quyền:
+     - Chọn hoặc bỏ chọn từng công việc thông qua checkbox.
+     - Chỉnh sửa trực tiếp tiêu đề, mô tả, phòng ban hoặc chuyển đổi qua lại giữa Task và Request.
+     - Thêm thủ công công việc mới hoặc xóa đề xuất không phù hợp.
+  5. **BƯỚC BẮT BUỘC — Người dùng bấm nút xác nhận tạo việc (`BR-028`, `AC-042`):** Hệ thống TUYỆT ĐỐI không tự động tạo dữ liệu trong DB. Người dùng phải chủ động nhấn nút **"Xác nhận tạo các công việc đã chọn"**.
+  6. **Xác thực thẩm quyền và thực thi nguyên tử phía Backend:**
+     - Backend tiếp nhận danh sách các công việc kèm mã chống gửi trùng (`Idempotency-Key` theo `OD-028`).
+     - Kiểm tra quyền hạn của người dùng đối với từng loại công việc và phòng ban tiếp nhận.
+     - Thực thi tạo các bản ghi `Task` và `Request` trong cơ sở dữ liệu theo một giao dịch nguyên tử.
+  7. **Phản hồi kết quả:** Hệ thống hiển thị thông báo tạo thành công, kèm danh sách liên kết dẫn tới các công việc/yêu cầu vừa được khởi tạo.
+- **Alternative / Error Flows:**
+  - **A1 — Người dùng bấm Bỏ qua / Hủy:** Người dùng chọn nút "Hủy / Bỏ qua đề xuất". Hệ thống đóng giao diện đề xuất, giải phóng bộ nhớ tạm và tuyệt đối không tạo bất kỳ bản ghi nào trong DB.
+  - **E1 — Lỗi xác thực quyền hạn trên một số đề xuất:** Nếu người dùng không có quyền giao việc cho một phòng ban cụ thể trong danh sách, Backend từ chối tạo công việc đó và báo lỗi rõ ràng theo từng dòng để người dùng sửa lại phòng ban.
+  - **E2 — Mất kết nối khi đang gửi yêu cầu xác nhận:** Nhờ có `Idempotency-Key`, khi người dùng gửi lại yêu cầu, Backend phát hiện và không tạo trùng lặp công việc (`AC-030`).
+- **Business Rules:** `BR-017` (AI không tự ý đổi trạng thái), `BR-018` (Gắn nhãn AI Suggestion), `BR-028` (Bắt buộc xác nhận tường minh trước khi tạo việc), `BR-002`.
+- **Related Requirements:**
+  - RDS: `STKN-010`, `STKN-016`, `BR-017`, `BR-018`, `BR-028`, `BIZ-021`, `BIZ-031`, `CAP-012`, `CAP-014`, `INFO-010`, `OD-028`.
+  - SRS: `FR-AI-013`, `IR-UI-003`, `IR-UI-005`, `DR-012`, `SEC-008`, `TST-026`, `TST-035`.
+- **Acceptance Criteria:** `AC-041`, `AC-042`, `AC-045`.
+- **Status:** `CONFIRMED`. Hiện trạng mã nguồn: `NOT_IMPLEMENTED`.
+
+---
+
+### `UC-017`: Cấu hình và Chuyển phát Nhắc nhở Hạn chót Đa Kênh (Multi-Channel Deadline Reminder Lifecycle & Notification Dispatch)
+
+- **Use Case ID:** `UC-017`
+- **Name:** Cấu hình và Chuyển phát Nhắc nhở Hạn chót Đa Kênh
+- **Goal:** Tiếp nhận cấu hình nhắc nhở hạn chót của người dùng qua lệnh `/notifications` bằng ngôn ngữ tự nhiên, lưu cấu hình có thẩm quyền phía server, tự động lập lịch và chuyển phát thông báo đa kênh (trong ứng dụng khi online, Web Push / Email khi không mở website) có khử trùng lặp (`BR-030`).
+- **Primary Actors:** `A03` (`MANAGER`), `A04` (`EMPLOYEE`), Tiến trình Lập lịch Hệ thống (Reminder Scheduler Service).
+- **Secondary Actors:** Dịch vụ Web Push Notification, Dịch vụ Thư điện tử (Email Service).
+- **Trigger:** Người dùng nhập khẩu lệnh `/notifications` trong Trợ lý Robot, hoặc đến thời điểm kích hoạt nhắc nhở do tiến trình nền phát hiện.
+- **Preconditions:**
+  1. Người dùng có tài khoản đang hoạt động và có công việc/yêu cầu được giao hoặc đang theo dõi.
+  2. Công việc có hạn chót (`Deadline`) hợp lệ ở tương lai.
+- **Main Success Scenario — Giai đoạn 1: Thiết lập Cấu hình Nhắc nhở qua Chatbot:**
+  1. Người dùng mở widget Trợ lý AI Robot và gõ khẩu lệnh: `/notifications nhắc tôi trước 2 tiếng khi có việc sắp hết hạn`.
+  2. Robot phân tích cú pháp ngôn ngữ tự nhiên, trích xuất thông số thời gian báo trước (`leadMinutes = 120`) và phạm vi công việc.
+  3. Robot phản hồi xác nhận: "Tôi đã lưu cấu hình: sẽ nhắc bạn trước 2 giờ đối với các công việc được giao sắp đến hạn. Bạn có muốn bật thêm thông báo đẩy khi không mở trình duyệt không?".
+  4. Người dùng xác nhận; Backend lưu cấu hình nhắc nhở có thẩm quyền vào cơ sở dữ liệu (`INFO-014`). Nếu người dùng đồng ý Web Push, Frontend yêu cầu quyền thông báo trình duyệt và đăng ký Push Subscription lên Backend (`OD-030`).
+- **Main Success Scenario — Giai đoạn 2: Lập lịch và Chuyển phát Thông báo Đa Kênh:**
+  1. Tiến trình nền chạy ngầm định kỳ (mỗi 1 phút), quét các công việc đang mở (`Task.Status` thuộc `ASSIGNED`, `ACCEPTED`, `IN_PROGRESS`) có `Deadline` thỏa mãn: `Deadline - leadMinutes <= Now < Deadline`.
+  2. Hệ thống kiểm tra bảng khử trùng lặp (`DeduplicationLog`). Nếu chưa từng phát thông báo cho mốc này:
+  3. **Trường hợp Người dùng đang Mở Website (Online):** Hệ thống phát thông báo trong ứng dụng qua SignalR: popup thông báo, chuông thông báo tăng số lượng chưa đọc, và hiển thị tin nhắn nhắc nhở trực tiếp trong widget Robot.
+  4. **Trường hợp Người dùng Không Mở Website (Offline):**
+     - Hệ thống kiểm tra Push Subscription của người dùng. Nếu có, gửi Web Push Notification theo chuẩn W3C / VAPID tới trình duyệt/thiết bị của người dùng.
+     - Nếu người dùng chưa cấp quyền Web Push hoặc gửi push thất bại, hệ thống tự động kích hoạt gửi Email cảnh báo nhắc nhở hạn chót tới hòm thư cá nhân (`Email Fallback` theo `OD-030`).
+  5. Hệ thống ghi nhận mã băm khử trùng (`DeduplicationHash`) vào cơ sở dữ liệu để ngăn chặn gửi trùng lặp ở các chu kỳ quét sau (`BR-030`).
+  6. Khi công việc được chuyển sang `COMPLETED`, `CANCELLED` hoặc khi hạn chót thay đổi: hệ thống tự động cập nhật hoặc vô hiệu hóa bản ghi nhắc nhở tương ứng.
+- **Alternative / Error Flows:**
+  - **A1 — Người dùng gõ câu lệnh cấu hình mơ hồ:** Nếu câu lệnh không nêu rõ thời gian hoặc điều kiện (ví dụ: "/notifications nhắc tôi nhé"), Robot yêu cầu người dùng làm rõ khoảng thời gian muốn được nhắc trước thay vì tự ý tạo cấu hình bừa bãi.
+  - **E1 — Người dùng bị thu hồi quyền truy cập trên công việc:** Nếu người dùng bị chuyển phòng ban hoặc công việc được giao lại cho người khác, hệ thống tự động hủy toàn bộ các lịch nhắc nhở chưa phát của người dùng đó trên công việc này.
+- **Business Rules:** `BR-030` (Vòng đời cấu hình nhắc nhở, lập lịch & chống gửi trùng), `BR-002` (Cách ly đa thuê bao).
+- **Related Requirements:**
+  - RDS: `STKN-008`, `STKN-016`, `BR-030`, `BIZ-032`, `BIZ-033`, `CAP-015`, `INFO-014`, `OD-030`, `OD-032`.
+  - SRS: `FR-NOTIF-003`, `FR-NOTIF-004`, `IR-NOTIF-001`, `IR-EXT-002`, `IR-EXT-003`, `DR-010`, `DR-016`, `TST-037`.
+- **Acceptance Criteria:** `AC-046`, `AC-047`.
+- **Status:** `CONFIRMED`. Hiện trạng mã nguồn: `NOT_IMPLEMENTED`.
+
+---
+
 ## 3. Bảng Ma trận Bao phủ giữa Tác nhân, Quy trình Nghiệp vụ và Ca Sử dụng (Actor – Process – Use Case Coverage Matrix)
 
 | Mã UC | Tên Ca Sử dụng | Luồng Nghiệp vụ Liên quan (RDS Mục 6) | Tác nhân Chính | Tác nhân Phụ | Năng lực Sản phẩm (`CAP-*`) | Yêu cầu Nghiệp vụ (`BIZ-*`) |
 |---|---|---|---|---|---|---|
-| `UC-001` | Đăng ký doanh nghiệp, xét duyệt bởi `PLATFORM_ADMIN` & khởi tạo Tenant chính (Confirmed Baseline) | Flow D — Nhánh D1 (`PLATFORM_ADMIN`-Approved Onboarding) | `A01`, Đại diện công ty | `A02`, Email Service | `CAP-002`, `CAP-009`, `CAP-013` | `BIZ-003`, `BIZ-004`, `BIZ-028` |
-| `UC-002` | Xác thực người dùng, quản lý phiên & khôi phục mật khẩu | Nền tảng bảo mật cho Flow A, B, C, D, E | `A01`, `A02`, `A03`, `A04` | `A02`, Email Service | `CAP-001`, `CAP-013` | `BIZ-001`, `BIZ-002` |
+| `UC-001` | Đăng ký doanh nghiệp (6 trường, MinIO Docs), xét duyệt bởi `PLATFORM_ADMIN` & khởi tạo Tenant chính | Flow D — Nhánh D1 (`PLATFORM_ADMIN`-Approved Onboarding) | `A01`, Đại diện công ty | `A02`, Email Service | `CAP-002`, `CAP-009`, `CAP-013` | `BIZ-003`, `BIZ-004`, `BIZ-028` |
+| `UC-002` | Quản lý phiên & khôi phục mật khẩu kép | Nền tảng bảo mật cho Flow A, B, C, D, E | `A01`, `A02`, `A03`, `A04` | `A02`, Email Service | `CAP-001`, `CAP-013` | `BIZ-001`, `BIZ-002` |
 | `UC-003` | Thiết lập cơ cấu tổ chức, phạm vi quản lý & vai trò | Flow D (Tenant Setup) & Quản trị tổ chức | `A02` | `A03`, `A04` | `CAP-003`, `CAP-013` | `BIZ-005`, `BIZ-006` |
 | `UC-004` | Cấu hình danh mục dịch vụ, định tuyến, quy trình & SLA | Chuẩn bị cấu hình cho Flow A, B, C | `A02` | — | `CAP-004`, `CAP-007`, `CAP-008` | `BIZ-007`, `BIZ-008`, `BIZ-016`, `BIZ-018` |
 | `UC-005` | Gửi yêu cầu dịch vụ, định tuyến, tiếp nhận & sửa đổi | Flow B (Request Processing) & Flow C (Rejected Request Revision) | `A04`, `A03` | `A05` | `CAP-006`, `CAP-009` | `BIZ-012`, `BIZ-013`, `BIZ-015` |
@@ -622,4 +787,8 @@ flowchart TB
 | `UC-011` | Hỗ trợ tác nghiệp bằng AI có kiểm soát con người | Flow E (Human-in-the-Loop AI Assistance) | `A02`, `A03`, `A04` | `A05`, LLM Provider | `CAP-012` | `BIZ-021`, `BIZ-022` |
 | `UC-012` | Giám sát bảng điều khiển, báo cáo, tìm kiếm & kiểm toán | Giám sát điều hành & Tuân thủ xuyên suốt | `A01`, `A02`, `A03`, `A04` | `A05` | `CAP-010`, `CAP-011`, `CAP-013` | `BIZ-024`, `BIZ-025`, `BIZ-026` |
 | `UC-013` | Đăng ký doanh nghiệp tự phục vụ, xác minh email & tự động khởi tạo Không gian làm việc chính (Proposed Self-Service Option) | Flow D — Nhánh D2 (`PROPOSED` Self-Service Onboarding) | Đại diện công ty (Initial Owner) | Email Service, `A02`, `A01` | `CAP-002`, `CAP-009`, `CAP-013` | `BIZ-003`, `BIZ-004`, `BIZ-027`, `BIZ-028` |
+| `UC-014` | Đăng nhập thống nhất (ID 3 trường & Email-link kèm chọn workspace) | Nền tảng bảo mật cho Flow A, B, C, D, E | `A01`, `A02`, `A03`, `A04` | Email Service | `CAP-001` | `BIZ-001`, `BIZ-029` |
+| `UC-015` | Tương tác Trợ lý AI Robot nhúng UI & khẩu lệnh điều khiển | Giao tiếp trợ lý ảo đồng hành & quản trị tác nghiệp | `A02`, `A03`, `A04` | `A05`, LLM Provider | `CAP-014` | `BIZ-030`, `BIZ-032` |
+| `UC-016` | Phân rã công việc bằng AI với bước xác nhận tường minh | Tự động hóa phân rã công việc dưới sự kiểm soát của con người | `A03`, `A04` | `A05`, LLM Provider | `CAP-012`, `CAP-014` | `BIZ-031` |
+| `UC-017` | Cấu hình & chuyển phát nhắc nhở hạn chót đa kênh | Quản lý hạn chót công việc & thông báo đa kênh | `A03`, `A04`, System Scheduler | Web Push, Email Service | `CAP-015` | `BIZ-032`, `BIZ-033` |
 

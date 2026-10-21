@@ -1,9 +1,9 @@
 # DANH MỤC QUYẾT ĐỊNH CÒN MỞ VÀ CÂU HỎI KHÁM PHÁ (OPEN DECISIONS & DISCOVERY LOG)
 
 - **Dự án:** AI-Assisted BizFlow Platform
-- **Mã tài liệu:** `BIZFLOW-SRS-OD-v1.1`
-- **Phiên bản:** `1.1-DRAFT`
-- **Ngày lập:** `2026-10-18` (Cập nhật rà soát Onboarding: `2026-10-19`)
+- **Mã tài liệu:** `BIZFLOW-SRS-OD-v1.2`
+- **Phiên bản:** `1.2-DRAFT`
+- **Ngày lập:** `2026-10-18` (Cập nhật đồng bộ v1.2: `2026-10-21`)
 - **Trạng thái:** `ACTIVE — AWAITING OWNER SIGN-OFF`
 - **Tài liệu liên quan:** [SRS_v1.0_DRAFT.md](file:///d:/FA26/AI-Assisted-BizFlow-Platform/docs/requirements/srs/SRS_v1.0_DRAFT.md), [SOURCE_REGISTER.md](file:///d:/FA26/AI-Assisted-BizFlow-Platform/docs/requirements/srs/SOURCE_REGISTER.md), [REQUIREMENTS_TRACEABILITY.md](file:///d:/FA26/AI-Assisted-BizFlow-Platform/docs/requirements/srs/REQUIREMENTS_TRACEABILITY.md)
 
@@ -41,13 +41,34 @@ Các quyết định dưới đây đã có bằng chứng phê duyệt rõ ràn
 
 ---
 
-## 3. Bộ 7 Câu hỏi Khám phá Ưu tiên Cao nhất dành cho Stakeholder (Top 7 High-Impact Discovery Questions)
+## 3. Bộ 10 Câu hỏi Khám phá Ưu tiên Cao nhất dành cho Stakeholder (Top 10 High-Impact Discovery Questions)
 
-Dưới đây là 7 câu hỏi cốt lõi nhất mà câu trả lời từ Product Owner / Giảng viên hướng dẫn / Kiến trúc sư trưởng sẽ quyết định trực tiếp việc đóng các điểm mở về quyền hạn, máy trạng thái, lược đồ dữ liệu và tiêu chí nghiệm thu MVP:
+Dưới đây là 10 câu hỏi cốt lõi nhất mà câu trả lời từ Product Owner / Giảng viên hướng dẫn / Kiến trúc sư trưởng sẽ quyết định trực tiếp việc đóng các điểm mở về quyền hạn, máy trạng thái, lược đồ dữ liệu và tiêu chí nghiệm thu MVP:
 
 1. **[Câu hỏi 1 — Thẩm quyền từ chối nhận việc và báo cáo tiến độ của Task (`OD-001`, `OD-002`)]:**
    Khi một Task được giao cho cả phòng ban (`DepartmentId` có giá trị, `UserId = null`), một nhân viên bất kỳ trong phòng ban có được quyền bấm **"Từ chối nhận việc" (`ASSIGNED -> REJECTED`)** khiến toàn bộ phòng ban mất việc đó không, hay chỉ người được giao đích danh / Quản lý phòng ban mới được từ chối? Đồng thời, người xử lý có được phép gửi báo cáo tiến độ (`FR-TASK-005/006`) khi Task đang ở trạng thái `OVERDUE` hay bắt buộc phải bấm "Tiếp tục xử lý" (`OVERDUE -> IN_PROGRESS`) trước?
 2. **[Câu hỏi 2 — Tập trạng thái được phép hủy/quá hạn của Request và mã quyền RBAC (`OD-003`)]:**
+   Người gửi hoặc người xử lý có được quyền hủy (`CANCELLED`) một Request khi đang ở trạng thái **Chờ phê duyệt (`WAITING_APPROVAL`)** hoặc **Quá hạn (`OVERDUE`)** không?
+3. **[Câu hỏi 3 — Nhân viên không có Email và ép đổi mật khẩu lần đầu (`OD-004`, `OD-007`)]:**
+   Cho phép cột `UserAccount.Email` mang giá trị `NULL` cho nhóm nhân viên vận hành chỉ dùng `EmployeeCode` không? Có bắt buộc đổi mật khẩu ngay lần đăng nhập đầu tiên khi nhận mật khẩu tạm từ Admin không?
+4. **[Câu hỏi 4 — Trạng thái duyệt đăng ký công ty và trùng tên phòng ban (`OD-005`, `OD-006`)]:**
+   Khi Platform Admin bấm duyệt, chuyển thẳng sang `ACTIVE` hay có trạng thái chờ kích hoạt `PENDING_ACTIVATION`? Tên phòng ban có bắt buộc duy nhất trên toàn công ty hay chỉ cần duy nhất trong cùng phòng ban cha?
+5. **[Câu hỏi 5 — Quy tắc phê duyệt nhiều người trong Workflow (`OD-008`, `OD-011`)]:**
+   Khi một bước phê duyệt có nhiều người duyệt, quy tắc mặc định là Tất cả cùng đồng ý (Unanimous / ALL) hay Chỉ cần người đầu tiên đồng ý (First-responder / ANY)?
+6. **[Câu hỏi 6 — Độc lập đồng hồ SLA giữa Request và Task con (`OD-010`, `OD-012`)]:**
+   Khi Request tạm dừng SLA do `WAITING_FOR_INFO`, đồng hồ SLA của các Task con liên kết có tạm dừng theo không hay tiếp tục tính độc lập?
+7. **[Câu hỏi 7 — Ngưỡng chỉ tiêu phi chức năng và giới hạn AI (`OD-013`..`OD-016`)]:**
+   Xác nhận bộ ngưỡng NFR đề xuất (`p95 <= 500 ms` cho CRUD, `p95 <= 2,000 ms` cho Report với 100 concurrent users, AI timeout 15s) làm cơ sở nghiệm thu chính thức?
+8. **[Câu hỏi 8 — Tiếp nhận Doanh nghiệp, Xác minh Email và Rollback Khởi tạo Workspace (`OD-021`..`OD-024`)]:**
+   Giữ cổng kiểm duyệt thủ công `PLATFORM_ADMIN` hay hỗ trợ Tự đăng ký (`Self-Service Onboarding`)? Thời hạn token xác minh email là 24h? Cho phép đăng ký lại sau khi đơn bị `REJECTED`? Hoàn tác nguyên tử 100% khi tạo workspace hoặc gán quyền admin thất bại?
+9. **[Câu hỏi 9 — Đăng nhập bằng Email-Link và Bộ chọn Không gian làm việc (`OD-025`)]:**
+   Xác nhận phương thức đăng nhập bằng Email-link (Magic link) dùng một lần (`TTL = 15 phút`): Khi người dùng thuộc đúng 1 workspace thì tự động vào; khi thuộc $\ge 2$ workspace thì hiển thị `Workspace Selector` để chọn; khi thuộc 0 workspace thì từ chối kèm link đăng ký mới?
+10. **[Câu hỏi 10 — Trải nghiệm Chatbot Robot Mặc định Mở và Thông báo Deadline Đa kênh Web Push / Email (`OD-028`, `OD-029`, `OD-030`)]:**
+   Xác nhận trải nghiệm chú robot AI trợ lý xuất hiện mặc định mở sau khi đăng nhập (nút [X] chỉ đóng trong phiên hiện tại `sessionStorage`); quy trình phân rã công việc bằng AI bắt buộc người dùng xác nhận rõ ràng trước khi ghi vào DB (`BR-028`); và thông báo deadline ngoài trang qua Web Push Service Worker với fallback tự động sang Email HTML?
+
+---
+
+## 4. Danh mục Chi tiết các Quyết định Còn Mở (`OD-001` .. `OD-032`)
    Yêu cầu nội bộ (`Request`) được phép hủy (`CANCELLED`) từ những trạng thái nào (chỉ `SUBMITTED, ROUTED, RECEIVED, WAITING_FOR_INFO, IN_PROGRESS`, hay bao gồm cả `WAITING_APPROVAL` và `OVERDUE`)? Có tách các mã quyền độc lập `requests.reject`, `requests.cancel`, `requests.information` khỏi quyền `requests.process` không?
 3. **[Câu hỏi 3 — Hỗ trợ nhân viên không có Email và hợp đồng đổi mật khẩu tạm lần đầu (`OD-004`, `OD-007`)]:**
    Để đáp ứng `FR-AUTH-004` (nhân viên không có địa chỉ email được Admin cấp mật khẩu tạm thời), bạn có phê duyệt chuyển cột `User.Email` sang `NULLABLE` (kèm unique index khi `Email IS NOT NULL`) và bổ sung trường `MustChangePassword` + endpoint đổi mật khẩu bắt buộc ngay sau lần đăng nhập đầu tiên không?
@@ -382,4 +403,104 @@ Dưới đây là 7 câu hỏi cốt lõi nhất mà câu trả lời từ Produ
     3. Tách gửi email thông báo kích hoạt ra sau bước Commit DB (qua Outbox/hàng đợi) để lỗi SMTP không làm rollback giao dịch hợp lệ.
   - **Phương án B:** Khởi tạo bất đồng bộ từng phần không dùng chung giao dịch ACID, giữ `Tenant.Status = Provisioning` khi lỗi và yêu cầu `PLATFORM_ADMIN` can thiệp thủ công.
 - **Khuyến nghị (`PROPOSED — NOT APPROVED`):** Chọn **Phương án A**.
+
+---
+
+### `OD-025`: Cơ chế Bảo mật và Thời hạn Token Xác thực qua Email Link (`Magic Link Token Security & Expiration Policy`)
+- **Trạng thái:** `OPEN`
+- **Nguồn phát sinh:** Yêu cầu Đăng nhập hợp nhất (Group A), `BR-025`, `FR-AUTH-005`, `IR-API-004`, `IR-UI-005`, `UC-014`, `TST-032`, `TST-033`.
+- **Yêu cầu bị ảnh hưởng:** `BR-025`, `FR-AUTH-005`, `IR-API-004`, `IR-UI-005`, `DR-004`, `SEC-001`, `UC-014`, `TST-032`, `TST-033`.
+- **Mô tả vấn đề:** Đăng nhập qua Email-link không yêu cầu mật khẩu hay mã workspace trước. Cần xác định: thời hạn token, thuật toán băm, chống replay, và luồng điều hướng khi email gắn với 0, 1 hoặc nhiều workspace.
+- **Các phương án:**
+  - **Phương án A (`PROPOSED — NOT APPROVED`):**
+    1. Token ngẫu nhiên mật mã (CSPRNG 32 bytes), lưu băm SHA-256 trong DB/Redis với `TTL = 15 phút`, thu hồi ngay sau lần sử dụng đầu tiên.
+    2. Giới hạn tối đa `3 email / 15 phút / IP & email`.
+    3. Khi xác thực: thuộc đúng 1 workspace -> vào thẳng; thuộc $\ge 2$ workspace -> cấp `sessionSelectToken` (TTL 5m) và mở `Workspace Selector Modal` (`IR-UI-005`); thuộc 0 workspace -> từ chối kèm link tới `/register-company`.
+  - **Phương án B:** JWT không trạng thái thời hạn 24 giờ, không có Workspace Selector.
+- **Khuyến nghị (`PROPOSED — NOT APPROVED`):** Chọn **Phương án A**.
+
+---
+
+### `OD-026`: Thuật toán và Định dạng Sinh Mã Workspace Tự động (`Auto-generated Workspace Code Format & Fallback`)
+- **Trạng thái:** `OPEN`
+- **Nguồn phát sinh:** Yêu cầu Đăng ký doanh nghiệp (Group B), `BR-026`, `FR-TEN-001`, `IR-API-005`, `UC-001`, `TST-034`.
+- **Yêu cầu bị ảnh hưởng:** `BR-026`, `FR-TEN-001`, `IR-API-005`, `DR-002`, `UC-001`, `TST-034`.
+- **Mô tả vấn đề:** Cung cấp API kiểm tra thời gian thực và nút tự động tạo mã ngẫu nhiên hợp lệ URL/subdomain (`^[a-z0-9-]{3,30}$`).
+- **Các phương án:**
+  - **Phương án A (`PROPOSED — NOT APPROVED`):** Sinh mã dựa trên slug tên công ty kết hợp 4 chữ số ngẫu nhiên (`acme-8492`), hoặc tiền tố `ws-` kèm 6 ký tự hex. Frontend gọi API kiểm tra trước; backend re-check khi submit để chống race condition.
+  - **Phương án B:** Sinh UUID thuần túy.
+- **Khuyến nghị (`PROPOSED — NOT APPROVED`):** Chọn **Phương án A**.
+
+---
+
+### `OD-027`: Chính sách Lưu trữ và Quét Mã độc Tài liệu Hồ sơ Doanh nghiệp trên MinIO/S3 (`Supporting Document Storage & Security Scan`)
+- **Trạng thái:** `OPEN`
+- **Nguồn phát sinh:** Yêu cầu Đăng ký doanh nghiệp (Group B), `BR-026`, `FR-TEN-001`, `FR-TEN-002`, `IR-FILE-001`, `IR-UI-006`, `DR-017`, `TST-034`, `TST-035`.
+- **Yêu cầu bị ảnh hưởng:** `BR-026`, `FR-TEN-001`, `FR-TEN-002`, `IR-FILE-001`, `IR-UI-006`, `DR-017`, `TST-034`, `TST-035`.
+- **Mô tả vấn đề:** Quản lý tệp đính kèm tài liệu pháp lý của hồ sơ đăng ký doanh nghiệp trên MinIO/S3 bucket `company-documents`.
+- **Các phương án:**
+  - **Phương án A (`PROPOSED — NOT APPROVED`):** Hỗ trợ PDF, PNG, JPG; tối đa 10 MB/tệp, tổng không quá 50 MB/hồ sơ; lưu trữ tại `companies/{registrationId}/docs/{uuid}_{filename}`; sinh Presigned URL (TTL 15m) cho Platform Admin xem/tải.
+  - **Phương án B:** Lưu byte array trực tiếp vào PostgreSQL.
+- **Khuyến nghị (`PROPOSED — NOT APPROVED`):** Chọn **Phương án A**.
+
+---
+
+### `OD-028`: Cơ chế Bắt buộc Xác nhận Rõ ràng trước khi Tạo Công việc từ AI (`Mandatory Human Confirmation Workflow for AI Task Decomposition`)
+- **Trạng thái:** `OPEN`
+- **Nguồn phát sinh:** Yêu cầu Phân rã công việc bằng AI (Group D), `BR-028`, `FR-AI-013`, `IR-API-006`, `UC-016`, `TST-036`.
+- **Yêu cầu bị ảnh hưởng:** `BR-028`, `FR-AI-013`, `IR-API-006`, `DR-016`, `UC-016`, `TST-036`.
+- **Mô tả vấn đề:** Lệnh `/task` phân rã đoạn văn bản thành công việc/yêu cầu có cấu trúc. Tuyệt đối cấm AI tự động lưu vào DB.
+- **Các phương án:**
+  - **Phương án A (`PROPOSED — NOT APPROVED`):** AI chỉ trả về JSON danh sách đề xuất hiển thị dạng checklist tương tác; người dùng có thể tick chọn, chỉnh sửa trực tiếp từng trường; chỉ khi người dùng bấm "Xác nhận tạo việc", frontend mới gửi batch API lên backend; backend kiểm tra quyền tại từng phòng ban trước khi commit.
+  - **Phương án B:** Tùy chọn tự động tạo ngay không cần người dùng xác nhận.
+- **Khuyến nghị (`PROPOSED — NOT APPROVED`):** Chọn **Phương án A** (bảo đảm tuân thủ 100% `BR-028`).
+
+---
+
+### `OD-029`: Định dạng Giao diện và Quản lý Trạng thái Thu gọn/Mở rộng của Robot Trợ lý Ảo (`Interactive Robot Widget Lifecycle & Session Storage`)
+- **Trạng thái:** `OPEN`
+- **Nguồn phát sinh:** Yêu cầu Robot Trợ lý Ảo (Group E), `BR-029`, `FR-AI-011`, `IR-UI-005`, `UC-015`, `TST-037`.
+- **Yêu cầu bị ảnh hưởng:** `BR-029`, `FR-AI-011`, `IR-UI-005`, `UC-015`, `TST-037`.
+- **Mô tả vấn đề:** Widget robot trợ lý thông minh mặc định mở sau đăng nhập. Nút [X] ở góc trên bên phải đóng widget. Cần quản lý vòng đời trạng thái đóng.
+- **Các phương án:**
+  - **Phương án A (`PROPOSED — NOT APPROVED`):** Trạng thái đóng được lưu trong `sessionStorage` (`bizflow_robot_dismissed = true`). Trong suốt phiên làm việc (kể cả khi đổi trang), widget giữ thu gọn. Khi đăng xuất và đăng nhập lại hoặc phiên mới, cờ được xóa và robot tự động mở lại theo mặc định.
+  - **Phương án B:** Lưu cờ đóng vĩnh viễn trong `localStorage` hoặc cấu hình user.
+- **Khuyến nghị (`PROPOSED — NOT APPROVED`):** Chọn **Phương án A**.
+
+---
+
+### `OD-030`: Chiến lược Điều phối Đa kênh cho Thông báo Deadline và Đẩy Tin Ngoài Trang (`Web Push vs. Fallback Email Delivery Strategy`)
+- **Trạng thái:** `OPEN`
+- **Nguồn phát sinh:** Yêu cầu Thông báo đa kênh (Group E), `BR-030`, `FR-NOTIF-004`, `IR-EXT-003`, `IR-EXT-002`, `UC-017`, `TST-037`.
+- **Yêu cầu bị ảnh hưởng:** `BR-030`, `FR-NOTIF-004`, `IR-EXT-003`, `IR-EXT-002`, `DR-016`, `UC-017`, `TST-037`.
+- **Mô tả vấn đề:** Thông báo deadline cần gửi cả khi trong ứng dụng (SignalR) và ngoài ứng dụng (Web Push + Fallback Email).
+- **Các phương án:**
+  - **Phương án A (`PROPOSED — NOT APPROVED`):** Khi online: phát SignalR Toast; khi offline: gửi Web Push qua Service Worker (chuẩn VAPID RFC 8292); nếu chưa cấp quyền push hoặc gửi lỗi: tự động fallback gửi Email HTML.
+  - **Phương án B:** Chỉ gửi Email, không dùng Web Push.
+- **Khuyến nghị (`PROPOSED — NOT APPROVED`):** Chọn **Phương án A**.
+
+---
+
+### `OD-031`: Cơ chế Kiểm soát Chi phí Token và Giới hạn Tần suất cho Lệnh AI (`Token Quota, Rate Limiting & Fallback for AI Commands`)
+- **Trạng thái:** `OPEN`
+- **Nguồn phát sinh:** Yêu cầu AI Chatbot & Task Decomposition (Group D, E), `BR-027`, `FR-AI-012`, `FR-AI-013`.
+- **Yêu cầu bị ảnh hưởng:** `BR-027`, `FR-AI-012`, `FR-AI-013`, `NFR-AI-002`.
+- **Mô tả vấn đề:** Kiểm soát chi phí gọi OpenAI API và phòng chống lạm dụng.
+- **Các phương án:**
+  - **Phương án A (`PROPOSED — NOT APPROVED`):** Giới hạn tần suất qua Redis: tối đa 10 lệnh/phút/user và hạn ngạch 500 yêu cầu/ngày/tenant; cắt ngắn context window và prompt grounding chặt chẽ; khi timeout > 15s hoặc lỗi trả về thông báo suy giảm an toàn lịch sự.
+  - **Phương án B:** Không áp dụng giới hạn.
+- **Khuyến nghị (`PROPOSED — NOT APPROVED`):** Chọn **Phương án A**.
+
+---
+
+### `OD-032`: Chiến lược Khử trùng lặp và Lập lịch Nhắc nhở Deadline Hàng loạt (`Deadline Reminder Scheduling & Deduplication Policy`)
+- **Trạng thái:** `OPEN`
+- **Nguồn phát sinh:** Yêu cầu Thông báo deadline (Group E), `BR-030`, `FR-NOTIF-003`, `FR-NOTIF-004`, `UC-017`, `TST-037`.
+- **Yêu cầu bị ảnh hưởng:** `BR-030`, `FR-NOTIF-003`, `FR-NOTIF-004`, `DR-016`, `UC-017`, `TST-037`.
+- **Mô tả vấn đề:** Quản lý lịch nhắc deadline tập trung và khử trùng lặp thông báo.
+- **Các phương án:**
+  - **Phương án A (`PROPOSED — NOT APPROVED`):** Background Worker quét chu kỳ 1 phút; khử trùng lặp qua bảng `NotificationLog` với ràng buộc composite unique `(TaskId, UserId, TriggerType, TimeWindow)`; tự động hủy các lịch nhắc chưa kích hoạt khi Task đạt `COMPLETED`, `CANCELLED` hoặc `CLOSED`.
+  - **Phương án B:** Frontend dùng timer cục bộ trong browser.
+- **Khuyến nghị (`PROPOSED — NOT APPROVED`):** Chọn **Phương án A**.
+
 
