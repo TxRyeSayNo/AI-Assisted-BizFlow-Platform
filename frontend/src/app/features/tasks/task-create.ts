@@ -73,12 +73,12 @@ export class TaskCreate {
               priority: draft.priority || 'MEDIUM',
               checklist: (draft.checklistItems || []).join('\n'),
             });
-            this.aiMessage.set(`AI đã tạo bản thảo (Độ tin cậy: ${(draft.confidence * 100).toFixed(0)}%): ${draft.reasoning}`);
+            this.aiMessage.set(`AI generated draft (Confidence: ${(draft.confidence * 100).toFixed(0)}%): ${draft.reasoning}`);
           }
         },
         error: () => {
           this.aiBusy.set(false);
-          this.aiMessage.set('Không thể kết nối trợ lý AI. Vui lòng thử lại.');
+          this.aiMessage.set('Could not connect to AI assistant. Please try again.');
         }
       });
   }
@@ -95,12 +95,12 @@ export class TaskCreate {
           if (res?.subtasks?.length) {
             const list = res.subtasks.map((s: any) => `${s.orderIndex}. ${s.title}: ${s.description}`).join('\n');
             this.form.patchValue({ checklist: list });
-            this.aiMessage.set(`AI đã phân rã thành ${res.subtasks.length} nhiệm vụ con: ${res.strategy}`);
+            this.aiMessage.set(`AI broke down into ${res.subtasks.length} subtasks: ${res.strategy}`);
           }
         },
         error: () => {
           this.aiBusy.set(false);
-          this.aiMessage.set('Phân rã thất bại. Vui lòng kiểm tra tiêu đề.');
+          this.aiMessage.set('Breakdown failed. Please check the title.');
         }
       });
   }

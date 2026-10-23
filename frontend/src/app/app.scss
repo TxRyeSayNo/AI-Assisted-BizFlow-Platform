@@ -1,0 +1,503 @@
+.app-authenticated-shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: #f8fafd;
+  color: #071b33;
+}
+
+/* ==========================================================================
+   TOP APPLICATION BAR & RESTORED ORIGINAL LOGO
+   ========================================================================== */
+.app-topbar {
+  height: 56px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 1.25rem;
+  background: rgba(255, 255, 255, 0.98);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid #dfe8f2;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  box-shadow: 0 1px 3px rgba(7, 27, 51, 0.03);
+}
+
+.topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.wordmark {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  font-weight: 800;
+  font-size: 1.2rem;
+  color: #071b33;
+  text-decoration: none;
+  letter-spacing: -0.02em;
+
+  &::before {
+    content: none !important;
+    display: none !important;
+  }
+
+  &:hover {
+    text-decoration: none;
+  }
+}
+
+/* Original BizFlow Circular Emblem Logo */
+.brand-logo-img,
+.brand-mark {
+  width: 34px !important;
+  height: 34px !important;
+  object-fit: contain !important;
+  border-radius: 50% !important;
+  flex-shrink: 0;
+  vertical-align: middle;
+  filter: drop-shadow(0 2px 6px rgba(37, 99, 235, 0.25));
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.wordmark:hover .brand-logo-img,
+.wordmark:hover .brand-mark {
+  transform: scale(1.08) rotate(3deg);
+}
+
+.brand-name {
+  font-weight: 800;
+  color: #071b33;
+}
+
+.tenant-badge {
+  background: #eaf4ff;
+  color: #145da0;
+  border: 1px solid #bfdbfe;
+  padding: 0.2rem 0.65rem;
+  border-radius: 9999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+/* Right-side Utilities Group */
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.ai-trigger-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 0.38rem 0.85rem;
+  border-radius: 8px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25);
+  transition: all 0.16s ease;
+
+  .sparkle {
+    color: #93c5fd;
+    font-size: 0.9rem;
+  }
+
+  &:hover {
+    background: linear-gradient(135deg, #1e40af 0%, #1d4ed8 100%);
+    box-shadow: 0 4px 10px rgba(37, 99, 235, 0.35);
+    transform: translateY(-1px);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+}
+
+.notify-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  border: 1px solid #dfe8f2;
+  background: #ffffff;
+  color: #475569;
+  text-decoration: none;
+  position: relative;
+  font-size: 1rem;
+  transition: all 0.15s ease;
+
+  &:hover {
+    background: #f1f5f9;
+    border-color: #cbd5e1;
+    color: #0f172a;
+    text-decoration: none;
+  }
+
+  .unread-dot {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 7px;
+    height: 7px;
+    background: #2563eb;
+    border-radius: 50%;
+    border: 1.5px solid #ffffff;
+  }
+}
+
+.user-chip {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  background: #f8fafd;
+  border: 1px solid #dfe8f2;
+  padding: 0.25rem 0.75rem 0.25rem 0.35rem;
+  border-radius: 9999px;
+  cursor: default;
+}
+
+.user-avatar-img {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1.5px solid #bfdbfe;
+  background: #eaf4ff;
+  display: block;
+  flex-shrink: 0;
+}
+
+.user-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #0b2a4a;
+  color: #ffffff;
+  display: grid;
+  place-items: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  flex-shrink: 0;
+}
+
+.user-meta {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+.user-name {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #071b33;
+  max-width: 9rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.user-role {
+  font-size: 0.7rem;
+  color: #63758b;
+  max-width: 9rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.btn-signout {
+  background: #ffffff;
+  border: 1px solid #dfe8f2;
+  color: #63758b;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  padding: 0.38rem 0.75rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+
+  &:hover {
+    background: #fee2e2;
+    color: #b91c1c;
+    border-color: #fca5a5;
+  }
+}
+
+/* ==========================================================================
+   LIGHT-OCEAN WHITE-BLUE SIDEBAR WITH ROTATING LUMINOUS ACTIVE BORDER
+   ========================================================================== */
+.app-body-layout {
+  display: flex;
+  flex: 1;
+  min-height: calc(100vh - 56px);
+  position: relative;
+}
+
+.app-sidebar {
+  width: 230px;
+  flex-shrink: 0;
+  /* Pristine light white-ocean background matching the login screen */
+  background: 
+    radial-gradient(circle at 18% 12%, rgba(214, 233, 255, 0.85) 0%, transparent 55%),
+    radial-gradient(circle at 82% 85%, rgba(214, 233, 255, 0.75) 0%, transparent 50%),
+    linear-gradient(180deg, #f8fbff 0%, #edf5ff 35%, #e1effe 70%, #d6e9ff 100%);
+  border-right: 1px solid rgba(191, 219, 254, 0.85);
+  display: flex;
+  flex-direction: column;
+  padding: 1rem 0;
+  position: sticky;
+  top: 56px;
+  height: calc(100vh - 56px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  z-index: 100;
+  box-shadow: 2px 0 16px rgba(22, 78, 145, 0.06);
+
+  scrollbar-width: thin;
+  scrollbar-color: #bfdbfe transparent;
+
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: #bfdbfe;
+    border-radius: 4px;
+  }
+}
+
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  width: 100%;
+}
+
+.sidebar-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.65rem 0.95rem;
+  margin: 0.15rem 0.75rem;
+  border-radius: 10px;
+  color: #1e3a5f;
+  text-decoration: none;
+  font-size: 0.875rem;
+  font-weight: 550;
+  letter-spacing: 0.01em;
+  background: transparent;
+  border: 1px solid transparent;
+  box-sizing: border-box;
+  overflow: hidden;
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+
+  .nav-icon {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+    stroke: #2563eb;
+    stroke-width: 1.9;
+    position: relative;
+    z-index: 3;
+    transition: transform 0.2s ease, stroke 0.2s ease;
+  }
+
+  .nav-label {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: #1e3a5f;
+    position: relative;
+    z-index: 3;
+    transition: color 0.18s ease;
+  }
+
+  &:hover:not(.active) {
+    background: rgba(255, 255, 255, 0.88);
+    border-color: rgba(191, 219, 254, 0.85);
+    color: #0d47a1;
+    box-shadow: 0 3px 10px rgba(37, 99, 235, 0.09);
+    transform: translateX(2px);
+
+    .nav-icon {
+      stroke: #1d4ed8;
+      transform: scale(1.06);
+    }
+
+    .nav-label {
+      color: #0d47a1;
+      font-weight: 600;
+    }
+  }
+
+  &:active {
+    transform: scale(0.98);
+  }
+
+  /* Active Navigation State: Rich Blue Fill with Continuous Rotating Conic Gradient Luminous Border */
+  &.active {
+    background: transparent;
+    color: #ffffff;
+    font-weight: 600;
+    border-color: transparent;
+    box-shadow: 
+      0 6px 20px -3px rgba(36, 120, 242, 0.45),
+      0 2px 8px -2px rgba(18, 60, 118, 0.22),
+      0 0 16px rgba(0, 212, 255, 0.32);
+
+    /* Continuous Rotating Conic Gradient Border matching the Login card/button */
+    &::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 280px;
+      height: 280px;
+      background: conic-gradient(
+        from 0deg,
+        transparent 0deg,
+        #124cc4 40deg,
+        #2478f2 90deg,
+        #00d4ff 135deg,
+        #ffffff 165deg,
+        #00d4ff 195deg,
+        #2478f2 240deg,
+        #124cc4 290deg,
+        transparent 340deg,
+        transparent 360deg
+      );
+      animation: rotate-sidebar-luminous-border 3.6s linear infinite;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    /* Solid Rich Blue Inner Background revealing precisely 2px of rotating border */
+    &::after {
+      content: '';
+      position: absolute;
+      inset: 2px;
+      background: linear-gradient(135deg, #0e44b8 0%, #1e6beb 52%, #2478f2 100%);
+      border-radius: 8px;
+      z-index: 2;
+      pointer-events: none;
+    }
+
+    .nav-icon {
+      stroke: #ffffff;
+      stroke-width: 2.2;
+      filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.25));
+    }
+
+    .nav-label {
+      color: #ffffff;
+      font-weight: 650;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+    }
+
+    &:hover {
+      transform: translateY(-1px) scale(1.01);
+      box-shadow: 
+        0 8px 24px -2px rgba(36, 120, 242, 0.55),
+        0 2px 10px rgba(18, 60, 118, 0.3),
+        0 0 22px rgba(0, 212, 255, 0.45);
+    }
+  }
+
+  &:focus-visible {
+    outline: 2px solid #2563eb;
+    outline-offset: 2px;
+  }
+}
+
+@keyframes rotate-sidebar-luminous-border {
+  0% {
+    transform: translate(-50%, -50%) rotate(0deg);
+  }
+  100% {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
+}
+
+.app-main-viewport {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  background: #f8fafd;
+}
+
+/* ==========================================================================
+   RESPONSIVE DESIGN (MOBILE & TABLET)
+   ========================================================================== */
+@media (max-width: 768px) {
+  .app-topbar {
+    padding: 0 0.75rem;
+  }
+
+  .user-meta {
+    display: none;
+  }
+
+  .tenant-badge {
+    display: none;
+  }
+
+  .app-body-layout {
+    flex-direction: column-reverse;
+  }
+
+  .app-sidebar {
+    width: 100%;
+    height: 60px;
+    position: sticky;
+    bottom: 0;
+    top: auto;
+    border-right: none;
+    border-top: 1px solid rgba(191, 219, 254, 0.85);
+    background: 
+      radial-gradient(circle at 50% 0%, rgba(214, 233, 255, 0.8) 0%, transparent 60%),
+      linear-gradient(180deg, #f8fbff 0%, #eaf4ff 100%);
+    padding: 0.35rem 0.5rem;
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+
+  .sidebar-nav {
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 0.25rem;
+  }
+
+  .sidebar-item {
+    margin: 0;
+    padding: 0.4rem 0.65rem;
+    gap: 0.4rem;
+    font-size: 0.78rem;
+
+    &.active::before {
+      width: 200px;
+      height: 200px;
+    }
+
+    &.active::after {
+      inset: 1.5px;
+      border-radius: 7px;
+    }
+  }
+}

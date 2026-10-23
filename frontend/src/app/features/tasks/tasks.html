@@ -96,7 +96,11 @@
                   </span>
                 </th>
                 <td>
-                  <span class="status-label" [class.overdue]="item.status === 'OVERDUE'">{{
+                  <span
+                    class="status-label"
+                    [attr.data-status]="item.status"
+                    [class.overdue]="item.status === 'OVERDUE'"
+                  >{{
                     states[item.status]
                   }}</span>
                   @if (item.deadline) {

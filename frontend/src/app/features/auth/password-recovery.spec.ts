@@ -28,6 +28,30 @@ describe('password recovery', () => {
     request.flush({ message: 'untrusted server text' }, { status: 202, statusText: 'Accepted' });
     expect(component.sent()).toBe(true);
     expect(component.error()).toBe('');
+    expect(component.toast()).toBeNull();
+  });
+
+  it('shows top-right toast when forgot-password form is invalid', () => {
+    const component = TestBed.createComponent(ForgotPassword).componentInstance;
+    component.form.setValue({ identifier: '', tenantKey: '' });
+    component.submit();
+    TestBed.inject(HttpTestingController).expectNone('/api/v1/auth/forgot-password');
+    expect(component.toast()?.title).toBe('Missing account identifier');
+
+    component.form.setValue({ identifier: 'EMP1', tenantKey: 'INVALID_UPPERCASE!' });
+    component.submit();
+    TestBed.inject(HttpTestingController).expectNone('/api/v1/auth/forgot-password');
+    expect(component.toast()?.title).toBe('Invalid workspace key');
+  });
+
+  it('shows top-right toast when forgot-password server fails', () => {
+    const component = TestBed.createComponent(ForgotPassword).componentInstance;
+    component.form.setValue({ identifier: 'EMP1', tenantKey: 'valid-key' });
+    component.submit();
+    const request = TestBed.inject(HttpTestingController).expectOne('/api/v1/auth/forgot-password');
+    request.flush({ message: 'server error' }, { status: 500, statusText: 'Internal Server Error' });
+    expect(component.error()).toContain('temporarily unavailable');
+    expect(component.toast()?.title).toBe('Service unavailable');
   });
 
   it('removes the token from history and prevents mismatched passwords from being sent', () => {

@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { SessionService } from '../../core/auth/session';
@@ -76,7 +76,11 @@ import { AiAssistantComponent } from '../../shared/ai/ai-assistant';
         </a>
 
         <div class="user-chip">
-          <span class="user-avatar">{{ userInitials() }}</span>
+          @if (profilePhotoUrl() && !avatarFailed()) {
+            <img [src]="profilePhotoUrl()" [alt]="identity()?.fullName || 'User avatar'" class="user-avatar-img" (error)="onAvatarError()" />
+          } @else {
+            <span class="user-avatar">{{ userInitials() }}</span>
+          }
           <span class="user-name">{{ identity()?.fullName }}</span>
         </div>
 
@@ -97,7 +101,7 @@ import { AiAssistantComponent } from '../../shared/ai/ai-assistant';
             <span class="role-chip">{{ currentRoleLabel() }}</span>
           </div>
 
-          <h1>Welcome, {{ identity()?.fullName }}</h1>
+          <h1>Welcome</h1>
           <p class="hero-subtext">
             You are signed in to {{ identity()?.tenantName ?? 'the platform console' }}.
           </p>
@@ -666,13 +670,38 @@ import { AiAssistantComponent } from '../../shared/ai/ai-assistant';
     .module-link-wrap {
       border-top: 1px solid #f1f5f9;
       padding-top: 0.75rem;
-      p, a {
+      p {
+        margin: 0;
+        text-decoration: none;
+      }
+      a {
         margin: 0;
         font-size: 0.875rem;
         font-weight: 600;
         color: #2563eb;
-        &:hover { text-decoration: underline; }
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        transition: color 0.15s ease;
+        &:hover {
+          text-decoration: underline;
+          color: #1d4ed8;
+        }
+        &:focus-visible {
+          outline: 2px solid #2563eb;
+          outline-offset: 2px;
+          text-decoration: underline;
+        }
       }
+    }
+    .user-avatar-img {
+      width: 1.65rem;
+      height: 1.65rem;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 1.5px solid #bfdbfe;
+      background: #eaf4ff;
     }
     .platform-card {
       border-color: #cbd5e1;
@@ -686,6 +715,16 @@ export class Workspace {
   readonly identity = this.session.identity;
 
   readonly isAiOpen = signal(false);
+  readonly avatarFailed = signal(false);
+
+  readonly profilePhotoUrl = computed(() => {
+    const id = this.identity();
+    return id?.avatarUrl || id?.picture || id?.photoUrl || null;
+  });
+
+  onAvatarError(): void {
+    this.avatarFailed.set(true);
+  }
 
   userInitials(): string {
     const name = this.identity()?.fullName || 'User';

@@ -115,7 +115,11 @@
                   }}</time>
                 </td>
                 <td>
-                  <span class="status-badge" [ngClass]="statusClass(item.status)">{{
+                  <span
+                    class="status-badge"
+                    [attr.data-status]="item.status"
+                    [ngClass]="statusClass(item.status)"
+                  >{{
                     getStateName(item.status)
                   }}</span>
                   <span class="request-meta">

@@ -403,15 +403,15 @@
 
     @if (activeModal() === 'ai-split') {
       <div class="action-card ai-assistant-card" role="region" aria-label="AI Multi-Intent Split panel">
-        <div class="ai-card-badge">✨ Phân tích đa mục tiêu (AI Request Split)</div>
-        <h3>Phát hiện yêu cầu chứa nhiều mục tiêu độc lập</h3>
+        <div class="ai-card-badge">✨ Multi-Intent Analysis (AI Request Split)</div>
+        <h3>Multiple Independent Objectives Detected</h3>
         <p class="action-subtext">
-          Hệ thống AI đề xuất phân rã yêu cầu này thành các yêu cầu con độc lập để các bộ phận chuyên trách xử lý song song.
+          The AI system recommends splitting this request into independent sub-requests for concurrent processing by specialized departments.
         </p>
 
         @if (aiMultiIntent()?.reasoning) {
           <div class="ai-reasoning-callout">
-            <strong>Nhận định AI:</strong> {{ aiMultiIntent()?.reasoning }}
+            <strong>AI Rationale:</strong> {{ aiMultiIntent()?.reasoning }}
           </div>
         }
 
@@ -419,7 +419,7 @@
           @for (item of aiMultiIntent()?.intents; track $index) {
             <div class="ai-split-item">
               <div class="ai-split-item-header">
-                <span class="ai-split-index">Yêu cầu con #{{ $index + 1 }}</span>
+                <span class="ai-split-index">Sub-request #{{ $index + 1 }}</span>
                 @if (item.suggestedServiceName) {
                   <span class="badge badge-dept">{{ item.suggestedServiceName }}</span>
                 }
@@ -432,9 +432,9 @@
 
         <div class="modal-actions">
           <button mat-flat-button color="primary" type="button" [disabled]="actionInProgress()" (click)="confirmSplit()">
-            {{ actionInProgress() ? 'Đang thực hiện tách…' : 'Xác nhận tách yêu cầu (Split Request)' }}
+            {{ actionInProgress() ? 'Splitting request…' : 'Confirm Split Request' }}
           </button>
-          <button mat-stroked-button type="button" (click)="closeModal()">Đóng / Bỏ qua</button>
+          <button mat-stroked-button type="button" (click)="closeModal()">Close / Dismiss</button>
         </div>
       </div>
     }

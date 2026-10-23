@@ -278,12 +278,12 @@ export class RequestDetail implements OnInit {
         if (res?.isMultiIntent) {
           this.activeModal.set('ai-split');
         } else {
-          this.aiMessage.set('AI xác nhận yêu cầu có phạm vi đơn lẻ, không cần phân tách.');
+          this.aiMessage.set('AI confirmed single-scope request; no split required.');
         }
       },
       error: () => {
         this.aiBusy.set(false);
-        this.aiMessage.set('Phân tích đa mục tiêu thất bại.');
+        this.aiMessage.set('Multi-intent analysis failed.');
       }
     });
   }
@@ -304,14 +304,14 @@ export class RequestDetail implements OnInit {
         this.aiRouting.set(res);
         if (res?.recommendedDepartmentId) {
           this.routeDepartmentId.set(res.recommendedDepartmentId);
-          this.routeReason.set(res.rationale || 'Điều phối theo gợi ý AI');
+          this.routeReason.set(res.rationale || 'Routed based on AI suggestion');
           this.routeSource.set('AI');
           this.openModal('route');
         }
       },
       error: () => {
         this.aiBusy.set(false);
-        this.aiMessage.set('Gợi ý điều phối thất bại.');
+        this.aiMessage.set('Routing suggestion failed.');
       }
     });
   }
@@ -336,12 +336,12 @@ export class RequestDetail implements OnInit {
         next: (res) => {
           this.actionInProgress.set(false);
           this.activeModal.set(null);
-          this.actionSuccess.set(`Đã phân tách thành công thành ${res.splitCount} yêu cầu con.`);
+          this.actionSuccess.set(`Successfully split into ${res.splitCount} sub-requests.`);
           this.load();
         },
         error: (err: HttpErrorResponse) => {
           this.actionInProgress.set(false);
-          this.actionError.set(err?.error?.message ?? 'Phân tách yêu cầu thất bại.');
+          this.actionError.set(err?.error?.message ?? 'Request split failed.');
         }
       });
   }

@@ -1,2 +1,287 @@
 <a class="skip-link" href="#main-content">Skip to main content</a>
-<router-outlet />
+
+@if (signedIn()) {
+  <div class="app-authenticated-shell">
+    <!-- Top Horizontal Utility Header -->
+    <header class="app-topbar" role="banner">
+      <div class="topbar-left">
+        <a class="wordmark" routerLink="/workspace" title="BizFlow Home">
+          <img
+            src="/assets/brand/bizflow-logo.png"
+            alt="BizFlow logo"
+            class="brand-mark brand-logo-img"
+            width="34"
+            height="34"
+          />
+          <span class="brand-name">BizFlow</span>
+        </a>
+        <span class="tenant-badge">
+          {{ identity()?.tenantName ?? 'BizFlow Corporation' }}
+        </span>
+      </div>
+
+      <div class="topbar-right">
+        <!-- AI Assistant Action Button -->
+        <button
+          type="button"
+          class="ai-trigger-btn"
+          (click)="isAiOpen.set(true)"
+          title="Open AI Assistant"
+          aria-label="Open AI Assistant"
+        >
+          <span class="sparkle" aria-hidden="true">✦</span>
+          <span>AI Assistant</span>
+        </button>
+
+        <!-- Notification Bell -->
+        <a
+          routerLink="/notifications"
+          class="notify-btn"
+          title="Notifications"
+          aria-label="Notifications"
+        >
+          <span class="bell-icon" aria-hidden="true">🔔</span>
+          <span class="unread-dot" aria-hidden="true"></span>
+        </a>
+
+        <!-- Current User Profile / Avatar -->
+        <div class="user-chip" [title]="(identity()?.fullName || 'User') + ' (' + currentRoleLabel() + ')'">
+          @if (profilePhotoUrl() && !avatarFailed()) {
+            <img
+              [src]="profilePhotoUrl()"
+              [alt]="identity()?.fullName || 'User avatar'"
+              class="user-avatar-img"
+              (error)="onAvatarError()"
+            />
+          } @else {
+            <span class="user-avatar" aria-hidden="true">{{ userInitials() }}</span>
+          }
+          <div class="user-meta">
+            <span class="user-name">{{ identity()?.fullName || 'Administrator' }}</span>
+            <span class="user-role">{{ currentRoleLabel() }}</span>
+          </div>
+        </div>
+
+        <!-- Sign Out Action -->
+        <button
+          type="button"
+          class="btn-signout"
+          (click)="signOut()"
+          title="Sign out"
+          aria-label="Sign out of BizFlow"
+        >
+          Sign out
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Shell with Left Sidebar & Viewport -->
+    <div class="app-body-layout">
+      <!-- Left Distinct Navy-Blue Sidebar with Icons and Visible Labels -->
+      <aside class="app-sidebar" aria-label="Primary navigation">
+        <nav class="sidebar-nav" aria-label="Main application">
+          @if (identity()?.tenantId) {
+            <!-- 1. Home / Dashboard -->
+            <a
+              routerLink="/workspace"
+              routerLinkActive="active"
+              [routerLinkActiveOptions]="{ exact: true }"
+              class="sidebar-item"
+              title="Home"
+              aria-label="Home"
+            >
+              <svg class="nav-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                <polyline points="9 22 9 12 15 12 15 22"/>
+              </svg>
+              <span class="nav-label">Home</span>
+            </a>
+
+            <!-- 2. Tasks -->
+            @if (
+              hasPermission('tasks.read.tenant') ||
+              hasPermission('tasks.read.managed') ||
+              hasPermission('tasks.read.own') ||
+              hasPermission('tasks.read.assigned')
+            ) {
+              <a
+                routerLink="/tasks"
+                routerLinkActive="active"
+                class="sidebar-item"
+                title="Tasks"
+                aria-label="Tasks"
+              >
+                <svg class="nav-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M9 11l3 3L22 4"/>
+                  <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+                </svg>
+                <span class="nav-label">Tasks</span>
+              </a>
+            }
+
+            <!-- 3. Requests -->
+            @if (
+              hasPermission('requests.read.tenant') ||
+              hasPermission('requests.read.managed') ||
+              hasPermission('requests.read.own')
+            ) {
+              <a
+                routerLink="/requests"
+                routerLinkActive="active"
+                class="sidebar-item"
+                title="Requests"
+                aria-label="Requests"
+              >
+                <svg class="nav-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                  <polyline points="22,6 12,13 2,6"/>
+                </svg>
+                <span class="nav-label">Requests</span>
+              </a>
+            }
+
+            <!-- 4. Approvals -->
+            <a
+              routerLink="/approvals"
+              routerLinkActive="active"
+              class="sidebar-item"
+              title="Approvals"
+              aria-label="Approvals"
+            >
+              <svg class="nav-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <circle cx="12" cy="12" r="10"/>
+                <path d="m9 12 2 2 4-4"/>
+              </svg>
+              <span class="nav-label">Approvals</span>
+            </a>
+
+            <!-- 5. Reports -->
+            @if (
+              hasPermission('reports.manager') ||
+              hasPermission('reports.company') ||
+              hasPermission('reports.workload') ||
+              hasPermission('reports.sla')
+            ) {
+              <a
+                routerLink="/reports"
+                routerLinkActive="active"
+                class="sidebar-item"
+                title="Reports"
+                aria-label="Reports"
+              >
+                <svg class="nav-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <line x1="18" y1="20" x2="18" y2="10"/>
+                  <line x1="12" y1="20" x2="12" y2="4"/>
+                  <line x1="6" y1="20" x2="6" y2="14"/>
+                </svg>
+                <span class="nav-label">Reports</span>
+              </a>
+            }
+
+            <!-- 6. SLA Monitor -->
+            <a
+              routerLink="/sla-monitor"
+              routerLinkActive="active"
+              class="sidebar-item"
+              title="SLA Monitor"
+              aria-label="SLA Monitor"
+            >
+              <svg class="nav-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <circle cx="12" cy="12" r="10"/>
+                <polyline points="12 6 12 12 16 14"/>
+              </svg>
+              <span class="nav-label">SLA Monitor</span>
+            </a>
+
+            <!-- 7. Search -->
+            @if (hasPermission('records.search')) {
+              <a
+                routerLink="/records/search"
+                routerLinkActive="active"
+                class="sidebar-item"
+                title="Search"
+                aria-label="Search records"
+              >
+                <svg class="nav-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <circle cx="11" cy="11" r="8"/>
+                  <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                </svg>
+                <span class="nav-label">Search</span>
+              </a>
+            }
+
+            <!-- 8. Settings -->
+            <a
+              routerLink="/settings"
+              routerLinkActive="active"
+              class="sidebar-item"
+              title="Settings"
+              aria-label="Settings"
+            >
+              <svg class="nav-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <circle cx="12" cy="12" r="3"/>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+              </svg>
+              <span class="nav-label">Settings</span>
+            </a>
+          } @else {
+            <a
+              routerLink="/workspace"
+              routerLinkActive="active"
+              [routerLinkActiveOptions]="{ exact: true }"
+              class="sidebar-item"
+              title="Home"
+              aria-label="Home"
+            >
+              <svg class="nav-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                <polyline points="9 22 9 12 15 12 15 22"/>
+              </svg>
+              <span class="nav-label">Home</span>
+            </a>
+            <a
+              routerLink="/platform/companies"
+              routerLinkActive="active"
+              class="sidebar-item"
+              title="Companies"
+              aria-label="Companies"
+            >
+              <svg class="nav-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
+                <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
+              </svg>
+              <span class="nav-label">Companies</span>
+            </a>
+            <a
+              routerLink="/platform/audit"
+              routerLinkActive="active"
+              class="sidebar-item"
+              title="Platform Audit"
+              aria-label="Platform Audit"
+            >
+              <svg class="nav-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+                <line x1="16" y1="13" x2="8" y2="13"/>
+                <line x1="16" y1="17" x2="8" y2="17"/>
+              </svg>
+              <span class="nav-label">Platform Audit</span>
+            </a>
+          }
+        </nav>
+      </aside>
+
+      <!-- Main Content Viewport -->
+      <div class="app-main-viewport">
+        <router-outlet />
+      </div>
+    </div>
+
+    <!-- Global AI Assistant modal -->
+    @if (isAiOpen()) {
+      <bf-ai-assistant [isOpen]="isAiOpen()" (closeModal)="isAiOpen.set(false)" />
+    }
+  </div>
+} @else {
+  <router-outlet />
+}

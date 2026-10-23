@@ -303,7 +303,7 @@ export class TaskDetail {
         },
         error: (err: HttpErrorResponse) => {
           this.aiBusy.set(false);
-          this.aiError.set(err?.error?.message ?? 'Không thể đánh giá rủi ro.');
+          this.aiError.set(err?.error?.message ?? 'Could not evaluate risk.');
         }
       });
   }
@@ -321,7 +321,7 @@ export class TaskDetail {
         },
         error: (err: HttpErrorResponse) => {
           this.aiBusy.set(false);
-          this.aiError.set(err?.error?.message ?? 'Không thể tạo tóm tắt tiến độ.');
+          this.aiError.set(err?.error?.message ?? 'Could not generate progress summary.');
         }
       });
   }

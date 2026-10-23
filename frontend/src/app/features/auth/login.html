@@ -1,13 +1,62 @@
-<div class="auth-page ocean-auth-theme">
-  <!-- Immersive Crystal-Clear Ultra-Sharp HD Panoramic Background -->
-  <div class="ocean-backdrop" aria-hidden="true">
-    <img
-      src="/assets/ocean/ocean-background-hd.jpg"
-      alt=""
-      class="ocean-bg-image"
-      loading="eager"
-      fetchpriority="high"
-    />
+<!-- Top-Right Floating Pop-Up Alert (Fades out smoothly after 3s) -->
+@if (toast(); as currentToast) {
+  <aside
+    id="auth-top-toast"
+    class="auth-top-toast"
+    [class.toast-fade-out]="toastFading()"
+    role="alert"
+    aria-live="assertive"
+  >
+    <div class="toast-icon-wrap" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" class="toast-svg">
+        <circle cx="12" cy="12" r="10" />
+        <line x1="12" y1="8" x2="12" y2="12" />
+        <line x1="12" y1="16" x2="12.01" y2="16" />
+      </svg>
+    </div>
+    <div class="toast-content">
+      <div class="toast-title">{{ currentToast.title }}</div>
+      <div class="toast-desc">{{ currentToast.message }}</div>
+    </div>
+    <button type="button" class="toast-close-btn" (click)="dismissToast()" aria-label="Close notification">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="18" y1="6" x2="6" y2="18" />
+        <line x1="6" y1="6" x2="18" y2="18" />
+      </svg>
+    </button>
+
+    <!-- Precise SVG Rounded Perimeter Border Runner (3s full loop, perfectly matches corner radius) -->
+    <svg class="toast-perimeter-svg" aria-hidden="true" width="100%" height="100%">
+      <rect
+        class="toast-perimeter-track"
+        x="1.5"
+        y="1.5"
+        width="calc(100% - 3px)"
+        height="calc(100% - 3px)"
+        rx="14.5"
+        ry="14.5"
+        pathLength="100"
+      />
+      <rect
+        class="toast-perimeter-runner"
+        x="1.5"
+        y="1.5"
+        width="calc(100% - 3px)"
+        height="calc(100% - 3px)"
+        rx="14.5"
+        ry="14.5"
+        pathLength="100"
+      />
+    </svg>
+  </aside>
+}
+
+<div class="auth-page light-ocean-theme">
+  <!-- Ambient Light Ocean Animated Atmosphere (CSS-Only, No Image) -->
+  <div class="light-ocean-ambient" aria-hidden="true">
+    <div class="ambient-glow glow-1"></div>
+    <div class="ambient-glow glow-2"></div>
+    <div class="ambient-glow glow-3"></div>
   </div>
 
   <!-- Centered Frosted Glass Login Panel -->
@@ -32,6 +81,7 @@
             <mat-button-toggle-group
               class="toggle-group-separated"
               aria-label="Sign-in method"
+              hideSingleSelectionIndicator="true"
               [value]="mode()"
               (change)="changeMode($event.value)"
               [disabled]="busy()"
@@ -41,7 +91,7 @@
             </mat-button-toggle-group>
           </div>
 
-          <!-- Authentication Form -->
+          <!-- Authentication Form (Stable Height, Non-Stretching) -->
           <form [formGroup]="form" (ngSubmit)="submit()" [attr.aria-busy]="busy()">
             <mat-form-field appearance="outline" subscriptSizing="dynamic">
               <mat-label>{{ mode() === 'email' ? 'Company email' : 'Employee code' }}</mat-label>
@@ -53,11 +103,6 @@
                 [readonly]="busy()"
                 [placeholder]="mode() === 'email' ? 'name@company.com' : 'e.g. EMP001'"
               />
-              <mat-error>{{
-                mode() === 'email'
-                  ? 'Enter a valid company email.'
-                  : 'Enter your employee code (up to 50 characters).'
-              }}</mat-error>
             </mat-form-field>
 
             <mat-form-field appearance="outline" subscriptSizing="dynamic">
@@ -79,7 +124,6 @@
               >
                 {{ showPassword() ? 'Hide' : 'Show' }}
               </button>
-              <mat-error>Enter your password.</mat-error>
             </mat-form-field>
 
             <mat-form-field appearance="outline" subscriptSizing="dynamic">
@@ -91,17 +135,18 @@
                 [readonly]="busy()"
                 placeholder="e.g. bizflow-corp"
               />
-              <mat-hint>Optional unless your company requires it.</mat-hint>
-              <mat-error>Use your company key: lowercase letters, numbers, and hyphens.</mat-error>
             </mat-form-field>
-
-            @if (error()) {
-              <p class="inline-alert" role="alert">{{ error() }}</p>
-            }
 
             <!-- Primary Sign-In Action Button with Animated Rotating Laser Border -->
             <div class="sign-in-btn-animated-border">
-              <button mat-flat-button class="sign-in-button" type="submit" [disabled]="busy()">
+              <button
+                mat-flat-button
+                id="sign-in-btn"
+                class="sign-in-button"
+                type="submit"
+                (click)="submit()"
+                [disabled]="busy()"
+              >
                 @if (busy()) {
                   <span>Signing in…</span>
                 } @else {

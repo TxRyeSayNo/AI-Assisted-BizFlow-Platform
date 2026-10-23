@@ -723,7 +723,7 @@ describe('request detail component', () => {
     fixture.detectChanges();
 
     expect(fixture.componentInstance.activeModal()).toBeNull();
-    expect(fixture.componentInstance.actionSuccess()).toContain('2 yêu cầu con');
+    expect(fixture.componentInstance.actionSuccess()).toContain('2 sub-requests');
   });
 
   it('triggers AI request routing recommendation and populates target department', () => {
