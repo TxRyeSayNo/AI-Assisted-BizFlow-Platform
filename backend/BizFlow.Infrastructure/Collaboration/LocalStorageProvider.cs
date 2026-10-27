@@ -131,4 +131,6 @@ public sealed class LocalStorageProvider : IObjectStorageProvider
         }
         return Task.FromResult(false);
     }
+
+    public string? GeneratePresignedDownloadUrl(string objectKey, TimeSpan expiry) => null;
 }

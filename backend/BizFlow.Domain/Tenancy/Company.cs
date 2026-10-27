@@ -9,18 +9,44 @@ public sealed class Company
     public Guid Id { get; private set; }
     public string Code { get; private set; } = "";
     public string Name { get; private set; } = "";
+    public string TaxId { get; private set; } = "";
+    public string ContactPersonName { get; private set; } = "";
     public string ContactEmail { get; private set; } = "";
+    public string ContactPhone { get; private set; } = "";
+    public string? EvidenceDocumentKey { get; private set; }
+    public string? EvidenceDocumentFileName { get; private set; }
     public CompanyStatus Status { get; private set; }
     public DateTimeOffset CreatedAt { get; private set; }
     public DateTimeOffset UpdatedAt { get; private set; }
     private Company() { }
 
-    public static Company Register(string code, string name, string contactEmail, DateTimeOffset now) => new()
+    public static Company Register(
+        string code,
+        string name,
+        string taxId,
+        string contactPersonName,
+        string contactEmail,
+        string contactPhone,
+        DateTimeOffset now,
+        string? evidenceDocumentKey = null,
+        string? evidenceDocumentFileName = null) => new()
     {
-        Id = Guid.CreateVersion7(), Code = EntityRules.Text(code, 50, nameof(code)).ToUpperInvariant(),
-        Name = EntityRules.Text(name, 200, nameof(name)), ContactEmail = EntityRules.Email(contactEmail),
-        Status = CompanyStatus.Pending, CreatedAt = now.ToUniversalTime(), UpdatedAt = now.ToUniversalTime()
+        Id = Guid.CreateVersion7(),
+        Code = EntityRules.Text(code, 50, nameof(code)).ToUpperInvariant(),
+        Name = EntityRules.Text(name, 200, nameof(name)),
+        TaxId = EntityRules.Text(taxId, 50, nameof(taxId)),
+        ContactPersonName = EntityRules.Text(contactPersonName, 150, nameof(contactPersonName)),
+        ContactEmail = EntityRules.Email(contactEmail),
+        ContactPhone = EntityRules.Text(contactPhone, 30, nameof(contactPhone)),
+        EvidenceDocumentKey = string.IsNullOrWhiteSpace(evidenceDocumentKey) ? null : evidenceDocumentKey.Trim(),
+        EvidenceDocumentFileName = string.IsNullOrWhiteSpace(evidenceDocumentFileName) ? null : evidenceDocumentFileName.Trim(),
+        Status = CompanyStatus.Pending,
+        CreatedAt = now.ToUniversalTime(),
+        UpdatedAt = now.ToUniversalTime()
     };
+
+    public static Company Register(string code, string name, string contactEmail, DateTimeOffset now) =>
+        Register(code, name, "TAX-" + code, "Authorized Representative", contactEmail, "0000000000", now);
 
     public void Approve(DateTimeOffset now)
     {

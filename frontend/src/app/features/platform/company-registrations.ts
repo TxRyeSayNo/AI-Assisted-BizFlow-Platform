@@ -14,9 +14,15 @@ interface Registration {
   companyId: string;
   code: string;
   name: string;
+  taxId?: string;
+  contactPersonName?: string;
   contactEmail: string;
+  contactPhone?: string;
   status: 'PENDING' | 'ACTIVE' | 'SUSPENDED' | 'INACTIVE';
   createdAt: string;
+  evidenceDocumentKey?: string | null;
+  evidenceDocumentFileName?: string | null;
+  evidenceDocumentDownloadUrl?: string | null;
 }
 
 interface RegistrationPage {
@@ -127,8 +133,25 @@ interface RegistrationPage {
                       <th scope="row">
                         <strong>{{ item.name }}</strong>
                         <span class="company-code">{{ item.code }}</span>
+                        @if (item.taxId) {
+                          <span class="company-code" style="color: #93c5fd;">MST: {{ item.taxId }}</span>
+                        }
                       </th>
-                      <td>{{ item.contactEmail }}</td>
+                      <td>
+                        <div>{{ item.contactEmail }}</div>
+                        @if (item.contactPersonName || item.contactPhone) {
+                          <div style="font-size: 0.8rem; color: #94a3b8;">
+                            {{ item.contactPersonName }} {{ item.contactPhone ? '· ' + item.contactPhone : '' }}
+                          </div>
+                        }
+                        @if (item.evidenceDocumentDownloadUrl) {
+                          <div style="margin-top: 0.35rem;">
+                            <a [href]="item.evidenceDocumentDownloadUrl" target="_blank" rel="noopener" style="font-size: 0.8rem; color: #60a5fa; text-decoration: underline;">
+                              📄 {{ item.evidenceDocumentFileName || 'Legal Document' }}
+                            </a>
+                          </div>
+                        }
+                      </td>
                       <td>
                         <span class="status-label status-{{ item.status.toLowerCase() }}">{{ labels[item.status] }}</span>
                       </td>
@@ -338,7 +361,7 @@ export class CompanyRegistrations {
       tenantKey: slug || 'tenant',
       adminEmployeeCode: 'ADMIN01',
       adminEmail: item.contactEmail,
-      adminFullName: `${item.name} Administrator`,
+      adminFullName: item.contactPersonName || `${item.name} Administrator`,
       adminPassword: 'Password123!',
       timeZone: 'UTC',
     });

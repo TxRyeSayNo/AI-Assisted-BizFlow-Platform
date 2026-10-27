@@ -1,0 +1,132 @@
+@if (isAuthenticated()) {
+  <aside class="robot-widget-container" aria-label="Trợ lý Robot BizFlow">
+    <!-- Minimized Floating Circular Button -->
+    @if (!isOpen()) {
+      <button
+        type="button"
+        class="robot-fab-button"
+        (click)="openWidget()"
+        title="Mở Trợ lý Robot BizFlow (AI Assistant)"
+        aria-label="Mở Trợ lý Robot BizFlow"
+      >
+        <span class="robot-icon" aria-hidden="true">🤖</span>
+        <span class="robot-pulse-ring" aria-hidden="true"></span>
+      </button>
+    }
+
+    <!-- Open Chat Window -->
+    @if (isOpen()) {
+      <div class="robot-chat-window" role="dialog" aria-labelledby="robot-chat-title" aria-modal="false">
+        <!-- Header -->
+        <div class="chat-header">
+          <div class="header-left">
+            <span class="robot-avatar" aria-hidden="true">🤖</span>
+            <div class="header-info">
+              <h3 id="robot-chat-title" class="robot-title">Trợ lý Robot BizFlow</h3>
+              <span class="status-indicator">
+                <span class="status-dot"></span> Sẵn sàng hỗ trợ
+              </span>
+            </div>
+          </div>
+          <div class="header-right">
+            <!-- Small [X] close button for current session (BR-029) -->
+            <button
+              type="button"
+              class="close-session-btn"
+              (click)="closeWidget()"
+              title="Thu gọn trợ lý (chỉ có hiệu lực trong phiên này)"
+              aria-label="Đóng trợ lý Robot"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+
+        <!-- Quick Command Chips -->
+        <div class="quick-chips-bar">
+          <button type="button" class="chip" (click)="sendQuickPrompt('Hôm nay tôi có deadline nào không?')">
+            Deadline hôm nay ⏰
+          </button>
+          <button type="button" class="chip" (click)="sendQuickPrompt('Kiểm tra các việc bị quá hạn')">
+            Việc quá hạn ⚠️
+          </button>
+          <button type="button" class="chip" (click)="sendQuickPrompt('Liệt kê các việc chờ xử lý của tôi')">
+            Việc chờ xử lý 📋
+          </button>
+          <button type="button" class="chip command-chip" (click)="sendQuickPrompt('/task ')">
+            /task Phân rã ✦
+          </button>
+          <button type="button" class="chip command-chip" (click)="sendQuickPrompt('/notifications')">
+            /notifications 🔔
+          </button>
+        </div>
+
+        <!-- Chat Stream Body -->
+        <div class="chat-body" #chatBody>
+          @for (msg of messages(); track msg.id) {
+            <div class="message-wrapper" [class.user]="msg.sender === 'user'" [class.robot]="msg.sender === 'robot'">
+              @if (msg.sender === 'robot') {
+                <span class="msg-avatar" aria-hidden="true">🤖</span>
+              }
+              <div class="message-bubble">
+                <div class="message-text" style="white-space: pre-wrap;">{{ msg.text }}</div>
+
+                @if (msg.actionCards && msg.actionCards.length > 0) {
+                  <div class="action-cards-container">
+                    @for (card of msg.actionCards; track card.title) {
+                      <button
+                        type="button"
+                        class="action-card-btn"
+                        (click)="executeAction(card)"
+                      >
+                        <span class="card-icon">✦</span>
+                        <span class="card-title">{{ card.title }}</span>
+                        <span class="card-arrow">→</span>
+                      </button>
+                    }
+                  </div>
+                }
+
+                <span class="message-time">{{ msg.time }}</span>
+              </div>
+            </div>
+          }
+
+          @if (busy()) {
+            <div class="message-wrapper robot">
+              <span class="msg-avatar" aria-hidden="true">🤖</span>
+              <div class="message-bubble loading-bubble">
+                <span class="typing-dot"></span>
+                <span class="typing-dot"></span>
+                <span class="typing-dot"></span>
+              </div>
+            </div>
+          }
+        </div>
+
+        <!-- Input Row -->
+        <div class="chat-footer">
+          <input
+            type="text"
+            class="chat-input"
+            placeholder="Hỏi deadline, gõ /task hoặc /notifications..."
+            [ngModel]="inputMessage()"
+            (ngModelChange)="inputMessage.set($event)"
+            (keydown.enter)="sendMessage()"
+            [disabled]="busy()"
+          />
+          <button
+            type="button"
+            class="send-btn"
+            (click)="sendMessage()"
+            [disabled]="busy() || !inputMessage().trim()"
+            title="Gửi tin nhắn"
+            aria-label="Gửi tin nhắn"
+          >
+            ➤
+          </button>
+        </div>
+      </div>
+    }
+  </aside>
+}

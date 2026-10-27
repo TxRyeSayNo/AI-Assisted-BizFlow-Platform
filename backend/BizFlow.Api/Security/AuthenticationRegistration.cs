@@ -38,6 +38,7 @@ public static class AuthenticationRegistration
         services.AddSingleton<IRefreshTokenGenerator, RefreshTokenGenerator>();
         services.AddSingleton<IAuthenticationAttemptLimiter, AuthenticationAttemptLimiter>();
         services.AddScoped<AuthenticationService>();
+        services.AddScoped<IEmailLinkAuthenticationService, EmailLinkAuthenticationService>();
         services.AddScoped<IAccessSnapshotProvider, AccessSnapshotProvider>();
         services.AddScoped<ISecurityAuditWriter, SecurityAuditWriter>();
         services.AddScoped<IResourceAuthorizer, ResourceAuthorizer>();

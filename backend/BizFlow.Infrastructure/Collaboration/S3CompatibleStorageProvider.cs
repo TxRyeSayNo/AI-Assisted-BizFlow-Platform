@@ -120,6 +120,44 @@ public sealed class S3CompatibleStorageProvider : IObjectStorageProvider
         return Task.FromResult(new UploadSessionDescriptor(uploadUrl, expiresAt));
     }
 
+    public string? GeneratePresignedDownloadUrl(string objectKey, TimeSpan expiry)
+    {
+        var uri = new Uri(_publicEndpoint);
+        var host = uri.Authority;
+        var now = DateTimeOffset.UtcNow;
+        var amzDate = now.ToString("yyyyMMddTHHmmssZ", CultureInfo.InvariantCulture);
+        var dateStamp = now.ToString("yyyyMMdd", CultureInfo.InvariantCulture);
+
+        var canonicalUri = $"/{_bucket.Trim('/')}/{EscapePath(objectKey)}";
+        var credentialScope = $"{dateStamp}/{_region}/s3/aws4_request";
+        var escapedCredential = Uri.EscapeDataString($"{_accessKey}/{credentialScope}");
+
+        var queryParams = new[]
+        {
+            ("X-Amz-Algorithm", "AWS4-HMAC-SHA256"),
+            ("X-Amz-Credential", escapedCredential),
+            ("X-Amz-Date", amzDate),
+            ("X-Amz-Expires", ((int)expiry.TotalSeconds).ToString(CultureInfo.InvariantCulture)),
+            ("X-Amz-SignedHeaders", "host")
+        };
+
+        Array.Sort(queryParams, (a, b) => string.CompareOrdinal(a.Item1, b.Item1));
+        var canonicalQuery = string.Join("&", Array.ConvertAll(queryParams, p => $"{p.Item1}={p.Item2}"));
+
+        var canonicalHeaders = $"host:{host}\n";
+        var signedHeaders = "host";
+        var payloadHash = "UNSIGNED-PAYLOAD";
+
+        var canonicalRequest = $"GET\n{canonicalUri}\n{canonicalQuery}\n{canonicalHeaders}\n{signedHeaders}\n{payloadHash}";
+        var hashedCanonicalRequest = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(canonicalRequest))).ToLowerInvariant();
+
+        var stringToSign = $"AWS4-HMAC-SHA256\n{amzDate}\n{credentialScope}\n{hashedCanonicalRequest}";
+        var signingKey = DeriveSigningKey(_secretKey, dateStamp, _region, "s3");
+        var signature = Convert.ToHexString(HMACSHA256.HashData(signingKey, Encoding.UTF8.GetBytes(stringToSign))).ToLowerInvariant();
+
+        return $"{_publicEndpoint}{canonicalUri}?{canonicalQuery}&X-Amz-Signature={signature}";
+    }
+
     public async Task SaveBinaryDirectAsync(
         string objectKey,
         Stream content,

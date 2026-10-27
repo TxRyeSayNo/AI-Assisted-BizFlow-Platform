@@ -4,11 +4,30 @@ using BizFlow.Domain.Security;
 
 namespace BizFlow.Application.Authentication;
 
-public sealed record AuthenticationCandidate(Guid UserId, Guid? TenantId, string? TenantName);
+public sealed record AuthenticationCandidate(Guid UserId, Guid? TenantId, string? TenantName, string? TenantKey = null);
 public sealed record SessionIdentity(Guid UserId, string FullName, Guid? TenantId, string? TenantName, string[] Permissions);
 public sealed record AuthenticationResponse(string AccessToken, string RefreshToken, DateTimeOffset ExpiresAt, SessionIdentity Session)
 {
     public override string ToString() => "[REDACTED AUTHENTICATION RESPONSE]";
+}
+public sealed record EmailLinkRequestInput(string Email);
+public sealed record EmailLinkRequestResponse(string Message, int ExpiresInMinutes);
+public sealed record EmailLinkVerifyInput(string Token);
+public sealed record WorkspaceCandidateDto(Guid? TenantId, string TenantKey, string TenantName);
+public sealed record EmailLinkVerificationResponse(
+    string Status,
+    string? Message,
+    string? RegisterCompanyUrl,
+    string? Ticket,
+    IReadOnlyList<WorkspaceCandidateDto>? Workspaces,
+    AuthenticationResponse? Authentication);
+public sealed record EmailLinkSelectWorkspaceInput(string Ticket, string TenantKey);
+
+public interface IEmailLinkAuthenticationService
+{
+    Task<EmailLinkRequestResponse> RequestLinkAsync(string email, CancellationToken cancellationToken = default);
+    Task<EmailLinkVerificationResponse> VerifyLinkAsync(string token, CancellationToken cancellationToken = default);
+    Task<AuthenticationResponse> SelectWorkspaceAsync(string ticket, string tenantKey, CancellationToken cancellationToken = default);
 }
 public sealed record AccessTokenRequest(Guid UserId, Guid? TenantId, Guid FamilyId, string SecurityStamp);
 public sealed record IssuedAccessToken(string Secret, DateTimeOffset ExpiresAt)

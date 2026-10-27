@@ -5,7 +5,19 @@ using BizFlow.Domain.Security;
 namespace BizFlow.Application.Tenancy;
 
 public sealed record CompanyRegistrationFilter(int Page = 1, int PageSize = 25, string? Status = null, string? Search = null);
-public sealed record CompanyRegistrationRow(Guid CompanyId, string Code, string Name, string ContactEmail, string Status, DateTimeOffset CreatedAt);
+public sealed record CompanyRegistrationRow(
+    Guid CompanyId,
+    string Code,
+    string Name,
+    string TaxId,
+    string ContactPersonName,
+    string ContactEmail,
+    string ContactPhone,
+    string Status,
+    DateTimeOffset CreatedAt,
+    string? EvidenceDocumentKey = null,
+    string? EvidenceDocumentFileName = null,
+    string? EvidenceDocumentDownloadUrl = null);
 public sealed record CompanyRegistrationPage(IReadOnlyList<CompanyRegistrationRow> Items, int Page, int PageSize, long Total);
 public interface ICompanyRegistrationReader
 {

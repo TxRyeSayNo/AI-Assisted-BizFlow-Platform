@@ -53,6 +53,9 @@ public sealed class BizFlowDbContext(DbContextOptions<BizFlowDbContext> options,
     public DbSet<AuthenticationSession> AuthenticationSessions => Set<AuthenticationSession>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
     public DbSet<Notification> Notifications => Set<Notification>();
+    public DbSet<DeadlineReminderSchedule> DeadlineReminderSchedules => Set<DeadlineReminderSchedule>();
+    public DbSet<WebPushSubscription> WebPushSubscriptions => Set<WebPushSubscription>();
+    public DbSet<NotificationLog> NotificationLogs => Set<NotificationLog>();
     public DbSet<WorkflowDefinition> Workflows => Set<WorkflowDefinition>();
     public DbSet<WorkflowVersion> WorkflowVersions => Set<WorkflowVersion>();
     public DbSet<WorkflowStep> WorkflowSteps => Set<WorkflowStep>();
@@ -94,6 +97,9 @@ public sealed class BizFlowDbContext(DbContextOptions<BizFlowDbContext> options,
         model.Entity<AuthenticationSession>().HasQueryFilter(x => CurrentUserId != null && x.UserId == CurrentUserId);
         model.Entity<AuditLog>().HasQueryFilter(x => CurrentUserId != null && CurrentTenantId != null && x.TenantId == CurrentTenantId);
         model.Entity<Notification>().HasQueryFilter(x => CurrentUserId != null && CurrentTenantId != null && x.TenantId == CurrentTenantId && x.RecipientId == CurrentUserId);
+        model.Entity<DeadlineReminderSchedule>().HasQueryFilter(x => CurrentUserId != null && CurrentTenantId != null && x.TenantId == CurrentTenantId);
+        model.Entity<WebPushSubscription>().HasQueryFilter(x => CurrentUserId != null && CurrentTenantId != null && x.TenantId == CurrentTenantId);
+        model.Entity<NotificationLog>().HasQueryFilter(x => CurrentUserId != null && CurrentTenantId != null && x.TenantId == CurrentTenantId);
         model.Entity<WorkflowDefinition>().HasQueryFilter(x => CurrentUserId != null && CurrentTenantId != null && x.TenantId == CurrentTenantId);
         model.Entity<WorkflowVersion>().HasQueryFilter(x => Workflows.Any(w => w.Id == x.WorkflowId));
         model.Entity<WorkflowStep>().HasQueryFilter(x => WorkflowVersions.Any(v => v.Id == x.WorkflowVersionId));
@@ -151,6 +157,18 @@ public sealed class BizFlowDbContext(DbContextOptions<BizFlowDbContext> options,
                             !await Notifications.AsNoTracking().AnyAsync(n => n.Id == notification.Id, cancellationToken) ||
                             entry.Properties.Any(p => p.IsModified && p.Metadata.Name != nameof(Notification.ReadAt))) throw Denied();
                     }
+                    break;
+                case DeadlineReminderSchedule schedule:
+                    if (CurrentUserId is not null) AssertTenant(schedule.TenantId);
+                    else if (schedule.TenantId == Guid.Empty) throw Denied();
+                    break;
+                case WebPushSubscription sub:
+                    AssertTenant(sub.TenantId);
+                    if (sub.UserId != CurrentUserId) throw Denied();
+                    break;
+                case NotificationLog log:
+                    if (CurrentUserId is not null) AssertTenant(log.TenantId);
+                    else if (log.TenantId == Guid.Empty) throw Denied();
                     break;
                 case SlaProfile profile:
                     AssertTenant(profile.TenantId);

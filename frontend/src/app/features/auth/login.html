@@ -19,69 +19,120 @@
               <span class="brand-dot" aria-hidden="true"></span>
             </div>
             <h1 id="login-title">Sign in to your workspace</h1>
-            <p class="supporting-copy">Use your employee code or company email to continue.</p>
+            <p class="supporting-copy">
+              {{ authMethod() === 'email-link' 
+                ? 'Sign in passwordless using your verified company email link.' 
+                : 'Use your employee code or company email and workspace key to continue.' }}
+            </p>
           </div>
 
-          <!-- Separated Method Selector with Distinct Laser Animated Buttons -->
+          <!-- Authentication Method Toggle (ID Login vs Passwordless Email Link) -->
           <div class="toggle-group-container">
-            <mat-button-toggle-group class="toggle-group-separated" aria-label="Sign-in method" [value]="mode()"
-              (change)="changeMode($event.value)" [disabled]="busy()">
-              <mat-button-toggle value="code">Employee code</mat-button-toggle>
-              <mat-button-toggle value="email">Company email</mat-button-toggle>
+            <mat-button-toggle-group class="toggle-group-separated" aria-label="Authentication method" [value]="authMethod()"
+              (change)="setAuthMethod($event.value)" [disabled]="busy()">
+              <mat-button-toggle value="password">ID & Mật khẩu</mat-button-toggle>
+              <mat-button-toggle value="email-link">Email Link (Không MK)</mat-button-toggle>
             </mat-button-toggle-group>
           </div>
 
-          <!-- Authentication Form -->
-          <form [formGroup]="form" (ngSubmit)="submit()" [attr.aria-busy]="busy()">
-            <mat-form-field appearance="outline" subscriptSizing="dynamic">
-              <mat-label>{{ mode() === 'email' ? 'Company email' : 'Employee code' }}</mat-label>
-              <input matInput formControlName="identifier" autocomplete="username"
-                [type]="mode() === 'email' ? 'email' : 'text'" [readonly]="busy()"
-                [placeholder]="mode() === 'email' ? 'name@company.com' : 'e.g. EMP001'" />
-              <mat-error>{{
-                mode() === 'email'
-                ? 'Enter a valid company email.'
-                : 'Enter your employee code (up to 50 characters).'
-                }}</mat-error>
-            </mat-form-field>
-
-            <mat-form-field appearance="outline" subscriptSizing="dynamic">
-              <mat-label>Password</mat-label>
-              <input matInput formControlName="password" autocomplete="current-password"
-                [type]="showPassword() ? 'text' : 'password'" [readonly]="busy()" />
-              <button mat-button matSuffix type="button"
-                [attr.aria-label]="showPassword() ? 'Hide password' : 'Show password'"
-                [attr.aria-pressed]="showPassword()" (click)="showPassword.set(!showPassword())">
-                {{ showPassword() ? 'Hide' : 'Show' }}
-              </button>
-              <mat-error>Enter your password.</mat-error>
-            </mat-form-field>
-
-            <mat-form-field appearance="outline" subscriptSizing="dynamic">
-              <mat-label>Workspace key</mat-label>
-              <input matInput formControlName="tenantKey" autocomplete="organization" [readonly]="busy()"
-                placeholder="e.g. bizflow-corp" />
-              <mat-hint>Optional unless your company requires it.</mat-hint>
-              <mat-error>Use your company key: lowercase letters, numbers, and hyphens.</mat-error>
-            </mat-form-field>
-
-            @if (error()) {
-            <p class="inline-alert" role="alert">{{ error() }}</p>
-            }
-
-            <!-- Primary Sign-In Action Button with Animated Rotating Laser Border -->
-            <div class="sign-in-btn-animated-border">
-              <button mat-flat-button class="sign-in-button" type="submit" [disabled]="busy()">
-                @if (busy()) {
-                <span>Signing in…</span>
-                } @else {
-                <span>Sign in to Workspace</span>
-                }
-              </button>
+          @if (authMethod() === 'password') {
+            <!-- Sub-selector for Identifier Type in ID Login -->
+            <div class="toggle-group-container" style="margin-top: 0.25rem; margin-bottom: 0.75rem;">
+              <mat-button-toggle-group class="toggle-group-sub" aria-label="Sign-in identifier type" [value]="mode()"
+                (change)="changeMode($event.value)" [disabled]="busy()">
+                <mat-button-toggle value="code">Mã nhân viên</mat-button-toggle>
+                <mat-button-toggle value="email">Email công ty</mat-button-toggle>
+              </mat-button-toggle-group>
             </div>
-          </form>
+
+            <!-- Standard 3-field Authentication Form -->
+            <form [formGroup]="form" (ngSubmit)="submit()" [attr.aria-busy]="busy()">
+              <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                <mat-label>{{ mode() === 'email' ? 'Company email' : 'Employee code' }}</mat-label>
+                <input matInput formControlName="identifier" autocomplete="username"
+                  [type]="mode() === 'email' ? 'email' : 'text'" [readonly]="busy()"
+                  [placeholder]="mode() === 'email' ? 'name@company.com' : 'e.g. EMP001'" />
+                <mat-error>{{
+                  mode() === 'email'
+                  ? 'Enter a valid company email.'
+                  : 'Enter your employee code (up to 50 characters).'
+                  }}</mat-error>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                <mat-label>Password</mat-label>
+                <input matInput formControlName="password" autocomplete="current-password"
+                  [type]="showPassword() ? 'text' : 'password'" [readonly]="busy()" />
+                <button mat-button matSuffix type="button"
+                  [attr.aria-label]="showPassword() ? 'Hide password' : 'Show password'"
+                  [attr.aria-pressed]="showPassword()" (click)="showPassword.set(!showPassword())">
+                  {{ showPassword() ? 'Hide' : 'Show' }}
+                </button>
+                <mat-error>Enter your password.</mat-error>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                <mat-label>Workspace key</mat-label>
+                <input matInput formControlName="tenantKey" autocomplete="organization" [readonly]="busy()"
+                  placeholder="e.g. bizflow-corp" required />
+                <mat-hint>Required: Enter your organization's workspace key.</mat-hint>
+                <mat-error>Workspace key is required (lowercase letters, numbers, and hyphens).</mat-error>
+              </mat-form-field>
+
+              @if (error()) {
+                <p class="inline-alert" role="alert">{{ error() }}</p>
+              }
+
+              <!-- Primary Sign-In Action Button -->
+              <div class="sign-in-btn-animated-border">
+                <button mat-flat-button class="sign-in-button" type="submit" [disabled]="busy()">
+                  @if (busy()) {
+                    <span>Signing in…</span>
+                  } @else {
+                    <span>Sign in to Workspace</span>
+                  }
+                </button>
+              </div>
+            </form>
+          } @else {
+            <!-- Passwordless Email Link Form (FR-AUTH-005, INT-029) -->
+            <form [formGroup]="emailForm" (ngSubmit)="submitEmailLink()" [attr.aria-busy]="busy()">
+              <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                <mat-label>Địa chỉ Email công ty</mat-label>
+                <input matInput formControlName="email" type="email" autocomplete="email" [readonly]="busy()"
+                  placeholder="name@company.com" required />
+                <mat-hint>Chúng tôi sẽ gửi liên kết đăng nhập xác thực qua email (hiệu lực 15 phút).</mat-hint>
+                <mat-error>Vui lòng nhập địa chỉ email hợp lệ.</mat-error>
+              </mat-form-field>
+
+              @if (emailSentMessage()) {
+                <div class="inline-success" role="status">
+                  <span class="icon">✉️</span> {{ emailSentMessage() }}
+                </div>
+              }
+
+              @if (error()) {
+                <p class="inline-alert" role="alert">{{ error() }}</p>
+              }
+
+              <div class="sign-in-btn-animated-border" style="margin-top: 1rem;">
+                <button mat-flat-button class="sign-in-button" type="submit" [disabled]="busy()">
+                  @if (busy()) {
+                    <span>Đang gửi liên kết…</span>
+                  } @else {
+                    <span>Gửi Liên Kết Đăng Nhập</span>
+                  }
+                </button>
+              </div>
+            </form>
+          }
 
           <div class="auth-card-footer">
+            @if (showRegisterLink()) {
+              <p class="auth-help" style="margin: 0.75rem 0; padding: 0.5rem; background: rgba(59, 130, 246, 0.1); border-radius: 6px;">
+                <a routerLink="/register-company" style="font-weight: 700; color: #3b82f6;">&rarr; Đăng ký doanh nghiệp mới ngay</a>
+              </p>
+            }
             <p class="auth-help"><a routerLink="/forgot-password">Forgot your password?</a></p>
             <p class="auth-help" style="margin: 0.5rem 0;">
               <span>New organization? </span>

@@ -66,7 +66,7 @@ public sealed class AuthenticationApiTests(PostgresFixture database)
         await using var factory = new AuthenticationFactory(database);
         using var client = factory.CreateClient();
         using var login = await client.PostAsJsonAsync("/api/v1/auth/login", new
-        { identifier = useEmail ? account.Email.ToUpperInvariant() : account.Code.ToLowerInvariant(), password = TestPassword });
+        { identifier = useEmail ? account.Email.ToUpperInvariant() : account.Code.ToLowerInvariant(), password = TestPassword, tenantKey = account.Key });
         Assert.True(login.StatusCode == HttpStatusCode.OK, factory.LastServerError?.ToString());
         Assert.True(login.Headers.CacheControl?.NoStore);
         var result = (await login.Content.ReadFromJsonAsync<AuthenticationResponse>())!;
@@ -93,8 +93,8 @@ public sealed class AuthenticationApiTests(PostgresFixture database)
         await using var factory = new AuthenticationFactory(database);
         using var client = factory.CreateClient();
         using var ambiguous = await client.PostAsJsonAsync("/api/v1/auth/login", new { identifier = code, password = TestPassword });
-        Assert.Equal(HttpStatusCode.Conflict, ambiguous.StatusCode);
-        Assert.Equal("AUTH.TENANT_CONTEXT_REQUIRED", (await ambiguous.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("code").GetString());
+        Assert.Equal(HttpStatusCode.Unauthorized, ambiguous.StatusCode);
+        Assert.Equal("AUTH.INVALID_CREDENTIALS", (await ambiguous.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("code").GetString());
         var result = await LoginAsync(client, b);
         Assert.Equal(b.TenantId, result.Session.TenantId);
         Assert.NotEqual(a.TenantId, result.Session.TenantId);

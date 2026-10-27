@@ -3,12 +3,14 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
 import { SessionService } from '../../core/auth/session';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
+import { WorkspaceSelectorDialog } from './workspace-selector-dialog';
 
 @Component({
   selector: 'bf-login',
@@ -16,6 +18,7 @@ import { TranslatePipe } from '../../core/i18n/translate.pipe';
     ReactiveFormsModule,
     MatButtonModule,
     MatButtonToggleModule,
+    MatDialogModule,
     MatFormFieldModule,
     MatInputModule,
     RouterLink,
@@ -27,19 +30,42 @@ export class Login implements OnInit {
   private readonly forms = inject(FormBuilder);
   private readonly session = inject(SessionService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
+  private readonly dialog = inject(MatDialog);
+
+  readonly authMethod = signal<'password' | 'email-link'>('password');
   readonly mode = signal<'code' | 'email'>('code');
   readonly busy = signal(false);
   readonly error = signal('');
+  readonly emailSentMessage = signal('');
+  readonly showRegisterLink = signal(false);
   readonly showPassword = signal(false);
+
   readonly form = this.forms.nonNullable.group({
     identifier: ['', [Validators.required, Validators.maxLength(50)]],
     password: ['', [Validators.required, Validators.maxLength(1024)]],
-    tenantKey: ['', [Validators.maxLength(80), Validators.pattern(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)]],
+    tenantKey: ['', [Validators.required, Validators.maxLength(80), Validators.pattern(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)]],
+  });
+
+  readonly emailForm = this.forms.nonNullable.group({
+    email: ['', [Validators.required, Validators.email, Validators.maxLength(320)]],
   });
 
   ngOnInit(): void {
     // Eagerly pre-warm the workspace bundle while the user is typing credentials
     void import('./workspace');
+
+    const token = this.route.snapshot.queryParamMap.get('token');
+    if (token) {
+      this.verifyToken(token);
+    }
+  }
+
+  setAuthMethod(method: 'password' | 'email-link'): void {
+    this.authMethod.set(method);
+    this.error.set('');
+    this.emailSentMessage.set('');
+    this.showRegisterLink.set(false);
   }
 
   changeMode(mode: 'code' | 'email') {
@@ -64,7 +90,7 @@ export class Login implements OnInit {
       .login({
         identifier: values.identifier.trim(),
         password: values.password,
-        ...(values.tenantKey.trim() ? { tenantKey: values.tenantKey.trim() } : {}),
+        tenantKey: values.tenantKey.trim(),
       })
       .pipe(finalize(() => this.busy.set(false)))
       .subscribe({
@@ -114,6 +140,79 @@ export class Login implements OnInit {
       });
   }
 
+  submitEmailLink(): void {
+    if (this.busy()) return;
+    this.emailForm.markAllAsTouched();
+    if (this.emailForm.invalid) return;
+
+    this.busy.set(true);
+    this.error.set('');
+    this.emailSentMessage.set('');
+    this.showRegisterLink.set(false);
+
+    const email = this.emailForm.controls.email.value.trim();
+    this.session
+      .requestEmailLink(email)
+      .pipe(finalize(() => this.busy.set(false)))
+      .subscribe({
+        next: (res) => {
+          this.emailSentMessage.set(
+            `Đã gửi liên kết đăng nhập tới ${email} (hết hạn trong ${res.expiresInMinutes || 15} phút). Vui lòng kiểm tra hộp thư.`,
+          );
+        },
+        error: (err: HttpErrorResponse) => {
+          if (err.status === 404 || err.error?.code === 'AUTH.USER_NOT_FOUND') {
+            this.error.set('Không tìm thấy tài khoản cho email này. Bạn có thể đăng ký doanh nghiệp mới.');
+            this.showRegisterLink.set(true);
+          } else if (err.status === 429) {
+            this.error.set('Quá nhiều yêu cầu gửi liên kết. Vui lòng đợi trong giây lát.');
+          } else {
+            this.error.set('Không thể gửi liên kết đăng nhập. Vui lòng thử lại sau.');
+          }
+        },
+      });
+  }
+
+  verifyToken(token: string): void {
+    this.busy.set(true);
+    this.error.set('');
+    this.showRegisterLink.set(false);
+
+    this.session
+      .verifyEmailLink(token)
+      .pipe(finalize(() => this.busy.set(false)))
+      .subscribe({
+        next: (res) => {
+          if (res.status === 'Authenticated') {
+            void this.router.navigateByUrl('/workspace', { replaceUrl: true });
+          } else if (res.status === 'RequiresWorkspaceSelection' && res.workspaces && res.ticket) {
+            const dialogRef = this.dialog.open(WorkspaceSelectorDialog, {
+              data: { workspaces: res.workspaces, ticket: res.ticket },
+              disableClose: true,
+            });
+            dialogRef.afterClosed().subscribe((selectedKey) => {
+              if (selectedKey) {
+                this.busy.set(true);
+                this.session
+                  .selectWorkspace(res.ticket!, selectedKey)
+                  .pipe(finalize(() => this.busy.set(false)))
+                  .subscribe({
+                    next: () => void this.router.navigateByUrl('/workspace', { replaceUrl: true }),
+                    error: () => this.error.set('Không thể hoàn tất chọn không gian làm việc. Vui lòng thử lại.'),
+                  });
+              }
+            });
+          } else if (res.status === 'NoWorkspace') {
+            this.error.set('Không tìm thấy không gian làm việc nào cho email này.');
+            this.showRegisterLink.set(true);
+          }
+        },
+        error: () => {
+          this.error.set('Liên kết đăng nhập không hợp lệ hoặc đã hết hạn. Vui lòng yêu cầu liên kết mới.');
+        },
+      });
+  }
+
   quickLogin(type: 'ADMIN' | 'EMPLOYEE'): void {
     if (type === 'ADMIN') {
       this.form.patchValue({
@@ -138,62 +237,73 @@ export class Login implements OnInit {
         refreshToken: 'dev-admin-refresh',
         expiresAt: new Date(Date.now() + 86400000).toISOString(),
         session: {
-          userId: '019f7f8a-0000-7000-8000-000000000001',
-          fullName: 'Administrator (Admin & Manager)',
-          tenantId: 'bizflow-corp',
+          userId: '00000000-0000-0000-0000-000000000001',
+          fullName: 'Platform Administrator',
+          tenantId: '00000000-0000-0000-0000-000000000002',
           tenantName: 'BizFlow Corporation',
           permissions: [
+            'tenants.read',
+            'tenants.create',
+            'tenants.update',
+            'departments.read',
+            'departments.create',
+            'departments.update',
+            'users.read',
+            'users.create',
+            'users.update',
+            'roles.read',
+            'roles.create',
+            'roles.update',
+            'roles.configure',
+            'requests.read.tenant',
+            'requests.read.managed',
+            'requests.read.own',
+            'requests.create',
+            'requests.update',
+            'requests.delete',
             'tasks.read.tenant',
             'tasks.read.managed',
             'tasks.read.own',
             'tasks.read.assigned',
             'tasks.create',
             'tasks.assign',
-            'requests.read.tenant',
-            'requests.read.managed',
-            'requests.read.own',
-            'requests.create',
-            'records.search',
-            'reports.manager',
-            'reports.company',
-            'reports.workload',
-            'reports.sla',
-            'users.read',
-            'roles.configure',
-            'workflows.read',
+            'tasks.accept',
+            'tasks.execute',
+            'tasks.submit',
+            'tasks.confirm',
             'sla.read',
-            'service.create',
-            'service.update',
+            'sla.manage',
+            'workflows.read',
+            'workflows.manage',
             'audit.read',
+            'analytics.read',
+            'reports.export',
+            'platform.company-registrations.read',
+            'platform.company-registrations.review',
           ],
         },
       });
     } else {
       this.session.setSessionForTesting({
-        accessToken: 'dev-emp-token',
-        refreshToken: 'dev-emp-refresh',
+        accessToken: 'dev-employee-token',
+        refreshToken: 'dev-employee-refresh',
         expiresAt: new Date(Date.now() + 86400000).toISOString(),
         session: {
-          userId: '019f7f8a-0000-7000-8000-000000000002',
-          fullName: 'Employee (EMP001)',
-          tenantId: 'bizflow-corp',
+          userId: '00000000-0000-0000-0000-000000000003',
+          fullName: 'Regular Employee',
+          tenantId: '00000000-0000-0000-0000-000000000002',
           tenantName: 'BizFlow Corporation',
           permissions: [
-            'tasks.read.own',
-            'tasks.read.assigned',
-            'tasks.create',
             'requests.read.own',
             'requests.create',
-            'records.search',
+            'tasks.read.own',
+            'tasks.read.assigned',
+            'tasks.execute',
+            'tasks.submit',
           ],
         },
       });
     }
-    void this.router.navigateByUrl('/workspace');
-  }
-
-  signInDemo(): void {
-    this.signInAsAccount('ADMIN');
+    void this.router.navigateByUrl('/workspace', { replaceUrl: true });
   }
 }
-

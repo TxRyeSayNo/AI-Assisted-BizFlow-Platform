@@ -46,7 +46,18 @@ public sealed class CompanyRegistrationManagementTests
         public Task<bool> TenantKeyExistsAsync(string tenantKey, CancellationToken cancellationToken) => Task.FromResult(KeyExists);
 
         public Task<SubmitCompanyRegistrationResult> SubmitRegistrationAsync(Company company, CancellationToken cancellationToken) =>
-            Task.FromResult(new SubmitCompanyRegistrationResult(company.Id, company.Code, company.Name, company.ContactEmail, company.Status.ToString().ToUpperInvariant(), company.CreatedAt));
+            Task.FromResult(new SubmitCompanyRegistrationResult(
+                company.Id,
+                company.Code,
+                company.Name,
+                company.TaxId,
+                company.ContactPersonName,
+                company.ContactEmail,
+                company.ContactPhone,
+                company.Status.ToString().ToUpperInvariant(),
+                company.CreatedAt,
+                company.EvidenceDocumentKey,
+                company.EvidenceDocumentFileName));
 
         public Task<ApproveCompanyRegistrationResult> ApproveAsync(
             Guid companyId, string tenantKey, string adminEmployeeCode, string adminEmail,
@@ -65,11 +76,14 @@ public sealed class CompanyRegistrationManagementTests
     public void Company_entity_lifecycle_enforces_pending_transition_rules()
     {
         var now = DateTimeOffset.UtcNow;
-        var company = Company.Register("ACME", "Acme Corporation", "contact@acme.test", now);
+        var company = Company.Register("ACME", "Acme Corporation", "0101234567", "John Doe", "contact@acme.test", "0901234567", now);
 
         Assert.Equal("ACME", company.Code);
         Assert.Equal("Acme Corporation", company.Name);
+        Assert.Equal("0101234567", company.TaxId);
+        Assert.Equal("John Doe", company.ContactPersonName);
         Assert.Equal("contact@acme.test", company.ContactEmail);
+        Assert.Equal("0901234567", company.ContactPhone);
         Assert.Equal(CompanyStatus.Pending, company.Status);
 
         company.Approve(now.AddMinutes(5));
@@ -83,11 +97,31 @@ public sealed class CompanyRegistrationManagementTests
     public void Company_reject_requires_pending_state()
     {
         var now = DateTimeOffset.UtcNow;
-        var company = Company.Register("TEST", "Test Co", "info@test.test", now);
+        var company = Company.Register("TEST", "Test Co", "0109876543", "Jane Doe", "info@test.test", "0912345678", now);
         company.Reject(now.AddMinutes(1));
         Assert.Equal(CompanyStatus.Inactive, company.Status);
 
         Assert.Throws<InvalidOperationException>(() => company.Reject(now.AddMinutes(2)));
+    }
+
+    [Theory]
+    [InlineData("", "Company Name", "0101234567", "John Doe", "contact@acme.test", "0901234567")]
+    [InlineData("ACME", "", "0101234567", "John Doe", "contact@acme.test", "0901234567")]
+    [InlineData("ACME", "Company Name", "", "John Doe", "contact@acme.test", "0901234567")]
+    [InlineData("ACME", "Company Name", "0101234567", "", "contact@acme.test", "0901234567")]
+    [InlineData("ACME", "Company Name", "0101234567", "John Doe", "invalid-email", "0901234567")]
+    [InlineData("ACME", "Company Name", "0101234567", "John Doe", "contact@acme.test", "")]
+    public async Task SubmitAsync_validates_all_six_mandatory_fields(
+        string code, string name, string taxId, string contactPerson, string contactEmail, string contactPhone)
+    {
+        var store = new StubCompanyStore();
+        var management = new CompanyRegistrationManagement(new StubTenantContext(), new StubAuthorizer(), new StubCredentialVerifier(), store, TimeProvider.System);
+
+        var fault = await Assert.ThrowsAsync<ApplicationFault>(() =>
+            management.SubmitAsync(new SubmitCompanyRegistrationRequest(code, name, taxId, contactPerson, contactEmail, contactPhone), CancellationToken.None));
+
+        Assert.Equal("VALIDATION.FAILED", fault.Code);
+        Assert.Equal(FaultKind.Validation, fault.Kind);
     }
 
     [Fact]
@@ -97,7 +131,7 @@ public sealed class CompanyRegistrationManagementTests
         var management = new CompanyRegistrationManagement(new StubTenantContext(), new StubAuthorizer(), new StubCredentialVerifier(), store, TimeProvider.System);
 
         var fault = await Assert.ThrowsAsync<ApplicationFault>(() =>
-            management.SubmitAsync(new SubmitCompanyRegistrationRequest("EXISTING", "Company Name", "test@company.test"), CancellationToken.None));
+            management.SubmitAsync(new SubmitCompanyRegistrationRequest("EXISTING", "Company Name", "0101234567", "John", "test@company.test", "0901234567"), CancellationToken.None));
 
         Assert.Equal("TENANT.CODE_IN_USE", fault.Code);
     }

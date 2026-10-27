@@ -27,7 +27,7 @@ public sealed class AuthenticationController(AuthenticationService authenticatio
 public sealed record LoginInput(
     [Required, StringLength(320)] string Identifier,
     [Required, StringLength(1024)] string Password,
-    [StringLength(80)] string? TenantKey)
+    [StringLength(80)] string? TenantKey = null)
 {
     public override string ToString() => "[REDACTED LOGIN INPUT]";
 }

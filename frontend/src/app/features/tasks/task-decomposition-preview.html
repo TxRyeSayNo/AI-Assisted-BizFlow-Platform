@@ -1,0 +1,217 @@
+<div class="bf-editor-page">
+  <div class="bf-editor-header">
+    <div class="header-titles">
+      <h1 class="bf-page-title">Phân rã Công việc Thông minh bằng AI</h1>
+      <p class="bf-page-subtitle">
+        Bóc tách đoạn văn hoặc kế hoạch tự nhiên thành các đầu việc và yêu cầu hỗ trợ có cấu trúc (INT-031, BR-028).
+      </p>
+    </div>
+    <div class="header-actions">
+      <a mat-button routerLink="/tasks">← Quay lại danh sách</a>
+    </div>
+  </div>
+
+  @if (error()) {
+    <div class="bf-alert error mb-4" role="alert">
+      <span>{{ error() }}</span>
+    </div>
+  }
+
+  @if (successMessage()) {
+    <div class="bf-alert success mb-4" role="status">
+      <span>{{ successMessage() }}</span>
+    </div>
+  }
+
+  <!-- Section 1: Prompt Input & Quick Templates -->
+  <div class="bf-card prompt-card mb-4">
+    <div class="card-header">
+      <h2>Mô tả công việc hoặc kế hoạch tổng thể</h2>
+    </div>
+    <div class="card-body">
+      <mat-form-field appearance="outline" class="w-full">
+        <mat-label>Nhập nội dung cần phân rã (đoạn văn, danh sách công việc, email chỉ đạo...)</mat-label>
+        <textarea
+          matInput
+          rows="5"
+          [ngModel]="prompt()"
+          (ngModelChange)="prompt.set($event)"
+          placeholder="Ví dụ: Triển khai chiến dịch ra mắt sản phẩm: 1. Phòng Marketing chuẩn bị bài viết và banner truyền thông. 2. Phòng Kỹ thuật chuẩn bị hạ tầng server và kiểm thử tải. 3. Phòng CSKH chuẩn bị kịch bản hỗ trợ người dùng..."
+        ></textarea>
+      </mat-form-field>
+
+      <div class="template-suggestions">
+        <span class="label">Mẫu nhanh:</span>
+        <button
+          type="button"
+          class="template-chip"
+          (click)="setSamplePrompt('Quy trình tiếp nhận nhân sự mới:\n1. IT chuẩn bị laptop, cài đặt OS, cấu hình VPN và cấp email công ty.\n2. Nhân sự làm thủ tục ký HĐLĐ và phổ biến nội quy.\n3. Quản lý phân công mentor và giao dự án ban đầu.')"
+        >
+          Onboarding nhân viên mới
+        </button>
+        <button
+          type="button"
+          class="template-chip"
+          (click)="setSamplePrompt('Kế hoạch nâng cấp hệ thống Quý 4:\n1. Sao lưu toàn bộ cơ sở dữ liệu PostgreSQL.\n2. Nâng cấp phiên bản Redis và kiểm thử kết nối cache.\n3. Kiểm tra bảo mật ứng dụng và cập nhật chứng chỉ SSL.')"
+        >
+          Nâng cấp hệ thống định kỳ
+        </button>
+      </div>
+
+      <div class="action-row mt-3">
+        <button
+          mat-flat-button
+          color="primary"
+          [disabled]="previewBusy() || !prompt().trim()"
+          (click)="previewDecomposition()"
+        >
+          @if (previewBusy()) {
+            <span>Đang phân tích dữ liệu...</span>
+          } @else {
+            <span>Phân tích bằng AI</span>
+          }
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 2: Interactive Preview Checklist -->
+  @if (proposals().length > 0) {
+    <div class="bf-card preview-card">
+      <div class="notice-banner mb-3">
+        <div class="banner-icon">ℹ️</div>
+        <div class="banner-text">
+          <strong>Bản xem trước dự thảo (Human-in-the-Loop):</strong>
+          AI đã bóc tách đoạn văn thành các đề xuất dưới đây. Tuyệt đối chưa có bản ghi nào được lưu vào cơ sở dữ liệu. Bạn hãy xem xét, sửa đổi thông tin, chọn lọc các mục cần tạo và nhấn <strong>Xác nhận tạo việc</strong>.
+        </div>
+      </div>
+
+      <div class="preview-toolbar mb-3">
+        <div class="toolbar-left">
+          <mat-checkbox
+            [checked]="selectedCount === proposals().length"
+            [indeterminate]="selectedCount > 0 && selectedCount < proposals().length"
+            (change)="toggleSelectAll($event.checked)"
+          >
+            Chọn tất cả ({{ selectedCount }}/{{ proposals().length }})
+          </mat-checkbox>
+        </div>
+        <div class="toolbar-right">
+          <button mat-stroked-button type="button" (click)="addNewProposal()">
+            + Thêm đầu việc tùy chỉnh
+          </button>
+        </div>
+      </div>
+
+      <div class="proposal-list">
+        @for (item of proposals(); track $index) {
+          <div class="proposal-item-card" [class.deselected]="!item.selected">
+            <div class="item-header">
+              <mat-checkbox [(ngModel)]="item.selected" class="item-checkbox"></mat-checkbox>
+              <div class="item-title-field">
+                <mat-form-field appearance="outline" class="w-full">
+                  <mat-label>Tiêu đề công việc</mat-label>
+                  <input matInput [(ngModel)]="item.title" placeholder="Nhập tiêu đề" />
+                </mat-form-field>
+              </div>
+              <button
+                type="button"
+                class="remove-btn"
+                title="Xóa đề xuất này"
+                (click)="removeItem($index)"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div class="item-body">
+              <div class="grid-row mb-2">
+                <mat-form-field appearance="outline">
+                  <mat-label>Loại công việc</mat-label>
+                  <mat-select [(ngModel)]="item.type">
+                    <mat-option value="Assignment">Giao việc (Assignment)</mat-option>
+                    <mat-option value="SupportRequest">Yêu cầu hỗ trợ (SupportRequest)</mat-option>
+                  </mat-select>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Mức độ ưu tiên</mat-label>
+                  <mat-select [(ngModel)]="item.priority">
+                    <mat-option value="LOW">Thấp (Low)</mat-option>
+                    <mat-option value="MEDIUM">Trung bình (Medium)</mat-option>
+                    <mat-option value="HIGH">Cao (High)</mat-option>
+                  </mat-select>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Phòng ban tiếp nhận</mat-label>
+                  <mat-select [(ngModel)]="item.departmentId">
+                    <mat-option [value]="null">Không chỉ định</mat-option>
+                    @for (dept of departments(); track dept.id) {
+                      <mat-option [value]="dept.id">{{ dept.name }}</mat-option>
+                    }
+                  </mat-select>
+                </mat-form-field>
+              </div>
+
+              <mat-form-field appearance="outline" class="w-full mb-2">
+                <mat-label>Mô tả chi tiết</mat-label>
+                <textarea matInput rows="2" [(ngModel)]="item.description" placeholder="Mô tả công việc..."></textarea>
+              </mat-form-field>
+
+              @if (item.reasoning) {
+                <div class="item-reasoning mb-2">
+                  <span class="reason-label">Lý do gợi ý từ AI:</span> {{ item.reasoning }}
+                </div>
+              }
+
+              <!-- Checklist subtasks -->
+              <div class="item-checklist-section">
+                <div class="checklist-title">Danh sách các bước con (Checklist):</div>
+                @for (sub of item.checklistItems; track $index; let cIdx = $index) {
+                  <div class="checklist-row">
+                    <span class="bullet">•</span>
+                    <span class="text">{{ sub }}</span>
+                    <button type="button" class="sub-remove" (click)="removeChecklistItem(item, cIdx)">✕</button>
+                  </div>
+                }
+                <div class="add-checklist-row">
+                  <input
+                    type="text"
+                    class="add-sub-input"
+                    placeholder="Thêm bước thực hiện..."
+                    [(ngModel)]="item.newChecklistInput"
+                    (keydown.enter)="addChecklistItem(item)"
+                  />
+                  <button type="button" class="add-sub-btn" (click)="addChecklistItem(item)">+ Thêm</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+
+      <!-- Footer action bar -->
+      <div class="preview-footer mt-4">
+        <div class="footer-summary">
+          Số lượng sẽ tạo: <strong>{{ selectedCount }}</strong> công việc
+        </div>
+        <div class="footer-actions">
+          <button
+            mat-flat-button
+            color="primary"
+            class="confirm-button"
+            [disabled]="confirmBusy() || selectedCount === 0"
+            (click)="confirmDecomposition()"
+          >
+            @if (confirmBusy()) {
+              <span>Đang lưu vào hệ thống...</span>
+            } @else {
+              <span>Xác nhận tạo việc ({{ selectedCount }})</span>
+            }
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+</div>

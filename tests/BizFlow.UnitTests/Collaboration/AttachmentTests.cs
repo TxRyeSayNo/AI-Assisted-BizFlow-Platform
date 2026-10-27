@@ -449,5 +449,7 @@ public sealed class AttachmentTests
         }
 
         public Task<bool> DeleteFileAsync(string objectKey, CancellationToken cancellationToken) => Task.FromResult(true);
+
+        public string? GeneratePresignedDownloadUrl(string objectKey, TimeSpan expiry) => $"https://storage.local/{objectKey}";
     }
 }

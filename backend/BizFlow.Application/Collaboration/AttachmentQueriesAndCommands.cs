@@ -86,6 +86,10 @@ public interface IObjectStorageProvider
     Task<bool> DeleteFileAsync(
         string objectKey,
         CancellationToken cancellationToken);
+
+    string? GeneratePresignedDownloadUrl(
+        string objectKey,
+        TimeSpan expiry);
 }
 
 public interface IAttachmentCreationTransaction : IAsyncDisposable

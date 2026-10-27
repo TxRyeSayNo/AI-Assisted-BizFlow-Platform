@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
@@ -21,6 +21,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\backend\BizFlow.Domain\BizFlow.Domain.csproj" />
     <ProjectReference Include="..\..\backend\BizFlow.Application\BizFlow.Application.csproj" />
+    <ProjectReference Include="..\..\backend\BizFlow.Api\BizFlow.Api.csproj" />
   </ItemGroup>
 
 </Project>

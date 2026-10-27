@@ -94,6 +94,11 @@ builder.Services.AddScoped<BizFlow.Application.Sla.ISlaVersionHistoryStore, BizF
 builder.Services.AddScoped<BizFlow.Application.Sla.ISlaVersionStore, BizFlow.Infrastructure.Sla.SlaVersionStore>();
 builder.Services.AddScoped<BizFlow.Application.Notifications.NotificationInbox>();
 builder.Services.AddScoped<BizFlow.Application.Notifications.INotificationInboxStore, BizFlow.Infrastructure.Notifications.NotificationInboxStore>();
+builder.Services.AddScoped<BizFlow.Application.Notifications.IDeadlineReminderStore, BizFlow.Infrastructure.Notifications.DeadlineReminderStore>();
+builder.Services.AddSingleton<BizFlow.Application.Notifications.IVapidKeyProvider, BizFlow.Infrastructure.Notifications.ConfigVapidKeyProvider>();
+builder.Services.AddScoped<BizFlow.Application.Notifications.IEmailNotificationDispatcher, BizFlow.Infrastructure.Notifications.EmailNotificationDispatcher>();
+builder.Services.AddScoped<BizFlow.Application.Notifications.IWebPushDispatcher, BizFlow.Infrastructure.Notifications.WebPushDispatcher>();
+builder.Services.AddScoped<BizFlow.Application.Notifications.IDeadlineReminderService, BizFlow.Application.Notifications.DeadlineReminderService>();
 builder.Services.AddScoped<BizFlow.Application.Collaboration.CommentService>();
 builder.Services.AddScoped<BizFlow.Application.Collaboration.ICommentStore, BizFlow.Infrastructure.Collaboration.CommentStore>();
 builder.Services.AddScoped<BizFlow.Application.Collaboration.ICommentReader, BizFlow.Infrastructure.Collaboration.CommentReader>();
@@ -124,6 +129,9 @@ builder.Services.AddSingleton<BizFlow.Application.AI.IAiToolRegistry, BizFlow.In
 builder.Services.AddScoped<BizFlow.Application.AI.IRequestSplitStore, BizFlow.Infrastructure.AI.RequestSplitStore>();
 builder.Services.AddScoped<BizFlow.Application.AI.IAiActionDispatcher, BizFlow.Infrastructure.AI.AiActionDispatcher>();
 builder.Services.AddScoped<BizFlow.Application.AI.AiAssistanceService>();
+builder.Services.AddScoped<BizFlow.Application.AI.ITaskDecompositionStore, BizFlow.Infrastructure.AI.TaskDecompositionStore>();
+builder.Services.AddScoped<BizFlow.Application.AI.IAiTaskDecompositionService, BizFlow.Application.AI.AiTaskDecompositionService>();
+builder.Services.AddScoped<BizFlow.Application.AI.IRobotChatService, BizFlow.Application.AI.RobotChatService>();
 builder.Services.AddScoped<BizFlow.Application.Audit.IAuditReader, BizFlow.Infrastructure.Audit.AuditReader>();
 builder.Services.AddExceptionHandler<ApiExceptionHandler>();
 builder.Services.AddProblemDetails();

@@ -8,8 +8,28 @@ using BizFlow.Domain.Tenancy;
 
 namespace BizFlow.Application.Tenancy;
 
-public sealed record SubmitCompanyRegistrationRequest(string Code, string Name, string ContactEmail);
-public sealed record SubmitCompanyRegistrationResult(Guid CompanyId, string Code, string Name, string ContactEmail, string Status, DateTimeOffset CreatedAt);
+public sealed record SubmitCompanyRegistrationRequest(
+    string Code,
+    string Name,
+    string TaxId,
+    string ContactPersonName,
+    string ContactEmail,
+    string ContactPhone,
+    string? EvidenceDocumentKey = null,
+    string? EvidenceDocumentFileName = null);
+
+public sealed record SubmitCompanyRegistrationResult(
+    Guid CompanyId,
+    string Code,
+    string Name,
+    string TaxId,
+    string ContactPersonName,
+    string ContactEmail,
+    string ContactPhone,
+    string Status,
+    DateTimeOffset CreatedAt,
+    string? EvidenceDocumentKey = null,
+    string? EvidenceDocumentFileName = null);
 
 public sealed record ApproveCompanyRegistrationRequest(
     string TenantKey,
@@ -76,8 +96,14 @@ public sealed class CompanyRegistrationManagement(
             throw new ApplicationFault(FaultKind.Validation, "VALIDATION.FAILED", "Company code is required and must not exceed 50 characters.");
         if (string.IsNullOrWhiteSpace(request.Name) || request.Name.Trim().Length > 200)
             throw new ApplicationFault(FaultKind.Validation, "VALIDATION.FAILED", "Company name is required and must not exceed 200 characters.");
-        if (string.IsNullOrWhiteSpace(request.ContactEmail) || !request.ContactEmail.Contains('@'))
+        if (string.IsNullOrWhiteSpace(request.TaxId) || request.TaxId.Trim().Length > 50)
+            throw new ApplicationFault(FaultKind.Validation, "VALIDATION.FAILED", "Tax ID is required and must not exceed 50 characters.");
+        if (string.IsNullOrWhiteSpace(request.ContactPersonName) || request.ContactPersonName.Trim().Length > 150)
+            throw new ApplicationFault(FaultKind.Validation, "VALIDATION.FAILED", "Contact person name is required and must not exceed 150 characters.");
+        if (string.IsNullOrWhiteSpace(request.ContactEmail) || !request.ContactEmail.Contains('@') || request.ContactEmail.Trim().Length > 320)
             throw new ApplicationFault(FaultKind.Validation, "VALIDATION.FAILED", "A valid contact email is required.");
+        if (string.IsNullOrWhiteSpace(request.ContactPhone) || request.ContactPhone.Trim().Length > 30)
+            throw new ApplicationFault(FaultKind.Validation, "VALIDATION.FAILED", "Contact phone number is required and must not exceed 30 characters.");
 
         var normalizedCode = request.Code.Trim().ToUpperInvariant();
         var normalizedEmail = request.ContactEmail.Trim().ToUpperInvariant();
@@ -88,7 +114,16 @@ public sealed class CompanyRegistrationManagement(
             throw new ApplicationFault(FaultKind.Conflict, "TENANT.EMAIL_IN_USE", "A company registration with this contact email already exists.");
 
         var now = clock.GetUtcNow();
-        var company = Company.Register(normalizedCode, request.Name.Trim(), request.ContactEmail.Trim(), now);
+        var company = Company.Register(
+            normalizedCode,
+            request.Name.Trim(),
+            request.TaxId.Trim(),
+            request.ContactPersonName.Trim(),
+            request.ContactEmail.Trim(),
+            request.ContactPhone.Trim(),
+            now,
+            request.EvidenceDocumentKey,
+            request.EvidenceDocumentFileName);
         return await store.SubmitRegistrationAsync(company, cancellationToken);
     }
 

@@ -25,7 +25,18 @@ public sealed class CompanyProvisioningStore(BizFlowDbContext db) : ICompanyProv
     {
         db.Companies.Add(company);
         await db.SaveChangesAsync(cancellationToken);
-        return new(company.Id, company.Code, company.Name, company.ContactEmail, company.Status.ToString().ToUpperInvariant(), company.CreatedAt);
+        return new(
+            company.Id,
+            company.Code,
+            company.Name,
+            company.TaxId,
+            company.ContactPersonName,
+            company.ContactEmail,
+            company.ContactPhone,
+            company.Status.ToString().ToUpperInvariant(),
+            company.CreatedAt,
+            company.EvidenceDocumentKey,
+            company.EvidenceDocumentFileName);
     }
 
     public async Task<ApproveCompanyRegistrationResult> ApproveAsync(

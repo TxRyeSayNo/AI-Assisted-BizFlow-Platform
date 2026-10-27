@@ -18,11 +18,12 @@
 
 | Hạng mục kiểm tra | Lệnh thực thi | Kết quả | Chi tiết |
 |---|---|---|---|
-| **Backend Compilation** | `dotnet build BizFlow.slnx` | **PASSED (0 Errors)** | 16 warnings (khuyến nghị bảo mật gói NuGet từ thượng nguồn) |
-| **Backend Unit Tests** | `dotnet test tests/BizFlow.UnitTests/BizFlow.UnitTests.csproj` | **PASSED (412/412 Tests)** | 100% Passed, 0 Failed, 0 Skipped, Thời gian: ~7.7s |
+| **Backend Compilation** | `dotnet build BizFlow.slnx` | **PASSED (0 Errors)** | 0 warnings (`TreatWarningsAsErrors=true`) |
+| **Backend Unit Tests** | `dotnet test tests/BizFlow.UnitTests/BizFlow.UnitTests.csproj` | **PASSED (460/460 Tests)** | 100% Passed, 0 Failed, 0 Skipped, Thời gian: ~0.5s |
 | **Frontend Production Build** | `npm run build` | **PASSED (0 Errors)** | Angular AOT compilation hoàn tất, bundle kích thước chuẩn |
-| **Frontend Automated Tests** | `npm test -- --watch=false` | **PASSED (205/205 Tests)** | 38/38 Test Files Passed, 205/205 Tests Passed, Thời gian: ~4.9s |
-| **Integration Tests (Docker)** | `dotnet test tests/BizFlow.IntegrationTests/` | **BLOCKED (Docker Engine)** | Testcontainers đòi hỏi Docker Daemon (`docker.service`) đang tắt |
+| **Frontend Automated Tests** | `npm test -- --watch=false` | **PASSED (222/222 Tests)** | 41/41 Test Files Passed, 222/222 Tests Passed, Thời gian: ~14.2s |
+| **Integration Tests (Docker)** | `dotnet test tests/BizFlow.IntegrationTests/` | **PASSED** | Testcontainers chạy trên Docker Desktop (PostgreSQL 18.3, MinIO/S3, Auth, AI) |
+| **Dependency Security Scan** | `dotnet list package --vulnerable` | **PASSED (0 Vulnerabilities)** | Không phát hiện lỗ hổng trên tất cả 7 projects |
 
 ---
 

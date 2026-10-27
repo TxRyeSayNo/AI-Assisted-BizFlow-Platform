@@ -26,8 +26,33 @@ public sealed class CompanyRegistrationReader(BizFlowDbContext db, ITenantContex
         var total = await query.LongCountAsync(cancellationToken);
         var rows = await query.OrderByDescending(c => c.CreatedAt).ThenByDescending(c => c.Id)
             .Skip(checked((filter.Page - 1) * filter.PageSize)).Take(filter.PageSize)
-            .Select(c => new { c.Id, c.Code, c.Name, c.ContactEmail, c.Status, c.CreatedAt }).ToListAsync(cancellationToken);
-        return new(rows.Select(c => new CompanyRegistrationRow(c.Id, c.Code, c.Name, c.ContactEmail,
-            c.Status.ToString().ToUpperInvariant(), c.CreatedAt)).ToArray(), filter.Page, filter.PageSize, total);
+            .Select(c => new
+            {
+                c.Id,
+                c.Code,
+                c.Name,
+                c.TaxId,
+                c.ContactPersonName,
+                c.ContactEmail,
+                c.ContactPhone,
+                c.Status,
+                c.CreatedAt,
+                c.EvidenceDocumentKey,
+                c.EvidenceDocumentFileName
+            }).ToListAsync(cancellationToken);
+        return new(rows.Select(c => new CompanyRegistrationRow(
+            c.Id,
+            c.Code,
+            c.Name,
+            c.TaxId,
+            c.ContactPersonName,
+            c.ContactEmail,
+            c.ContactPhone,
+            c.Status.ToString().ToUpperInvariant(),
+            c.CreatedAt,
+            c.EvidenceDocumentKey,
+            c.EvidenceDocumentFileName,
+            c.EvidenceDocumentKey != null ? $"/api/v1/platform/company-registrations/{c.Id}/document" : null)).ToArray(),
+            filter.Page, filter.PageSize, total);
     }
 }

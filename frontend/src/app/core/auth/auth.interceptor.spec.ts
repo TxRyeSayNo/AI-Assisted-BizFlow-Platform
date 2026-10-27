@@ -22,7 +22,7 @@ describe('authenticated HTTP requests', () => {
     },
   });
   const signIn = (token = 'access-1') => {
-    session.login({ identifier: 'EMP1', password: 'test-password' }).subscribe();
+    session.login({ identifier: 'EMP1', password: 'test-password', tenantKey: 'tenant-a' }).subscribe();
     controller.expectOne('/api/v1/auth/login').flush(response(token, 'refresh-1'));
   };
 

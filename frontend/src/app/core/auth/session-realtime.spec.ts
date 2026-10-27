@@ -26,7 +26,7 @@ describe('realtime token refresh', () => {
         permissions: [],
       },
     };
-    session.login({ identifier: 'user', password: 'test' }).subscribe();
+    session.login({ identifier: 'user', password: 'test', tenantKey: 'tenant' }).subscribe();
     http.expectOne('/api/v1/auth/login').flush(initial);
     const realtime = session.realtimeAccessToken();
     const ordinary = firstValueFrom(session.refresh());

@@ -26,7 +26,7 @@ public sealed class AuthenticationStore(DbContextOptions<BizFlowDbContext> optio
                         (user.NormalizedEmployeeCode == normalizedIdentifier || user.NormalizedEmail == normalizedIdentifier) &&
                         (tenantKey == null || (tenant != null && tenant.TenantKey == tenantKey))
                     orderby user.Id
-                    select new AuthenticationCandidate(user.Id, user.TenantId, tenant == null ? null : tenant.Name);
+                    select new AuthenticationCandidate(user.Id, user.TenantId, tenant == null ? null : tenant.Name, tenant == null ? null : tenant.TenantKey);
         // Bound anonymous lookup results; more than one always requires workspace context.
         return await query.Take(20).ToListAsync(cancellationToken);
     }

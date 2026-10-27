@@ -14,7 +14,7 @@ import {
 export interface LoginRequest {
   identifier: string;
   password: string;
-  tenantKey?: string;
+  tenantKey: string;
 }
 
 export interface SessionIdentity {
@@ -30,6 +30,21 @@ export interface LoginResponse {
   refreshToken: string;
   expiresAt: string;
   session: SessionIdentity;
+}
+
+export interface WorkspaceCandidate {
+  tenantId: string | null;
+  tenantKey: string;
+  tenantName: string;
+}
+
+export interface EmailLinkVerificationResult {
+  status: 'Authenticated' | 'RequiresWorkspaceSelection' | 'NoWorkspace';
+  message?: string | null;
+  registerCompanyUrl?: string | null;
+  ticket?: string | null;
+  workspaces?: WorkspaceCandidate[] | null;
+  authentication?: LoginResponse | null;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -66,6 +81,36 @@ export class SessionService {
     });
   }
 
+  requestEmailLink(email: string): Observable<{ message: string; expiresInMinutes: number }> {
+    return this.http.post<{ message: string; expiresInMinutes: number }>('/api/v1/auth/email-link/request', { email });
+  }
+
+  verifyEmailLink(token: string): Observable<EmailLinkVerificationResult> {
+    return defer(() => {
+      this.clear();
+      const generation = this.generation;
+      return this.http.post<EmailLinkVerificationResult>('/api/v1/auth/email-link/verify', { token }).pipe(
+        tap((res) => {
+          if (res.status === 'Authenticated' && res.authentication && generation === this.generation) {
+            this.response.set(res.authentication);
+          }
+        }),
+      );
+    });
+  }
+
+  selectWorkspace(ticket: string, tenantKey: string): Observable<LoginResponse> {
+    return defer(() => {
+      this.clear();
+      const generation = this.generation;
+      return this.http.post<LoginResponse>('/api/v1/auth/email-link/select-workspace', { ticket, tenantKey }).pipe(
+        tap((res) => {
+          if (generation === this.generation) this.response.set(res);
+        }),
+      );
+    });
+  }
+
   accessToken(): string | null {
     return this.response()?.accessToken ?? null;
   }
@@ -86,6 +131,11 @@ export class SessionService {
     this.generation++;
     this.response.set(null);
     this.refreshRequest = null;
+    try {
+      sessionStorage.removeItem('bizflow_robot_dismissed');
+    } catch {
+      // Safe guard for environments without sessionStorage
+    }
   }
 
   refresh(): Observable<LoginResponse> {
