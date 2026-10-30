@@ -318,6 +318,7 @@ export class TaskDetail {
           this.aiBusy.set(false);
           this.aiError.set(err?.error?.message ?? 'Không thể đánh giá rủi ro.');
         },
+
       });
   }
 
@@ -337,6 +338,7 @@ export class TaskDetail {
           this.aiBusy.set(false);
           this.aiError.set(err?.error?.message ?? 'Không thể tạo tóm tắt tiến độ.');
         },
+
       });
   }
 }

@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, OnInit, effect, inject, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, effect, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
@@ -13,6 +13,11 @@ import { FirebaseAuthService } from '../../core/auth/firebase-auth.service';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
 import { ToastService } from '../../core/toast/toast.service';
 import { WorkspaceSelectorDialog } from './workspace-selector-dialog';
+
+export interface ToastAlert {
+  title: string;
+  message: string;
+}
 
 @Component({
   selector: 'bf-login',
@@ -29,14 +34,14 @@ import { WorkspaceSelectorDialog } from './workspace-selector-dialog';
   templateUrl: './login.html',
   styleUrls: ['./login.scss'],
 })
-export class Login implements OnInit {
+export class Login implements OnInit, OnDestroy {
   private readonly forms = inject(FormBuilder);
   private readonly session = inject(SessionService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly dialog = inject(MatDialog);
   private readonly firebaseAuth = inject(FirebaseAuthService);
-  private readonly toast = inject(ToastService);
+  private readonly toastService = inject(ToastService);
 
   readonly authMethod = signal<'password' | 'email-link'>('password');
   readonly mode = signal<'code' | 'email'>('code');
@@ -48,7 +53,10 @@ export class Login implements OnInit {
   readonly rememberMe = signal(false);
   readonly isSuperAdmin = signal(false);
 
-  readonly requiredValidator = Validators.required;
+  readonly toast = signal<ToastAlert | null>(null);
+  readonly toastFading = signal<boolean>(false);
+  private toastTimer?: ReturnType<typeof setTimeout>;
+  private toastFadeTimer?: ReturnType<typeof setTimeout>;
 
   readonly form = this.forms.nonNullable.group({
     identifier: ['', [Validators.required, Validators.maxLength(50)]],
@@ -77,29 +85,28 @@ export class Login implements OnInit {
     effect(() => {
       const err = this.error();
       if (err) {
-        this.toast.error(err);
+        this.toastService.error(err);
       }
     });
 
     effect(() => {
       const msg = this.emailSentMessage();
       if (msg) {
-        this.toast.success(msg);
+        this.toastService.success(msg);
       }
     });
   }
 
   async ngOnInit(): Promise<void> {
-    // Eagerly pre-warm the workspace bundle while the user is typing credentials
+    // Pre-warm workspace
     void import('./workspace');
 
-    // Handle Firebase email link authentication if present in current URL
+    // Handle Firebase email link authentication if present in URL
     if (this.firebaseAuth.isConfigured() && this.firebaseAuth.isSignInLink()) {
       await this.handleFirebaseSignInLink();
       return;
     }
 
-    // Direct token verification (e.g. for testing or deep-linking)
     const firebaseToken = this.route.snapshot.queryParamMap.get('firebase_token');
     if (firebaseToken) {
       this.verifyFirebaseToken(firebaseToken);
@@ -110,6 +117,39 @@ export class Login implements OnInit {
     if (token) {
       this.verifyToken(token);
     }
+  }
+
+  ngOnDestroy(): void {
+    this.clearToastTimers();
+  }
+
+  private clearToastTimers(): void {
+    if (this.toastTimer) clearTimeout(this.toastTimer);
+    if (this.toastFadeTimer) clearTimeout(this.toastFadeTimer);
+  }
+
+  showToast(title: string, message: string): void {
+    this.clearToastTimers();
+    this.toast.set({ title, message });
+    this.toastFading.set(false);
+    this.toastService.error(message, title);
+
+    this.toastTimer = setTimeout(() => {
+      this.toastFading.set(true);
+      this.toastFadeTimer = setTimeout(() => {
+        this.toast.set(null);
+        this.toastFading.set(false);
+      }, 650);
+    }, 3000);
+  }
+
+  dismissToast(): void {
+    this.clearToastTimers();
+    this.toastFading.set(true);
+    this.toastFadeTimer = setTimeout(() => {
+      this.toast.set(null);
+      this.toastFading.set(false);
+    }, 400);
   }
 
   checkSuperAdmin(identifier: string): boolean {
@@ -153,6 +193,7 @@ export class Login implements OnInit {
     );
     this.form.controls.identifier.updateValueAndValidity();
     this.error.set('');
+    this.dismissToast();
 
     const isSuper = this.checkSuperAdmin(this.form.controls.identifier.value);
     this.isSuperAdmin.set(isSuper);
@@ -167,10 +208,58 @@ export class Login implements OnInit {
     this.updateTenantKeyValidators(isSuper);
 
     this.form.markAllAsTouched();
-    if (this.form.invalid) return;
+
+    if (this.form.invalid) {
+      const idCtrl = this.form.controls.identifier;
+      const passCtrl = this.form.controls.password;
+      const tenantCtrl = this.form.controls.tenantKey;
+
+      if (idCtrl.invalid) {
+        if (idCtrl.errors?.['required']) {
+          this.showToast(
+            this.mode() === 'email' ? 'Missing company email' : 'Missing employee code',
+            this.mode() === 'email'
+              ? 'Please enter your company email address.'
+              : 'Please enter your employee code.',
+          );
+        } else if (idCtrl.errors?.['email']) {
+          this.showToast(
+            'Invalid email format',
+            'Company email address is not in a valid format (e.g. name@company.com).',
+          );
+        } else {
+          this.showToast('Invalid employee code', 'Employee code must be 50 characters or fewer.');
+        }
+        return;
+      }
+
+      if (passCtrl.invalid) {
+        this.showToast('Missing password', 'Please enter your password.');
+        return;
+      }
+
+      if (tenantCtrl.invalid) {
+        if (tenantCtrl.errors?.['required']) {
+          this.showToast('Missing workspace key', 'Please enter your company workspace key.');
+        } else if (tenantCtrl.errors?.['pattern']) {
+          this.showToast(
+            'Invalid workspace key',
+            'Workspace key may only contain lowercase letters, numbers, and hyphens (e.g. bizflow-corp).',
+          );
+        } else {
+          this.showToast('Invalid workspace key', 'Workspace key must be 80 characters or fewer.');
+        }
+        return;
+      }
+
+      this.showToast('Invalid input', 'Please review the required fields and try again.');
+      return;
+    }
+
     const values = this.form.getRawValue();
     this.busy.set(true);
     this.error.set('');
+    this.dismissToast();
 
     const tenantKey = isSuper && !values.tenantKey.trim() ? undefined : values.tenantKey.trim();
 
@@ -195,7 +284,7 @@ export class Login implements OnInit {
             failure.status === 503 ||
             failure.status === 504;
 
-          // Seamless offline fallback for pre-seeded dev accounts when backend API is offline
+          // Seamless offline fallback for dev accounts
           if (isOfflineOrUnavailable && values.password === 'Password123!') {
             if (upperId === 'ADMIN001' || lowerId === 'admin@bizflow.local') {
               this.signInAsAccount('ADMIN');
@@ -207,21 +296,38 @@ export class Login implements OnInit {
             }
           }
 
-          // Error text is locally allowlisted; do not echo arbitrary provider/server payloads.
           if (failure.error?.code === 'AUTH.TENANT_CONTEXT_REQUIRED') {
-            this.error.set(
-              'Enter your company workspace key to continue. Your company administrator can provide it.',
-            );
+            const msg =
+              'Enter your company workspace key to continue. Your company administrator can provide it.';
+            this.error.set(msg);
             this.form.controls.tenantKey.addValidators(Validators.required);
             this.form.controls.tenantKey.updateValueAndValidity();
+            this.showToast(
+              'Workspace key required',
+              'Enter your company workspace key to continue.',
+            );
           } else if (failure.status === 401 || failure.status === 403) {
-            this.error.set(
-              'We could not sign you in. Check your credentials and workspace, or contact your administrator.',
+            const msg =
+              'We could not sign you in. Check your credentials and workspace, or contact your administrator.';
+            this.error.set(msg);
+            this.showToast(
+              'Sign-in failed',
+              'We could not sign you in. Check your credentials and workspace key, or contact your administrator.',
             );
           } else if (failure.status === 429) {
-            this.error.set('Too many sign-in attempts. Please wait before trying again.');
+            const msg = 'Too many sign-in attempts. Please wait before trying again.';
+            this.error.set(msg);
+            this.showToast(
+              'Too many attempts',
+              'Too many sign-in attempts. Please wait before trying again.',
+            );
           } else {
-            this.error.set('Sign-in is temporarily unavailable. Please try again shortly.');
+            const msg = 'Sign-in is temporarily unavailable. Please try again shortly.';
+            this.error.set(msg);
+            this.showToast(
+              'Service unavailable',
+              'Sign-in is temporarily unavailable. Please try again shortly.',
+            );
           }
           this.form.controls.password.reset();
         },
@@ -248,7 +354,6 @@ export class Login implements OnInit {
           `Đã gửi liên kết đăng nhập tới ${email} qua Firebase. Vui lòng mở liên kết trong email để tiếp tục.`,
         );
       } catch {
-        // Fallback to backend service if Firebase send fails or is restricted
         this.requestBackendEmailLink(email);
       }
     } else {

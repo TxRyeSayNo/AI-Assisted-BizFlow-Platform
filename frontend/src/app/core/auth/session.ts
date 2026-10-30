@@ -23,6 +23,9 @@ export interface SessionIdentity {
   tenantId: string | null;
   tenantName: string | null;
   permissions: string[];
+  avatarUrl?: string | null;
+  picture?: string | null;
+  photoUrl?: string | null;
 }
 
 export interface LoginResponse {

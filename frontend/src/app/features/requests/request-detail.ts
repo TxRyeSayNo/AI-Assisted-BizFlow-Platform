@@ -311,6 +311,7 @@ export class RequestDetail implements OnInit {
           this.aiMessage.set('Phân tích đa mục tiêu thất bại.');
         },
       });
+
   }
 
   planBranching() {
@@ -371,6 +372,7 @@ export class RequestDetail implements OnInit {
           this.actionError.set(err?.error?.message || 'Khởi chạy phân nhánh thất bại.');
         },
       });
+
   }
 
   confirmSplit() {
@@ -394,7 +396,7 @@ export class RequestDetail implements OnInit {
         next: (res) => {
           this.actionInProgress.set(false);
           this.activeModal.set(null);
-          this.actionSuccess.set(`Đã phân tách thành công thành ${res.splitCount} yêu cầu con.`);
+          this.actionSuccess.set(`Successfully split into ${res.splitCount} sub-requests.`);
           this.load();
         },
         error: (err: HttpErrorResponse) => {
@@ -432,6 +434,7 @@ export class RequestDetail implements OnInit {
           this.aiBusy.set(false);
           this.aiMessage.set('Gợi ý điều phối thất bại.');
         },
+
       });
   }
 

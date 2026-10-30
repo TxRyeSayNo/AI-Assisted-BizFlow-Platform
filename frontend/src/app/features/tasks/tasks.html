@@ -134,8 +134,13 @@
                   </span>
                 </th>
                 <td>
-                  <span class="status-label" [class.overdue]="item.status === 'OVERDUE'">{{
+<span
+                    class="status-label"
+                    [attr.data-status]="item.status"
+                    [class.overdue]="item.status === 'OVERDUE'"
+                  >{{
                     'status.' + item.status | translate: states[item.status]
+                  }}</span>
                   }}</span>
                   @if (item.deadline) {
                     <time class="task-meta" [attr.datetime]="item.deadline">{{

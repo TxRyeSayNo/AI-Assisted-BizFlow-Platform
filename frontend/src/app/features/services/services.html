@@ -147,7 +147,7 @@
                         </li>
                       }
                     </ul>
-                    <p>
+<p>
                       {{ 'services.workflowVersion' | translate: 'Workflow version:' }}
                       {{
                         row.activeWorkflowVersionId ||
@@ -161,28 +161,30 @@
                           ('services.notConfigured' | translate: 'Not configured')
                       }}
                     </p>
-                    @if (session.hasPermission('service.create')) {
-                      <button
-                        mat-stroked-button
-                        type="button"
-                        (click)="beginCategory(row)"
-                        [disabled]="mutating() || needsReconciliation()"
-                        [attr.aria-label]="'Add category to ' + row.code"
-                      >
-                        {{ 'services.addCategoryToService' | translate: 'Add category to service' }}
-                      </button>
-                    }
-                    @if (session.hasPermission('service.update')) {
-                      <button
-                        mat-stroked-button
-                        type="button"
-                        (click)="beginMetadata(row)"
-                        [disabled]="mutating() || needsReconciliation()"
-                        [attr.aria-label]="'Edit service ' + row.code"
-                      >
-                        {{ 'services.editService' | translate: 'Edit service' }}
-                      </button>
-                    }
+                    <div class="service-actions-group">
+                      @if (session.hasPermission('service.create')) {
+                        <button
+                          mat-stroked-button
+                          type="button"
+                          (click)="beginCategory(row)"
+                          [disabled]="mutating() || needsReconciliation()"
+                          [attr.aria-label]="'Add category to ' + row.code"
+                        >
+                          {{ 'services.addCategoryToService' | translate: 'Add category to service' }}
+                        </button>
+                      }
+                      @if (session.hasPermission('service.update')) {
+                        <button
+                          mat-stroked-button
+                          type="button"
+                          (click)="beginMetadata(row)"
+                          [disabled]="mutating() || needsReconciliation()"
+                          [attr.aria-label]="'Edit service ' + row.code"
+                        >
+                          {{ 'services.editService' | translate: 'Edit service' }}
+                        </button>
+                      }
+                    </div>
                   </details>
                 </td>
                 <td>{{ labels[row.status] }}</td>

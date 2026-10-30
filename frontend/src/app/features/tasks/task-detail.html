@@ -133,6 +133,7 @@
           [disabled]="aiBusy()"
         >
           {{ 'ai.summary' | translate: 'Tóm tắt tiến độ (AI Summary)' }}
+
         </button>
       </div>
       @if (aiError()) {
@@ -161,8 +162,9 @@
               >{{ risk.riskLevel }} (Điểm: {{ (risk.riskScore * 100).toFixed(0) }}%)</span
             >
           </p>
+
           @if (risk.riskFactors?.length) {
-            <p><strong>Yếu tố ảnh hưởng:</strong></p>
+            <p><strong>Contributing Factors:</strong></p>
             <ul>
               @for (factor of risk.riskFactors; track factor) {
                 <li>{{ factor }}</li>
@@ -170,7 +172,7 @@
             </ul>
           }
           @if (risk.mitigationAdvice?.length) {
-            <p><strong>Khuyến nghị xử lý:</strong></p>
+            <p><strong>Mitigation Recommendations:</strong></p>
             <ul>
               @for (advice of risk.mitigationAdvice; track advice) {
                 <li>{{ advice }}</li>
@@ -194,8 +196,9 @@
           "
         >
           <p><strong>Tóm tắt tự động:</strong> {{ sum.summary }}</p>
+
           @if (sum.keyMilestones?.length) {
-            <p><strong>Các mốc chính:</strong></p>
+            <p><strong>Key Milestones:</strong></p>
             <ul>
               @for (m of sum.keyMilestones; track m) {
                 <li>{{ m }}</li>

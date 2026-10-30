@@ -58,6 +58,14 @@ mat-form-field {
   gap: var(--tp-space-3);
   margin-top: var(--tp-space-4);
 }
+.service-actions-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;
+  margin-top: var(--tp-space-4);
+  margin-bottom: var(--tp-space-2);
+}
 .visually-hidden {
   position: absolute;
   width: 1px;

@@ -86,6 +86,7 @@ describe('Login', () => {
     TestBed.inject(HttpTestingController)
       .expectOne('/api/v1/auth/login')
       .flush({ code: 'AUTH.TENANT_CONTEXT_REQUIRED' }, { status: 409, statusText: 'Conflict' });
+
     expect(component.error()).toContain('workspace key');
   });
 
@@ -120,6 +121,40 @@ describe('Login', () => {
     expect(component.form.controls.identifier.value).toBe('EMP001');
     expect(component.form.controls.password.value).toBe('Password123!');
     expect(component.form.controls.tenantKey.value).toBe('bizflow-corp');
+  });
+
+  it('triggers top-right toast alert on missing field and does not stretch the form', () => {
+    const component = TestBed.createComponent(Login).componentInstance;
+    component.submit();
+    expect(component.toast()).not.toBeNull();
+    expect(component.toast()?.title).toBe('Missing employee code');
+  });
+
+  it('triggers top-right toast alert on 401 unauthorized', () => {
+    const component = TestBed.createComponent(Login).componentInstance;
+    component.form.setValue({
+      identifier: 'EMP001',
+      password: 'wrong-password',
+      tenantKey: 'company-a',
+    });
+    component.submit();
+    const req = TestBed.inject(HttpTestingController).expectOne('/api/v1/auth/login');
+    req.flush({}, { status: 401, statusText: 'Unauthorized' });
+    expect(component.toast()).not.toBeNull();
+    expect(component.toast()?.title).toBe('Sign-in failed');
+  });
+
+  it('triggers top-right toast alert on missing or invalid workspace key', () => {
+    const component = TestBed.createComponent(Login).componentInstance;
+    component.form.controls.identifier.setValue('EMP001');
+    component.form.controls.password.setValue('password');
+    component.form.controls.tenantKey.setValue('');
+    component.submit();
+    expect(component.toast()?.title).toBe('Missing workspace key');
+
+    component.form.controls.tenantKey.setValue('INVALID KEY!');
+    component.submit();
+    expect(component.toast()?.title).toBe('Invalid workspace key');
   });
 
   it('submits email-link request and displays confirmation message', () => {

@@ -79,12 +79,14 @@ export class TaskCreate {
             this.aiMessage.set(
               `AI đã tạo bản thảo (Độ tin cậy: ${(draft.confidence * 100).toFixed(0)}%): ${draft.reasoning}`,
             );
+
           }
         },
         error: () => {
           this.aiBusy.set(false);
           this.aiMessage.set('Không thể kết nối trợ lý AI. Vui lòng thử lại.');
         },
+
       });
   }
 
@@ -110,12 +112,14 @@ export class TaskCreate {
             this.aiMessage.set(
               `AI đã phân rã thành ${res.subtasks.length} nhiệm vụ con: ${res.strategy}`,
             );
+
           }
         },
         error: () => {
           this.aiBusy.set(false);
           this.aiMessage.set('Phân rã thất bại. Vui lòng kiểm tra tiêu đề.');
         },
+
       });
   }
   save() {

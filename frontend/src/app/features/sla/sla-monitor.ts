@@ -169,23 +169,19 @@ export interface SlaBreachItem {
                     }}
                   </span>
                 </td>
-                <td>
+                <td class="col-escalation">
                   <span class="escalation-badge">{{ item.escalationLevel }}</span>
                 </td>
-                <td>
-                  <a
-                    *ngIf="item.type === 'TASK'"
-                    [routerLink]="['/tasks', item.id]"
-                    class="view-link"
-                  >
-                    {{ 'slaMonitor.openTask' | translate: 'Open Task →' }}
+<td class="col-action">
+                  <a *ngIf="item.type === 'TASK'" [routerLink]="['/tasks', item.id]" class="view-link" title="Open task details">
+                    <span>{{ 'slaMonitor.openTask' | translate: 'Open Task' }}</span>
+                    <span class="arrow-icon" aria-hidden="true">→</span>
                   </a>
-                  <a
-                    *ngIf="item.type === 'REQUEST'"
-                    [routerLink]="['/requests', item.id]"
-                    class="view-link"
-                  >
-                    {{ 'slaMonitor.openRequest' | translate: 'Open Request →' }}
+                  <a *ngIf="item.type === 'REQUEST'" [routerLink]="['/requests', item.id]" class="view-link" title="Open request details">
+                    <span>{{ 'slaMonitor.openRequest' | translate: 'Open Request' }}</span>
+                    <span class="arrow-icon" aria-hidden="true">→</span>
+                  </a>
+                </td>
                   </a>
                 </td>
               </tr>
@@ -258,238 +254,246 @@ export interface SlaBreachItem {
         gap: 1.5rem;
         flex-wrap: wrap;
       }
-      .subtitle {
-        color: #63758b;
-        margin: 0.35rem 0 0;
-        font-size: 0.95rem;
+      &.highlight-azure::before { background: #2563eb; }
+      &.highlight-danger::before { background: #dc2626; }
+      &.highlight-warning::before { background: #d97706; }
+      &.highlight-neutral::before { background: #0b2a4a; }
+    }
+    .kpi-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.5rem;
+    }
+    .kpi-label {
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #63758b;
+    }
+    .kpi-value {
+      font-size: 2.1rem;
+      font-weight: 800;
+      line-height: 1.1;
+      margin-bottom: 0.35rem;
+    }
+    .kpi-meta {
+      font-size: 0.78rem;
+      color: #63758b;
+      margin: 0;
+    }
+    .text-azure { color: #2563eb; }
+    .text-danger { color: #dc2626; }
+    .text-warning { color: #d97706; }
+    .text-navy { color: #0b2a4a; }
+    .live-beacon {
+      position: relative;
+      display: inline-block;
+      width: 9px;
+      height: 9px;
+      background: #059669;
+      border-radius: 50%;
+      box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.95), 0 0 4px #059669;
+
+      &::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        border: 2px solid #059669;
+        box-shadow: 0 0 8px #059669;
+        pointer-events: none;
+        animation: status-pulse-ring-expand 1.5s cubic-bezier(0.1, 0.7, 0.1, 1) infinite;
       }
-      .btn-secondary {
-        background: #ffffff;
-        border: 1px solid #dfe8f2;
-        color: #145da0;
-        padding: 0.55rem 1rem;
-        border-radius: 8px;
-        font-weight: 600;
-        font-size: 0.875rem;
-        &:hover {
-          background: #f8fafd;
-          border-color: #8ec5ff;
-        }
+    }
+
+    .pulse-beacon {
+      position: relative;
+      display: inline-block;
+      width: 9px;
+      height: 9px;
+      background: #dc2626;
+      border-radius: 50%;
+      box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.95), 0 0 5px #dc2626;
+
+      &::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        border: 2px solid #dc2626;
+        box-shadow: 0 0 8px #dc2626;
+        pointer-events: none;
+        animation: status-pulse-ring-expand 1.1s cubic-bezier(0.1, 0.7, 0.1, 1) infinite;
       }
-      .sla-kpi-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-        gap: 1rem;
-        margin-bottom: 1.5rem;
+    }
+    .panel-header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.25rem;
+      h2 { margin: 0; font-size: 1.2rem; }
+    }
+    .badge-count {
+      background: #eaf4ff;
+      color: #145da0;
+      padding: 0.25rem 0.65rem;
+      border-radius: 9999px;
+      font-size: 0.78rem;
+      font-weight: 700;
+    }
+    .table-container {
+      overflow-x: auto;
+      border-radius: 8px;
+    }
+    .sla-table {
+      width: 100%;
+      min-width: 860px;
+      border-collapse: collapse;
+      font-size: 0.875rem;
+
+      th, td {
+        padding: 0.85rem 1rem;
+        text-align: left;
+        vertical-align: middle;
       }
-      .kpi-card {
-        background: #ffffff;
-        border: 1px solid #dfe8f2;
-        border-radius: 12px;
-        padding: 1.25rem;
-        box-shadow: 0 2px 8px rgba(7, 27, 51, 0.04);
-        position: relative;
-        overflow: hidden;
-        &::before {
-          content: '';
-          position: absolute;
-          top: 0;
-          left: 0;
-          right: 0;
-          height: 3px;
-        }
-        &.highlight-azure::before {
-          background: #2563eb;
-        }
-        &.highlight-danger::before {
-          background: #dc2626;
-        }
-        &.highlight-warning::before {
-          background: #d97706;
-        }
-        &.highlight-neutral::before {
-          background: #0b2a4a;
-        }
-      }
-      .kpi-head {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 0.5rem;
-      }
-      .kpi-label {
-        font-size: 0.78rem;
+
+      th {
+        font-size: 0.75rem;
+
         font-weight: 700;
         text-transform: uppercase;
         letter-spacing: 0.05em;
         color: #63758b;
-      }
-      .kpi-value {
-        font-size: 2.1rem;
-        font-weight: 800;
-        line-height: 1.1;
-        margin-bottom: 0.35rem;
-      }
-      .kpi-meta {
-        font-size: 0.78rem;
-        color: #63758b;
-        margin: 0;
-      }
-      .text-azure {
-        color: #2563eb;
-      }
-      .text-danger {
-        color: #dc2626;
-      }
-      .text-warning {
-        color: #d97706;
-      }
-      .text-navy {
-        color: #0b2a4a;
-      }
-      .live-beacon {
-        width: 8px;
-        height: 8px;
-        background: #059669;
-        border-radius: 50%;
-        box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.2);
-      }
-      .pulse-beacon {
-        width: 8px;
-        height: 8px;
-        background: #dc2626;
-        border-radius: 50%;
-        animation: sla-beacon 2s infinite;
-      }
-      .panel-header-row {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 1.25rem;
-        h2 {
-          margin: 0;
-          font-size: 1.2rem;
-        }
-      }
-      .badge-count {
-        background: #eaf4ff;
-        color: #145da0;
-        padding: 0.25rem 0.65rem;
-        border-radius: 9999px;
-        font-size: 0.78rem;
-        font-weight: 700;
-      }
-      .table-container {
-        overflow-x: auto;
-      }
-      .sla-table {
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 0.875rem;
-      }
-      .beacon-dot {
-        display: inline-block;
-        width: 6px;
-        height: 6px;
-        border-radius: 50%;
-        background: #dc2626;
-        margin-right: 4px;
-        animation: sla-beacon 1.8s infinite;
-      }
-      .time-overdue {
-        color: #dc2626;
-        font-weight: 700;
-      }
-      .time-warning {
-        color: #d97706;
-        font-weight: 600;
-      }
-      .type-badge {
-        background: #f1f5f9;
-        padding: 0.15rem 0.45rem;
-        border-radius: 4px;
-        font-size: 0.72rem;
-        font-weight: 600;
-      }
-      .escalation-badge {
-        background: #fef2f2;
-        color: #991b1b;
-        padding: 0.15rem 0.5rem;
-        border-radius: 4px;
-        font-size: 0.75rem;
-        font-weight: 600;
-        border: 1px solid #fecaca;
-      }
-      .view-link {
-        font-size: 0.8125rem;
-        color: #2563eb;
-        font-weight: 600;
-        &:hover {
-          text-decoration: underline;
-        }
-      }
-      .policy-box {
-        margin-top: 1.5rem;
-        h3 {
-          margin: 0 0 0.5rem;
-          font-size: 1.15rem;
-          color: #071b33;
-        }
-      }
-      .policy-desc {
-        color: #63758b;
-        font-size: 0.875rem;
-        margin: 0 0 1rem;
-      }
-      .matrix-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-        gap: 1rem;
-      }
-      .matrix-card {
         background: #f8fafd;
-        border: 1px solid #dfe8f2;
-        border-radius: 8px;
-        padding: 1rem;
-        h4 {
-          margin: 0.5rem 0 0.25rem;
-          font-size: 0.95rem;
-          color: #0b2a4a;
-        }
-        p {
-          margin: 0;
-          font-size: 0.8125rem;
-          color: #63758b;
+        border-bottom: 1px solid #dfe8f2;
+        white-space: nowrap;
+      }
+
+      tbody tr {
+        border-bottom: 1px solid #f1f5f9;
+        transition: background-color 0.15s ease;
+        &:hover {
+          background: #f8fafd;
         }
       }
-      .tier-tag {
-        font-size: 0.7rem;
-        font-weight: 700;
-        text-transform: uppercase;
-        padding: 0.15rem 0.45rem;
-        border-radius: 4px;
-        background: #fef3c7;
-        color: #92400e;
-        &.tier-2 {
-          background: #fee2e2;
-          color: #991b1b;
-        }
-        &.tier-3 {
-          background: #ede9fe;
-          color: #5b21b6;
+
+      .col-escalation {
+        white-space: nowrap;
+        min-width: 190px;
+      }
+
+      .col-action {
+        white-space: nowrap;
+        min-width: 130px;
+      }
+    }
+    .beacon-dot {
+      display: none; /* Central status-chip::before handles animated dot and ring */
+    }
+    .time-overdue { color: #dc2626; font-weight: 700; }
+    .time-warning { color: #d97706; font-weight: 600; }
+    .type-badge {
+      background: #f1f5f9;
+      padding: 0.15rem 0.45rem;
+      border-radius: 4px;
+      font-size: 0.72rem;
+      font-weight: 600;
+    }
+    .escalation-badge {
+      display: inline-block;
+      white-space: nowrap;
+      background: #fef2f2;
+      color: #991b1b;
+      padding: 0.25rem 0.65rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      border: 1px solid #fecaca;
+      line-height: 1.25;
+      box-shadow: 0 1px 2px rgba(153, 27, 27, 0.05);
+    }
+    .view-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      white-space: nowrap;
+      font-size: 0.8125rem;
+      color: #2563eb;
+      font-weight: 600;
+      text-decoration: none;
+      transition: color 0.15s ease, transform 0.15s ease;
+
+      .arrow-icon {
+        display: inline-block;
+        transition: transform 0.15s ease;
+      }
+
+      &:hover {
+        color: #1d4ed8;
+        text-decoration: underline;
+
+        .arrow-icon {
+          transform: translateX(3px);
         }
       }
-      .tenant-badge {
-        background: #eaf4ff;
-        color: #145da0;
-        border: 1px solid #bfdbfe;
-        padding: 0.2rem 0.65rem;
-        border-radius: 9999px;
-        font-size: 0.8125rem;
-        font-weight: 600;
+
+      &:focus-visible {
+        outline: 2px solid #2563eb;
+        outline-offset: 2px;
       }
-    `,
-  ],
+    }
+    .policy-box {
+      margin-top: 1.5rem;
+      h3 { margin: 0 0 0.5rem; font-size: 1.15rem; color: #071b33; }
+    }
+    .policy-desc {
+      color: #63758b;
+      font-size: 0.875rem;
+      margin: 0 0 1rem;
+    }
+    .matrix-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 1rem;
+    }
+    .matrix-card {
+      background: #f8fafd;
+      border: 1px solid #dfe8f2;
+      border-radius: 8px;
+      padding: 1rem;
+      h4 { margin: 0.5rem 0 0.25rem; font-size: 0.95rem; color: #0b2a4a; }
+      p { margin: 0; font-size: 0.8125rem; color: #63758b; }
+    }
+    .tier-tag {
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      padding: 0.15rem 0.45rem;
+      border-radius: 4px;
+      background: #fef3c7;
+      color: #92400e;
+      &.tier-2 { background: #fee2e2; color: #991b1b; }
+      &.tier-3 { background: #ede9fe; color: #5b21b6; }
+    }
+    .tenant-badge {
+      background: #eaf4ff;
+      color: #145da0;
+      border: 1px solid #bfdbfe;
+      padding: 0.2rem 0.65rem;
+      border-radius: 9999px;
+      font-size: 0.8125rem;
+      font-weight: 600;
+    }
+  `]
+
 })
 export class SlaMonitor implements OnInit {
   private readonly http = inject(HttpClient);

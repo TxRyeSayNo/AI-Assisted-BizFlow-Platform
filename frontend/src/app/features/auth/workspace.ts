@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { SessionService } from '../../core/auth/session';
@@ -96,7 +96,11 @@ import { TranslatePipe } from '../../core/i18n/translate.pipe';
         </a>
 
         <div class="user-chip">
-          <span class="user-avatar">{{ userInitials() }}</span>
+          @if (profilePhotoUrl() && !avatarFailed()) {
+            <img [src]="profilePhotoUrl()" [alt]="identity()?.fullName || 'User avatar'" class="user-avatar-img" (error)="onAvatarError()" />
+          } @else {
+            <span class="user-avatar">{{ userInitials() }}</span>
+          }
           <span class="user-name">{{ identity()?.fullName }}</span>
         </div>
 
@@ -862,6 +866,7 @@ import { TranslatePipe } from '../../core/i18n/translate.pipe';
       }
     `,
   ],
+
 })
 export class Workspace {
   readonly session = inject(SessionService);
@@ -869,6 +874,16 @@ export class Workspace {
   readonly identity = this.session.identity;
 
   readonly isAiOpen = signal(false);
+  readonly avatarFailed = signal(false);
+
+  readonly profilePhotoUrl = computed(() => {
+    const id = this.identity();
+    return id?.avatarUrl || id?.picture || id?.photoUrl || null;
+  });
+
+  onAvatarError(): void {
+    this.avatarFailed.set(true);
+  }
 
   userInitials(): string {
     const name = this.identity()?.fullName || 'User';
