@@ -57,25 +57,31 @@ export class I18nService {
   }
 
   private getInitialLanguage(): LanguageCode {
+    if (this.isTestRunner()) {
+      return 'en';
+    }
     if (typeof window !== 'undefined' && window.localStorage) {
       try {
-        const saved = localStorage.getItem(STORAGE_KEY) as LanguageCode;
-        if (saved === 'en' || saved === 'vi' || saved === 'ja') {
-          return saved;
+        const stored = localStorage.getItem(STORAGE_KEY) as LanguageCode | null;
+        if (stored === 'en' || stored === 'vi' || stored === 'ja') {
+          return stored;
         }
       } catch {
         // Fallback
       }
-    }
-    if (this.isTestRunner()) {
-      return 'en';
     }
     return 'vi';
   }
 
   private isTestRunner(): boolean {
     const g = globalThis as Record<string, unknown>;
-    return typeof g['describe'] === 'function' && typeof g['it'] === 'function';
+    const proc = g['process'] as { env?: Record<string, string> } | undefined;
+    return (
+      typeof g['describe'] === 'function' ||
+      typeof g['it'] === 'function' ||
+      typeof g['__vitest_worker__'] !== 'undefined' ||
+      (proc !== undefined && proc.env !== undefined && (proc.env['NODE_ENV'] === 'test' || !!proc.env['VITEST']))
+    );
   }
 
   private updateHtmlLang(lang: LanguageCode): void {

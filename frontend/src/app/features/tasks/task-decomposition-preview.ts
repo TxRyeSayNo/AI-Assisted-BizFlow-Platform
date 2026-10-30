@@ -9,7 +9,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Params, Router, RouterLink } from '@angular/router';
 import { SessionService } from '../../core/auth/session';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
 
@@ -51,6 +51,7 @@ export class TaskDecompositionPreview implements OnInit {
   readonly session = inject(SessionService);
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   private readonly destroy = inject(DestroyRef);
 
   readonly prompt = signal('');
@@ -63,6 +64,13 @@ export class TaskDecompositionPreview implements OnInit {
 
   ngOnInit() {
     this.loadDepartments();
+    this.route.queryParams.pipe(takeUntilDestroyed(this.destroy)).subscribe((params: Params) => {
+      const qp = params['prompt'];
+      if (qp && !this.prompt()) {
+        this.prompt.set(qp);
+        this.previewDecomposition();
+      }
+    });
   }
 
   loadDepartments() {

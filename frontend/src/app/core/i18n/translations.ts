@@ -1347,16 +1347,6 @@ export const TRANSLATIONS: Record<LanguageCode, Record<string, string>> = {
     'ai.promptBranchingLabel': 'Nhập hướng dẫn dự án hoặc chỉ thị cần phân nhánh đa luồng:',
     'attachments.file': 'Tài liệu nguồn:',
     'forgot.successToast': 'Yêu cầu đặt lại mật khẩu đã được gửi thành công!',
-    'requests.rejectedTitle': 'Yêu cầu bị từ chối',
-    'requests.currentRoutingLabel': 'Phân công & Điều phối hiện tại',
-    'requests.routedAt': 'Đã điều phối',
-    'requestDetail.errNotFound': 'Không tìm thấy yêu cầu hoặc bạn không có quyền xem.',
-    'requests.resolvedSuccess': 'Yêu cầu đã được hoàn tất giải quyết.',
-    'requests.reworkNoteRequired': 'Vui lòng nhập ghi chú giải thích lý do cần sửa đổi lại.',
-    'requests.revisedSuccess': 'Yêu cầu sửa đổi đã được tạo thành công.',
-    'requests.taskCreatedSuccess': 'Nhiệm vụ đã được tạo thành công và liên kết với yêu cầu này.',
-    'requests.archivedSuccess': 'Yêu cầu đã được lưu trữ thành công.',
-
 
   },
 
@@ -2461,16 +2451,6 @@ export const TRANSLATIONS: Record<LanguageCode, Record<string, string>> = {
     'ai.tasksCreatedSuccess': 'Tasks created successfully!',
     'ai.tasksSpawned': 'new draft tasks have been stored in the workspace.',
     'ai.summarize': 'AI Summarize',
-    'requests.rejectedTitle': 'Request Rejected',
-    'requests.currentRoutingLabel': 'Current Assignment & Routing',
-    'requests.routedAt': 'Routed',
-    'requestDetail.errNotFound': 'Request not found or you do not have permission to view it.',
-    'requests.resolvedSuccess': 'Request resolved successfully.',
-    'requests.reworkNoteRequired': 'A note explaining why rework is needed is required.',
-    'requests.revisedSuccess': 'Revised request created successfully.',
-    'requests.taskCreatedSuccess': 'Task created successfully and linked to this request.',
-    'requests.archivedSuccess': 'Request archived successfully.',
-
   },
 
   ja: {
@@ -3565,14 +3545,5 @@ export const TRANSLATIONS: Record<LanguageCode, Record<string, string>> = {
     'ai.tasksCreatedSuccess': 'タスクが正常に作成されました！',
     'ai.tasksSpawned': '件の下書きタスクがワークスペースに保存されました。',
     'ai.summarize': 'AI要約',
-    'requests.rejectedTitle': 'リクエスト拒否',
-    'requests.currentRoutingLabel': '現在の割り当てとルーティング',
-    'requests.routedAt': 'ルーティング済み',
-    'requestDetail.errNotFound': 'リクエストが見つからないか、表示権限がありません。',
-    'requests.resolvedSuccess': 'リクエストが正常に解決されました。',
-    'requests.reworkNoteRequired': 'やり直しが必要な理由を説明するメモが必要です。',
-    'requests.revisedSuccess': '改訂されたリクエストが正常に作成されました。',
-    'requests.taskCreatedSuccess': 'タスクが正常に作成され、このリクエストにリンクされました。',
-    'requests.archivedSuccess': 'リクエストが正常にアーカイブされました。',
   },
 };

@@ -1531,6 +1531,8 @@ export class AiAssistantComponent {
       queryParams: {
         aiTitle: draft.title,
         aiPriority: draft.priority,
+        aiDescription: draft.description,
+        aiChecklist: (draft.checklistItems || []).join('\n'),
       },
     });
   }

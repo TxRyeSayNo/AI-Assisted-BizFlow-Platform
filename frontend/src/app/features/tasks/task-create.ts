@@ -47,6 +47,14 @@ export class TaskCreate {
       if (params['requestId']) {
         this.requestId.set(params['requestId']);
       }
+      if (params['aiTitle'] || params['title']) {
+        this.form.patchValue({
+          title: params['aiTitle'] || params['title'] || '',
+          description: params['aiDescription'] || params['description'] || '',
+          priority: params['aiPriority'] || params['priority'] || 'MEDIUM',
+          checklist: params['aiChecklist'] || params['checklist'] || '',
+        });
+      }
     });
   }
 

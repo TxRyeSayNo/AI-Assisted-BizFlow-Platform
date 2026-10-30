@@ -1,7 +1,8 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { provideRouter, Router } from '@angular/router';
+import { ActivatedRoute, provideRouter, Router } from '@angular/router';
+import { of } from 'rxjs';
 import { SessionService } from '../../core/auth/session';
 import { TaskDecompositionPreview } from './task-decomposition-preview';
 
@@ -222,5 +223,44 @@ describe('TaskDecompositionPreview Component', () => {
 
     http.expectNone('/api/v1/tasks/ai-decomposition/confirm');
     expect(component.confirmBusy()).toBe(false);
+  });
+
+  it('auto-initializes prompt and triggers preview when loaded with prompt query parameter', () => {
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+        { provide: SessionService, useValue: { hasPermission: () => true } },
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            queryParams: of({ prompt: '1. Cài đặt database\n2. Cấu hình backup' }),
+          },
+        },
+      ],
+    });
+
+    const fixture = TestBed.createComponent(TaskDecompositionPreview);
+    const component = fixture.componentInstance;
+    const http = TestBed.inject(HttpTestingController);
+    fixture.detectChanges();
+
+    http.expectOne('/api/v1/departments').flush([]);
+
+    expect(component.prompt()).toBe('1. Cài đặt database\n2. Cấu hình backup');
+    const previewReq = http.expectOne('/api/v1/tasks/ai-decomposition/preview');
+    expect(previewReq.request.method).toBe('POST');
+    expect(previewReq.request.body).toEqual({ prompt: '1. Cài đặt database\n2. Cấu hình backup' });
+    previewReq.flush({
+      originalPrompt: '1. Cài đặt database\n2. Cấu hình backup',
+      proposals: [
+        { title: 'Cài đặt database', description: '', type: 'Assignment', priority: 'HIGH', checklistItems: [] }
+      ]
+    });
+
+    expect(component.proposals().length).toBe(1);
+    expect(component.proposals()[0].title).toBe('Cài đặt database');
   });
 });
