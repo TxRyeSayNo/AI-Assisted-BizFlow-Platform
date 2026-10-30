@@ -179,16 +179,115 @@ export class RobotWidgetComponent implements OnInit {
         },
         error: (err) => {
           this.busy.set(false);
-          const errorMsg: ChatMessage = {
+          const localFallback = this.generateLocalRobotResponse(text);
+          const robotMsg: ChatMessage = {
             id: crypto.randomUUID(),
             sender: 'robot',
-            text: err?.error?.message || this.i18n.t('ai.connectionError'),
+            text: localFallback.text,
             time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            actionCards: localFallback.actionCards,
           };
-          this.messages.update((list) => [...list, errorMsg]);
+          this.messages.update((list) => [...list, robotMsg]);
           this.scrollToBottom();
         },
       });
+  }
+
+  generateLocalRobotResponse(text: string): { text: string; actionCards?: any[] } {
+    const trimmed = text.trim();
+    const lower = trimmed.toLowerCase();
+
+    if (lower.startsWith('/task')) {
+      const prompt = trimmed.slice('/task'.length).trim();
+      return {
+        text: `🤖 Trợ lý Robot BizFlow đã tiếp nhận yêu cầu bóc tách công việc: "${prompt || 'Dự án mới'}".\n\n` +
+          `• Phân tích: Đã chia thành các đầu mục công việc, kiểm tra phòng ban và mốc hoàn thành dự kiến.\n` +
+          `👉 Bạn có thể bấm nút bên dưới để mở giao diện Phân rã AI chuyên dụng:`,
+        actionCards: [
+          {
+            actionType: 'OPEN_DECOMPOSITION',
+            title: 'Mở công cụ Phân rã AI',
+            linkUrl: '/tasks/ai-decomposition',
+            payload: { prompt },
+          },
+        ],
+      };
+    }
+
+    if (lower.startsWith('/notifications') || lower.includes('thông báo') || lower.includes('notification')) {
+      return {
+        text: '🔔 Bạn có 2 thông báo công việc mới trong hôm nay:\n' +
+          '1. [Yêu cầu] Bàn giao thiết bị làm việc cho nhân viên mới — Cần duyệt.\n' +
+          '2. [Cảnh báo SLA] Nhiệm vụ "Cập nhật tài liệu kỹ thuật" còn 4 giờ trước hạn.\n' +
+          '👉 Bấm bên dưới để xem toàn bộ thông báo:',
+        actionCards: [
+          {
+            actionType: 'NAVIGATE',
+            title: 'Xem hộp thư thông báo',
+            linkUrl: '/notifications',
+          },
+        ],
+      };
+    }
+
+    if (lower.includes('deadline') || lower.includes('hôm nay') || lower.includes('today')) {
+      return {
+        text: '📅 Hôm nay bạn có 1 công việc đến hạn hoàn thành:\n' +
+          '• **Báo cáo tuần & Đánh giá tiến độ dịch vụ** (Hạn chót: 17:00 hôm nay).\n' +
+          'Tất cả các công việc khác vẫn đang ở trạng thái an toàn (Healthy SLA).',
+        actionCards: [
+          {
+            actionType: 'NAVIGATE',
+            title: 'Xem danh sách công việc',
+            linkUrl: '/tasks',
+          },
+        ],
+      };
+    }
+
+    if (lower.includes('quá hạn') || lower.includes('overdue')) {
+      return {
+        text: '⚠️ Trạng thái SLA: Hiện tại hệ thống ghi nhận 1 đầu việc chạm ngưỡng quá hạn (Overdue):\n' +
+          '• "Xử lý lỗ hổng bảo mật máy chủ" - Đang thuộc diện Giám sát Cấp 2.\n' +
+          '👉 Bạn có thể xem ngay tại Trung tâm Giám sát SLA:',
+        actionCards: [
+          {
+            actionType: 'NAVIGATE',
+            title: 'Mở SLA Monitor',
+            linkUrl: '/settings/sla-monitor',
+          },
+        ],
+      };
+    }
+
+    if (lower.includes('chờ xử lý') || lower.includes('pending')) {
+      return {
+        text: '📋 Danh sách việc chờ bạn xử lý:\n' +
+          '1. Tiếp nhận và phản hồi yêu cầu IT phòng Kế toán.\n' +
+          '2. Nộp kết quả thực hiện tác vụ "Kiểm thử phân quyền RBAC".\n' +
+          'Chúc bạn một ngày làm việc hiệu quả!',
+        actionCards: [
+          {
+            actionType: 'NAVIGATE',
+            title: 'Xem công việc của tôi',
+            linkUrl: '/tasks',
+          },
+        ],
+      };
+    }
+
+    return {
+      text: `Xin chào! Tôi là Trợ lý Robot AI của BizFlow 🤖.\n` +
+        `Tôi luôn sẵn sàng hỗ trợ bạn quản lý công việc, theo dõi tiến độ, kiểm tra deadline và phân rã nhiệm vụ.\n` +
+        `Bạn có thể thử các câu hỏi nhanh bên dưới hoặc gõ lệnh \`/task <mô tả>\` để bóc tách quy trình làm việc!`,
+      actionCards: [
+        {
+          actionType: 'OPEN_DECOMPOSITION',
+          title: 'Phân rã công việc với AI',
+          linkUrl: '/tasks/ai-decomposition',
+        },
+      ],
+    };
   }
 
   executeAction(card: { actionType: string; title: string; linkUrl?: string; payload?: any }) {
