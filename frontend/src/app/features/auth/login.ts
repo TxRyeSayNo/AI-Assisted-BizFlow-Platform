@@ -280,14 +280,23 @@ export class Login implements OnInit, OnDestroy {
           const lowerId = rawId.toLowerCase();
           const isOfflineOrUnavailable =
             failure.status === 0 ||
+            failure.status === 500 ||
             failure.status === 502 ||
             failure.status === 503 ||
             failure.status === 504;
 
           // Seamless offline fallback for dev accounts
           if (isOfflineOrUnavailable && values.password === 'Password123!') {
+            if (upperId === 'SUPERADMIN' || lowerId === 'platform@bizflow.local') {
+              this.signInAsAccount('SUPERADMIN');
+              return;
+            }
             if (upperId === 'ADMIN001' || lowerId === 'admin@bizflow.local') {
               this.signInAsAccount('ADMIN');
+              return;
+            }
+            if (upperId === 'MGR001' || lowerId === 'manager@bizflow.local') {
+              this.signInAsAccount('MANAGER');
               return;
             }
             if (upperId === 'EMP001' || lowerId === 'employee@bizflow.local') {
