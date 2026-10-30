@@ -47,20 +47,28 @@ export class ToastService {
     return id;
   }
 
-  error(message: string, duration = 5000, title?: string): string {
-    return this.show(message, 'error', duration, title);
+  error(message: string, durationOrTitle: number | string = 5000, title?: string): string {
+    const duration = typeof durationOrTitle === 'number' ? durationOrTitle : 5000;
+    const finalTitle = typeof durationOrTitle === 'string' ? durationOrTitle : title;
+    return this.show(message, 'error', duration, finalTitle);
   }
 
-  success(message: string, duration = 4000, title?: string): string {
-    return this.show(message, 'success', duration, title);
+  success(message: string, durationOrTitle: number | string = 4000, title?: string): string {
+    const duration = typeof durationOrTitle === 'number' ? durationOrTitle : 4000;
+    const finalTitle = typeof durationOrTitle === 'string' ? durationOrTitle : title;
+    return this.show(message, 'success', duration, finalTitle);
   }
 
-  info(message: string, duration = 4000, title?: string): string {
-    return this.show(message, 'info', duration, title);
+  info(message: string, durationOrTitle: number | string = 4000, title?: string): string {
+    const duration = typeof durationOrTitle === 'number' ? durationOrTitle : 4000;
+    const finalTitle = typeof durationOrTitle === 'string' ? durationOrTitle : title;
+    return this.show(message, 'info', duration, finalTitle);
   }
 
-  warning(message: string, duration = 4500, title?: string): string {
-    return this.show(message, 'warning', duration, title);
+  warning(message: string, durationOrTitle: number | string = 4500, title?: string): string {
+    const duration = typeof durationOrTitle === 'number' ? durationOrTitle : 4500;
+    const finalTitle = typeof durationOrTitle === 'string' ? durationOrTitle : title;
+    return this.show(message, 'warning', duration, finalTitle);
   }
 
   dismiss(id: string): void {

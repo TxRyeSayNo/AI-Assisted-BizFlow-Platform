@@ -141,7 +141,6 @@
                   >{{
                     'status.' + item.status | translate: states[item.status]
                   }}</span>
-                  }}</span>
                   @if (item.deadline) {
                     <time class="task-meta" [attr.datetime]="item.deadline">{{
                       item.deadline | date: 'medium'
