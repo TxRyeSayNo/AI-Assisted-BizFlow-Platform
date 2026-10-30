@@ -132,7 +132,7 @@ export class TaskCreate {
       const value = this.form.getRawValue();
       const deadline = value.deadline ? new Date(value.deadline) : null;
       if (deadline && (!Number.isFinite(deadline.getTime()) || deadline.getTime() <= Date.now())) {
-        this.error.set('Choose a future deadline in your local time.');
+        this.error.set('Vui lòng chọn thời hạn trong tương lai theo giờ địa phương.');
         return;
       }
       this.submitted = {
@@ -170,10 +170,10 @@ export class TaskCreate {
           if (failure.status === 422 && !this.uncertain()) {
             this.form.enable();
             this.key = crypto.randomUUID();
-            this.error.set('Check the title, checklist and future deadline. No task was created.');
+            this.error.set('Vui lòng kiểm tra lại tiêu đề, danh mục kiểm tra và hạn chót. Nhiệm vụ chưa được tạo.');
           } else if (failure.status === 403 || failure.status === 401) {
             this.done.set(true);
-            this.error.set('You no longer have permission to create tasks.');
+            this.error.set('Bạn không còn quyền tạo nhiệm vụ.');
           } else {
             this.unknown();
           }

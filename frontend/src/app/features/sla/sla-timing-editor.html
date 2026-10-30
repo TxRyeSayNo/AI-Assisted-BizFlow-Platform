@@ -1,4 +1,4 @@
-<h2 mat-dialog-title id="sla-timing-title">Create SLA timing version</h2>
+<h2 mat-dialog-title id="sla-timing-title">Tạo phiên bản thời gian SLA</h2>
 <form [formGroup]="form" (ngSubmit)="save()" [attr.aria-busy]="busy()">
   <mat-dialog-content>
     <p>{{ data.profileName }} · Based on version {{ data.source.versionNo }}</p>
@@ -7,7 +7,7 @@
       changed.
     </p>
     <mat-form-field appearance="outline">
-      <mat-label>Target working minutes</mat-label>
+      <mat-label>Số phút làm việc mục tiêu</mat-label>
       <input
         matInput
         type="number"
@@ -17,10 +17,10 @@
         formControlName="targetMinutes"
         [readonly]="busy() || uncertain() || terminal()"
       />
-      <mat-error>Enter a positive whole number of working minutes.</mat-error>
+      <mat-error>Vui lòng nhập số nguyên dương cho số phút làm việc.</mat-error>
     </mat-form-field>
     <mat-form-field appearance="outline">
-      <mat-label>Warning working minutes from start</mat-label>
+      <mat-label>Số phút làm việc cảnh báo từ lúc bắt đầu</mat-label>
       <input
         matInput
         type="number"
@@ -30,7 +30,7 @@
         formControlName="warningMinutes"
         [readonly]="busy() || uncertain() || terminal()"
       />
-      <mat-error>Enter a nonnegative whole number of working minutes.</mat-error>
+      <mat-error>Vui lòng nhập số nguyên không âm cho số phút làm việc.</mat-error>
     </mat-form-field>
     <p class="hint">
       Warning time is elapsed working time from SLA start, and must be less than the target.
@@ -38,11 +38,11 @@
     @if (form.hasError('timing') && form.touched) {
       <p role="alert">Use whole minutes with 0 ≤ warning &lt; target.</p>
     }
-    <h3>Preserved configuration</h3>
+    <h3>Cấu hình được bảo lưu</h3>
     <dl>
-      <dt>Frozen calendar</dt>
+      <dt>Lịch làm việc cố định</dt>
       <dd>{{ data.source.calendar.timeZone }} · {{ data.source.calendar.calendarId }}</dd>
-      <dt>Escalation levels</dt>
+      <dt>Các cấp leo thang</dt>
       <dd>{{ data.source.escalationConfig?.levels?.length ?? 0 }} · Unchanged</dd>
     </dl>
     <p>

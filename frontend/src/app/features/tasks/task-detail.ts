@@ -249,7 +249,7 @@ export class TaskDetail {
     if (!task || this.archiving || !this.canArchive()) return;
     if (
       !confirm(
-        `Are you sure you want to archive task "${task.title}"? Once archived, it will be moved to historical records.`,
+        `Bạn có chắc chắn muốn lưu trữ nhiệm vụ "${task.title}"? Sau khi lưu trữ, nhiệm vụ sẽ được chuyển vào hồ sơ lịch sử.`,
       )
     ) {
       return;

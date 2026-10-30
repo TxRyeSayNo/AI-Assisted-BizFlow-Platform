@@ -121,7 +121,7 @@ export class WorkItemAttachments implements OnInit {
 
     const file = files[0];
     if (file.size > this.MAX_FILE_SIZE) {
-      this.error.set('File size exceeds maximum limit of 500 MB.');
+      this.error.set('Dung lượng tệp vượt quá giới hạn tối đa 500 MB.');
       inputElement.value = '';
       return;
     }
@@ -179,7 +179,7 @@ export class WorkItemAttachments implements OnInit {
   }
 
   deleteAttachment(attachmentId: string) {
-    if (!confirm('Are you sure you want to delete this attachment?')) return;
+    if (!confirm('Bạn có chắc chắn muốn xóa tệp đính kèm này không?')) return;
 
     this.error.set('');
     this.http.delete(`/api/v1/attachments/${attachmentId}`).subscribe({

@@ -100,7 +100,7 @@ export class TaskSubmissionEditor {
           if (!this.uncertain() && failure.status === 422) {
             this.content.enable();
             this.key = crypto.randomUUID();
-            this.error.set('Review your submission content and try again.');
+            this.error.set('Vui lòng kiểm tra lại nội dung nộp kết quả và thử lại.');
           } else if ([401, 403, 404, 409].includes(failure.status)) {
             this.terminal.set(true);
             this.error.set(

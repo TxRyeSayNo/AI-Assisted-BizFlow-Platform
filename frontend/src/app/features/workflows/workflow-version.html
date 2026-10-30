@@ -111,7 +111,7 @@
                 <h3>{{ step.name }}</h3>
                 <p>{{ step.stepCode }} · {{ step.type }} · Order {{ step.orderNo }}</p>
                 <details>
-                  <summary>Stored step configuration</summary>
+                  <summary>Cấu hình bước đã lưu</summary>
                   <pre>{{ step.config | json }}</pre>
                 </details>
               </li>
@@ -130,7 +130,7 @@
                 {{ transition.fromState }} → {{ transition.toState }}
                 @if (transition.guard) {
                   <details>
-                    <summary>Stored guard configuration</summary>
+                    <summary>Cấu hình điều kiện bảo vệ đã lưu</summary>
                     <pre>{{ transition.guard | json }}</pre>
                   </details>
                 }

@@ -79,7 +79,7 @@ export class SlaTimingEditor {
     if (this.busy() || this.uncertain() || this.terminal()) return;
     if (!this.session.hasPermission('sla.configure')) {
       this.terminal.set(true);
-      this.error.set('You no longer have permission to configure SLA versions.');
+      this.error.set('Bạn không còn quyền cấu hình các phiên bản SLA.');
       return;
     }
     this.form.markAllAsTouched();

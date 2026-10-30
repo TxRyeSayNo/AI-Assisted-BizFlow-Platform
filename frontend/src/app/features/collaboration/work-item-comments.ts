@@ -148,7 +148,7 @@ export class WorkItemComments implements OnInit {
   }
 
   deleteComment(commentId: string) {
-    if (!confirm('Are you sure you want to delete this comment?')) return;
+    if (!confirm('Bạn có chắc chắn muốn xóa bình luận này không?')) return;
 
     this.error.set('');
     this.http.delete(`/api/v1/comments/${commentId}`).subscribe({

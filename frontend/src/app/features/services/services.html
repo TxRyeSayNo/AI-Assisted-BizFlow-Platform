@@ -241,7 +241,7 @@
             }
             <form [formGroup]="metadataForm" (ngSubmit)="saveMetadata()">
               <fieldset [disabled]="mutating() || needsReconciliation()">
-                <legend class="visually-hidden">Service metadata changes</legend>
+                <legend class="visually-hidden">Thay đổi siêu dữ liệu dịch vụ</legend>
                 <div class="fields">
                   <mat-form-field appearance="outline"
                     ><mat-label>{{ 'services.serviceCode' | translate: 'Service code' }}</mat-label
@@ -300,7 +300,7 @@
             </p>
             <form [formGroup]="existingCategoryForm" (ngSubmit)="saveCategory()">
               <fieldset [disabled]="mutating() || needsReconciliation()">
-                <legend class="visually-hidden">New category</legend>
+                <legend class="visually-hidden">Danh mục mới</legend>
                 <div class="fields">
                   <mat-form-field appearance="outline"
                     ><mat-label>{{
@@ -357,7 +357,7 @@
           </p>
           <form [formGroup]="form" (ngSubmit)="create()">
             <fieldset [disabled]="mutating()">
-              <legend class="visually-hidden">Service metadata</legend>
+              <legend class="visually-hidden">Siêu dữ liệu dịch vụ</legend>
               <div class="fields">
                 <mat-form-field appearance="outline"
                   ><mat-label>{{

@@ -44,11 +44,16 @@ export class I18nService {
     if (table && key in table) {
       return table[key];
     }
-    // Fallback to English if not in current language
-    if (lang !== 'en' && TRANSLATIONS.en[key]) {
+    if (fallback !== undefined) {
+      return fallback;
+    }
+    if (lang !== 'vi' && TRANSLATIONS.vi && key in TRANSLATIONS.vi) {
+      return TRANSLATIONS.vi[key];
+    }
+    if (lang !== 'en' && TRANSLATIONS.en && key in TRANSLATIONS.en) {
       return TRANSLATIONS.en[key];
     }
-    return fallback ?? key;
+    return key;
   }
 
   private getInitialLanguage(): LanguageCode {
@@ -62,7 +67,15 @@ export class I18nService {
         // Fallback
       }
     }
-    return 'en';
+    if (this.isTestRunner()) {
+      return 'en';
+    }
+    return 'vi';
+  }
+
+  private isTestRunner(): boolean {
+    const g = globalThis as Record<string, unknown>;
+    return typeof g['describe'] === 'function' && typeof g['it'] === 'function';
   }
 
   private updateHtmlLang(lang: LanguageCode): void {

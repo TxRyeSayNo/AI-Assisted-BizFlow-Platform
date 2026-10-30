@@ -161,7 +161,7 @@ export class TaskConfirmationEditor {
           if (!this.uncertain() && failure.status === 422) {
             this.form.enable();
             this.key = crypto.randomUUID();
-            this.error.set('Review your confirmation input and note, then try again.');
+            this.error.set('Vui lòng kiểm tra lại thông tin xác nhận và ghi chú, sau đó thử lại.');
           } else if ([401, 403, 404, 409].includes(failure.status)) {
             this.terminal.set(true);
             this.error.set(

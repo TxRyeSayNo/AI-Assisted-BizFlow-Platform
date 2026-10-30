@@ -29,9 +29,6 @@
       </div>
 
       <div class="topbar-right">
-        <!-- Embedded Language Switch in Topbar -->
-        <bf-language-switch />
-
         <!-- AI Assistant Action Button -->
         <button
           type="button"
@@ -296,8 +293,5 @@
   </div>
 } @else {
   <!-- Unauthenticated Views (Login, Forgot Password, Register Company, Reset Password) -->
-  <div class="global-floating-lang-switch">
-    <bf-language-switch />
-  </div>
   <router-outlet />
 }

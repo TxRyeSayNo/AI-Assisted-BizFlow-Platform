@@ -4,7 +4,6 @@ import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/rou
 import { SessionService } from './core/auth/session';
 import { AiAssistantComponent } from './shared/ai/ai-assistant';
 import { TranslatePipe } from './core/i18n/translate.pipe';
-import { LanguageSwitchComponent } from './shared/language-switch/language-switch';
 import { RobotWidgetComponent } from './shared/ai/robot-widget';
 import { ToastContainerComponent } from './core/toast/toast-container.component';
 
@@ -18,7 +17,6 @@ import { ToastContainerComponent } from './core/toast/toast-container.component'
     RouterLinkActive,
     AiAssistantComponent,
     TranslatePipe,
-    LanguageSwitchComponent,
     RobotWidgetComponent,
     ToastContainerComponent,
   ],

@@ -214,7 +214,7 @@
     <!-- Rejection Callout -->
     @if (detail.status === 'REJECTED' && detail.rejectionReason) {
       <div class="rejection-callout" role="alert">
-        <div class="rejection-title">Request Rejected</div>
+        <div class="rejection-title">{{ 'requests.rejectedTitle' | translate: 'Request Rejected' }}</div>
         <div class="rejection-body">{{ detail.rejectionReason }}</div>
       </div>
     }
@@ -223,9 +223,9 @@
     @if (detail.currentRoutingDepartmentName || detail.currentRoutingUserName) {
       <div class="routing-target-card">
         <div class="routing-target-header">
-          <span class="routing-target-label">Current Assignment & Routing</span>
+          <span class="routing-target-label">Phân công & Điều phối hiện tại</span>
           @if (detail.routedAt) {
-            <span class="routing-time">Routed {{ detail.routedAt | date: 'medium' }}</span>
+            <span class="routing-time">Đã điều phối {{ detail.routedAt | date: 'dd/MM/yyyy HH:mm' }}</span>
           }
         </div>
         <div class="routing-target-details">
@@ -436,7 +436,7 @@
           {{
             'requestDetail.cancelModalSubtext'
               | translate
-                : 'Are you sure you want to cancel this request? This action cannot be undone.'
+                : 'Bạn có chắc chắn muốn hủy yêu cầu này không? Hành động này không thể hoàn tác.'
           }}
         </p>
 

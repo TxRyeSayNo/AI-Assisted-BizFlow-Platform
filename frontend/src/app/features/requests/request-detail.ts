@@ -9,6 +9,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { SessionService } from '../../core/auth/session';
+import { I18nService } from '../../core/i18n/i18n.service';
 import { requestPriorities, requestStates } from './requests';
 import { WorkItemComments } from '../collaboration/work-item-comments';
 import { WorkItemAttachments } from '../collaboration/work-item-attachments';
@@ -113,6 +114,7 @@ export class RequestDetail implements OnInit {
   private readonly router = inject(Router);
   private readonly http = inject(HttpClient);
   private readonly destroy = inject(DestroyRef);
+  private readonly i18n = inject(I18nService);
 
   readonly session = inject(SessionService);
   readonly states = requestStates;
@@ -214,11 +216,11 @@ export class RequestDetail implements OnInit {
         error: (err: HttpErrorResponse) => {
           this.busy.set(false);
           if (err.status === 404) {
-            this.error.set('Request not found or you do not have permission to view it.');
+            this.error.set(this.i18n.t('requestDetail.errNotFound', 'Request not found or you do not have permission to view it.'));
           } else if (err.status === 403 || err.status === 401) {
-            this.error.set('You are not authorized to view this request.');
+            this.error.set('Bạn không có quyền xem yêu cầu này.');
           } else {
-            this.error.set('Failed to load request details. Please try again.');
+            this.error.set('Không thể tải chi tiết yêu cầu. Vui lòng thử lại.');
           }
         },
       });
@@ -456,17 +458,17 @@ export class RequestDetail implements OnInit {
       .subscribe({
         next: () => {
           this.actionInProgress.set(false);
-          this.actionSuccess.set('Request submitted successfully.');
+          this.actionSuccess.set('Yêu cầu đã được gửi thành công.');
           this.load();
         },
         error: (err: HttpErrorResponse) => {
           this.actionInProgress.set(false);
           if (err.status === 409) {
-            this.actionError.set('Request cannot be submitted in its current state.');
+            this.actionError.set('Yêu cầu không thể gửi ở trạng thái hiện tại.');
           } else if (err.status === 403) {
-            this.actionError.set('You do not have permission to submit this request.');
+            this.actionError.set('Bạn không có quyền gửi yêu cầu này.');
           } else {
-            this.actionError.set('Failed to submit request. Please try again.');
+            this.actionError.set('Không thể gửi yêu cầu. Vui lòng thử lại.');
           }
         },
       });
@@ -478,7 +480,7 @@ export class RequestDetail implements OnInit {
     const deptId = this.routeDepartmentId().trim() || null;
     const userId = this.routeUserId().trim() || null;
     if (!deptId && !userId) {
-      this.actionError.set('Please select a target department or user.');
+      this.actionError.set('Vui lòng chọn phòng ban hoặc nhân viên tiếp nhận.');
       return;
     }
 
@@ -502,15 +504,15 @@ export class RequestDetail implements OnInit {
         next: () => {
           this.actionInProgress.set(false);
           this.closeModal();
-          this.actionSuccess.set('Request routed successfully.');
+          this.actionSuccess.set('Yêu cầu đã được điều phối thành công.');
           this.load();
         },
         error: (err: HttpErrorResponse) => {
           this.actionInProgress.set(false);
           if (err.status === 403) {
-            this.actionError.set('You do not have permission to route this request.');
+            this.actionError.set('Bạn không có quyền điều phối yêu cầu này.');
           } else if (err.status === 409) {
-            this.actionError.set('Request cannot be routed in its current state.');
+            this.actionError.set('Yêu cầu không thể điều phối ở trạng thái hiện tại.');
           } else {
             this.actionError.set(err.error?.message || 'Failed to route request.');
           }
@@ -538,15 +540,15 @@ export class RequestDetail implements OnInit {
         next: () => {
           this.actionInProgress.set(false);
           this.closeModal();
-          this.actionSuccess.set('Request received and marked for processing.');
+          this.actionSuccess.set('Đã tiếp nhận yêu cầu và đưa vào luồng xử lý.');
           this.load();
         },
         error: (err: HttpErrorResponse) => {
           this.actionInProgress.set(false);
           if (err.status === 403) {
-            this.actionError.set('You are not authorized to receive this request.');
+            this.actionError.set('Bạn không có quyền tiếp nhận yêu cầu này.');
           } else if (err.status === 409) {
-            this.actionError.set('Request cannot be received in its current state.');
+            this.actionError.set('Yêu cầu không thể tiếp nhận ở trạng thái hiện tại.');
           } else {
             this.actionError.set(err.error?.message || 'Failed to receive request.');
           }
@@ -572,15 +574,15 @@ export class RequestDetail implements OnInit {
       .subscribe({
         next: () => {
           this.actionInProgress.set(false);
-          this.actionSuccess.set('Work execution started (In Progress).');
+          this.actionSuccess.set('Đã bắt đầu thực hiện yêu cầu (Đang xử lý).');
           this.load();
         },
         error: (err: HttpErrorResponse) => {
           this.actionInProgress.set(false);
           if (err.status === 403) {
-            this.actionError.set('You do not have permission to process this request.');
+            this.actionError.set('Bạn không có quyền xử lý yêu cầu này.');
           } else if (err.status === 409) {
-            this.actionError.set('Request cannot transition to In Progress in its current state.');
+            this.actionError.set('Yêu cầu không thể chuyển sang Đang xử lý ở trạng thái hiện tại.');
           } else {
             this.actionError.set(err.error?.message || 'Failed to start processing request.');
           }
@@ -593,7 +595,7 @@ export class RequestDetail implements OnInit {
 
     const reason = this.rejectReason().trim();
     if (!reason) {
-      this.actionError.set('A plain-text rejection reason is required.');
+      this.actionError.set('Vui lòng nhập lý do từ chối yêu cầu.');
       return;
     }
 
@@ -613,15 +615,15 @@ export class RequestDetail implements OnInit {
         next: () => {
           this.actionInProgress.set(false);
           this.closeModal();
-          this.actionSuccess.set('Request rejected.');
+          this.actionSuccess.set('Yêu cầu đã bị từ chối.');
           this.load();
         },
         error: (err: HttpErrorResponse) => {
           this.actionInProgress.set(false);
           if (err.status === 403) {
-            this.actionError.set('You do not have permission to reject this request.');
+            this.actionError.set('Bạn không có quyền từ chối yêu cầu này.');
           } else if (err.status === 409) {
-            this.actionError.set('Request cannot be rejected in its current state.');
+            this.actionError.set('Yêu cầu không thể từ chối ở trạng thái hiện tại.');
           } else {
             this.actionError.set(err.error?.message || 'Failed to reject request.');
           }
@@ -648,15 +650,15 @@ export class RequestDetail implements OnInit {
         next: () => {
           this.actionInProgress.set(false);
           this.closeModal();
-          this.actionSuccess.set('Request cancelled.');
+          this.actionSuccess.set('Yêu cầu đã được hủy bỏ.');
           this.load();
         },
         error: (err: HttpErrorResponse) => {
           this.actionInProgress.set(false);
           if (err.status === 403) {
-            this.actionError.set('You do not have permission to cancel this request.');
+            this.actionError.set('Bạn không có quyền hủy yêu cầu này.');
           } else if (err.status === 409) {
-            this.actionError.set('Request cannot be cancelled in its current state.');
+            this.actionError.set('Yêu cầu không thể hủy ở trạng thái hiện tại.');
           } else {
             this.actionError.set(err.error?.message || 'Failed to cancel request.');
           }
@@ -668,7 +670,7 @@ export class RequestDetail implements OnInit {
     if (this.actionInProgress() || !this.canResolve()) return;
     const content = this.resolveContent().trim();
     if (!content) {
-      this.actionError.set('Resolution details are required.');
+      this.actionError.set('Vui lòng nhập nội dung chi tiết giải quyết yêu cầu.');
       return;
     }
 
@@ -689,15 +691,15 @@ export class RequestDetail implements OnInit {
         next: () => {
           this.actionInProgress.set(false);
           this.closeModal();
-          this.actionSuccess.set('Request resolved successfully.');
+          this.actionSuccess.set(this.i18n.t('requests.resolvedSuccess', 'Request resolved successfully.'));
           this.load();
         },
         error: (err: HttpErrorResponse) => {
           this.actionInProgress.set(false);
           if (err.status === 403) {
-            this.actionError.set('You do not have permission to resolve this request.');
+            this.actionError.set('Bạn không có quyền hoàn tất giải quyết yêu cầu này.');
           } else if (err.status === 409) {
-            this.actionError.set('Request cannot be resolved in its current state.');
+            this.actionError.set('Yêu cầu không thể hoàn tất giải quyết ở trạng thái hiện tại.');
           } else {
             this.actionError.set(err.error?.message || 'Failed to resolve request.');
           }
@@ -710,7 +712,7 @@ export class RequestDetail implements OnInit {
     const decision = this.confirmDecision();
     const note = this.confirmNote().trim();
     if (decision === 'REWORK' && !note) {
-      this.actionError.set('A note explaining why rework is needed is required.');
+      this.actionError.set(this.i18n.t('requests.reworkNoteRequired', 'A note explaining why rework is needed is required.'));
       return;
     }
 
@@ -745,7 +747,7 @@ export class RequestDetail implements OnInit {
               'You do not have permission to confirm or request rework for this request.',
             );
           } else if (err.status === 409) {
-            this.actionError.set('Request cannot be confirmed in its current state.');
+            this.actionError.set('Yêu cầu không thể xác nhận ở trạng thái hiện tại.');
           } else {
             this.actionError.set(err.error?.message || 'Failed to submit confirmation.');
           }
@@ -757,7 +759,7 @@ export class RequestDetail implements OnInit {
     if (this.actionInProgress() || !this.canRevise()) return;
     const title = this.reviseTitle().trim();
     if (!title) {
-      this.actionError.set('Title is required for the revised request.');
+      this.actionError.set('Vui lòng nhập tiêu đề cho yêu cầu sửa đổi.');
       return;
     }
 
@@ -781,15 +783,15 @@ export class RequestDetail implements OnInit {
         next: (res) => {
           this.actionInProgress.set(false);
           this.closeModal();
-          this.actionSuccess.set('Revised request created successfully.');
+          this.actionSuccess.set(this.i18n.t('requests.revisedSuccess', 'Revised request created successfully.'));
           this.router.navigate(['/requests', res.requestId]);
         },
         error: (err: HttpErrorResponse) => {
           this.actionInProgress.set(false);
           if (err.status === 403) {
-            this.actionError.set('You do not have permission to create a revised request.');
+            this.actionError.set('Bạn không có quyền tạo yêu cầu sửa đổi.');
           } else if (err.status === 409) {
-            this.actionError.set('Request cannot be revised in its current state.');
+            this.actionError.set('Yêu cầu không thể sửa đổi ở trạng thái hiện tại.');
           } else {
             this.actionError.set(err.error?.message || 'Failed to create revised request.');
           }
@@ -812,7 +814,7 @@ export class RequestDetail implements OnInit {
     if (this.actionInProgress() || !this.canCreateTask()) return;
     const title = this.taskTitle().trim();
     if (!title) {
-      this.actionError.set('Title is required for the task.');
+      this.actionError.set('Vui lòng nhập tiêu đề cho nhiệm vụ.');
       return;
     }
 
@@ -821,7 +823,7 @@ export class RequestDetail implements OnInit {
     if (deadlineStr) {
       const dl = new Date(deadlineStr);
       if (!Number.isFinite(dl.getTime()) || dl.getTime() <= Date.now()) {
-        this.actionError.set('Choose a future deadline in your local time.');
+        this.actionError.set('Vui lòng chọn thời hạn trong tương lai theo giờ địa phương.');
         return;
       }
       deadlineIso = dl.toISOString();
@@ -848,15 +850,15 @@ export class RequestDetail implements OnInit {
         next: () => {
           this.actionInProgress.set(false);
           this.closeModal();
-          this.actionSuccess.set('Task created successfully and linked to this request.');
+          this.actionSuccess.set(this.i18n.t('requests.taskCreatedSuccess', 'Task created successfully and linked to this request.'));
           this.load();
         },
         error: (err: HttpErrorResponse) => {
           this.actionInProgress.set(false);
           if (err.status === 403) {
-            this.actionError.set('You do not have permission to create tasks.');
+            this.actionError.set('Bạn không có quyền tạo nhiệm vụ.');
           } else if (err.status === 409) {
-            this.actionError.set('Cannot link task: request is not in an active state.');
+            this.actionError.set('Không thể liên kết nhiệm vụ: yêu cầu không ở trạng thái hoạt động.');
           } else {
             this.actionError.set(err.error?.message || 'Failed to create task.');
           }
@@ -941,7 +943,7 @@ export class RequestDetail implements OnInit {
     const d = this.data();
     if (
       !confirm(
-        `Are you sure you want to archive request "${d?.title}"? Once archived, it will be moved to historical records.`,
+        `Bạn có chắc chắn muốn lưu trữ yêu cầu "${d?.title}"? Sau khi lưu trữ, yêu cầu sẽ được chuyển vào hồ sơ lịch sử.`,
       )
     ) {
       return;
@@ -954,15 +956,15 @@ export class RequestDetail implements OnInit {
       .subscribe({
         next: () => {
           this.actionInProgress.set(false);
-          this.actionSuccess.set('Request archived successfully.');
+          this.actionSuccess.set(this.i18n.t('requests.archivedSuccess', 'Request archived successfully.'));
           this.load();
         },
         error: (err: HttpErrorResponse) => {
           this.actionInProgress.set(false);
           if (err.status === 403) {
-            this.actionError.set('You do not have permission to archive records.');
+            this.actionError.set('Bạn không có quyền lưu trữ hồ sơ.');
           } else if (err.status === 409) {
-            this.actionError.set('Request cannot be archived in its current state.');
+            this.actionError.set('Yêu cầu không thể lưu trữ ở trạng thái hiện tại.');
           } else {
             this.actionError.set(err.error?.message || 'Failed to archive request.');
           }

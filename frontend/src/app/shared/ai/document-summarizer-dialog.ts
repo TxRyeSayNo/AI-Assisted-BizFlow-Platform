@@ -54,13 +54,13 @@ export interface CreateTasksFromSummaryResponse {
             <span class="ai-spark" aria-hidden="true">📑</span>
             <div>
               <h2 id="summarizer-title" class="dialog-title">
-                {{ 'ai.summarizeTitle' | translate: 'AI Document Intelligence & Summarizer' }}
+                {{ 'ai.summarizeTitle' | translate: 'Tóm tắt & Trích xuất Tài liệu Thông minh AI' }}
               </h2>
               <p class="dialog-subtitle">
                 {{
                   'ai.summarizeSubtitle'
                     | translate
-                      : 'Extract executive insights, actionable tasks, and compliance alerts'
+                      : 'Trích xuất thông tin điều hành, nhiệm vụ cần thực hiện và cảnh báo rủi ro'
                 }}
               </p>
             </div>
@@ -143,14 +143,6 @@ export interface CreateTasksFromSummaryResponse {
               </div>
             </div>
 
-            <div class="language-selector">
-              <span class="controls-label">{{ 'common.language' | translate: 'Ngôn ngữ:' }}</span>
-              <select class="form-select" [(ngModel)]="selectedLang" [disabled]="loading()">
-                <option value="vi">Tiếng Việt</option>
-                <option value="en">English</option>
-                <option value="ja">日本語</option>
-              </select>
-            </div>
           </div>
 
           <!-- Action trigger -->

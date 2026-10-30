@@ -92,7 +92,7 @@
         <dt>{{ 'taskDetail.created' | translate: 'Created' }}</dt>
         <dd>{{ detail.task.createdAt | date: 'medium' }}</dd>
       </dl>
-      <p>Dates shown in your local time.</p>
+      <p>Ngày giờ hiển thị theo giờ địa phương.</p>
       <p>{{ detail.description ?? ('taskDetail.noDescription' | translate: 'No description') }}</p>
       @if (detail.task.requestId) {
         <p>
@@ -164,7 +164,7 @@
           </p>
 
           @if (risk.riskFactors?.length) {
-            <p><strong>Contributing Factors:</strong></p>
+            <p><strong>Yếu tố tác động:</strong></p>
             <ul>
               @for (factor of risk.riskFactors; track factor) {
                 <li>{{ factor }}</li>
@@ -172,7 +172,7 @@
             </ul>
           }
           @if (risk.mitigationAdvice?.length) {
-            <p><strong>Mitigation Recommendations:</strong></p>
+            <p><strong>Khuyến nghị giảm thiểu:</strong></p>
             <ul>
               @for (advice of risk.mitigationAdvice; track advice) {
                 <li>{{ advice }}</li>
@@ -198,7 +198,7 @@
           <p><strong>Tóm tắt tự động:</strong> {{ sum.summary }}</p>
 
           @if (sum.keyMilestones?.length) {
-            <p><strong>Key Milestones:</strong></p>
+            <p><strong>Các cột mốc then chốt:</strong></p>
             <ul>
               @for (m of sum.keyMilestones; track m) {
                 <li>{{ m }}</li>

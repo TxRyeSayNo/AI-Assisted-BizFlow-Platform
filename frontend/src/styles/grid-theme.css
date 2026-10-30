@@ -710,8 +710,8 @@
   --tp-sh-sm: 0 1px 3px rgba(11, 42, 74, 0.05), 0 1px 2px rgba(11, 42, 74, 0.03);
   --tp-sh-lg: 0 16px 40px -6px rgba(7, 27, 51, 0.12), 0 6px 16px -2px rgba(7, 27, 51, 0.06);
   --tp-bw: 1px;
-  --tp-font-display: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  --tp-font-body: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --tp-font-display: 'Be Vietnam Pro', 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --tp-font-body: 'Be Vietnam Pro', 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --tp-font-mono: 'JetBrains Mono', monospace;
   --tp-w-display: 700;
   --tp-track-display: -0.025em;
