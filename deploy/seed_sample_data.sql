@@ -151,6 +151,13 @@ INSERT INTO "UserRole" ("UserId", "RoleId") VALUES
     ('019f8000-0000-7000-8000-000000000011', '019f7f8a-0000-7000-8000-000000000004')
 ON CONFLICT ("UserId", "RoleId") DO NOTHING;
 
+-- Grant tasks.create to EMPLOYEE role so employees can create tasks & use AI decomposition
+INSERT INTO "RolePermission" ("RoleId", "PermissionId")
+SELECT '019f7f8a-0000-7000-8000-000000000004', "PermissionId"
+FROM "Permission"
+WHERE "Code" = 'tasks.create'
+ON CONFLICT DO NOTHING;
+
 -- 7. ManagementScope for Admin & Manager
 INSERT INTO "ManagementScope" ("ManagementScopeId", "TenantId", "UserId", "DepartmentId", "IncludeDescendants", "CreatedBy", "CreatedAt")
 VALUES (

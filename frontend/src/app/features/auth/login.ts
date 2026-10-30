@@ -98,6 +98,11 @@ export class Login implements OnInit, OnDestroy {
   }
 
   async ngOnInit(): Promise<void> {
+    if (this.session.signedIn()) {
+      void this.router.navigateByUrl('/workspace', { replaceUrl: true });
+      return;
+    }
+
     // Pre-warm workspace
     void import('./workspace');
 
@@ -667,6 +672,7 @@ export class Login implements OnInit, OnDestroy {
             'requests.create',
             'tasks.read.own',
             'tasks.read.assigned',
+            'tasks.create',
             'tasks.execute',
             'tasks.submit',
           ],

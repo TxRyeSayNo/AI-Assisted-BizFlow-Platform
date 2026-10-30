@@ -254,7 +254,7 @@ export class RobotWidgetComponent implements OnInit {
           {
             actionType: 'NAVIGATE',
             title: 'Mở SLA Monitor',
-            linkUrl: '/settings/sla-monitor',
+            linkUrl: '/sla-monitor',
           },
         ],
       };

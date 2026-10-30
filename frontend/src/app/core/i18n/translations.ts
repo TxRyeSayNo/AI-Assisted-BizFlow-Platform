@@ -1006,6 +1006,7 @@ export const TRANSLATIONS: Record<LanguageCode, Record<string, string>> = {
     'accessDenied.message':
       'Bạn không có quyền truy cập trang này. Vui lòng liên hệ quản trị viên doanh nghiệp nếu bạn cần hỗ trợ.',
     'accessDenied.back': 'Quay lại trang đăng nhập',
+    'accessDenied.backHome': 'Quay lại Không gian làm việc',
 
     // AI Features & Assistant Drawer
     'ai.assistant': 'AI Trợ lý',
@@ -2349,6 +2350,7 @@ export const TRANSLATIONS: Record<LanguageCode, Record<string, string>> = {
     'accessDenied.message':
       'You do not have access to this page. Contact your company administrator if you need help.',
     'accessDenied.back': 'Back to sign in',
+    'accessDenied.backHome': 'Back to Workspace',
 
     // AI Features & Assistant Drawer
     'ai.assistant': 'AI Assistant',
@@ -3443,6 +3445,7 @@ export const TRANSLATIONS: Record<LanguageCode, Record<string, string>> = {
     'accessDenied.message':
       'このページへのアクセス権限がありません。サポートが必要な場合は社内管理者にお問い合わせください。',
     'accessDenied.back': 'サインイン画面へ戻る',
+    'accessDenied.backHome': 'ワークスペースへ戻る',
 
     // AI Features & Assistant Drawer
     'ai.assistant': 'AIアシスタント',
