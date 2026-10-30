@@ -14,6 +14,7 @@ import { TaskSubmissionEditor } from './task-submission';
 import { TaskConfirmationEditor } from './task-confirmation';
 import { WorkItemComments } from '../collaboration/work-item-comments';
 import { WorkItemAttachments } from '../collaboration/work-item-attachments';
+import { TranslatePipe } from '../../core/i18n/translate.pipe';
 
 interface Evidence {
   id: string;
@@ -51,7 +52,14 @@ interface Detail {
 }
 @Component({
   selector: 'bf-task-detail',
-  imports: [DatePipe, MatButtonModule, RouterLink, WorkItemComments, WorkItemAttachments],
+  imports: [
+    DatePipe,
+    MatButtonModule,
+    RouterLink,
+    WorkItemComments,
+    WorkItemAttachments,
+    TranslatePipe,
+  ],
   templateUrl: './task-detail.html',
   styleUrls: ['../organization/departments.scss', './task-editor.scss'],
 })

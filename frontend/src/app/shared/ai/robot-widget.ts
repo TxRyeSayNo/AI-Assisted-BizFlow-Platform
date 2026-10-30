@@ -1,10 +1,21 @@
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
-import { Component, DestroyRef, ElementRef, OnInit, ViewChild, computed, inject, signal } from '@angular/core';
+import {
+  Component,
+  DestroyRef,
+  ElementRef,
+  OnInit,
+  ViewChild,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { SessionService } from '../../core/auth/session';
+import { I18nService } from '../../core/i18n/i18n.service';
+import { TranslatePipe } from '../../core/i18n/translate.pipe';
 
 export interface ChatMessage {
   id: string;
@@ -22,12 +33,13 @@ export interface ChatMessage {
 @Component({
   selector: 'bf-robot-widget',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TranslatePipe],
   templateUrl: './robot-widget.html',
   styleUrls: ['./robot-widget.scss'],
 })
 export class RobotWidgetComponent implements OnInit {
   readonly session = inject(SessionService);
+  readonly i18n = inject(I18nService);
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
   private readonly destroy = inject(DestroyRef);
@@ -52,6 +64,14 @@ export class RobotWidgetComponent implements OnInit {
 
   ngOnInit() {
     this.checkSessionDisplayState();
+    this.messages.set([
+      {
+        id: 'welcome',
+        sender: 'robot',
+        text: this.i18n.t('ai.welcomeMsg'),
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      },
+    ]);
   }
 
   checkSessionDisplayState() {
@@ -80,6 +100,43 @@ export class RobotWidgetComponent implements OnInit {
     } catch {}
   }
 
+  onQuickPrompt(type: 'today' | 'overdue' | 'pending' | 'task' | 'notifications') {
+    const prompts: Record<string, Record<string, string>> = {
+      today: {
+        vi: 'Hôm nay tôi có deadline nào không?',
+        en: 'Do I have any deadlines due today?',
+        ja: '本日締切のタスクはありますか？',
+      },
+      overdue: {
+        vi: 'Kiểm tra các việc bị quá hạn',
+        en: 'Check my overdue tasks',
+        ja: '期限超過のタスクを確認してください',
+      },
+      pending: {
+        vi: 'Liệt kê các việc chờ xử lý của tôi',
+        en: 'List my pending tasks',
+        ja: '未処理のタスクを一覧表示してください',
+      },
+      task: {
+        vi: '/task ',
+        en: '/task ',
+        ja: '/task ',
+      },
+      notifications: {
+        vi: '/notifications',
+        en: '/notifications',
+        ja: '/notifications',
+      },
+    };
+    const lang = this.i18n.currentLanguage();
+    const text = prompts[type]?.[lang] || prompts[type]?.['vi'] || '';
+    if (type === 'task') {
+      this.inputMessage.set(text);
+    } else {
+      this.sendQuickPrompt(text);
+    }
+  }
+
   sendQuickPrompt(text: string) {
     this.inputMessage.set(text);
     this.sendMessage();
@@ -104,7 +161,7 @@ export class RobotWidgetComponent implements OnInit {
     this.http
       .post<{ response: string; recognizedCommand?: string; actionCards?: any[] }>(
         '/api/v1/ai/chat',
-        { message: text },
+        { message: text, locale: this.i18n.currentLanguage() },
       )
       .pipe(takeUntilDestroyed(this.destroy))
       .subscribe({
@@ -125,9 +182,7 @@ export class RobotWidgetComponent implements OnInit {
           const errorMsg: ChatMessage = {
             id: crypto.randomUUID(),
             sender: 'robot',
-            text:
-              err?.error?.message ||
-              'Xin lỗi, không thể kết nối tới dịch vụ AI lúc này. Vui lòng thử lại.',
+            text: err?.error?.message || this.i18n.t('ai.connectionError'),
             time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
           };
           this.messages.update((list) => [...list, errorMsg]);
@@ -137,6 +192,46 @@ export class RobotWidgetComponent implements OnInit {
   }
 
   executeAction(card: { actionType: string; title: string; linkUrl?: string; payload?: any }) {
+    if (card.actionType === 'CONFIRM_ACTION') {
+      this.busy.set(true);
+      this.http
+        .post<{ success: boolean; resultJson?: string; error?: string }>(
+          card.linkUrl || '/api/v1/ai/actions/execute',
+          {
+            toolName: card.payload?.toolName,
+            argsJson: card.payload?.argsJson,
+            confirmed: true,
+            confirmationToken: card.payload?.confirmationToken,
+          },
+        )
+        .pipe(takeUntilDestroyed(this.destroy))
+        .subscribe({
+          next: (res) => {
+            this.busy.set(false);
+            const msg: ChatMessage = {
+              id: crypto.randomUUID(),
+              sender: 'robot',
+              text: res.success ? `✅ ${card.title} thành công!` : `❌ Thất bại: ${res.error}`,
+              time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            };
+            this.messages.update((list) => [...list, msg]);
+            this.scrollToBottom();
+          },
+          error: (err) => {
+            this.busy.set(false);
+            const msg: ChatMessage = {
+              id: crypto.randomUUID(),
+              sender: 'robot',
+              text: `❌ Lỗi thực thi hành động: ${err?.error?.message || err.message}`,
+              time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            };
+            this.messages.update((list) => [...list, msg]);
+            this.scrollToBottom();
+          },
+        });
+      return;
+    }
+
     if (card.linkUrl) {
       this.router.navigate([card.linkUrl], {
         queryParams: card.payload ? card.payload : undefined,

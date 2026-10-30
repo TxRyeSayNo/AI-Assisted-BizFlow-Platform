@@ -1,9 +1,10 @@
 import { Component, input, output } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
+import { TranslatePipe } from '../../core/i18n/translate.pipe';
 
 @Component({
   selector: 'bf-feedback',
-  imports: [MatButtonModule],
+  imports: [MatButtonModule, TranslatePipe],
   template: `
     <section class="feedback" [attr.aria-busy]="state() === 'loading'" aria-live="polite">
       <span class="feedback-mark" aria-hidden="true">{{
@@ -13,7 +14,9 @@ import { MatButtonModule } from '@angular/material/button';
         <h2>{{ title() }}</h2>
         <p>{{ message() }}</p>
         @if (retryable()) {
-          <button mat-stroked-button type="button" (click)="retry.emit()">Try again</button>
+          <button mat-stroked-button type="button" (click)="retry.emit()">
+            {{ 'common.tryAgain' | translate: 'Try again' }}
+          </button>
         }
       </div>
     </section>

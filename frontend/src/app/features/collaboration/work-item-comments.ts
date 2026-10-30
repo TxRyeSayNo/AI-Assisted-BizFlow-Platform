@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, inject, signal } from '@angular/core';
+import { Component, Input, OnInit, effect, inject, signal } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
@@ -6,6 +6,8 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { SessionService } from '../../core/auth/session';
+import { TranslatePipe } from '../../core/i18n/translate.pipe';
+import { ToastService } from '../../core/toast/toast.service';
 
 export interface CommentItem {
   commentId: string;
@@ -31,6 +33,7 @@ export interface CommentItem {
     MatButtonModule,
     MatFormFieldModule,
     MatInputModule,
+    TranslatePipe,
   ],
   templateUrl: './work-item-comments.html',
   styleUrls: ['./work-item-comments.scss'],
@@ -41,6 +44,7 @@ export class WorkItemComments implements OnInit {
 
   readonly session = inject(SessionService);
   private readonly http = inject(HttpClient);
+  private readonly toast = inject(ToastService);
 
   readonly comments = signal<CommentItem[]>([]);
   readonly loading = signal(false);
@@ -51,6 +55,15 @@ export class WorkItemComments implements OnInit {
   editingCommentId: string | null = null;
   editingText = '';
   savingEdit = false;
+
+  constructor() {
+    effect(() => {
+      const err = this.error();
+      if (err) {
+        this.toast.error(err);
+      }
+    });
+  }
 
   ngOnInit() {
     if (this.objectId) {

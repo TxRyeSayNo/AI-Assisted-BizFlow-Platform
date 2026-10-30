@@ -104,22 +104,70 @@ VALUES (
     "AccessFailedCount" = 0,
     "LockoutEnd" = NULL;
 
+-- 5.1. Department Manager (MGR001 / Password123!)
+INSERT INTO "User" (
+    "UserId", "TenantId", "IsPlatformAdministrator", "EmployeeCode", "NormalizedEmployeeCode",
+    "Email", "NormalizedEmail", "PasswordHash", "SecurityStamp", "FullName",
+    "DepartmentId", "Status", "AccessFailedCount", "LockoutEnd", "MustChangePassword",
+    "LastLoginAt", "CreatedAt", "UpdatedAt", "DeletedAt"
+)
+VALUES (
+    '019f8000-0000-7000-8000-000000000012',
+    '019f8000-0000-7000-8000-000000000002',
+    FALSE,
+    'MGR001',
+    'MGR001',
+    'manager@bizflow.local',
+    'MANAGER@BIZFLOW.LOCAL',
+    'AQAAAAIAAYagAAAAEMa9qd78Fhm+i6WlQIWbA0oTRemrrwoIP/XwOmaoEFH4y54oHQg5favZTIwG7ixFcQ==',
+    '019f8000000070008000000000000012',
+    'Trần Thị Quản Lý',
+    '019f8000-0000-7000-8000-000000000003',
+    'ACTIVE',
+    0,
+    NULL,
+    FALSE,
+    NULL,
+    NOW(),
+    NOW(),
+    NULL
+) ON CONFLICT ("UserId") DO UPDATE SET
+    "FullName" = EXCLUDED."FullName",
+    "PasswordHash" = 'AQAAAAIAAYagAAAAEMa9qd78Fhm+i6WlQIWbA0oTRemrrwoIP/XwOmaoEFH4y54oHQg5favZTIwG7ixFcQ==',
+    "Status" = 'ACTIVE',
+    "AccessFailedCount" = 0,
+    "LockoutEnd" = NULL;
+
 -- 6. User Roles
 -- Admin roles: COMPANY_ADMIN, MANAGER, EMPLOYEE
 INSERT INTO "UserRole" ("UserId", "RoleId") VALUES
     ('019f8000-0000-7000-8000-000000000010', '019f7f8a-0000-7000-8000-000000000002'),
     ('019f8000-0000-7000-8000-000000000010', '019f7f8a-0000-7000-8000-000000000003'),
     ('019f8000-0000-7000-8000-000000000010', '019f7f8a-0000-7000-8000-000000000004'),
+-- Manager roles: MANAGER, EMPLOYEE
+    ('019f8000-0000-7000-8000-000000000012', '019f7f8a-0000-7000-8000-000000000003'),
+    ('019f8000-0000-7000-8000-000000000012', '019f7f8a-0000-7000-8000-000000000004'),
 -- Employee roles: EMPLOYEE
     ('019f8000-0000-7000-8000-000000000011', '019f7f8a-0000-7000-8000-000000000004')
 ON CONFLICT ("UserId", "RoleId") DO NOTHING;
 
--- 7. ManagementScope for Admin
+-- 7. ManagementScope for Admin & Manager
 INSERT INTO "ManagementScope" ("ManagementScopeId", "TenantId", "UserId", "DepartmentId", "IncludeDescendants", "CreatedBy", "CreatedAt")
 VALUES (
     '019f8000-0000-7000-8000-000000000020',
     '019f8000-0000-7000-8000-000000000002',
     '019f8000-0000-7000-8000-000000000010',
+    '019f8000-0000-7000-8000-000000000003',
+    TRUE,
+    '019f8000-0000-7000-8000-000000000010',
+    NOW()
+) ON CONFLICT ("ManagementScopeId") DO NOTHING;
+
+INSERT INTO "ManagementScope" ("ManagementScopeId", "TenantId", "UserId", "DepartmentId", "IncludeDescendants", "CreatedBy", "CreatedAt")
+VALUES (
+    '019f8000-0000-7000-8000-000000000021',
+    '019f8000-0000-7000-8000-000000000002',
+    '019f8000-0000-7000-8000-000000000012',
     '019f8000-0000-7000-8000-000000000003',
     TRUE,
     '019f8000-0000-7000-8000-000000000010',

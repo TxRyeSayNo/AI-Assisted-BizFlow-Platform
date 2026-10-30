@@ -27,6 +27,7 @@ public interface IEmailLinkAuthenticationService
 {
     Task<EmailLinkRequestResponse> RequestLinkAsync(string email, CancellationToken cancellationToken = default);
     Task<EmailLinkVerificationResponse> VerifyLinkAsync(string token, CancellationToken cancellationToken = default);
+    Task<EmailLinkVerificationResponse> VerifyFirebaseTokenAsync(string idToken, CancellationToken cancellationToken = default);
     Task<AuthenticationResponse> SelectWorkspaceAsync(string ticket, string tenantKey, CancellationToken cancellationToken = default);
 }
 public sealed record AccessTokenRequest(Guid UserId, Guid? TenantId, Guid FamilyId, string SecurityStamp);

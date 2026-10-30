@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using BizFlow.Application.AI;
 using BizFlow.Application.Common;
 using BizFlow.Domain.Collaboration;
+using BizFlow.Domain.Organization;
 using BizFlow.Domain.Requests;
 using BizFlow.Domain.Tasks;
 using BizFlow.Infrastructure.Persistence;
@@ -33,6 +34,22 @@ public sealed class AiActionDispatcher(BizFlowDbContext dbContext) : IAiActionDi
                 var priorityStr = root.TryGetProperty("priority", out var pp) ? pp.GetString() : "Medium";
                 var priority = Enum.TryParse<TaskPriority>(priorityStr, true, out var p) ? p : TaskPriority.Medium;
 
+                Guid? deptId = root.TryGetProperty("departmentId", out var dip) && dip.TryGetGuid(out var d) ? d : null;
+                if (deptId.HasValue)
+                {
+                    var deptExists = await dbContext.Departments.AnyAsync(dept => dept.TenantId == tenantId && dept.Id == deptId.Value && dept.Status == RecordStatus.Active, cancellationToken);
+                    if (!deptExists)
+                        throw new ApplicationFault(FaultKind.Validation, "AI.DEPARTMENT_NOT_FOUND", "Department not found in workspace.");
+                }
+
+                Guid? assigneeId = root.TryGetProperty("assigneeId", out var aip) && aip.TryGetGuid(out var a) ? a : null;
+                if (assigneeId.HasValue)
+                {
+                    var userExists = await dbContext.Users.AnyAsync(u => u.TenantId == tenantId && u.Id == assigneeId.Value && u.DeletedAt == null && u.Status == UserStatus.Active, cancellationToken);
+                    if (!userExists)
+                        throw new ApplicationFault(FaultKind.Validation, "AI.USER_NOT_FOUND", "Assignee user not found or inactive in workspace.");
+                }
+
                 var task = WorkTask.CreateDraft(tenantId, userId, title, DateTimeOffset.UtcNow, desc, priority, null, null);
                 dbContext.WorkTasks.Add(task);
                 await dbContext.SaveChangesAsync(cancellationToken);
@@ -49,7 +66,14 @@ public sealed class AiActionDispatcher(BizFlowDbContext dbContext) : IAiActionDi
 
                 var task = await dbContext.WorkTasks
                     .FirstOrDefaultAsync(t => t.TenantId == tenantId && t.Id == taskId && t.DeletedAt == null, cancellationToken)
-                    ?? throw new ApplicationFault(FaultKind.NotFound, "TASK.NOT_FOUND", "Task not found.");
+                    ?? throw new ApplicationFault(FaultKind.NotFound, "TASK.NOT_FOUND", "Task not found in tenant workspace.");
+
+                if (task.Status == TaskState.Completed || task.Status == TaskState.Cancelled)
+                    throw new ApplicationFault(FaultKind.Conflict, "TASK.TERMINAL_STATE", $"Cannot assign task in terminal state {task.Status}.");
+
+                var targetUser = await dbContext.Users
+                    .FirstOrDefaultAsync(u => u.TenantId == tenantId && u.Id == targetUserId && u.DeletedAt == null && u.Status == UserStatus.Active, cancellationToken)
+                    ?? throw new ApplicationFault(FaultKind.Validation, "USER.NOT_FOUND", "Target assignee user not found or inactive in tenant workspace.");
 
                 var assignment = TaskAssignment.Create(task.Id, userId, null, targetUserId, DateTimeOffset.UtcNow);
                 dbContext.TaskAssignments.Add(assignment);
@@ -69,6 +93,19 @@ public sealed class AiActionDispatcher(BizFlowDbContext dbContext) : IAiActionDi
                 var objTypeStr = root.TryGetProperty("objectType", out var otp) ? otp.GetString() : "Task";
                 var objType = Enum.TryParse<CommentObjectType>(objTypeStr, true, out var ot) ? ot : CommentObjectType.Task;
 
+                if (objType == CommentObjectType.Task)
+                {
+                    var taskExists = await dbContext.WorkTasks.AnyAsync(t => t.TenantId == tenantId && t.Id == objectId && t.DeletedAt == null, cancellationToken);
+                    if (!taskExists)
+                        throw new ApplicationFault(FaultKind.NotFound, "TASK.NOT_FOUND", "Target task not found in tenant workspace.");
+                }
+                else if (objType == CommentObjectType.Request)
+                {
+                    var reqExists = await dbContext.Requests.AnyAsync(r => r.TenantId == tenantId && r.Id == objectId && r.DeletedAt == null, cancellationToken);
+                    if (!reqExists)
+                        throw new ApplicationFault(FaultKind.NotFound, "REQUEST.NOT_FOUND", "Target request not found in tenant workspace.");
+                }
+
                 var comment = Comment.Create(tenantId, objType, objectId, userId, content, DateTimeOffset.UtcNow);
                 dbContext.Comments.Add(comment);
                 await dbContext.SaveChangesAsync(cancellationToken);
@@ -86,7 +123,24 @@ public sealed class AiActionDispatcher(BizFlowDbContext dbContext) : IAiActionDi
 
                 var request = await dbContext.Requests
                     .FirstOrDefaultAsync(r => r.TenantId == tenantId && r.Id == reqId && r.DeletedAt == null, cancellationToken)
-                    ?? throw new ApplicationFault(FaultKind.NotFound, "REQUEST.NOT_FOUND", "Request not found.");
+                    ?? throw new ApplicationFault(FaultKind.NotFound, "REQUEST.NOT_FOUND", "Request not found in tenant workspace.");
+
+                if (request.Status is RequestState.Closed or RequestState.Cancelled or RequestState.Rejected)
+                    throw new ApplicationFault(FaultKind.Conflict, "REQUEST.TERMINAL_STATE", $"Cannot route request in terminal state {request.Status}.");
+
+                if (toDeptId.HasValue)
+                {
+                    var deptExists = await dbContext.Departments.AnyAsync(dept => dept.TenantId == tenantId && dept.Id == toDeptId.Value && dept.Status == RecordStatus.Active, cancellationToken);
+                    if (!deptExists)
+                        throw new ApplicationFault(FaultKind.Validation, "DEPARTMENT.NOT_FOUND", "Target department not found in workspace.");
+                }
+
+                if (toUserId.HasValue)
+                {
+                    var userExists = await dbContext.Users.AnyAsync(u => u.TenantId == tenantId && u.Id == toUserId.Value && u.DeletedAt == null && u.Status == UserStatus.Active, cancellationToken);
+                    if (!userExists)
+                        throw new ApplicationFault(FaultKind.Validation, "USER.NOT_FOUND", "Target user not found or inactive in workspace.");
+                }
 
                 var routing = RequestRouting.Create(
                     tenantId, request.Id, userId, DateTimeOffset.UtcNow,

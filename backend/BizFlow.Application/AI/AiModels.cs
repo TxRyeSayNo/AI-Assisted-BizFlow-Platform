@@ -181,7 +181,8 @@ public sealed record RequestRoutingRecommendationResult(
 public sealed record ExecuteAiActionCommand(
     string ToolName,
     string ArgsJson,
-    bool Confirmed = false);
+    bool Confirmed = false,
+    string? ConfirmationToken = null);
 
 public sealed record ExecuteAiActionResult(
     Guid ActionId,
@@ -190,7 +191,8 @@ public sealed record ExecuteAiActionResult(
     string ExecutionStatus,
     string? ResultRef,
     string? Message,
-    object? Output = null);
+    object? Output = null,
+    string? ConfirmationToken = null);
 
 // Context data structures for grounding AI operations
 public sealed record AiServiceInfo(Guid ServiceId, string Code, string Name, string Description, IReadOnlyList<AiCategoryInfo> Categories);

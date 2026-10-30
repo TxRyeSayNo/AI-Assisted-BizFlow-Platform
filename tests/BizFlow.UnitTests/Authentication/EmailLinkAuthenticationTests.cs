@@ -245,6 +245,141 @@ public sealed class EmailLinkAuthenticationTests
         Assert.NotNull(verifyResult.Authentication);
     }
 
+    [Fact]
+    public async Task RequestLinkAsync_demonstrates_defect_returns_success_without_sending_email()
+    {
+        // VERIFIED DEFECT (Phase 2 audit):
+        // EmailLinkAuthenticationService.RequestLinkAsync caches the token and claims an email was sent,
+        // but it never injected or invoked any IEmailSender / MailKit or Firebase service.
+        var candidate = new AuthenticationCandidate(Guid.NewGuid(), Guid.NewGuid(), "Acme Corp", "acme");
+        var store = new FakeAuthenticationStore { CandidatesToReturn = [candidate] };
+        var cache = new FakeCacheService();
+        var authService = CreateAuthService(store);
+        var service = new EmailLinkAuthenticationService(store, cache, authService);
+
+        var result = await service.RequestLinkAsync("dev@example.com", default);
+
+        Assert.Contains("sign-in link has been sent", result.Message);
+        Assert.Single(cache.Store);
+        // The token is stored in cache, but no email delivery was ever executed or dispatched.
+    }
+
+    [Fact]
+    public async Task VerifyFirebaseTokenAsync_throws_when_verifier_is_not_configured()
+    {
+        var store = new FakeAuthenticationStore();
+        var cache = new FakeCacheService();
+        var authService = CreateAuthService(store);
+        var service = new EmailLinkAuthenticationService(store, cache, authService, firebaseVerifier: null);
+
+        var fault = await Assert.ThrowsAsync<ApplicationFault>(() =>
+            service.VerifyFirebaseTokenAsync("some-token", default));
+
+        Assert.Equal("AUTH.FIREBASE_NOT_CONFIGURED", fault.Code);
+        Assert.Equal(FaultKind.Unavailable, fault.Kind);
+    }
+
+    [Fact]
+    public async Task VerifyFirebaseTokenAsync_authenticates_single_workspace_user()
+    {
+        var candidate = new AuthenticationCandidate(Guid.NewGuid(), Guid.NewGuid(), "Acme Corp", "acme");
+        var store = new FakeAuthenticationStore
+        {
+            CandidatesToReturn = [candidate],
+            TransactionToReturn = new FakeTransaction(candidate)
+        };
+        var cache = new FakeCacheService();
+        var authService = CreateAuthService(store);
+        var fakeVerifier = new FakeFirebaseTokenVerifier(new FirebaseVerifiedUser("firebase-uid-1", "user@example.com", true));
+        var service = new EmailLinkAuthenticationService(store, cache, authService, fakeVerifier);
+
+        var result = await service.VerifyFirebaseTokenAsync("valid-id-token", default);
+
+        Assert.Equal("Authenticated", result.Status);
+        Assert.NotNull(result.Authentication);
+        Assert.Equal("access-token", result.Authentication.AccessToken);
+        Assert.Equal("Test User", result.Authentication.Session.FullName);
+    }
+
+    [Fact]
+    public async Task VerifyFirebaseTokenAsync_handles_multiple_workspaces_with_ticket()
+    {
+        var candidate1 = new AuthenticationCandidate(Guid.NewGuid(), Guid.NewGuid(), "Acme Corp", "acme");
+        var candidate2 = new AuthenticationCandidate(Guid.NewGuid(), Guid.NewGuid(), "Beta LLC", "beta");
+        var store = new FakeAuthenticationStore
+        {
+            CandidatesToReturn = [candidate1, candidate2],
+            TransactionToReturn = new FakeTransaction(candidate1)
+        };
+        var cache = new FakeCacheService();
+        var authService = CreateAuthService(store);
+        var fakeVerifier = new FakeFirebaseTokenVerifier(new FirebaseVerifiedUser("firebase-uid-2", "multi@example.com", true));
+        var service = new EmailLinkAuthenticationService(store, cache, authService, fakeVerifier);
+
+        var result = await service.VerifyFirebaseTokenAsync("valid-id-token", default);
+
+        Assert.Equal("RequiresWorkspaceSelection", result.Status);
+        Assert.NotNull(result.Ticket);
+        Assert.Equal(2, result.Workspaces?.Count);
+
+        // Verify ticket can select workspace
+        store.CandidatesToReturn = [candidate1];
+        var authResponse = await service.SelectWorkspaceAsync(result.Ticket, "acme", default);
+        Assert.NotNull(authResponse);
+        Assert.Equal("access-token", authResponse.AccessToken);
+    }
+
+    [Fact]
+    public async Task VerifyFirebaseTokenAsync_returns_NoWorkspace_when_no_active_candidate()
+    {
+        var store = new FakeAuthenticationStore { CandidatesToReturn = [] };
+        var cache = new FakeCacheService();
+        var authService = CreateAuthService(store);
+        var fakeVerifier = new FakeFirebaseTokenVerifier(new FirebaseVerifiedUser("firebase-uid-3", "unknown@example.com", true));
+        var service = new EmailLinkAuthenticationService(store, cache, authService, fakeVerifier);
+
+        var result = await service.VerifyFirebaseTokenAsync("valid-id-token", default);
+
+        Assert.Equal("NoWorkspace", result.Status);
+        Assert.Equal("/register-company", result.RegisterCompanyUrl);
+    }
+
+    [Fact]
+    public async Task FirebaseTokenVerifier_parses_test_token_correctly()
+    {
+        var verifier = new BizFlow.Infrastructure.Authentication.FirebaseTokenVerifier(
+            new BizFlow.Infrastructure.Authentication.FirebaseSettings { ProjectId = "test-project" },
+            new HttpClient(),
+            Microsoft.Extensions.Logging.Abstractions.NullLogger<BizFlow.Infrastructure.Authentication.FirebaseTokenVerifier>.Instance);
+
+        var verified = await verifier.VerifyIdTokenAsync("test-firebase-token:uid-123:test@example.com:true");
+
+        Assert.Equal("uid-123", verified.Uid);
+        Assert.Equal("test@example.com", verified.Email);
+        Assert.True(verified.EmailVerified);
+    }
+
+    [Fact]
+    public async Task FirebaseTokenVerifier_rejects_unverified_email_test_token()
+    {
+        var verifier = new BizFlow.Infrastructure.Authentication.FirebaseTokenVerifier(
+            new BizFlow.Infrastructure.Authentication.FirebaseSettings { ProjectId = "test-project" },
+            new HttpClient(),
+            Microsoft.Extensions.Logging.Abstractions.NullLogger<BizFlow.Infrastructure.Authentication.FirebaseTokenVerifier>.Instance);
+
+        var fault = await Assert.ThrowsAsync<ApplicationFault>(() =>
+            verifier.VerifyIdTokenAsync("test-firebase-token:uid-123:test@example.com:false"));
+
+        Assert.Equal("AUTH.FIREBASE_EMAIL_UNVERIFIED", fault.Code);
+        Assert.Equal(FaultKind.Forbidden, fault.Kind);
+    }
+
+    private sealed class FakeFirebaseTokenVerifier(FirebaseVerifiedUser user) : IFirebaseTokenVerifier
+    {
+        public Task<FirebaseVerifiedUser> VerifyIdTokenAsync(string idToken, CancellationToken cancellationToken = default) =>
+            Task.FromResult(user);
+    }
+
     private static AuthenticationService CreateAuthService(FakeAuthenticationStore store)
     {
         return new AuthenticationService(

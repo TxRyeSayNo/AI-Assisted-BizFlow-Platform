@@ -1,15 +1,25 @@
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { Component, inject, signal } from '@angular/core';
+import { Component, effect, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
+import { I18nService } from '../../core/i18n/i18n.service';
+import { TranslatePipe } from '../../core/i18n/translate.pipe';
+import { ToastService } from '../../core/toast/toast.service';
 
 @Component({
   selector: 'bf-forgot-password',
-  imports: [ReactiveFormsModule, MatButtonModule, MatFormFieldModule, MatInputModule, RouterLink],
+  imports: [
+    ReactiveFormsModule,
+    MatButtonModule,
+    MatFormFieldModule,
+    MatInputModule,
+    RouterLink,
+    TranslatePipe,
+  ],
   styleUrl: './forgot-password.scss',
   template: `
     <div class="auth-page light-ocean-theme">
@@ -34,65 +44,107 @@ import { finalize } from 'rxjs';
                   <span class="brand-dot" aria-hidden="true"></span>
                 </div>
                 <div class="header-titles">
-                  <span class="eyebrow">Account recovery</span>
-                  <h1 id="reset-title">Forgot your password?</h1>
-                  <h2 class="title-secondary">Get back to your work.</h2>
+                  <span class="eyebrow">{{
+                    'forgot.eyebrow' | translate: 'Account recovery'
+                  }}</span>
+                  <h1 id="reset-title">
+                    {{ 'forgot.title' | translate: 'Forgot your password?' }}
+                  </h1>
                 </div>
                 <p class="intro-desc">
-                  We'll send a reset link to your company email. If you do not have access to that email,
-                  contact your company administrator.
+                  {{
+                    'forgot.subtitle'
+                      | translate
+                        : "We'll send a reset link to your company email. If you do not have access to that email, contact your company administrator."
+                  }}
                 </p>
               </div>
 
               @if (sent()) {
                 <div class="confirmation-panel" role="status">
                   <div class="status-icon-wrap" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="status-icon">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      class="status-icon"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                      />
                     </svg>
                   </div>
                   <p class="inline-alert success-message">
-                    If a matching account can receive email, reset instructions will be sent. Include your
-                    workspace key if your identifier is shared across companies.
+                    {{
+                      'forgot.successMessage'
+                        | translate
+                          : 'If a matching account can receive email, reset instructions will be sent. Include your workspace key if your identifier is shared across companies.'
+                    }}
                   </p>
                 </div>
               } @else {
-                <p class="supporting-copy">Enter your employee code or company email.</p>
+                <p class="supporting-copy">
+                  {{
+                    'forgot.supportingCopy'
+                      | translate: 'Enter your employee code or company email.'
+                  }}
+                </p>
                 <form [formGroup]="form" (ngSubmit)="submit()" [attr.aria-busy]="busy()">
                   <mat-form-field appearance="outline" subscriptSizing="dynamic">
-                    <mat-label>Employee code or company email</mat-label>
+                    <mat-label>{{
+                      'forgot.identifier' | translate: 'Employee code or company email'
+                    }}</mat-label>
                     <input
                       matInput
                       formControlName="identifier"
                       autocomplete="username"
                       [readonly]="busy()"
                     />
-                    <mat-error>Enter your employee code or company email.</mat-error>
+                    <mat-error>{{
+                      'forgot.identifierReq'
+                        | translate: 'Enter your employee code or company email.'
+                    }}</mat-error>
                   </mat-form-field>
 
                   <mat-form-field appearance="outline" subscriptSizing="dynamic">
-                    <mat-label>Workspace key</mat-label>
+                    <mat-label>{{
+                      'forgot.workspaceKey' | translate: 'Workspace key'
+                    }}</mat-label>
                     <input
                       matInput
                       formControlName="tenantKey"
                       autocomplete="organization"
                       [readonly]="busy()"
                     />
-                    <mat-hint>Use your company key if you know it.</mat-hint>
-                    <mat-error>Use a valid company workspace key.</mat-error>
+                    <mat-hint>{{
+                      'forgot.workspaceKeyHint' | translate: 'Use your company key if you know it.'
+                    }}</mat-hint>
+                    <mat-error>{{
+                      'forgot.workspaceKeyInvalid'
+                        | translate: 'Use a valid company workspace key.'
+                    }}</mat-error>
                   </mat-form-field>
 
+                  <!-- Accessible alert announcement without layout displacement -->
                   @if (error()) {
-                    <p class="inline-alert error-message" role="alert">{{ error() }}</p>
+                    <div class="sr-only" role="alert" aria-live="assertive">{{ error() }}</div>
                   }
 
                   <!-- Primary Action Button with Animated Rotating Laser Border -->
                   <div class="sign-in-btn-animated-border">
-                    <button mat-flat-button class="sign-in-button" type="submit" [disabled]="busy()">
+                    <button
+                      mat-flat-button
+                      class="sign-in-button"
+                      type="submit"
+                      [disabled]="busy()"
+                    >
                       @if (busy()) {
-                        <span>Sending…</span>
+                        <span>{{ 'forgot.submitting' | translate: 'Sending…' }}</span>
                       } @else {
-                        <span>Send reset link</span>
+                        <span>{{ 'forgot.submit' | translate: 'Send reset link' }}</span>
                       }
                     </button>
                   </div>
@@ -100,7 +152,11 @@ import { finalize } from 'rxjs';
               }
 
               <div class="auth-card-footer">
-                <p class="auth-help"><a routerLink="/login">Back to sign in</a></p>
+                <p class="auth-help">
+                  <a routerLink="/login">{{
+                    'auth.backToSignIn' | translate: 'Back to sign in'
+                  }}</a>
+                </p>
               </div>
             </section>
           </div>
@@ -111,6 +167,9 @@ import { finalize } from 'rxjs';
 })
 export class ForgotPassword {
   private readonly http = inject(HttpClient);
+  private readonly i18n = inject(I18nService);
+  private readonly toast = inject(ToastService);
+
   readonly busy = signal(false);
   readonly sent = signal(false);
   readonly error = signal('');
@@ -118,6 +177,16 @@ export class ForgotPassword {
     identifier: ['', [Validators.required, Validators.maxLength(320)]],
     tenantKey: ['', [Validators.maxLength(80), Validators.pattern(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)]],
   });
+
+  constructor() {
+    effect(() => {
+      const err = this.error();
+      if (err) {
+        this.toast.error(err);
+      }
+    });
+  }
+
   submit() {
     this.form.markAllAsTouched();
     if (this.busy() || this.form.invalid) return;
@@ -131,12 +200,26 @@ export class ForgotPassword {
       })
       .pipe(finalize(() => this.busy.set(false)))
       .subscribe({
-        next: () => this.sent.set(true),
+        next: () => {
+          this.sent.set(true);
+          this.toast.success(
+            this.i18n.t(
+              'forgot.successToast',
+              'Đã gửi liên kết khôi phục mật khẩu. Vui lòng kiểm tra email của bạn.',
+            ),
+          );
+        },
         error: (failure: HttpErrorResponse) =>
           this.error.set(
             failure.status === 429
-              ? 'Too many requests. Please wait before trying again.'
-              : 'Password reset is temporarily unavailable. Please try again or contact your administrator.',
+              ? this.i18n.t(
+                  'forgot.errTooMany',
+                  'Too many requests. Please wait before trying again.',
+                )
+              : this.i18n.t(
+                  'forgot.errUnavailable',
+                  'Password reset is temporarily unavailable. Please try again or contact your administrator.',
+                ),
           ),
       });
   }

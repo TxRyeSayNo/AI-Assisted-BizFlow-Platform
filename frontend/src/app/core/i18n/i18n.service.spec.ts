@@ -69,4 +69,42 @@ describe('I18nService & TranslatePipe', () => {
   it('falls back to default fallback text when key is not found', () => {
     expect(service.t('unknown.key.random', 'Fallback Text')).toBe('Fallback Text');
   });
+
+  it('covers all feature modules across vi, en, and ja', () => {
+    const moduleKeys = [
+      'tasks.title',
+      'taskCreate.title',
+      'taskDetail.breadcrumb',
+      'requests.title',
+      'requestCreate.title',
+      'requestDetail.submit',
+      'approvals.title',
+      'slaMonitor.title',
+      'reports.title',
+      'notifications.title',
+      'audit.workspaceTitle',
+      'search.title',
+      'settings.title',
+      'departments.title',
+      'users.title',
+      'roles.title',
+      'services.title',
+      'workflows.title',
+      'sla.title',
+      'platform.title',
+      'comments.title',
+      'attachments.title',
+      'accessDenied.title',
+      'ai.drawerTitle',
+    ];
+
+    for (const lang of ['vi', 'en', 'ja'] as const) {
+      service.setLanguage(lang);
+      for (const key of moduleKeys) {
+        const translated = service.t(key, '__MISSING__');
+        expect(translated).not.toBe('__MISSING__');
+        expect(translated.length).toBeGreaterThan(0);
+      }
+    }
+  });
 });

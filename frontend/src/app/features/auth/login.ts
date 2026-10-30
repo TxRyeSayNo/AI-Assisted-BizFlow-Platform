@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, effect, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
@@ -8,8 +8,10 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
-import { SessionService } from '../../core/auth/session';
+import { SessionService, EmailLinkVerificationResult } from '../../core/auth/session';
+import { FirebaseAuthService } from '../../core/auth/firebase-auth.service';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
+import { ToastService } from '../../core/toast/toast.service';
 import { WorkspaceSelectorDialog } from './workspace-selector-dialog';
 
 @Component({
@@ -25,6 +27,7 @@ import { WorkspaceSelectorDialog } from './workspace-selector-dialog';
     TranslatePipe,
   ],
   templateUrl: './login.html',
+  styleUrls: ['./login.scss'],
 })
 export class Login implements OnInit {
   private readonly forms = inject(FormBuilder);
@@ -32,6 +35,8 @@ export class Login implements OnInit {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly dialog = inject(MatDialog);
+  private readonly firebaseAuth = inject(FirebaseAuthService);
+  private readonly toast = inject(ToastService);
 
   readonly authMethod = signal<'password' | 'email-link'>('password');
   readonly mode = signal<'code' | 'email'>('code');
@@ -40,25 +45,96 @@ export class Login implements OnInit {
   readonly emailSentMessage = signal('');
   readonly showRegisterLink = signal(false);
   readonly showPassword = signal(false);
+  readonly rememberMe = signal(false);
+  readonly isSuperAdmin = signal(false);
+
+  readonly requiredValidator = Validators.required;
 
   readonly form = this.forms.nonNullable.group({
     identifier: ['', [Validators.required, Validators.maxLength(50)]],
     password: ['', [Validators.required, Validators.maxLength(1024)]],
-    tenantKey: ['', [Validators.required, Validators.maxLength(80), Validators.pattern(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)]],
+    tenantKey: [
+      '',
+      [
+        Validators.required,
+        Validators.maxLength(80),
+        Validators.pattern(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+      ],
+    ],
   });
 
   readonly emailForm = this.forms.nonNullable.group({
     email: ['', [Validators.required, Validators.email, Validators.maxLength(320)]],
   });
 
-  ngOnInit(): void {
+  constructor() {
+    this.form.controls.identifier.valueChanges.subscribe((value) => {
+      const isSuper = this.checkSuperAdmin(value);
+      this.isSuperAdmin.set(isSuper);
+      this.updateTenantKeyValidators(isSuper);
+    });
+
+    effect(() => {
+      const err = this.error();
+      if (err) {
+        this.toast.error(err);
+      }
+    });
+
+    effect(() => {
+      const msg = this.emailSentMessage();
+      if (msg) {
+        this.toast.success(msg);
+      }
+    });
+  }
+
+  async ngOnInit(): Promise<void> {
     // Eagerly pre-warm the workspace bundle while the user is typing credentials
     void import('./workspace');
+
+    // Handle Firebase email link authentication if present in current URL
+    if (this.firebaseAuth.isConfigured() && this.firebaseAuth.isSignInLink()) {
+      await this.handleFirebaseSignInLink();
+      return;
+    }
+
+    // Direct token verification (e.g. for testing or deep-linking)
+    const firebaseToken = this.route.snapshot.queryParamMap.get('firebase_token');
+    if (firebaseToken) {
+      this.verifyFirebaseToken(firebaseToken);
+      return;
+    }
 
     const token = this.route.snapshot.queryParamMap.get('token');
     if (token) {
       this.verifyToken(token);
     }
+  }
+
+  checkSuperAdmin(identifier: string): boolean {
+    const raw = (identifier || '').trim().toLowerCase();
+    return raw === 'superadmin' || raw === 'platform@bizflow.local';
+  }
+
+  updateTenantKeyValidators(isSuper: boolean): void {
+    const tenantControl = this.form.controls.tenantKey;
+    if (isSuper) {
+      tenantControl.setValidators([
+        Validators.maxLength(80),
+        Validators.pattern(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+      ]);
+      if (tenantControl.hasError('required')) {
+        tenantControl.setErrors(null);
+      }
+    } else {
+      tenantControl.setValidators([
+        Validators.required,
+        Validators.maxLength(80),
+        Validators.pattern(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+      ]);
+    }
+    tenantControl.updateValueAndValidity({ emitEvent: false });
   }
 
   setAuthMethod(method: 'password' | 'email-link'): void {
@@ -77,20 +153,32 @@ export class Login implements OnInit {
     );
     this.form.controls.identifier.updateValueAndValidity();
     this.error.set('');
+
+    const isSuper = this.checkSuperAdmin(this.form.controls.identifier.value);
+    this.isSuperAdmin.set(isSuper);
+    this.updateTenantKeyValidators(isSuper);
   }
 
   submit() {
     if (this.busy()) return;
+
+    const isSuper = this.checkSuperAdmin(this.form.controls.identifier.value);
+    this.isSuperAdmin.set(isSuper);
+    this.updateTenantKeyValidators(isSuper);
+
     this.form.markAllAsTouched();
     if (this.form.invalid) return;
     const values = this.form.getRawValue();
     this.busy.set(true);
     this.error.set('');
+
+    const tenantKey = isSuper && !values.tenantKey.trim() ? undefined : values.tenantKey.trim();
+
     this.session
       .login({
         identifier: values.identifier.trim(),
         password: values.password,
-        tenantKey: values.tenantKey.trim(),
+        tenantKey,
       })
       .pipe(finalize(() => this.busy.set(false)))
       .subscribe({
@@ -140,7 +228,7 @@ export class Login implements OnInit {
       });
   }
 
-  submitEmailLink(): void {
+  async submitEmailLink(): Promise<void> {
     if (this.busy()) return;
     this.emailForm.markAllAsTouched();
     if (this.emailForm.invalid) return;
@@ -151,6 +239,25 @@ export class Login implements OnInit {
     this.showRegisterLink.set(false);
 
     const email = this.emailForm.controls.email.value.trim();
+
+    if (this.firebaseAuth.isConfigured()) {
+      try {
+        await this.firebaseAuth.sendSignInLink(email);
+        this.busy.set(false);
+        this.emailSentMessage.set(
+          `Đã gửi liên kết đăng nhập tới ${email} qua Firebase. Vui lòng mở liên kết trong email để tiếp tục.`,
+        );
+      } catch {
+        // Fallback to backend service if Firebase send fails or is restricted
+        this.requestBackendEmailLink(email);
+      }
+    } else {
+      this.requestBackendEmailLink(email);
+    }
+  }
+
+  private requestBackendEmailLink(email: string): void {
+    this.busy.set(true);
     this.session
       .requestEmailLink(email)
       .pipe(finalize(() => this.busy.set(false)))
@@ -162,12 +269,64 @@ export class Login implements OnInit {
         },
         error: (err: HttpErrorResponse) => {
           if (err.status === 404 || err.error?.code === 'AUTH.USER_NOT_FOUND') {
-            this.error.set('Không tìm thấy tài khoản cho email này. Bạn có thể đăng ký doanh nghiệp mới.');
+            this.error.set(
+              'Không tìm thấy tài khoản cho email này. Bạn có thể đăng ký doanh nghiệp mới.',
+            );
             this.showRegisterLink.set(true);
           } else if (err.status === 429) {
             this.error.set('Quá nhiều yêu cầu gửi liên kết. Vui lòng đợi trong giây lát.');
           } else {
             this.error.set('Không thể gửi liên kết đăng nhập. Vui lòng thử lại sau.');
+          }
+        },
+      });
+  }
+
+  async handleFirebaseSignInLink(): Promise<void> {
+    this.busy.set(true);
+    this.error.set('');
+    this.showRegisterLink.set(false);
+
+    try {
+      let email = this.firebaseAuth.getStoredEmail();
+      if (!email) {
+        email = this.route.snapshot.queryParamMap.get('email');
+        if (!email && typeof window !== 'undefined') {
+          email = window.prompt('Vui lòng xác nhận địa chỉ email của bạn để hoàn tất đăng nhập:');
+        }
+      }
+
+      if (!email) {
+        this.error.set('Cần cung cấp email để hoàn tất đăng nhập bằng liên kết.');
+        this.busy.set(false);
+        return;
+      }
+
+      const { idToken } = await this.firebaseAuth.completeSignInWithEmailLink(email);
+      this.verifyFirebaseToken(idToken);
+    } catch {
+      this.busy.set(false);
+      this.error.set(
+        'Liên kết Firebase không hợp lệ hoặc đã hết hạn. Vui lòng yêu cầu liên kết mới.',
+      );
+    }
+  }
+
+  verifyFirebaseToken(idToken: string): void {
+    this.busy.set(true);
+    this.error.set('');
+    this.showRegisterLink.set(false);
+
+    this.session
+      .verifyFirebaseToken(idToken)
+      .pipe(finalize(() => this.busy.set(false)))
+      .subscribe({
+        next: (res) => this.handleVerificationResult(res),
+        error: (err: HttpErrorResponse) => {
+          if (err.status === 401 || err.status === 403) {
+            this.error.set('Mã xác thực Firebase không hợp lệ hoặc đã hết hạn.');
+          } else {
+            this.error.set('Không thể xác thực danh tính từ Firebase. Vui lòng thử lại sau.');
           }
         },
       });
@@ -182,35 +341,40 @@ export class Login implements OnInit {
       .verifyEmailLink(token)
       .pipe(finalize(() => this.busy.set(false)))
       .subscribe({
-        next: (res) => {
-          if (res.status === 'Authenticated') {
-            void this.router.navigateByUrl('/workspace', { replaceUrl: true });
-          } else if (res.status === 'RequiresWorkspaceSelection' && res.workspaces && res.ticket) {
-            const dialogRef = this.dialog.open(WorkspaceSelectorDialog, {
-              data: { workspaces: res.workspaces, ticket: res.ticket },
-              disableClose: true,
-            });
-            dialogRef.afterClosed().subscribe((selectedKey) => {
-              if (selectedKey) {
-                this.busy.set(true);
-                this.session
-                  .selectWorkspace(res.ticket!, selectedKey)
-                  .pipe(finalize(() => this.busy.set(false)))
-                  .subscribe({
-                    next: () => void this.router.navigateByUrl('/workspace', { replaceUrl: true }),
-                    error: () => this.error.set('Không thể hoàn tất chọn không gian làm việc. Vui lòng thử lại.'),
-                  });
-              }
-            });
-          } else if (res.status === 'NoWorkspace') {
-            this.error.set('Không tìm thấy không gian làm việc nào cho email này.');
-            this.showRegisterLink.set(true);
-          }
-        },
+        next: (res) => this.handleVerificationResult(res),
         error: () => {
-          this.error.set('Liên kết đăng nhập không hợp lệ hoặc đã hết hạn. Vui lòng yêu cầu liên kết mới.');
+          this.error.set(
+            'Liên kết đăng nhập không hợp lệ hoặc đã hết hạn. Vui lòng yêu cầu liên kết mới.',
+          );
         },
       });
+  }
+
+  private handleVerificationResult(res: EmailLinkVerificationResult): void {
+    if (res.status === 'Authenticated') {
+      void this.router.navigateByUrl('/workspace', { replaceUrl: true });
+    } else if (res.status === 'RequiresWorkspaceSelection' && res.workspaces && res.ticket) {
+      const dialogRef = this.dialog.open(WorkspaceSelectorDialog, {
+        data: { workspaces: res.workspaces, ticket: res.ticket },
+        disableClose: true,
+      });
+      dialogRef.afterClosed().subscribe((selectedKey) => {
+        if (selectedKey) {
+          this.busy.set(true);
+          this.session
+            .selectWorkspace(res.ticket!, selectedKey)
+            .pipe(finalize(() => this.busy.set(false)))
+            .subscribe({
+              next: () => void this.router.navigateByUrl('/workspace', { replaceUrl: true }),
+              error: () =>
+                this.error.set('Không thể hoàn tất chọn không gian làm việc. Vui lòng thử lại.'),
+            });
+        }
+      });
+    } else if (res.status === 'NoWorkspace') {
+      this.error.set(res.message || 'Không tìm thấy không gian làm việc nào cho email này.');
+      this.showRegisterLink.set(true);
+    }
   }
 
   quickLogin(type: 'ADMIN' | 'EMPLOYEE'): void {

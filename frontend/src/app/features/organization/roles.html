@@ -6,11 +6,18 @@
 </header>
 <main id="main-content" class="page-content" tabindex="-1">
   <nav aria-label="Breadcrumb">
-    <a routerLink="/workspace">Workspace</a> / <a routerLink="/settings">Settings</a> /
-    <span>Roles</span>
+    <a routerLink="/workspace">{{ 'common.workspace' | translate: 'Workspace' }}</a> /
+    <a routerLink="/settings">{{ 'nav.settings' | translate: 'Settings' }}</a> /
+    <span>{{ 'roles.breadcrumb' | translate: 'Roles' }}</span>
   </nav>
-  <h1>Roles and permissions</h1>
-  <p>Configure custom roles using the allowed workspace permissions. System roles are protected.</p>
+  <h1>{{ 'roles.title' | translate: 'Roles and permissions' }}</h1>
+  <p>
+    {{
+      'roles.subtitle'
+        | translate
+          : 'Configure custom roles using the allowed workspace permissions. System roles are protected.'
+    }}
+  </p>
   @if (notice()) {
     <p class="inline-alert" role="status">{{ notice() }}</p>
   }
@@ -18,7 +25,9 @@
     <p class="inline-alert" role="alert">{{ mutationError() }}</p>
   }
   @if (conflict()) {
-    <button mat-stroked-button type="button" (click)="load(page())">Reload directory</button>
+    <button mat-stroked-button type="button" (click)="load(page())">
+      {{ 'roles.reloadDirectory' | translate: 'Reload directory' }}
+    </button>
   }
   <section
     class="directory-panel"
@@ -27,36 +36,49 @@
   >
     <form class="filters" [formGroup]="filters" (ngSubmit)="apply()">
       <mat-form-field appearance="outline" subscriptSizing="dynamic"
-        ><mat-label>Role name</mat-label
+        ><mat-label>{{ 'roles.roleName' | translate: 'Role name' }}</mat-label
         ><input matInput formControlName="search" maxlength="100" [readonly]="busy() || saving()"
       /></mat-form-field>
-      <button mat-flat-button type="submit" [disabled]="busy() || saving()">Search roles</button>
+      <button mat-flat-button type="submit" [disabled]="busy() || saving()">
+        {{ 'roles.searchRoles' | translate: 'Search roles' }}
+      </button>
     </form>
     @if (busy()) {
-      <p class="directory-feedback" role="status">Loading roles and permissions…</p>
+      <p class="directory-feedback" role="status">
+        {{ 'roles.loading' | translate: 'Loading roles and permissions…' }}
+      </p>
     } @else if (denied()) {
       <p class="directory-feedback" role="alert">
-        You no longer have permission to configure roles.
+        {{ 'roles.denied' | translate: 'You no longer have permission to configure roles.' }}
       </p>
     } @else if (error()) {
       <div class="directory-feedback">
-        <p role="alert">Roles could not be loaded. Please try again.</p>
-        <button mat-stroked-button type="button" (click)="load(page())">Retry</button>
+        <p role="alert">
+          {{ 'roles.error' | translate: 'Roles could not be loaded. Please try again.' }}
+        </p>
+        <button mat-stroked-button type="button" (click)="load(page())">
+          {{ 'common.retry' | translate: 'Retry' }}
+        </button>
       </div>
     } @else if (result(); as data) {
       @if (data.items.length === 0) {
         <p class="directory-feedback" role="status">
-          No roles match your search. Try another name or create a custom role.
+          {{
+            'roles.empty'
+              | translate: 'No roles match your search. Try another name or create a custom role.'
+          }}
         </p>
       } @else {
         <table>
           <caption>
-            Workspace role configurations
+            {{
+              'roles.tableCaption' | translate: 'Workspace role configurations'
+            }}
           </caption>
           <thead>
             <tr>
-              <th scope="col">Role</th>
-              <th scope="col">Action</th>
+              <th scope="col">{{ 'roles.col.role' | translate: 'Role' }}</th>
+              <th scope="col">{{ 'roles.col.action' | translate: 'Action' }}</th>
             </tr>
           </thead>
           <tbody>
@@ -65,15 +87,30 @@
                 <th scope="row">
                   {{ role.name
                   }}<span class="role-meta"
-                    >{{ role.isSystem ? 'System' : 'Custom' }} ·
-                    {{ role.status === 'ACTIVE' ? 'Active' : 'Inactive' }} ·
-                    {{ role.permissionIds.length }}
-                    {{ role.permissionIds.length === 1 ? 'permission' : 'permissions' }}</span
+                    >{{
+                      role.isSystem
+                        ? ('roles.system' | translate: 'System')
+                        : ('roles.custom' | translate: 'Custom')
+                    }}
+                    ·
+                    {{
+                      role.status === 'ACTIVE'
+                        ? ('departments.active' | translate: 'Active')
+                        : ('departments.inactive' | translate: 'Inactive')
+                    }}
+                    · {{ role.permissionIds.length }}
+                    {{
+                      role.permissionIds.length === 1
+                        ? ('roles.permission' | translate: 'permission')
+                        : ('roles.permissions' | translate: 'permissions')
+                    }}</span
                   >
                 </th>
                 <td>
                   @if (role.isSystem) {
-                    <span class="status-label">Protected</span>
+                    <span class="status-label">{{
+                      'roles.protected' | translate: 'Protected'
+                    }}</span>
                   } @else {
                     <button
                       mat-stroked-button
@@ -82,7 +119,7 @@
                       [disabled]="saving()"
                       (click)="select(role)"
                     >
-                      Configure
+                      {{ 'roles.configure' | translate: 'Configure' }}
                     </button>
                   }
                 </td>
@@ -93,48 +130,73 @@
       }
       <nav class="pagination" aria-label="Role pages">
         <span role="status"
-          >{{ data.total }} {{ data.total === 1 ? 'role' : 'roles' }} · Page {{ data.page }}</span
+          >{{ data.total }}
+          {{
+            data.total === 1
+              ? ('roles.role' | translate: 'role')
+              : ('roles.roles' | translate: 'roles')
+          }}
+          · {{ 'common.page' | translate: 'Page' }} {{ data.page }}</span
         ><button
           mat-stroked-button
           type="button"
           [disabled]="saving() || data.page <= 1"
           (click)="load(data.page - 1)"
         >
-          Previous</button
+          {{ 'common.previous' | translate: 'Previous' }}</button
         ><button
           mat-stroked-button
           type="button"
           [disabled]="saving() || data.page * data.pageSize >= data.total"
           (click)="load(data.page + 1)"
         >
-          Next
+          {{ 'common.next' | translate: 'Next' }}
         </button>
       </nav>
       <section class="role-form" aria-labelledby="create-role-title">
-        <h2 id="create-role-title">Create custom role</h2>
-        <p>New roles start without permissions. Creating a role does not assign it to any user.</p>
+        <h2 id="create-role-title">
+          {{ 'roles.createCustomRole' | translate: 'Create custom role' }}
+        </h2>
+        <p>
+          {{
+            'roles.createCustomRoleDesc'
+              | translate
+                : 'New roles start without permissions. Creating a role does not assign it to any user.'
+          }}
+        </p>
         <form [formGroup]="createForm" (ngSubmit)="create()">
           <mat-form-field appearance="outline" subscriptSizing="dynamic"
-            ><mat-label>New role name</mat-label
+            ><mat-label>{{ 'roles.newRoleName' | translate: 'New role name' }}</mat-label
             ><input
               matInput
               formControlName="name"
               maxlength="100"
               [readonly]="saving()"
-            /><mat-error>Enter a name up to 100 characters.</mat-error></mat-form-field
+            /><mat-error>{{
+              'roles.errRoleName' | translate: 'Enter a name up to 100 characters.'
+            }}</mat-error></mat-form-field
           >
-          <button mat-flat-button type="submit" [disabled]="saving()">Create role</button>
+          <button mat-flat-button type="submit" [disabled]="saving()">
+            {{ 'roles.createRole' | translate: 'Create role' }}
+          </button>
         </form>
       </section>
       @if (selected(); as role) {
         <section class="role-form" aria-labelledby="permission-title">
-          <h2 id="permission-title">Permissions for {{ role.name }}</h2>
+          <h2 id="permission-title">
+            {{ 'roles.permissionsFor' | translate: 'Permissions for' }} {{ role.name }}
+          </h2>
           <p>
-            Only selected actions are granted. Removing a grant changes access for users assigned to
-            this role.
+            {{
+              'roles.permissionsDesc'
+                | translate
+                  : 'Only selected actions are granted. Removing a grant changes access for users assigned to this role.'
+            }}
           </p>
           @if (data.availablePermissions.length === 0) {
-            <p>No assignable permissions are available.</p>
+            <p>
+              {{ 'roles.noAssignable' | translate: 'No assignable permissions are available.' }}
+            </p>
           }
           @for (permission of data.availablePermissions; track permission.permissionId) {
             <mat-checkbox
@@ -151,7 +213,11 @@
             [disabled]="saving() || conflict()"
             (click)="save()"
           >
-            {{ saving() ? 'Saving…' : 'Save permissions' }}
+            {{
+              saving()
+                ? ('roles.saving' | translate: 'Saving…')
+                : ('roles.savePermissions' | translate: 'Save permissions')
+            }}
           </button>
         </section>
       }

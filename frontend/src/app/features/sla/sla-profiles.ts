@@ -9,6 +9,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { RouterLink } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { SessionService } from '../../core/auth/session';
+import { TranslatePipe } from '../../core/i18n/translate.pipe';
 
 export interface SlaProfileRow {
   slaProfileId: string;
@@ -31,6 +32,7 @@ interface SlaProfilePage {
     MatFormFieldModule,
     MatInputModule,
     MatSelectModule,
+    TranslatePipe,
   ],
   templateUrl: './sla-profiles.html',
   styleUrls: ['../organization/departments.scss', './sla-profiles.scss'],

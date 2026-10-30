@@ -1,8 +1,25 @@
-<div class="reports-container">
+<header class="public-header directory-header">
+  <a class="wordmark" routerLink="/workspace">
+    <span class="brand-mark" aria-hidden="true"></span> BizFlow
+  </a>
+  <span class="tenant-badge">{{ session.identity()?.tenantName }}</span>
+</header>
+<main id="main-content" class="page-content reports-container" tabindex="-1">
+  <nav aria-label="Breadcrumb">
+    <a routerLink="/workspace">{{ 'common.workspace' | translate: 'Workspace' }}</a
+    ><span aria-hidden="true"> / </span
+    ><span>{{ 'reports.breadcrumb' | translate: 'Reports' }}</span>
+  </nav>
+  <span class="eyebrow">{{ 'reports.eyebrow' | translate: 'Executive Intelligence' }}</span>
   <div class="page-header">
     <div class="header-titles">
-      <h2>Dashboard & Reports</h2>
-      <p class="subtitle">Operational metrics, workload allocation, and SLA compliance analytics</p>
+      <h2>{{ 'reports.title' | translate: 'Dashboard & Reports' }}</h2>
+      <p class="subtitle">
+        {{
+          'reports.subtitle'
+            | translate: 'Operational metrics, workload allocation, and SLA compliance analytics'
+        }}
+      </p>
     </div>
   </div>
 
@@ -15,7 +32,7 @@
       [class.active]="activeTab() === 'manager'"
       (click)="selectTab('manager')"
     >
-      Manager Dashboard
+      {{ 'reports.tab.manager' | translate: 'Manager Dashboard' }}
     </button>
     <button
       *ngIf="canViewCompany()"
@@ -24,7 +41,7 @@
       [class.active]="activeTab() === 'company'"
       (click)="selectTab('company')"
     >
-      Company Report
+      {{ 'reports.tab.company' | translate: 'Company Report' }}
     </button>
     <button
       *ngIf="canViewWorkload()"
@@ -33,7 +50,7 @@
       [class.active]="activeTab() === 'workload'"
       (click)="selectTab('workload')"
     >
-      Workload Analysis
+      {{ 'reports.tab.workload' | translate: 'Workload Analysis' }}
     </button>
     <button
       *ngIf="canViewSla()"
@@ -42,7 +59,7 @@
       [class.active]="activeTab() === 'sla'"
       (click)="selectTab('sla')"
     >
-      SLA Performance
+      {{ 'reports.tab.sla' | translate: 'SLA Performance' }}
     </button>
   </div>
 
@@ -54,9 +71,11 @@
         class="filter-field"
         *ngIf="activeTab() !== 'sla' && activeTab() !== 'company'"
       >
-        <mat-label>Department</mat-label>
+        <mat-label>{{ 'reports.department' | translate: 'Department' }}</mat-label>
         <mat-select formControlName="departmentId">
-          <mat-option value="">All Departments</mat-option>
+          <mat-option value="">{{
+            'reports.allDepartments' | translate: 'All Departments'
+          }}</mat-option>
           <mat-option *ngFor="let dept of departments()" [value]="dept.id">
             {{ dept.name }}
           </mat-option>
@@ -64,19 +83,25 @@
       </mat-form-field>
 
       <mat-form-field appearance="outline" class="filter-field">
-        <mat-label>From Date</mat-label>
+        <mat-label>{{ 'reports.fromDate' | translate: 'From Date' }}</mat-label>
         <input matInput type="date" formControlName="from" />
       </mat-form-field>
 
       <mat-form-field appearance="outline" class="filter-field">
-        <mat-label>To Date</mat-label>
+        <mat-label>{{ 'reports.toDate' | translate: 'To Date' }}</mat-label>
         <input matInput type="date" formControlName="to" />
       </mat-form-field>
 
       <div class="preset-buttons">
-        <button type="button" mat-stroked-button (click)="setPreset(7)">Last 7d</button>
-        <button type="button" mat-stroked-button (click)="setPreset(30)">Last 30d</button>
-        <button type="button" mat-stroked-button (click)="resetFilters()">Reset</button>
+        <button type="button" mat-stroked-button (click)="setPreset(7)">
+          {{ 'reports.last7d' | translate: 'Last 7d' }}
+        </button>
+        <button type="button" mat-stroked-button (click)="setPreset(30)">
+          {{ 'reports.last30d' | translate: 'Last 30d' }}
+        </button>
+        <button type="button" mat-stroked-button (click)="resetFilters()">
+          {{ 'common.reset' | translate: 'Reset' }}
+        </button>
       </div>
 
       <button
@@ -86,7 +111,7 @@
         class="apply-btn"
         (click)="applyFilters()"
       >
-        Apply Filters
+        {{ 'reports.applyFilters' | translate: 'Apply Filters' }}
       </button>
     </div>
   </div>
@@ -99,7 +124,7 @@
 
   <!-- Loading Indicator -->
   <div class="loading-state" *ngIf="busy()">
-    <p>Loading analytics data...</p>
+    <p>{{ 'reports.loading' | translate: 'Loading analytics data...' }}</p>
   </div>
 
   <!-- Content Sections -->
@@ -107,61 +132,65 @@
     <!-- TAB 1: Manager Dashboard -->
     <div *ngIf="activeTab() === 'manager' && managerData() as data" class="dashboard-content">
       <div class="section-heading">
-        <h3>Task Operations</h3>
+        <h3>{{ 'reports.taskOperations' | translate: 'Task Operations' }}</h3>
       </div>
       <div class="kpi-grid">
         <div class="kpi-card">
-          <div class="kpi-title">Total Tasks</div>
+          <div class="kpi-title">{{ 'reports.totalTasks' | translate: 'Total Tasks' }}</div>
           <div class="kpi-value">{{ data.taskMetrics.totalTasks }}</div>
         </div>
         <div class="kpi-card accent-blue">
-          <div class="kpi-title">Active Tasks</div>
+          <div class="kpi-title">{{ 'reports.activeTasks' | translate: 'Active Tasks' }}</div>
           <div class="kpi-value">{{ data.taskMetrics.activeTasks }}</div>
         </div>
         <div class="kpi-card accent-green">
-          <div class="kpi-title">Completed Tasks</div>
+          <div class="kpi-title">{{ 'reports.completedTasks' | translate: 'Completed Tasks' }}</div>
           <div class="kpi-value">{{ data.taskMetrics.completedTasks }}</div>
         </div>
         <div class="kpi-card accent-red">
-          <div class="kpi-title">Overdue Tasks</div>
+          <div class="kpi-title">{{ 'reports.overdueTasks' | translate: 'Overdue Tasks' }}</div>
           <div class="kpi-value">{{ data.taskMetrics.overdueTasks }}</div>
         </div>
       </div>
 
       <div class="section-heading">
-        <h3>Request Operations</h3>
+        <h3>{{ 'reports.requestOperations' | translate: 'Request Operations' }}</h3>
       </div>
       <div class="kpi-grid">
         <div class="kpi-card">
-          <div class="kpi-title">Total Requests</div>
+          <div class="kpi-title">{{ 'reports.totalRequests' | translate: 'Total Requests' }}</div>
           <div class="kpi-value">{{ data.requestMetrics.totalRequests }}</div>
         </div>
         <div class="kpi-card accent-blue">
-          <div class="kpi-title">Pending Requests</div>
+          <div class="kpi-title">
+            {{ 'reports.pendingRequests' | translate: 'Pending Requests' }}
+          </div>
           <div class="kpi-value">{{ data.requestMetrics.pendingRequests }}</div>
         </div>
         <div class="kpi-card accent-green">
-          <div class="kpi-title">Closed Requests</div>
+          <div class="kpi-title">{{ 'reports.closedRequests' | translate: 'Closed Requests' }}</div>
           <div class="kpi-value">{{ data.requestMetrics.closedRequests }}</div>
         </div>
         <div class="kpi-card accent-red">
-          <div class="kpi-title">Rejected Requests</div>
+          <div class="kpi-title">
+            {{ 'reports.rejectedRequests' | translate: 'Rejected Requests' }}
+          </div>
           <div class="kpi-value">{{ data.requestMetrics.rejectedRequests }}</div>
         </div>
       </div>
 
       <div class="section-heading">
-        <h3>Department Operational Summary</h3>
+        <h3>{{ 'reports.deptSummary' | translate: 'Department Operational Summary' }}</h3>
       </div>
       <div class="table-card">
         <table class="report-table">
           <thead>
             <tr>
-              <th>Department</th>
-              <th>Active Tasks</th>
-              <th>Completed Tasks</th>
-              <th>Overdue Tasks</th>
-              <th>Total Requests</th>
+              <th>{{ 'reports.department' | translate: 'Department' }}</th>
+              <th>{{ 'reports.activeTasks' | translate: 'Active Tasks' }}</th>
+              <th>{{ 'reports.completedTasks' | translate: 'Completed Tasks' }}</th>
+              <th>{{ 'reports.overdueTasks' | translate: 'Overdue Tasks' }}</th>
+              <th>{{ 'reports.totalRequests' | translate: 'Total Requests' }}</th>
             </tr>
           </thead>
           <tbody>
@@ -185,7 +214,9 @@
               <td>{{ s.totalRequests }}</td>
             </tr>
             <tr *ngIf="data.departmentSummaries.length === 0">
-              <td colspan="5" class="empty-cell">No department workload records found.</td>
+              <td colspan="5" class="empty-cell">
+                {{ 'reports.noDeptRecords' | translate: 'No department workload records found.' }}
+              </td>
             </tr>
           </tbody>
         </table>
@@ -195,18 +226,23 @@
     <!-- TAB 2: Company Report -->
     <div *ngIf="activeTab() === 'company' && companyData() as comp" class="dashboard-content">
       <div class="section-heading">
-        <h3>Company Performance Overview</h3>
+        <h3>{{ 'reports.companyOverview' | translate: 'Company Performance Overview' }}</h3>
       </div>
       <div class="kpi-grid">
         <div class="kpi-card accent-green">
-          <div class="kpi-title">Task Completion Rate</div>
+          <div class="kpi-title">
+            {{ 'reports.taskCompletionRate' | translate: 'Task Completion Rate' }}
+          </div>
           <div class="kpi-value">{{ comp.taskCompletionRatePercent }}%</div>
           <div class="kpi-sub">
-            {{ comp.totalTasksCompleted }} of {{ comp.totalTasksCreated }} tasks
+            {{ comp.totalTasksCompleted }} {{ 'common.of' | translate: 'of' }}
+            {{ comp.totalTasksCreated }} tasks
           </div>
         </div>
         <div class="kpi-card accent-blue">
-          <div class="kpi-title">Avg Task Turnaround</div>
+          <div class="kpi-title">
+            {{ 'reports.avgTaskTurnaround' | translate: 'Avg Task Turnaround' }}
+          </div>
           <div class="kpi-value">
             {{
               comp.averageTaskCompletionTimeHours !== null
@@ -216,14 +252,19 @@
           </div>
         </div>
         <div class="kpi-card accent-green">
-          <div class="kpi-title">Request Resolution Rate</div>
+          <div class="kpi-title">
+            {{ 'reports.reqResolutionRate' | translate: 'Request Resolution Rate' }}
+          </div>
           <div class="kpi-value">{{ comp.requestResolutionRatePercent }}%</div>
           <div class="kpi-sub">
-            {{ comp.totalRequestsClosed }} of {{ comp.totalRequestsSubmitted }} requests
+            {{ comp.totalRequestsClosed }} {{ 'common.of' | translate: 'of' }}
+            {{ comp.totalRequestsSubmitted }} requests
           </div>
         </div>
         <div class="kpi-card accent-blue">
-          <div class="kpi-title">Avg Request Turnaround</div>
+          <div class="kpi-title">
+            {{ 'reports.avgReqTurnaround' | translate: 'Avg Request Turnaround' }}
+          </div>
           <div class="kpi-value">
             {{
               comp.averageRequestResolutionTimeHours !== null
@@ -235,17 +276,17 @@
       </div>
 
       <div class="section-heading">
-        <h3>Department Execution Breakdown</h3>
+        <h3>{{ 'reports.deptBreakdown' | translate: 'Department Execution Breakdown' }}</h3>
       </div>
       <div class="table-card">
         <table class="report-table">
           <thead>
             <tr>
-              <th>Department</th>
-              <th>Tasks Assigned</th>
-              <th>Tasks Completed</th>
-              <th>Requests Received</th>
-              <th>Requests Closed</th>
+              <th>{{ 'reports.department' | translate: 'Department' }}</th>
+              <th>{{ 'reports.tasksAssigned' | translate: 'Tasks Assigned' }}</th>
+              <th>{{ 'reports.tasksCompleted' | translate: 'Tasks Completed' }}</th>
+              <th>{{ 'reports.requestsReceived' | translate: 'Requests Received' }}</th>
+              <th>{{ 'reports.requestsClosed' | translate: 'Requests Closed' }}</th>
             </tr>
           </thead>
           <tbody>
@@ -261,7 +302,9 @@
               </td>
             </tr>
             <tr *ngIf="comp.departmentMetrics.length === 0">
-              <td colspan="5" class="empty-cell">No department operational data available.</td>
+              <td colspan="5" class="empty-cell">
+                {{ 'reports.noDeptData' | translate: 'No department operational data available.' }}
+              </td>
             </tr>
           </tbody>
         </table>
@@ -271,19 +314,19 @@
     <!-- TAB 3: Workload Report -->
     <div *ngIf="activeTab() === 'workload' && workloadData() as wl" class="dashboard-content">
       <div class="section-heading">
-        <h3>User Workload Distribution</h3>
+        <h3>{{ 'reports.userWorkload' | translate: 'User Workload Distribution' }}</h3>
       </div>
       <div class="table-card">
         <table class="report-table">
           <thead>
             <tr>
-              <th>User</th>
-              <th>Code</th>
-              <th>Department</th>
-              <th>Active Tasks</th>
-              <th>Completed Tasks</th>
-              <th>Overdue Tasks</th>
-              <th>Total Assigned</th>
+              <th>{{ 'reports.user' | translate: 'User' }}</th>
+              <th>{{ 'reports.code' | translate: 'Code' }}</th>
+              <th>{{ 'reports.department' | translate: 'Department' }}</th>
+              <th>{{ 'reports.activeTasks' | translate: 'Active Tasks' }}</th>
+              <th>{{ 'reports.completedTasks' | translate: 'Completed Tasks' }}</th>
+              <th>{{ 'reports.overdueTasks' | translate: 'Overdue Tasks' }}</th>
+              <th>{{ 'reports.totalAssigned' | translate: 'Total Assigned' }}</th>
             </tr>
           </thead>
           <tbody>
@@ -311,23 +354,25 @@
               <td>{{ item.totalAssigned }}</td>
             </tr>
             <tr *ngIf="wl.items.length === 0">
-              <td colspan="7" class="empty-cell">No user workload records found.</td>
+              <td colspan="7" class="empty-cell">
+                {{ 'reports.noUserRecords' | translate: 'No user workload records found.' }}
+              </td>
             </tr>
           </tbody>
         </table>
       </div>
 
       <div class="section-heading">
-        <h3>Department Workload Capacity</h3>
+        <h3>{{ 'reports.deptCapacity' | translate: 'Department Workload Capacity' }}</h3>
       </div>
       <div class="table-card">
         <table class="report-table">
           <thead>
             <tr>
-              <th>Department</th>
-              <th>Active Tasks</th>
-              <th>Total Members</th>
-              <th>Avg Tasks / Member</th>
+              <th>{{ 'reports.department' | translate: 'Department' }}</th>
+              <th>{{ 'reports.activeTasks' | translate: 'Active Tasks' }}</th>
+              <th>{{ 'reports.totalMembers' | translate: 'Total Members' }}</th>
+              <th>{{ 'reports.avgTasksMember' | translate: 'Avg Tasks / Member' }}</th>
             </tr>
           </thead>
           <tbody>
@@ -347,39 +392,43 @@
     <!-- TAB 4: SLA Performance Report -->
     <div *ngIf="activeTab() === 'sla' && slaData() as sla" class="dashboard-content">
       <div class="section-heading">
-        <h3>SLA Compliance Summary</h3>
+        <h3>{{ 'reports.slaCompliance' | translate: 'SLA Compliance Summary' }}</h3>
       </div>
       <div class="kpi-grid">
         <div class="kpi-card accent-green">
-          <div class="kpi-title">Compliance Rate</div>
+          <div class="kpi-title">{{ 'reports.complianceRate' | translate: 'Compliance Rate' }}</div>
           <div class="kpi-value">{{ sla.complianceRatePercent }}%</div>
         </div>
         <div class="kpi-card">
-          <div class="kpi-title">Total Tracked</div>
+          <div class="kpi-title">{{ 'reports.totalTracked' | translate: 'Total Tracked' }}</div>
           <div class="kpi-value">{{ sla.totalTracked }}</div>
         </div>
         <div class="kpi-card accent-green">
-          <div class="kpi-title">Compliant Requests</div>
+          <div class="kpi-title">
+            {{ 'reports.compliantRequests' | translate: 'Compliant Requests' }}
+          </div>
           <div class="kpi-value">{{ sla.compliantCount }}</div>
         </div>
         <div class="kpi-card accent-red">
-          <div class="kpi-title">Breached Requests</div>
+          <div class="kpi-title">
+            {{ 'reports.breachedRequests' | translate: 'Breached Requests' }}
+          </div>
           <div class="kpi-value">{{ sla.breachedCount }}</div>
         </div>
       </div>
 
       <div class="section-heading">
-        <h3>Service SLA Breakdown</h3>
+        <h3>{{ 'reports.serviceSlaBreakdown' | translate: 'Service SLA Breakdown' }}</h3>
       </div>
       <div class="table-card">
         <table class="report-table">
           <thead>
             <tr>
-              <th>Service</th>
-              <th>Total Requests</th>
-              <th>Compliant</th>
-              <th>Breached</th>
-              <th>Compliance Rate</th>
+              <th>{{ 'reports.service' | translate: 'Service' }}</th>
+              <th>{{ 'reports.totalRequests' | translate: 'Total Requests' }}</th>
+              <th>{{ 'reports.compliant' | translate: 'Compliant' }}</th>
+              <th>{{ 'reports.breached' | translate: 'Breached' }}</th>
+              <th>{{ 'reports.complianceRate' | translate: 'Compliance Rate' }}</th>
             </tr>
           </thead>
           <tbody>
@@ -406,11 +455,13 @@
               </td>
             </tr>
             <tr *ngIf="sla.serviceBreakdown.length === 0">
-              <td colspan="5" class="empty-cell">No service SLA records available.</td>
+              <td colspan="5" class="empty-cell">
+                {{ 'reports.noSlaRecords' | translate: 'No service SLA records available.' }}
+              </td>
             </tr>
           </tbody>
         </table>
       </div>
     </div>
   </div>
-</div>
+</main>

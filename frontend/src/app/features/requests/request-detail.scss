@@ -482,3 +482,117 @@ dl.request-properties dd {
   font-size: 0.875rem;
   color: #64748b;
 }
+
+.ai-dag-stats {
+  display: flex;
+  gap: 0.75rem;
+  margin: 0.75rem 0;
+
+  .stat-badge {
+    background: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    padding: 0.35rem 0.75rem;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    color: #475569;
+  }
+}
+
+.branch-node-item {
+  border-left: 3px solid #6366f1;
+
+  .ai-split-item-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  .badge-phase {
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 0.15rem 0.5rem;
+    border-radius: 9999px;
+
+    &.phase-1 {
+      background: #ecfdf5;
+      color: #065f46;
+      border: 1px solid #a7f3d0;
+    }
+
+    &.phase-2 {
+      background: #eff6ff;
+      color: #1e40af;
+      border: 1px solid #bfdbfe;
+    }
+  }
+
+  .badge-type {
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 0.15rem 0.45rem;
+    border-radius: 4px;
+    background: #f1f5f9;
+    color: #334155;
+  }
+
+  .badge-pri {
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 0.15rem 0.45rem;
+    border-radius: 4px;
+    background: #fef3c7;
+    color: #92400e;
+  }
+
+  .badge-days {
+    font-size: 0.75rem;
+    color: #64748b;
+  }
+
+  .branch-dep-alert {
+    margin-top: 0.5rem;
+    padding: 0.35rem 0.6rem;
+    border-radius: 6px;
+    background: #fffbeb;
+    border: 1px solid #fef3c7;
+    font-size: 0.8rem;
+    color: #b45309;
+    display: flex;
+    gap: 0.35rem;
+    align-items: center;
+  }
+
+  .branch-checklist-box {
+    margin-top: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: 6px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    font-size: 0.8rem;
+
+    .checklist-title {
+      font-weight: 600;
+      color: #334155;
+      display: block;
+      margin-bottom: 0.25rem;
+    }
+
+    ul {
+      margin: 0;
+      padding-left: 1rem;
+      list-style: none;
+
+      li {
+        color: #475569;
+        margin-bottom: 0.2rem;
+      }
+    }
+  }
+
+  .node-reasoning {
+    margin-top: 0.4rem;
+    font-size: 0.78rem;
+    color: #7c3aed;
+  }
+}

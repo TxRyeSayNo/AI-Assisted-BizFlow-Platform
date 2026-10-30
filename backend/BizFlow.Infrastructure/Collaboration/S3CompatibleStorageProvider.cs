@@ -23,6 +23,8 @@ public sealed class S3CompatibleStorageProvider : IObjectStorageProvider
     private readonly string _secretKey;
     private readonly string _region;
     private readonly ILogger<S3CompatibleStorageProvider>? _logger;
+    private bool _bucketChecked;
+    private readonly SemaphoreSlim _bucketLock = new(1, 1);
 
     public bool IsConfigured => !string.IsNullOrWhiteSpace(_endpoint)
                              && !string.IsNullOrWhiteSpace(_accessKey)
@@ -72,7 +74,7 @@ public sealed class S3CompatibleStorageProvider : IObjectStorageProvider
             ?? "us-east-1";
     }
 
-    public Task<UploadSessionDescriptor> CreateUploadSessionAsync(
+    public async Task<UploadSessionDescriptor> CreateUploadSessionAsync(
         Guid attachmentId,
         string objectKey,
         string contentType,
@@ -80,6 +82,7 @@ public sealed class S3CompatibleStorageProvider : IObjectStorageProvider
         TimeSpan expiry,
         CancellationToken cancellationToken)
     {
+        await EnsureBucketExistsAsync(cancellationToken);
         var expiresAt = DateTimeOffset.UtcNow.Add(expiry);
         var uri = new Uri(_publicEndpoint);
         var host = uri.Authority;
@@ -117,7 +120,7 @@ public sealed class S3CompatibleStorageProvider : IObjectStorageProvider
         var signature = Convert.ToHexString(HMACSHA256.HashData(signingKey, Encoding.UTF8.GetBytes(stringToSign))).ToLowerInvariant();
 
         var uploadUrl = $"{_publicEndpoint}{canonicalUri}?{canonicalQuery}&X-Amz-Signature={signature}";
-        return Task.FromResult(new UploadSessionDescriptor(uploadUrl, expiresAt));
+        return new UploadSessionDescriptor(uploadUrl, expiresAt);
     }
 
     public string? GeneratePresignedDownloadUrl(string objectKey, TimeSpan expiry)
@@ -163,6 +166,8 @@ public sealed class S3CompatibleStorageProvider : IObjectStorageProvider
         Stream content,
         CancellationToken cancellationToken)
     {
+        await EnsureBucketExistsAsync(cancellationToken);
+
         var targetUri = BuildDirectUri(objectKey);
         using var request = new HttpRequestMessage(HttpMethod.Put, targetUri);
         request.Content = new StreamContent(content);
@@ -175,6 +180,48 @@ public sealed class S3CompatibleStorageProvider : IObjectStorageProvider
             var err = await response.Content.ReadAsStringAsync(cancellationToken);
             _logger?.LogError("Failed to upload object {Key} to S3/MinIO: {StatusCode} - {Error}", objectKey, response.StatusCode, err);
             throw new InvalidOperationException($"Storage upload failed with HTTP {response.StatusCode}.");
+        }
+    }
+
+    private async Task EnsureBucketExistsAsync(CancellationToken cancellationToken)
+    {
+        if (_bucketChecked || !IsConfigured) return;
+
+        await _bucketLock.WaitAsync(cancellationToken);
+        try
+        {
+            if (_bucketChecked) return;
+
+            var bucketUri = new Uri($"{_endpoint}/{_bucket.Trim('/')}");
+            using var headRequest = new HttpRequestMessage(HttpMethod.Head, bucketUri);
+            SignRequest(headRequest, HttpMethod.Head, bucketUri, "UNSIGNED-PAYLOAD");
+            var headRes = await _httpClient.SendAsync(headRequest, cancellationToken);
+            if (headRes.IsSuccessStatusCode)
+            {
+                _bucketChecked = true;
+                return;
+            }
+
+            if (headRes.StatusCode == HttpStatusCode.NotFound)
+            {
+                using var putRequest = new HttpRequestMessage(HttpMethod.Put, bucketUri);
+                SignRequest(putRequest, HttpMethod.Put, bucketUri, "UNSIGNED-PAYLOAD");
+                var putRes = await _httpClient.SendAsync(putRequest, cancellationToken);
+                if (putRes.IsSuccessStatusCode || putRes.StatusCode == HttpStatusCode.Conflict)
+                {
+                    _bucketChecked = true;
+                    return;
+                }
+            }
+            _bucketChecked = true;
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogWarning(ex, "Failed to ensure bucket {Bucket} exists in S3/MinIO", _bucket);
+        }
+        finally
+        {
+            _bucketLock.Release();
         }
     }
 

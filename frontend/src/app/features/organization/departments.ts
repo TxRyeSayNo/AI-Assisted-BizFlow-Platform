@@ -9,6 +9,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { RouterLink } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { SessionService } from '../../core/auth/session';
+import { TranslatePipe } from '../../core/i18n/translate.pipe';
 
 interface DepartmentRow {
   departmentId: string;
@@ -34,6 +35,7 @@ interface DepartmentPage {
     MatFormFieldModule,
     MatInputModule,
     MatSelectModule,
+    TranslatePipe,
   ],
   templateUrl: './departments.html',
   styleUrl: './departments.scss',

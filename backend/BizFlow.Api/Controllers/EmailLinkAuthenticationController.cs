@@ -22,6 +22,11 @@ public sealed class EmailLinkAuthenticationController(IEmailLinkAuthenticationSe
     public Task<EmailLinkVerificationResponse> Verify([FromBody] EmailLinkVerifyDto input, CancellationToken cancellationToken) =>
         emailLinkAuth.VerifyLinkAsync(input.Token, cancellationToken);
 
+    [HttpPost("verify-firebase")]
+    [AllowAnonymous]
+    public Task<EmailLinkVerificationResponse> VerifyFirebase([FromBody] FirebaseVerifyDto input, CancellationToken cancellationToken) =>
+        emailLinkAuth.VerifyFirebaseTokenAsync(input.IdToken, cancellationToken);
+
     [HttpPost("select-workspace")]
     [AllowAnonymous]
     public Task<AuthenticationResponse> SelectWorkspace([FromBody] EmailLinkSelectWorkspaceDto input, CancellationToken cancellationToken) =>
@@ -30,6 +35,7 @@ public sealed class EmailLinkAuthenticationController(IEmailLinkAuthenticationSe
 
 public sealed record EmailLinkRequestDto([Required, EmailAddress, StringLength(320)] string Email);
 public sealed record EmailLinkVerifyDto([Required, StringLength(128)] string Token);
+public sealed record FirebaseVerifyDto([Required, StringLength(4096)] string IdToken);
 public sealed record EmailLinkSelectWorkspaceDto(
     [Required, StringLength(128)] string Ticket,
     [Required, StringLength(80)] string TenantKey);

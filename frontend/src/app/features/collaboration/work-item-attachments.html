@@ -1,16 +1,17 @@
 <section class="attachments-section" aria-label="Attachments and evidence">
   <div class="attachments-header">
     <div class="header-title-group">
-      <h2>Attachments & Evidence</h2>
+      <h2>{{ 'attachments.title' | translate: 'Attachments & Evidence' }}</h2>
       <span class="badge attachments-count">{{ attachments().length }}</span>
     </div>
     @if (loading()) {
-      <span class="loading-indicator">Loading…</span>
+      <span class="loading-indicator">{{ 'common.loading' | translate: 'Loading…' }}</span>
     }
   </div>
 
+  <!-- Accessible alert announcement without layout displacement -->
   @if (error()) {
-    <p class="error-banner" role="alert">{{ error() }}</p>
+    <div class="sr-only" role="alert" aria-live="assertive">{{ error() }}</div>
   }
 
   @if (uploading()) {
@@ -42,7 +43,10 @@
             <span class="file-size">({{ formatBytes(att.sizeBytes) }})</span>
           </div>
           <div class="attachment-meta">
-            <span class="uploader-name">Uploaded by {{ att.uploaderName }}</span>
+            <span class="uploader-name"
+              >{{ 'attachments.uploadedBy' | translate: 'Uploaded by' }}
+              {{ att.uploaderName }}</span
+            >
             <time class="upload-time" [attr.datetime]="att.createdAt">
               {{ att.createdAt | date: 'medium' }}
             </time>
@@ -52,13 +56,22 @@
           </div>
         </div>
         <div class="attachment-actions">
+          <button
+            mat-stroked-button
+            class="btn-ai-summarize"
+            type="button"
+            (click)="openAiSummarizer(att)"
+            title="Tóm tắt tài liệu và trích xuất nhiệm vụ với AI"
+          >
+            ✨ {{ 'ai.summarize' | translate: 'Tóm tắt AI' }}
+          </button>
           <a
             mat-stroked-button
             class="btn-download"
             [href]="downloadUrl(att.attachmentId)"
             download
           >
-            Download
+            {{ 'attachments.download' | translate: 'Download' }}
           </a>
           @if (att.canDelete) {
             <button
@@ -68,14 +81,16 @@
               type="button"
               (click)="deleteAttachment(att.attachmentId)"
             >
-              Delete
+              {{ 'common.delete' | translate: 'Delete' }}
             </button>
           }
         </div>
       </article>
     } @empty {
       @if (!loading() && !uploading()) {
-        <p class="empty-state">No attachments or evidence files uploaded yet.</p>
+        <p class="empty-state">
+          {{ 'attachments.empty' | translate: 'No attachments or evidence files uploaded yet.' }}
+        </p>
       }
     }
   </div>
@@ -91,7 +106,11 @@
       />
       <div class="dropzone-content">
         <p class="dropzone-hint">
-          Upload documents, spreadsheets, diagrams, or evidence archives (Max 500 MB).
+          {{
+            'attachments.dropzoneHint'
+              | translate
+                : 'Upload documents, spreadsheets, diagrams, or evidence archives (Max 500 MB).'
+          }}
         </p>
         <button
           mat-flat-button
@@ -100,9 +119,17 @@
           [disabled]="uploading()"
           (click)="fileInput.click()"
         >
-          Choose File to Upload
+          {{ 'attachments.chooseFile' | translate: 'Choose File to Upload' }}
         </button>
       </div>
     </div>
   }
+
+  <bf-document-summarizer-dialog
+    [isOpen]="summarizerOpen()"
+    [attachmentId]="activeAttachmentForSummary()?.attachmentId || null"
+    [fileName]="activeAttachmentForSummary()?.fileName || null"
+    (close)="closeAiSummarizer()"
+    (tasksCreated)="onTasksCreatedFromSummary($event)"
+  />
 </section>

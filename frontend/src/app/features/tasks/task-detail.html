@@ -4,36 +4,51 @@
   </a>
 </header>
 <main id="main-content" class="page-content" tabindex="-1" [attr.aria-busy]="busy()">
-  <nav aria-label="Breadcrumb"><a routerLink="/tasks">Tasks</a> / Task details</nav>
+  <nav aria-label="Breadcrumb">
+    <a routerLink="/tasks">{{ 'tasks.title' | translate: 'Tasks' }}</a> /
+    {{ 'taskDetail.breadcrumb' | translate: 'Task details' }}
+  </nav>
   @if (busy()) {
-    <p role="status">Loading task…</p>
+    <p role="status">{{ 'taskDetail.loading' | translate: 'Loading task…' }}</p>
   }
   @if (error()) {
     <p role="alert">{{ error() }}</p>
-    <button mat-stroked-button (click)="load()">Retry</button>
+    <button mat-stroked-button (click)="load()">{{ 'common.retry' | translate: 'Retry' }}</button>
   }
   @if (data(); as detail) {
-    <span class="eyebrow">Work management</span>
+    <span class="eyebrow">{{ 'tasks.eyebrow' | translate: 'Work management' }}</span>
     <h1>{{ detail.task.title }}</h1>
     @if (canStart()) {
       <button mat-flat-button type="button" (click)="start()">
-        {{ detail.task.status === 'OVERDUE' ? 'Resume work' : 'Start work' }}
+        {{
+          detail.task.status === 'OVERDUE'
+            ? 'Resume work'
+            : ('taskDetail.startWorkBtn' | translate: 'Start work')
+        }}
       </button>
     }
     @if (canSubmit()) {
-      <button mat-flat-button type="button" (click)="submit()">Submit result</button>
+      <button mat-flat-button type="button" (click)="submit()">
+        {{ 'taskDetail.submitResultBtn' | translate: 'Submit result' }}
+      </button>
     }
     @if (canConfirm()) {
-      <button mat-flat-button type="button" (click)="confirm()">Review result</button>
+      <button mat-flat-button type="button" (click)="confirm()">
+        {{ 'tasks.confirmTask' | translate: 'Review result' }}
+      </button>
     }
     @if (canAccept()) {
-      <button mat-flat-button type="button" (click)="accept()">Accept task</button>
+      <button mat-flat-button type="button" (click)="accept()">
+        {{ 'taskDetail.acceptBtn' | translate: 'Accept task' }}
+      </button>
     }
     @if (
       session.hasPermission('tasks.assign') &&
       (detail.task.status === 'DRAFT' || detail.task.status === 'REJECTED')
     ) {
-      <button mat-flat-button type="button" (click)="assign()">Assign task</button>
+      <button mat-flat-button type="button" (click)="assign()">
+        {{ 'taskDetail.assignBtn' | translate: 'Assign task' }}
+      </button>
     }
     @if (canArchive()) {
       <button
@@ -43,33 +58,45 @@
         (click)="archive()"
         [disabled]="archiving"
       >
-        {{ archiving ? 'Archiving…' : 'Archive task' }}
+        {{
+          archiving
+            ? ('taskDetail.archivingBtn' | translate: 'Archiving…')
+            : ('taskDetail.archiveBtn' | translate: 'Archive task')
+        }}
       </button>
     }
     <section class="directory-panel detail-section" aria-label="Task summary">
       <dl>
-        <dt>Status</dt>
-        <dd>{{ detail.task.status }}</dd>
-        <dt>Priority</dt>
-        <dd>{{ detail.task.priority }}</dd>
-        <dt>Created by</dt>
+        <dt>{{ 'common.status' | translate: 'Status' }}</dt>
+        <dd>{{ 'status.' + detail.task.status | translate: detail.task.status }}</dd>
+        <dt>{{ 'common.priority' | translate: 'Priority' }}</dt>
+        <dd>{{ 'priority.' + detail.task.priority | translate: detail.task.priority }}</dd>
+        <dt>{{ 'tasks.creator' | translate: 'Created by' }}</dt>
         <dd>{{ detail.creatorName ?? 'Unavailable' }}</dd>
-        <dt>Responsibility</dt>
+        <dt>{{ 'tasks.colResponsibility' | translate: 'Responsibility' }}</dt>
         <dd>
-          {{ detail.task.assignedUserName ?? detail.task.assignedDepartmentName ?? 'Unassigned' }}
+          {{
+            detail.task.assignedUserName ??
+              detail.task.assignedDepartmentName ??
+              ('tasks.unassigned' | translate: 'Unassigned')
+          }}
         </dd>
-        <dt>Deadline</dt>
+        <dt>{{ 'tasks.deadline' | translate: 'Deadline' }}</dt>
         <dd>
-          {{ detail.task.deadline ? (detail.task.deadline | date: 'medium') : 'No deadline' }}
+          {{
+            detail.task.deadline
+              ? (detail.task.deadline | date: 'medium')
+              : ('tasks.noDeadline' | translate: 'No deadline')
+          }}
         </dd>
-        <dt>Created</dt>
+        <dt>{{ 'taskDetail.created' | translate: 'Created' }}</dt>
         <dd>{{ detail.task.createdAt | date: 'medium' }}</dd>
       </dl>
       <p>Dates shown in your local time.</p>
-      <p>{{ detail.description ?? 'No description' }}</p>
+      <p>{{ detail.description ?? ('taskDetail.noDescription' | translate: 'No description') }}</p>
       @if (detail.task.requestId) {
         <p>
-          Linked request:
+          {{ 'taskDetail.sourceRequest' | translate: 'Linked request' }}:
           <a [routerLink]="['/requests', detail.task.requestId]" class="request-link">{{
             detail.task.requestId
           }}</a>
@@ -79,8 +106,11 @@
 
     <section class="ai-assistant-card" aria-label="AI Task Intelligence">
       <div class="ai-header">
-        <span class="ai-badge">AI Intelligence</span>
-        <strong>Trợ lý Giám sát & Phân tích AI (FR-AI-005, FR-AI-006)</strong>
+        <span class="ai-badge">{{ 'ai.assistant' | translate: 'AI Intelligence' }}</span>
+        <strong>{{
+          'ai.predictiveAssessment'
+            | translate: 'Trợ lý Giám sát & Phân tích AI (FR-AI-005, FR-AI-006)'
+        }}</strong>
       </div>
       <p class="ai-meta">
         Đánh giá rủi ro tiến độ theo cam kết thời gian hoặc tạo bản tóm tắt nghiệp vụ tự động từ
@@ -94,7 +124,7 @@
           (click)="evaluateRisk()"
           [disabled]="aiBusy()"
         >
-          Đánh giá rủi ro (AI Risk)
+          {{ 'ai.risk' | translate: 'Đánh giá rủi ro (AI Risk)' }}
         </button>
         <button
           mat-stroked-button
@@ -102,7 +132,7 @@
           (click)="summarizeProgress()"
           [disabled]="aiBusy()"
         >
-          Tóm tắt tiến độ (AI Summary)
+          {{ 'ai.summary' | translate: 'Tóm tắt tiến độ (AI Summary)' }}
         </button>
       </div>
       @if (aiError()) {
@@ -204,7 +234,7 @@
             [disabled]="detail[section.key].page <= 1"
             (click)="page(section.key, detail[section.key].page - 1)"
           >
-            Previous
+            {{ 'common.previous' | translate: 'Previous' }}
           </button>
           <button
             mat-stroked-button
@@ -213,7 +243,7 @@
             "
             (click)="page(section.key, detail[section.key].page + 1)"
           >
-            Next
+            {{ 'common.next' | translate: 'Next' }}
           </button>
         </nav>
       </section>

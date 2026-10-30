@@ -40,4 +40,19 @@ describe('LanguageSwitchComponent', () => {
     component.selectLanguage('vi');
     expect(service.currentLanguage()).toBe('vi');
   });
+
+  it('toggles dropdown open state and closes on selection', () => {
+    expect(component.isOpen()).toBe(false);
+    component.toggleDropdown();
+    expect(component.isOpen()).toBe(true);
+    component.selectLanguage('ja');
+    expect(component.isOpen()).toBe(false);
+  });
+
+  it('closes dropdown when onEscape is called', () => {
+    component.toggleDropdown();
+    expect(component.isOpen()).toBe(true);
+    component.onEscape();
+    expect(component.isOpen()).toBe(false);
+  });
 });

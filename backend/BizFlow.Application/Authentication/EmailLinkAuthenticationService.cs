@@ -6,7 +6,8 @@ namespace BizFlow.Application.Authentication;
 public sealed class EmailLinkAuthenticationService(
     IAuthenticationStore store,
     IBizFlowCacheService cache,
-    AuthenticationService authService) : IEmailLinkAuthenticationService
+    AuthenticationService authService,
+    IFirebaseTokenVerifier? firebaseVerifier = null) : IEmailLinkAuthenticationService
 {
     private static readonly TimeSpan EmailLinkTtl = TimeSpan.FromMinutes(15);
     private static readonly TimeSpan WorkspaceTicketTtl = TimeSpan.FromMinutes(5);
@@ -78,6 +79,57 @@ public sealed class EmailLinkAuthenticationService(
         }
 
         // Multiple workspaces: generate short-lived selection ticket (5m TTL)
+        var ticket = Guid.NewGuid().ToString("N");
+        await cache.SetAsync($"ws_ticket:{ticket}", normalizedEmail, WorkspaceTicketTtl, cancellationToken);
+
+        var workspaces = candidates
+            .Select(c => new WorkspaceCandidateDto(c.TenantId, c.TenantKey ?? "", c.TenantName ?? "Workspace"))
+            .ToList();
+
+        return new EmailLinkVerificationResponse(
+            Status: "RequiresWorkspaceSelection",
+            Message: "Multiple workspaces found. Please select a workspace to enter.",
+            RegisterCompanyUrl: null,
+            Ticket: ticket,
+            Workspaces: workspaces,
+            Authentication: null);
+    }
+
+    public async Task<EmailLinkVerificationResponse> VerifyFirebaseTokenAsync(string idToken, CancellationToken cancellationToken = default)
+    {
+        if (firebaseVerifier is null)
+        {
+            throw new ApplicationFault(FaultKind.Unavailable, "AUTH.FIREBASE_NOT_CONFIGURED", "Firebase authentication verifier is not configured.");
+        }
+
+        var verified = await firebaseVerifier.VerifyIdTokenAsync(idToken, cancellationToken);
+        var normalizedEmail = verified.Email.Trim().ToUpperInvariant();
+
+        var candidates = await store.FindCandidatesAsync(normalizedEmail, null, cancellationToken);
+        if (candidates.Count == 0)
+        {
+            return new EmailLinkVerificationResponse(
+                Status: "NoWorkspace",
+                Message: "No active workspace found for this email account.",
+                RegisterCompanyUrl: "/register-company",
+                Ticket: null,
+                Workspaces: null,
+                Authentication: null);
+        }
+
+        if (candidates.Count == 1)
+        {
+            var auth = await authService.CreateSessionForCandidateAsync(candidates[0], cancellationToken);
+            return new EmailLinkVerificationResponse(
+                Status: "Authenticated",
+                Message: null,
+                RegisterCompanyUrl: null,
+                Ticket: null,
+                Workspaces: null,
+                Authentication: auth);
+        }
+
+        // Multiple workspaces: generate short-lived selection ticket (5m TTL) bound to verified email
         var ticket = Guid.NewGuid().ToString("N");
         await cache.SetAsync($"ws_ticket:{ticket}", normalizedEmail, WorkspaceTicketTtl, cancellationToken);
 

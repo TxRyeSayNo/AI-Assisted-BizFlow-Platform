@@ -18,7 +18,9 @@ public sealed class RobotChatService(
     NotificationInbox notificationInbox,
     IAiTaskDecompositionService decompositionService,
     TimeProvider clock,
-    IAiModelClient? modelClient = null) : IRobotChatService
+    IAiModelClient? modelClient = null,
+    IAiToolRegistry? toolRegistry = null,
+    AiAssistanceService? assistanceService = null) : IRobotChatService
 {
     public async Task<RobotChatResponse> ProcessMessageAsync(
         RobotChatCommand command,
@@ -43,8 +45,14 @@ public sealed class RobotChatService(
             return await HandleNotificationsCommandAsync(message, cancellationToken);
         }
 
-        // 3. Natural Language Task and Deadline Query with RBAC & Anti-Hallucination
-        return await HandleNaturalLanguageQueryAsync(message, cancellationToken);
+        // 3. Command /create-task
+        if (message.StartsWith("/create-task", StringComparison.OrdinalIgnoreCase) && assistanceService != null)
+        {
+            return await HandleCreateTaskCommandAsync(message, cancellationToken);
+        }
+
+        // 4. Natural Language Task and Deadline Query with Tool Orchestration, RBAC & Anti-Hallucination
+        return await HandleNaturalLanguageQueryAsync(message, command.Locale, cancellationToken);
     }
 
     private async Task<RobotChatResponse> HandleTaskCommandAsync(string message, CancellationToken cancellationToken)
@@ -120,7 +128,47 @@ public sealed class RobotChatService(
             [new RobotActionCard("OPEN_NOTIFICATIONS", "Xem hòm thư thông báo", "/notifications")]);
     }
 
-    private async Task<RobotChatResponse> HandleNaturalLanguageQueryAsync(string message, CancellationToken cancellationToken)
+    private async Task<RobotChatResponse> HandleCreateTaskCommandAsync(string message, CancellationToken cancellationToken)
+    {
+        var title = message["/create-task".Length..].Trim();
+        if (string.IsNullOrWhiteSpace(title))
+        {
+            return new RobotChatResponse(
+                "Vui lòng nhập tiêu đề công việc sau lệnh `/create-task <tiêu đề>`. Ví dụ: `/create-task Soạn thảo báo cáo tuần`.",
+                "/create-task");
+        }
+
+        try
+        {
+            var argsJson = JsonSerializer.Serialize(new { title });
+            var result = await assistanceService!.ExecuteActionAsync(
+                new ExecuteAiActionCommand("create_task_draft", argsJson, Confirmed: false),
+                cancellationToken);
+
+            var sb = new StringBuilder();
+            sb.AppendLine("🤖 **Đề xuất tạo công việc mới:**");
+            sb.AppendLine($"• Tiêu đề: **{title}**");
+            sb.AppendLine();
+            sb.AppendLine("⚠️ Hành động này cần sự xác nhận của bạn trước khi lưu vào hệ thống.");
+
+            return new RobotChatResponse(
+                sb.ToString().TrimEnd(),
+                "/create-task",
+                [
+                    new RobotActionCard(
+                        "CONFIRM_ACTION",
+                        "Xác nhận tạo việc",
+                        "/api/v1/ai/actions/execute",
+                        new { toolName = "create_task_draft", confirmationToken = result.ConfirmationToken, argsJson })
+                ]);
+        }
+        catch (ApplicationFault af)
+        {
+            return new RobotChatResponse($"❌ Không thể đề xuất tạo việc: {af.Message}", "ACTION_REJECTED");
+        }
+    }
+
+    private async Task<RobotChatResponse> HandleNaturalLanguageQueryAsync(string message, string? locale, CancellationToken cancellationToken)
     {
         var now = clock.GetUtcNow();
         var lowerMsg = message.ToLowerInvariant();
@@ -160,9 +208,8 @@ public sealed class RobotChatService(
         {
             if (dueTodayTasks.Count == 0)
             {
-                return new RobotChatResponse(
-                    "📅 Hôm nay bạn không có deadline nào cần hoàn thành. Chúc bạn một ngày làm việc hiệu quả!",
-                    "QUERY_DEADLINE");
+                var emptyMsg = locale == "ja" ? "📅 本日期限のタスクはありません。" : (locale == "en" ? "📅 You have no deadlines due today." : "📅 Hôm nay bạn không có deadline nào cần hoàn thành. Chúc bạn một ngày làm việc hiệu quả!");
+                return new RobotChatResponse(emptyMsg, "QUERY_DEADLINE");
             }
 
             var sb = new StringBuilder();
@@ -179,9 +226,8 @@ public sealed class RobotChatService(
         {
             if (overdueTasks.Count == 0)
             {
-                return new RobotChatResponse(
-                    "🎉 Tuyệt vời! Hiện tại bạn không có công việc nào bị quá hạn.",
-                    "QUERY_OVERDUE");
+                var noOverdueMsg = locale == "ja" ? "🎉 期限超過のタスクはありません。" : (locale == "en" ? "🎉 You have no overdue tasks." : "🎉 Tuyệt vời! Hiện tại bạn không có công việc nào bị quá hạn.");
+                return new RobotChatResponse(noOverdueMsg, "QUERY_OVERDUE");
             }
 
             var sb = new StringBuilder();
@@ -198,9 +244,8 @@ public sealed class RobotChatService(
         {
             if (pendingTasks.Count == 0)
             {
-                return new RobotChatResponse(
-                    "📋 Hiện tại bạn không có nhiệm vụ nào đang chờ xử lý.",
-                    "QUERY_PENDING");
+                var noPendingMsg = locale == "ja" ? "📋 処理待ちのタスクはありません。" : (locale == "en" ? "📋 You have no pending tasks." : "📋 Hiện tại bạn không có nhiệm vụ nào đang chờ xử lý.");
+                return new RobotChatResponse(noPendingMsg, "QUERY_PENDING");
             }
 
             var sb = new StringBuilder();
@@ -217,7 +262,7 @@ public sealed class RobotChatService(
             return new RobotChatResponse(sb.ToString().TrimEnd(), "QUERY_PENDING");
         }
 
-        // 3. Fallback / General Query with LLM Grounding or Friendly Help
+        // 3. Fallback / General Query with LLM Grounding & Tool Calling Support
         if (modelClient is { IsConfigured: true })
         {
             try
@@ -231,6 +276,7 @@ public sealed class RobotChatService(
                     pendingCount = pendingTasks.Count,
                     topTasks = visibleTasks.Take(8).Select(t => new
                     {
+                        t.TaskId,
                         t.Title,
                         t.Status,
                         t.Priority,
@@ -238,17 +284,94 @@ public sealed class RobotChatService(
                     })
                 });
 
-                var sysPrompt = $"""
+                var targetLanguage = locale switch
+                {
+                    "ja" => "tiếng Nhật (Japanese)",
+                    "en" => "tiếng Anh (English)",
+                    _ => "tiếng Việt (Vietnamese)"
+                };
+
+                var toolsSummary = string.Join("\n", (toolRegistry?.GetRegisteredTools() ?? []).Select(t => $"- {t.Name}: {t.Description}"));
+
+                var sysPrompt = $$"""
                     Bạn là Trợ lý Robot AI thông minh của nền tảng BizFlow Platform.
-                    Trả lời người dùng bằng tiếng Việt, ngắn gọn, thân thiện, lịch sự và súc tích.
+                    Trả lời người dùng bằng {{targetLanguage}}, ngắn gọn, thân thiện, lịch sự và súc tích.
                     QUY TẮC BẮT BUỘC (BR-027):
                     Chỉ dựa vào dữ liệu thực tế sau đây được trích xuất từ database của người dùng:
-                    {groundingData}
+                    {{groundingData}}
                     Tuyệt đối không bịa đặt nhiệm vụ, deadline, phòng ban hay số liệu không có trong dữ liệu trên.
                     Nếu thông tin không có, nói rõ là không tìm thấy trong phạm vi dữ liệu hiện tại.
+
+                    Danh sách công cụ được cấp phép:
+                    {{toolsSummary}}
+
+                    Nếu người dùng yêu cầu thực hiện hành động (tạo công việc, phân công, bình luận, điều phối yêu cầu), hãy trả về JSON:
+                    {
+                        "toolCall": {
+                            "name": "create_task_draft" | "assign_task" | "add_comment" | "route_request",
+                            "arguments": { ... }
+                        },
+                        "reply": "<lời giải thích ngắn gọn cho người dùng>"
+                    }
+                    Nếu là câu hỏi thông thường, trả về JSON:
+                    {
+                        "reply": "<nội dung câu trả lời>"
+                    }
                     """;
 
                 var aiResp = await modelClient.CompleteAsync(message, sysPrompt, cancellationToken);
+                using var doc = JsonDocument.Parse(aiResp.Content);
+                var root = doc.RootElement;
+
+                // Check for Tool Call proposal
+                if (root.TryGetProperty("toolCall", out var tcProp) &&
+                    tcProp.TryGetProperty("name", out var nameProp) &&
+                    assistanceService != null)
+                {
+                    var toolName = nameProp.GetString() ?? "";
+                    var argsJson = tcProp.TryGetProperty("arguments", out var argsProp) ? argsProp.GetRawText() : "{}";
+                    var reply = root.TryGetProperty("reply", out var rProp) ? rProp.GetString() ?? "" : "";
+
+                    if (toolRegistry != null && toolRegistry.GetTool(toolName) is null)
+                    {
+                        return new RobotChatResponse(
+                            $"⚠️ Công cụ '{toolName}' không nằm trong danh mục công cụ được cấp phép.",
+                            "TOOL_NOT_ALLOWED");
+                    }
+
+                    try
+                    {
+                        var actionResult = await assistanceService.ExecuteActionAsync(
+                            new ExecuteAiActionCommand(toolName, argsJson, Confirmed: false),
+                            cancellationToken);
+
+                        if (actionResult.ExecutionStatus == "NOT_EXECUTED")
+                        {
+                            return new RobotChatResponse(
+                                $"{reply}\n\n⚠️ Đề xuất hành động '{toolName}' cần sự xác nhận của bạn trước khi thực hiện.",
+                                "PROPOSE_ACTION",
+                                [
+                                    new RobotActionCard(
+                                        "CONFIRM_ACTION",
+                                        $"Xác nhận {toolName}",
+                                        "/api/v1/ai/actions/execute",
+                                        new { toolName, confirmationToken = actionResult.ConfirmationToken, argsJson })
+                                ]);
+                        }
+
+                        return new RobotChatResponse($"{reply}\n\n✅ Đã thực hiện thành công.", "EXECUTE_ACTION");
+                    }
+                    catch (ApplicationFault af)
+                    {
+                        return new RobotChatResponse($"❌ Không thể thực hiện hành động: {af.Message}", "ACTION_REJECTED");
+                    }
+                }
+
+                if (root.TryGetProperty("reply", out var directReplyProp))
+                {
+                    return new RobotChatResponse(directReplyProp.GetString() ?? "", "GENERAL");
+                }
+
                 return new RobotChatResponse(aiResp.Content, "GENERAL");
             }
             catch
@@ -257,18 +380,46 @@ public sealed class RobotChatService(
             }
         }
 
-        // Deterministic General Assistance
+        // Deterministic General Assistance with localization
         var genSb = new StringBuilder();
-        genSb.AppendLine("Chào bạn! Tôi là Trợ lý Robot BizFlow 🤖.");
-        genSb.AppendLine();
-        genSb.AppendLine($"Tổng quan hiện tại của bạn: **{pendingTasks.Count}** việc đang tiến hành, **{dueTodayTasks.Count}** việc đến hạn hôm nay, **{overdueTasks.Count}** việc quá hạn.");
-        genSb.AppendLine();
-        genSb.AppendLine("Bạn có thể hỏi tôi:");
-        genSb.AppendLine("• *\"Hôm nay tôi có deadline nào?\"*");
-        genSb.AppendLine("• *\"Kiểm tra các việc bị quá hạn\"*");
-        genSb.AppendLine("• *\"Liệt kê các việc chờ xử lý của tôi\"*");
-        genSb.AppendLine("• Hoặc dùng lệnh `/task <nội dung>` để phân rã công việc thông minh.");
-        genSb.AppendLine("• Dùng lệnh `/notifications` để xem thông báo và nhắc hạn.");
+        if (locale == "ja")
+        {
+            genSb.AppendLine("こんにちは！BizFlow Robot アシスタントです 🤖。");
+            genSb.AppendLine();
+            genSb.AppendLine($"現在の概要: 進行中 **{pendingTasks.Count}** 件、本日期限 **{dueTodayTasks.Count}** 件、期限超過 **{overdueTasks.Count}** 件。");
+            genSb.AppendLine();
+            genSb.AppendLine("質問の例:");
+            genSb.AppendLine("• *\"本日期限のタスクは？\"*");
+            genSb.AppendLine("• *\"期限超過のタスクを確認\"*");
+            genSb.AppendLine("• または `/task <内容>` コマンドでタスクをAI分解します。");
+            genSb.AppendLine("• `/notifications` で通知とリマインダーを確認します。");
+        }
+        else if (locale == "en")
+        {
+            genSb.AppendLine("Hello! I am your BizFlow Robot Assistant 🤖.");
+            genSb.AppendLine();
+            genSb.AppendLine($"Your current overview: **{pendingTasks.Count}** in progress, **{dueTodayTasks.Count}** due today, **{overdueTasks.Count}** overdue.");
+            genSb.AppendLine();
+            genSb.AppendLine("You can ask me:");
+            genSb.AppendLine("• *\"What deadlines do I have today?\"*");
+            genSb.AppendLine("• *\"Check my overdue tasks\"*");
+            genSb.AppendLine("• Or use `/task <description>` to break down work with AI.");
+            genSb.AppendLine("• Use `/notifications` to check notifications and reminders.");
+        }
+        else
+        {
+            genSb.AppendLine("Chào bạn! Tôi là Trợ lý Robot BizFlow 🤖.");
+            genSb.AppendLine();
+            genSb.AppendLine($"Tổng quan hiện tại của bạn: **{pendingTasks.Count}** việc đang tiến hành, **{dueTodayTasks.Count}** việc đến hạn hôm nay, **{overdueTasks.Count}** việc quá hạn.");
+            genSb.AppendLine();
+            genSb.AppendLine("Bạn có thể hỏi tôi:");
+            genSb.AppendLine("• *\"Hôm nay tôi có deadline nào?\"*");
+            genSb.AppendLine("• *\"Kiểm tra các việc bị quá hạn\"*");
+            genSb.AppendLine("• *\"Liệt kê các việc chờ xử lý của tôi\"*");
+            genSb.AppendLine("• Hoặc dùng lệnh `/task <nội dung>` để phân rã công việc thông minh.");
+            genSb.AppendLine("• Dùng lệnh `/create-task <tiêu đề>` để đề xuất tạo công việc mới.");
+            genSb.AppendLine("• Dùng lệnh `/notifications` để xem thông báo và nhắc hạn.");
+        }
 
         return new RobotChatResponse(genSb.ToString(), "GENERAL");
     }

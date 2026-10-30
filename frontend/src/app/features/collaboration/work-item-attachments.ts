@@ -1,10 +1,13 @@
-import { Component, Input, OnInit, inject, signal } from '@angular/core';
+import { Component, Input, OnInit, effect, inject, signal } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { MatButtonModule } from '@angular/material/button';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { lastValueFrom } from 'rxjs';
 import { SessionService } from '../../core/auth/session';
+import { TranslatePipe } from '../../core/i18n/translate.pipe';
+import { DocumentSummarizerDialog } from '../../shared/ai/document-summarizer-dialog';
+import { ToastService } from '../../core/toast/toast.service';
 
 export interface AttachmentItem {
   attachmentId: string;
@@ -33,7 +36,14 @@ export interface UploadSessionResult {
 @Component({
   selector: 'bf-work-item-attachments',
   standalone: true,
-  imports: [CommonModule, DatePipe, MatButtonModule, MatProgressBarModule],
+  imports: [
+    CommonModule,
+    DatePipe,
+    MatButtonModule,
+    MatProgressBarModule,
+    TranslatePipe,
+    DocumentSummarizerDialog,
+  ],
   templateUrl: './work-item-attachments.html',
   styleUrls: ['./work-item-attachments.scss'],
 })
@@ -43,12 +53,39 @@ export class WorkItemAttachments implements OnInit {
 
   readonly session = inject(SessionService);
   private readonly http = inject(HttpClient);
+  private readonly toast = inject(ToastService);
 
   readonly attachments = signal<AttachmentItem[]>([]);
   readonly loading = signal(false);
   readonly error = signal('');
   readonly uploading = signal(false);
   readonly uploadMessage = signal('');
+
+  readonly summarizerOpen = signal(false);
+  readonly activeAttachmentForSummary = signal<AttachmentItem | null>(null);
+
+  constructor() {
+    effect(() => {
+      const err = this.error();
+      if (err) {
+        this.toast.error(err);
+      }
+    });
+  }
+
+  openAiSummarizer(att: AttachmentItem) {
+    this.activeAttachmentForSummary.set(att);
+    this.summarizerOpen.set(true);
+  }
+
+  closeAiSummarizer() {
+    this.summarizerOpen.set(false);
+    this.activeAttachmentForSummary.set(null);
+  }
+
+  onTasksCreatedFromSummary(_tasks: any[]) {
+    // Optionally trigger refresh if we are on a task/request view
+  }
 
   // 500 MB hard limit
   readonly MAX_FILE_SIZE = 524288000;

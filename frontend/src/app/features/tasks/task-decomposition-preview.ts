@@ -11,6 +11,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { Router, RouterLink } from '@angular/router';
 import { SessionService } from '../../core/auth/session';
+import { TranslatePipe } from '../../core/i18n/translate.pipe';
 
 export interface EditableProposal {
   selected: boolean;
@@ -37,9 +38,14 @@ export interface EditableProposal {
     MatInputModule,
     MatSelectModule,
     RouterLink,
+    TranslatePipe,
   ],
   templateUrl: './task-decomposition-preview.html',
-  styleUrls: ['../organization/departments.scss', './task-editor.scss', './task-decomposition-preview.scss'],
+  styleUrls: [
+    '../organization/departments.scss',
+    './task-editor.scss',
+    './task-decomposition-preview.scss',
+  ],
 })
 export class TaskDecompositionPreview implements OnInit {
   readonly session = inject(SessionService);
@@ -85,9 +91,12 @@ export class TaskDecompositionPreview implements OnInit {
     this.successMessage.set('');
 
     this.http
-      .post<{ originalPrompt: string; proposals: any[] }>('/api/v1/tasks/ai-decomposition/preview', {
-        prompt: text,
-      })
+      .post<{ originalPrompt: string; proposals: any[] }>(
+        '/api/v1/tasks/ai-decomposition/preview',
+        {
+          prompt: text,
+        },
+      )
       .pipe(takeUntilDestroyed(this.destroy))
       .subscribe({
         next: (result) => {
@@ -114,9 +123,7 @@ export class TaskDecompositionPreview implements OnInit {
   }
 
   toggleSelectAll(checked: boolean) {
-    this.proposals.update((items) =>
-      items.map((it) => ({ ...it, selected: checked })),
-    );
+    this.proposals.update((items) => items.map((it) => ({ ...it, selected: checked })));
   }
 
   get selectedCount(): number {
@@ -181,7 +188,10 @@ export class TaskDecompositionPreview implements OnInit {
     };
 
     this.http
-      .post<{ totalCreated: number; items: any[] }>('/api/v1/tasks/ai-decomposition/confirm', payload)
+      .post<{ totalCreated: number; items: any[] }>(
+        '/api/v1/tasks/ai-decomposition/confirm',
+        payload,
+      )
       .pipe(takeUntilDestroyed(this.destroy))
       .subscribe({
         next: (resp) => {

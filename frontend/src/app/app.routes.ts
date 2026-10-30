@@ -36,9 +36,7 @@ export const routes: Routes = [
     canActivate: [tenantGuard, permissionGuard],
     data: { permission: 'tasks.create' },
     loadComponent: () =>
-      import('./features/tasks/task-decomposition-preview').then(
-        (m) => m.TaskDecompositionPreview,
-      ),
+      import('./features/tasks/task-decomposition-preview').then((m) => m.TaskDecompositionPreview),
   },
   {
     path: 'tasks/:id',
@@ -185,8 +183,7 @@ export const routes: Routes = [
   },
   {
     path: 'register-company',
-    loadComponent: () =>
-      import('./features/auth/register-company').then((m) => m.RegisterCompany),
+    loadComponent: () => import('./features/auth/register-company').then((m) => m.RegisterCompany),
   },
   { path: 'login', loadComponent: () => import('./features/auth/login').then((m) => m.Login) },
   {

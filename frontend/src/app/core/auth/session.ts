@@ -14,7 +14,7 @@ import {
 export interface LoginRequest {
   identifier: string;
   password: string;
-  tenantKey: string;
+  tenantKey?: string;
 }
 
 export interface SessionIdentity {
@@ -58,7 +58,9 @@ export class SessionService {
 
   constructor() {
     if (typeof window !== 'undefined') {
-      (window as unknown as { __bizflow_set_session?: (res: LoginResponse) => void }).__bizflow_set_session = (res) => {
+      (
+        window as unknown as { __bizflow_set_session?: (res: LoginResponse) => void }
+      ).__bizflow_set_session = (res) => {
         this.response.set(res);
       };
     }
@@ -73,7 +75,14 @@ export class SessionService {
     return defer(() => {
       this.clear();
       const generation = this.generation;
-      return this.http.post<LoginResponse>('/api/v1/auth/login', request).pipe(
+      const payload: Record<string, string> = {
+        identifier: request.identifier,
+        password: request.password,
+      };
+      if (request.tenantKey && request.tenantKey.trim()) {
+        payload['tenantKey'] = request.tenantKey.trim();
+      }
+      return this.http.post<LoginResponse>('/api/v1/auth/login', payload).pipe(
         tap((response) => {
           if (generation === this.generation) this.response.set(response);
         }),
@@ -82,20 +91,49 @@ export class SessionService {
   }
 
   requestEmailLink(email: string): Observable<{ message: string; expiresInMinutes: number }> {
-    return this.http.post<{ message: string; expiresInMinutes: number }>('/api/v1/auth/email-link/request', { email });
+    return this.http.post<{ message: string; expiresInMinutes: number }>(
+      '/api/v1/auth/email-link/request',
+      { email },
+    );
   }
 
   verifyEmailLink(token: string): Observable<EmailLinkVerificationResult> {
     return defer(() => {
       this.clear();
       const generation = this.generation;
-      return this.http.post<EmailLinkVerificationResult>('/api/v1/auth/email-link/verify', { token }).pipe(
-        tap((res) => {
-          if (res.status === 'Authenticated' && res.authentication && generation === this.generation) {
-            this.response.set(res.authentication);
-          }
-        }),
-      );
+      return this.http
+        .post<EmailLinkVerificationResult>('/api/v1/auth/email-link/verify', { token })
+        .pipe(
+          tap((res) => {
+            if (
+              res.status === 'Authenticated' &&
+              res.authentication &&
+              generation === this.generation
+            ) {
+              this.response.set(res.authentication);
+            }
+          }),
+        );
+    });
+  }
+
+  verifyFirebaseToken(idToken: string): Observable<EmailLinkVerificationResult> {
+    return defer(() => {
+      this.clear();
+      const generation = this.generation;
+      return this.http
+        .post<EmailLinkVerificationResult>('/api/v1/auth/email-link/verify-firebase', { idToken })
+        .pipe(
+          tap((res) => {
+            if (
+              res.status === 'Authenticated' &&
+              res.authentication &&
+              generation === this.generation
+            ) {
+              this.response.set(res.authentication);
+            }
+          }),
+        );
     });
   }
 
@@ -103,11 +141,13 @@ export class SessionService {
     return defer(() => {
       this.clear();
       const generation = this.generation;
-      return this.http.post<LoginResponse>('/api/v1/auth/email-link/select-workspace', { ticket, tenantKey }).pipe(
-        tap((res) => {
-          if (generation === this.generation) this.response.set(res);
-        }),
-      );
+      return this.http
+        .post<LoginResponse>('/api/v1/auth/email-link/select-workspace', { ticket, tenantKey })
+        .pipe(
+          tap((res) => {
+            if (generation === this.generation) this.response.set(res);
+          }),
+        );
     });
   }
 

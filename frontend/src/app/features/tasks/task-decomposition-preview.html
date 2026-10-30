@@ -1,13 +1,34 @@
-<div class="bf-editor-page">
+<header class="public-header directory-header">
+  <a class="wordmark" routerLink="/workspace">
+    <span class="brand-mark" aria-hidden="true"></span> BizFlow
+  </a>
+</header>
+<main id="main-content" class="page-content bf-editor-page" tabindex="-1">
+  <nav aria-label="Breadcrumb">
+    <a routerLink="/workspace">{{ 'common.workspace' | translate: 'Workspace' }}</a>
+    <span aria-hidden="true">/</span>
+    <a routerLink="/tasks">{{ 'tasks.title' | translate: 'Tasks' }}</a>
+    <span aria-hidden="true">/</span>
+    <span>{{ 'taskDecomp.breadcrumb' | translate: 'AI Decomposition' }}</span>
+  </nav>
+  <span class="eyebrow">{{ 'taskDecomp.eyebrow' | translate: 'AI Work Intelligence' }}</span>
   <div class="bf-editor-header">
     <div class="header-titles">
-      <h1 class="bf-page-title">Phân rã Công việc Thông minh bằng AI</h1>
+      <h1 class="bf-page-title">
+        {{ 'taskDecomp.title' | translate: 'Phân rã Công việc Thông minh bằng AI' }}
+      </h1>
       <p class="bf-page-subtitle">
-        Bóc tách đoạn văn hoặc kế hoạch tự nhiên thành các đầu việc và yêu cầu hỗ trợ có cấu trúc (INT-031, BR-028).
+        {{
+          'taskDecomp.subtitle'
+            | translate
+              : 'Bóc tách đoạn văn hoặc kế hoạch tự nhiên thành các đầu việc và yêu cầu hỗ trợ có cấu trúc (INT-031, BR-028).'
+        }}
       </p>
     </div>
     <div class="header-actions">
-      <a mat-button routerLink="/tasks">← Quay lại danh sách</a>
+      <a mat-stroked-button routerLink="/tasks"
+        >← {{ 'taskCreate.backToTasks' | translate: 'Quay lại danh sách' }}</a
+      >
     </div>
   </div>
 
@@ -26,11 +47,15 @@
   <!-- Section 1: Prompt Input & Quick Templates -->
   <div class="bf-card prompt-card mb-4">
     <div class="card-header">
-      <h2>Mô tả công việc hoặc kế hoạch tổng thể</h2>
+      <h2>{{ 'taskDecomp.promptTitle' | translate: 'Mô tả công việc hoặc kế hoạch tổng thể' }}</h2>
     </div>
     <div class="card-body">
       <mat-form-field appearance="outline" class="w-full">
-        <mat-label>Nhập nội dung cần phân rã (đoạn văn, danh sách công việc, email chỉ đạo...)</mat-label>
+        <mat-label>{{
+          'taskDecomp.promptLabel'
+            | translate
+              : 'Nhập nội dung cần phân rã (đoạn văn, danh sách công việc, email chỉ đạo...)'
+        }}</mat-label>
         <textarea
           matInput
           rows="5"
@@ -45,14 +70,22 @@
         <button
           type="button"
           class="template-chip"
-          (click)="setSamplePrompt('Quy trình tiếp nhận nhân sự mới:\n1. IT chuẩn bị laptop, cài đặt OS, cấu hình VPN và cấp email công ty.\n2. Nhân sự làm thủ tục ký HĐLĐ và phổ biến nội quy.\n3. Quản lý phân công mentor và giao dự án ban đầu.')"
+          (click)="
+            setSamplePrompt(
+              'Quy trình tiếp nhận nhân sự mới:\n1. IT chuẩn bị laptop, cài đặt OS, cấu hình VPN và cấp email công ty.\n2. Nhân sự làm thủ tục ký HĐLĐ và phổ biến nội quy.\n3. Quản lý phân công mentor và giao dự án ban đầu.'
+            )
+          "
         >
           Onboarding nhân viên mới
         </button>
         <button
           type="button"
           class="template-chip"
-          (click)="setSamplePrompt('Kế hoạch nâng cấp hệ thống Quý 4:\n1. Sao lưu toàn bộ cơ sở dữ liệu PostgreSQL.\n2. Nâng cấp phiên bản Redis và kiểm thử kết nối cache.\n3. Kiểm tra bảo mật ứng dụng và cập nhật chứng chỉ SSL.')"
+          (click)="
+            setSamplePrompt(
+              'Kế hoạch nâng cấp hệ thống Quý 4:\n1. Sao lưu toàn bộ cơ sở dữ liệu PostgreSQL.\n2. Nâng cấp phiên bản Redis và kiểm thử kết nối cache.\n3. Kiểm tra bảo mật ứng dụng và cập nhật chứng chỉ SSL.'
+            )
+          "
         >
           Nâng cấp hệ thống định kỳ
         </button>
@@ -66,9 +99,9 @@
           (click)="previewDecomposition()"
         >
           @if (previewBusy()) {
-            <span>Đang phân tích dữ liệu...</span>
+            <span>{{ 'taskDecomp.previewBusy' | translate: 'Đang phân tích dữ liệu...' }}</span>
           } @else {
-            <span>Phân tích bằng AI</span>
+            <span>{{ 'taskDecomp.previewBtn' | translate: 'Phân tích bằng AI' }}</span>
           }
         </button>
       </div>
@@ -82,7 +115,9 @@
         <div class="banner-icon">ℹ️</div>
         <div class="banner-text">
           <strong>Bản xem trước dự thảo (Human-in-the-Loop):</strong>
-          AI đã bóc tách đoạn văn thành các đề xuất dưới đây. Tuyệt đối chưa có bản ghi nào được lưu vào cơ sở dữ liệu. Bạn hãy xem xét, sửa đổi thông tin, chọn lọc các mục cần tạo và nhấn <strong>Xác nhận tạo việc</strong>.
+          AI đã bóc tách đoạn văn thành các đề xuất dưới đây. Tuyệt đối chưa có bản ghi nào được lưu
+          vào cơ sở dữ liệu. Bạn hãy xem xét, sửa đổi thông tin, chọn lọc các mục cần tạo và nhấn
+          <strong>Xác nhận tạo việc</strong>.
         </div>
       </div>
 
@@ -156,7 +191,12 @@
 
               <mat-form-field appearance="outline" class="w-full mb-2">
                 <mat-label>Mô tả chi tiết</mat-label>
-                <textarea matInput rows="2" [(ngModel)]="item.description" placeholder="Mô tả công việc..."></textarea>
+                <textarea
+                  matInput
+                  rows="2"
+                  [(ngModel)]="item.description"
+                  placeholder="Mô tả công việc..."
+                ></textarea>
               </mat-form-field>
 
               @if (item.reasoning) {
@@ -172,7 +212,13 @@
                   <div class="checklist-row">
                     <span class="bullet">•</span>
                     <span class="text">{{ sub }}</span>
-                    <button type="button" class="sub-remove" (click)="removeChecklistItem(item, cIdx)">✕</button>
+                    <button
+                      type="button"
+                      class="sub-remove"
+                      (click)="removeChecklistItem(item, cIdx)"
+                    >
+                      ✕
+                    </button>
                   </div>
                 }
                 <div class="add-checklist-row">
@@ -183,7 +229,9 @@
                     [(ngModel)]="item.newChecklistInput"
                     (keydown.enter)="addChecklistItem(item)"
                   />
-                  <button type="button" class="add-sub-btn" (click)="addChecklistItem(item)">+ Thêm</button>
+                  <button type="button" class="add-sub-btn" (click)="addChecklistItem(item)">
+                    + Thêm
+                  </button>
                 </div>
               </div>
             </div>
@@ -214,4 +262,4 @@
       </div>
     </div>
   }
-</div>
+</main>

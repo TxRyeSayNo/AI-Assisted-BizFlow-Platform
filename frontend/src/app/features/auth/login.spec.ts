@@ -24,6 +24,36 @@ describe('Login', () => {
     TestBed.inject(HttpTestingController).expectNone('/api/v1/auth/login');
   });
 
+  it('allows Super Admin to login without entering a tenant key', () => {
+    const component = TestBed.createComponent(Login).componentInstance;
+    component.form.controls.identifier.setValue('SUPERADMIN');
+    expect(component.isSuperAdmin()).toBe(true);
+    expect(component.form.controls.tenantKey.hasError('required')).toBe(false);
+
+    component.form.controls.password.setValue('Password123!');
+    component.form.controls.tenantKey.setValue('');
+    expect(component.form.valid).toBe(true);
+
+    component.submit();
+    const request = TestBed.inject(HttpTestingController).expectOne('/api/v1/auth/login');
+    expect(request.request.body).toEqual({
+      identifier: 'SUPERADMIN',
+      password: 'Password123!',
+    });
+    request.flush({
+      accessToken: 'token',
+      refreshToken: 'refresh',
+      expiresAt: new Date().toISOString(),
+      session: {
+        userId: 'super-1',
+        fullName: 'Platform Administrator',
+        tenantId: null,
+        tenantName: null,
+        permissions: ['platform.company-registrations.read'],
+      },
+    });
+  });
+
   it('preserves password whitespace and sends an explicit tenant key', () => {
     const component = TestBed.createComponent(Login).componentInstance;
     component.form.setValue({
@@ -43,23 +73,20 @@ describe('Login', () => {
     expect(component.busy()).toBe(false);
   });
 
-  it('validates email mode and requires tenant key for submission', () => {
+  it('validates email mode, requires tenant key, and handles TENANT_CONTEXT_REQUIRED', () => {
     const component = TestBed.createComponent(Login).componentInstance;
     component.changeMode('email');
-    component.form.setValue({ identifier: 'not-an-email', password: 'password', tenantKey: 'company-a' });
-    expect(component.form.invalid).toBe(true);
-
-    component.form.setValue({ identifier: 'person@company.test', password: 'password', tenantKey: '' });
+    component.form.setValue({ identifier: 'not-an-email', password: 'password', tenantKey: '' });
     expect(component.form.invalid).toBe(true);
     expect(component.form.controls.tenantKey.hasError('required')).toBe(true);
 
+    component.form.controls.identifier.setValue('person@company.test');
     component.form.controls.tenantKey.setValue('company-a');
-    expect(component.form.valid).toBe(true);
     component.submit();
     TestBed.inject(HttpTestingController)
       .expectOne('/api/v1/auth/login')
-      .flush({ code: 'AUTH.INVALID_CREDENTIALS' }, { status: 401, statusText: 'Unauthorized' });
-    expect(component.error()).toContain('We could not sign you in');
+      .flush({ code: 'AUTH.TENANT_CONTEXT_REQUIRED' }, { status: 409, statusText: 'Conflict' });
+    expect(component.error()).toContain('workspace key');
   });
 
   it('does not render arbitrary backend error messages', () => {
@@ -134,12 +161,74 @@ describe('Login', () => {
         accessToken: 'access-123',
         refreshToken: 'refresh-123',
         expiresAt: new Date().toISOString(),
-        session: { userId: '1', fullName: 'User', tenantId: 't1', tenantName: 'Tenant 1', permissions: [] },
+        session: {
+          userId: '1',
+          fullName: 'User',
+          tenantId: 't1',
+          tenantName: 'Tenant 1',
+          permissions: [],
+        },
       },
     });
 
     expect(component.error()).toBe('');
     expect(component.busy()).toBe(false);
   });
-});
 
+  it('verifies firebase id token and authenticates user', () => {
+    const component = TestBed.createComponent(Login).componentInstance;
+    component.verifyFirebaseToken('firebase-token-abc');
+
+    const req = TestBed.inject(HttpTestingController).expectOne(
+      '/api/v1/auth/email-link/verify-firebase',
+    );
+    expect(req.request.body).toEqual({ idToken: 'firebase-token-abc' });
+    req.flush({
+      status: 'Authenticated',
+      authentication: {
+        accessToken: 'access-bizflow',
+        refreshToken: 'refresh-bizflow',
+        expiresAt: new Date().toISOString(),
+        session: {
+          userId: '2',
+          fullName: 'Firebase User',
+          tenantId: 't2',
+          tenantName: 'Tenant 2',
+          permissions: [],
+        },
+      },
+    });
+
+    expect(component.error()).toBe('');
+    expect(component.busy()).toBe(false);
+  });
+
+  it('handles invalid firebase id token error', () => {
+    const component = TestBed.createComponent(Login).componentInstance;
+    component.verifyFirebaseToken('invalid-token');
+
+    const req = TestBed.inject(HttpTestingController).expectOne(
+      '/api/v1/auth/email-link/verify-firebase',
+    );
+    req.flush({ message: 'Invalid token' }, { status: 401, statusText: 'Unauthorized' });
+
+    expect(component.error()).toContain('Mã xác thực Firebase không hợp lệ');
+    expect(component.busy()).toBe(false);
+  });
+
+  it('handles NoWorkspace in firebase token verification', () => {
+    const component = TestBed.createComponent(Login).componentInstance;
+    component.verifyFirebaseToken('no-ws-token');
+
+    const req = TestBed.inject(HttpTestingController).expectOne(
+      '/api/v1/auth/email-link/verify-firebase',
+    );
+    req.flush({
+      status: 'NoWorkspace',
+      message: 'Không tìm thấy không gian làm việc.',
+    });
+
+    expect(component.showRegisterLink()).toBe(true);
+    expect(component.error()).toContain('Không tìm thấy không gian làm việc');
+  });
+});

@@ -9,6 +9,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { RouterLink } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { SessionService } from '../../core/auth/session';
+import { TranslatePipe } from '../../core/i18n/translate.pipe';
 
 interface UserRow {
   userId: string;
@@ -35,6 +36,7 @@ interface UserPage {
     MatFormFieldModule,
     MatInputModule,
     MatSelectModule,
+    TranslatePipe,
   ],
   templateUrl: './users.html',
   styleUrls: ['./departments.scss', './users.scss'],

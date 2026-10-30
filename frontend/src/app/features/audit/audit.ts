@@ -13,6 +13,7 @@ import { Subscription } from 'rxjs';
 import { SessionService } from '../../core/auth/session';
 import { AuditDetail } from './audit-detail';
 import { AuditPage, AuditRow } from './audit-model';
+import { TranslatePipe } from '../../core/i18n/translate.pipe';
 
 @Component({
   selector: 'bf-audit',
@@ -25,6 +26,7 @@ import { AuditPage, AuditRow } from './audit-model';
     MatFormFieldModule,
     MatInputModule,
     MatSelectModule,
+    TranslatePipe,
   ],
   templateUrl: './audit.html',
   styleUrls: ['../organization/departments.scss', './audit.scss'],

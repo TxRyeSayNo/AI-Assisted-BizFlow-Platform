@@ -4,22 +4,33 @@
   </a>
 </header>
 <main id="main-content" class="page-content" tabindex="-1">
-  <nav aria-label="Breadcrumb"><a routerLink="/tasks">Tasks</a> / New task</nav>
-  <span class="eyebrow">Work management</span>
-  <h1>New task</h1>
-  <p>Create an independent draft. Assignment and execution are separate steps.</p>
+  <nav aria-label="Breadcrumb">
+    <a routerLink="/tasks">{{ 'tasks.title' | translate: 'Tasks' }}</a> /
+    {{ 'taskCreate.breadcrumbNew' | translate: 'New task' }}
+  </nav>
+  <span class="eyebrow">{{ 'tasks.eyebrow' | translate: 'Work management' }}</span>
+  <h1>{{ 'taskCreate.breadcrumbNew' | translate: 'New task' }}</h1>
+  <p>
+    {{
+      'taskCreate.subtitle'
+        | translate: 'Create an independent draft. Assignment and execution are separate steps.'
+    }}
+  </p>
 
   <section class="ai-assistant-card" aria-label="AI Task Assistant">
     <div class="ai-header">
-      <span class="ai-badge">AI Assistant</span>
-      <strong>Khởi tạo nhanh bằng AI (FR-AI-001)</strong>
+      <span class="ai-badge">{{ 'ai.assistant' | translate: 'AI Assistant' }}</span>
+      <strong>{{ 'ai.extractParams' | translate: 'Khởi tạo nhanh bằng AI (FR-AI-001)' }}</strong>
     </div>
     <p class="ai-meta">
-      Nhập yêu cầu bằng ngôn ngữ tự nhiên để AI tự động điền tiêu đề, mô tả, mức ưu tiên và danh
-      sách việc cần làm.
+      {{
+        'ai.promptTaskLabel'
+          | translate
+            : 'Nhập yêu cầu bằng ngôn ngữ tự nhiên để AI tự động điền tiêu đề, mô tả, mức ưu tiên và danh sách việc cần làm.'
+      }}
     </p>
     <mat-form-field appearance="outline">
-      <mat-label>Yêu cầu công việc tự nhiên</mat-label>
+      <mat-label>{{ 'ai.promptTaskLabel' | translate: 'Yêu cầu công việc tự nhiên' }}</mat-label>
       <textarea
         matInput
         [ngModel]="aiPrompt()"
@@ -36,7 +47,11 @@
         (click)="assistWithAi()"
         [disabled]="aiBusy() || !aiPrompt().trim()"
       >
-        {{ aiBusy() ? 'AI đang suy nghĩ…' : 'Nhờ AI điền bản thảo' }}
+        {{
+          aiBusy()
+            ? ('taskCreate.aiExtractGenerating' | translate: 'AI đang suy nghĩ…')
+            : ('taskCreate.aiExtractBtn' | translate: 'Nhờ AI điền bản thảo')
+        }}
       </button>
       <button
         mat-stroked-button
@@ -44,11 +59,13 @@
         (click)="breakdownWithAi()"
         [disabled]="aiBusy() || !form.controls.title.value.trim()"
       >
-        Phân rã việc con (AI Breakdown)
+        {{ 'ai.breakdown' | translate: 'Phân rã việc con (AI Breakdown)' }}
       </button>
     </div>
     @if (aiMessage()) {
-      <p class="ai-meta" role="status"><strong>Gợi ý AI:</strong> {{ aiMessage() }}</p>
+      <p class="ai-meta" role="status">
+        <strong>{{ 'ai.aiReasoning' | translate: 'Gợi ý AI:' }}</strong> {{ aiMessage() }}
+      </p>
     }
   </section>
 
@@ -59,29 +76,32 @@
     [attr.aria-busy]="busy()"
   >
     <mat-form-field appearance="outline"
-      ><mat-label>Task title</mat-label
+      ><mat-label>{{ 'common.title' | translate: 'Task title' }}</mat-label
       ><input matInput formControlName="title" maxlength="300" required
     /></mat-form-field>
     <mat-form-field appearance="outline"
-      ><mat-label>Description</mat-label
+      ><mat-label>{{ 'tasks.description' | translate: 'Description' }}</mat-label
       ><textarea matInput formControlName="description" rows="4"></textarea>
     </mat-form-field>
     <mat-form-field appearance="outline"
-      ><mat-label>Priority</mat-label
+      ><mat-label>{{ 'common.priority' | translate: 'Priority' }}</mat-label
       ><mat-select formControlName="priority">
-        <mat-option value="LOW">Low</mat-option><mat-option value="MEDIUM">Medium</mat-option
-        ><mat-option value="HIGH">High</mat-option
-        ><mat-option value="CRITICAL">Critical</mat-option>
+        <mat-option value="LOW">{{ 'priority.LOW' | translate: 'Low' }}</mat-option
+        ><mat-option value="MEDIUM">{{ 'priority.MEDIUM' | translate: 'Medium' }}</mat-option
+        ><mat-option value="HIGH">{{ 'priority.HIGH' | translate: 'High' }}</mat-option
+        ><mat-option value="CRITICAL">{{ 'priority.CRITICAL' | translate: 'Critical' }}</mat-option>
       </mat-select></mat-form-field
     >
     <mat-form-field appearance="outline"
-      ><mat-label>Deadline (local time, optional)</mat-label
+      ><mat-label>{{
+        'taskCreate.deadlineLabel' | translate: 'Deadline (local time, optional)'
+      }}</mat-label
       ><input matInput type="datetime-local" formControlName="deadline" /><mat-hint
         >Saved as an absolute UTC time.</mat-hint
       ></mat-form-field
     >
     <mat-form-field appearance="outline"
-      ><mat-label>Checklist (one item per line)</mat-label
+      ><mat-label>{{ 'tasks.checklist' | translate: 'Checklist (one item per line)' }}</mat-label
       ><textarea matInput formControlName="checklist" rows="4"></textarea>
     </mat-form-field>
     @if (error()) {
@@ -92,8 +112,16 @@
     }
     <div class="actions">
       <button mat-flat-button type="submit" [disabled]="busy() || done()">
-        {{ busy() ? 'Saving…' : uncertain() ? 'Retry same submission' : 'Create draft' }}</button
-      ><a mat-stroked-button routerLink="/tasks">Back to tasks</a>
+        {{
+          busy()
+            ? ('common.saving' | translate: 'Saving…')
+            : uncertain()
+              ? 'Retry same submission'
+              : ('taskCreate.saveDraft' | translate: 'Create draft')
+        }}</button
+      ><a mat-stroked-button routerLink="/tasks">{{
+        'taskCreate.backToTasks' | translate: 'Back to tasks'
+      }}</a>
     </div>
   </form>
 </main>

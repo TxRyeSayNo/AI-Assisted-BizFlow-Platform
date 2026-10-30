@@ -10,6 +10,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { RouterLink } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { SessionService } from '../../core/auth/session';
+import { TranslatePipe } from '../../core/i18n/translate.pipe';
 
 export const requestStates = {
   DRAFT: 'Draft',
@@ -72,6 +73,7 @@ interface ServiceOption {
     MatFormFieldModule,
     MatInputModule,
     MatSelectModule,
+    TranslatePipe,
   ],
   templateUrl: './requests.html',
   styleUrls: ['../organization/departments.scss', './requests.scss'],

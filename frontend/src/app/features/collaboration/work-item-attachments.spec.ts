@@ -40,7 +40,7 @@ describe('WorkItemAttachments component', () => {
     },
   ];
 
-  const tick = () => new Promise((resolve) => setTimeout(resolve, 10));
+  const tick = (ms = 35) => new Promise((resolve) => setTimeout(resolve, ms));
 
   beforeEach(() => {
     TestBed.configureTestingModule({

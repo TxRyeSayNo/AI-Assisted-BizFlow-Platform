@@ -7,7 +7,8 @@ using System.Threading.Tasks;
 namespace BizFlow.Application.AI;
 
 public sealed record RobotChatCommand(
-    [Required, StringLength(2000, MinimumLength = 1)] string Message);
+    [Required, StringLength(2000, MinimumLength = 1)] string Message,
+    string? Locale = null);
 
 public sealed record RobotActionCard(
     string ActionType, // "OPEN_DECOMPOSITION" | "OPEN_NOTIFICATIONS" | "VIEW_TASK"

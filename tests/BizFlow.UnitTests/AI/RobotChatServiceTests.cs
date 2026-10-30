@@ -269,4 +269,82 @@ public sealed class RobotChatServiceTests
         Assert.Equal("QUERY_OVERDUE", result.RecognizedCommand);
         Assert.Contains("không có công việc nào bị quá hạn", result.Response);
     }
+
+    [Fact]
+    public async Task ProcessMessage_WhenAskingDeadlines_InJapanese_ReturnsJapaneseText()
+    {
+        var tenantId = Guid.NewGuid();
+        var userId = Guid.NewGuid();
+        var now = new DateTimeOffset(2026, 10, 21, 10, 0, 0, TimeSpan.Zero);
+
+        var taskList = new TaskListQuery(
+            new FakeTenantContext(tenantId, userId),
+            new FakeAccessSnapshotProvider(),
+            new FakeSecurityAuditWriter(),
+            new FakeTaskListReader([]));
+
+        var membership = new TenantMembershipAuthorizer(
+            new FakeTenantContext(tenantId, userId),
+            new FakeAccessSnapshotProvider(),
+            new FakeSecurityAuditWriter());
+
+        var inbox = new NotificationInbox(
+            new FakeTenantContext(tenantId, userId),
+            membership,
+            new FakeSecurityAuditWriter(),
+            new FakeNotificationInboxStore(),
+            new FakeClock(now),
+            new FakeNotificationUpdates());
+
+        var chatService = new RobotChatService(
+            new FakeTenantContext(tenantId, userId),
+            taskList,
+            inbox,
+            new FakeDecompositionService(),
+            new FakeClock(now));
+
+        var result = await chatService.ProcessMessageAsync(new RobotChatCommand("Hôm nay có deadline nào không?", "ja"));
+
+        Assert.Equal("QUERY_DEADLINE", result.RecognizedCommand);
+        Assert.Contains("本日期限", result.Response);
+    }
+
+    [Fact]
+    public async Task ProcessMessage_WhenAskingDeadlines_InEnglish_ReturnsEnglishText()
+    {
+        var tenantId = Guid.NewGuid();
+        var userId = Guid.NewGuid();
+        var now = new DateTimeOffset(2026, 10, 21, 10, 0, 0, TimeSpan.Zero);
+
+        var taskList = new TaskListQuery(
+            new FakeTenantContext(tenantId, userId),
+            new FakeAccessSnapshotProvider(),
+            new FakeSecurityAuditWriter(),
+            new FakeTaskListReader([]));
+
+        var membership = new TenantMembershipAuthorizer(
+            new FakeTenantContext(tenantId, userId),
+            new FakeAccessSnapshotProvider(),
+            new FakeSecurityAuditWriter());
+
+        var inbox = new NotificationInbox(
+            new FakeTenantContext(tenantId, userId),
+            membership,
+            new FakeSecurityAuditWriter(),
+            new FakeNotificationInboxStore(),
+            new FakeClock(now),
+            new FakeNotificationUpdates());
+
+        var chatService = new RobotChatService(
+            new FakeTenantContext(tenantId, userId),
+            taskList,
+            inbox,
+            new FakeDecompositionService(),
+            new FakeClock(now));
+
+        var result = await chatService.ProcessMessageAsync(new RobotChatCommand("Today deadline", "en"));
+
+        Assert.Equal("QUERY_DEADLINE", result.RecognizedCommand);
+        Assert.Contains("You have no deadlines due today", result.Response);
+    }
 }

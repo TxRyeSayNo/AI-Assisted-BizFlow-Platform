@@ -9,6 +9,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { RouterLink } from '@angular/router';
 import { Subscription } from 'rxjs';
+import { TranslatePipe } from '../../core/i18n/translate.pipe';
 
 interface Registration {
   companyId: string;
@@ -43,6 +44,7 @@ interface RegistrationPage {
     MatFormFieldModule,
     MatInputModule,
     MatSelectModule,
+    TranslatePipe,
   ],
   styleUrl: './company-registrations.scss',
   template: `
@@ -51,18 +53,28 @@ interface RegistrationPage {
         <span class="brand-mark" aria-hidden="true"></span> BizFlow
       </a>
       <nav aria-label="Platform navigation">
-        <a routerLink="/workspace">Home</a>
-        <a routerLink="/platform/companies" aria-current="page">Companies</a>
-        <a routerLink="/platform/audit">Audit Logs</a>
+        <a routerLink="/workspace">{{ 'platform.home' | translate: 'Home' }}</a>
+        <a routerLink="/platform/companies" aria-current="page">{{
+          'platform.companies' | translate: 'Companies'
+        }}</a>
+        <a routerLink="/platform/audit">{{ 'platform.auditLogs' | translate: 'Audit Logs' }}</a>
       </nav>
-      <span>Platform Administration</span>
+      <div style="display: flex; align-items: center; gap: 0.75rem;">
+        <span>{{ 'platform.admin' | translate: 'Platform Administration' }}</span>
+      </div>
     </header>
 
     <main id="main-content" class="page-content" tabindex="-1">
-      <span class="eyebrow">Enterprise Tenancy Operations</span>
-      <h1>Company Registrations & Provisioning</h1>
+      <span class="eyebrow">{{
+        'platform.eyebrow' | translate: 'Enterprise Tenancy Operations'
+      }}</span>
+      <h1>{{ 'platform.title' | translate: 'Company Registrations & Provisioning' }}</h1>
       <p>
-        Review incoming organization registrations, approve enterprise tenant provisioning, or manage subscription statuses.
+        {{
+          'platform.subtitle'
+            | translate
+              : 'Review incoming organization registrations, approve enterprise tenant provisioning, or manage subscription statuses.'
+        }}
       </p>
 
       @if (actionSuccess()) {
@@ -82,49 +94,82 @@ interface RegistrationPage {
       <section aria-label="Registration queue" class="registry-panel" [attr.aria-busy]="busy()">
         <form [formGroup]="filters" (ngSubmit)="apply()" class="filters">
           <mat-form-field appearance="outline" subscriptSizing="dynamic">
-            <mat-label>Company name or code</mat-label>
+            <mat-label>{{ 'platform.searchLabel' | translate: 'Company name or code' }}</mat-label>
             <input matInput formControlName="search" maxlength="200" [readonly]="busy()" />
           </mat-form-field>
           <mat-form-field appearance="outline" subscriptSizing="dynamic">
-            <mat-label>Company status</mat-label>
+            <mat-label>{{ 'platform.statusLabel' | translate: 'Company status' }}</mat-label>
             <mat-select formControlName="status">
-              <mat-option value="">All statuses</mat-option>
-              <mat-option value="PENDING">Pending</mat-option>
-              <mat-option value="ACTIVE">Active</mat-option>
-              <mat-option value="SUSPENDED">Suspended</mat-option>
-              <mat-option value="INACTIVE">Inactive</mat-option>
+              <mat-option value="">{{
+                'departments.allStatuses' | translate: 'All statuses'
+              }}</mat-option>
+              <mat-option value="PENDING">{{
+                'platform.pending' | translate: 'Pending'
+              }}</mat-option>
+              <mat-option value="ACTIVE">{{
+                'departments.active' | translate: 'Active'
+              }}</mat-option>
+              <mat-option value="SUSPENDED">{{
+                'platform.suspended' | translate: 'Suspended'
+              }}</mat-option>
+              <mat-option value="INACTIVE">{{
+                'departments.inactive' | translate: 'Inactive'
+              }}</mat-option>
             </mat-select>
           </mat-form-field>
-          <button mat-flat-button type="submit" [disabled]="busy()">Apply filters</button>
+          <button mat-flat-button type="submit" [disabled]="busy()">
+            {{ 'departments.applyFilters' | translate: 'Apply filters' }}
+          </button>
         </form>
 
         @if (busy()) {
-          <p role="status" class="feedback">Loading company registrations…</p>
+          <p role="status" class="feedback">
+            {{ 'platform.loading' | translate: 'Loading company registrations…' }}
+          </p>
         } @else if (denied()) {
           <p role="alert" class="feedback">
-            You no longer have permission to view company registrations.
+            {{
+              'platform.denied'
+                | translate: 'You no longer have permission to view company registrations.'
+            }}
           </p>
         } @else if (error()) {
           <div class="feedback">
-            <p role="alert">Company registrations could not be loaded. Please try again.</p>
-            <button mat-stroked-button type="button" (click)="load(page())">Retry</button>
+            <p role="alert">
+              {{
+                'platform.error'
+                  | translate: 'Company registrations could not be loaded. Please try again.'
+              }}
+            </p>
+            <button mat-stroked-button type="button" (click)="load(page())">
+              {{ 'common.retry' | translate: 'Retry' }}
+            </button>
           </div>
         } @else if (result(); as data) {
           @if (data.items.length === 0) {
             <p role="status" class="feedback">
-              No company registrations match these filters.
+              {{ 'platform.empty' | translate: 'No company registrations match these filters.' }}
             </p>
           } @else {
-            <div class="table-scroll" tabindex="0" role="region" aria-label="Company registration records">
+            <div
+              class="table-scroll"
+              tabindex="0"
+              role="region"
+              aria-label="Company registration records"
+            >
               <table>
-                <caption>Company registration queue</caption>
+                <caption>
+                  Company registration queue
+                </caption>
                 <thead>
                   <tr>
-                    <th scope="col">Company</th>
-                    <th scope="col">Contact</th>
-                    <th scope="col">Status</th>
-                    <th scope="col">Registered</th>
-                    <th scope="col" style="text-align: right;">Actions</th>
+                    <th scope="col">{{ 'platform.col.company' | translate: 'Company' }}</th>
+                    <th scope="col">{{ 'platform.col.contact' | translate: 'Contact' }}</th>
+                    <th scope="col">{{ 'common.status' | translate: 'Status' }}</th>
+                    <th scope="col">{{ 'platform.col.registered' | translate: 'Registered' }}</th>
+                    <th scope="col" style="text-align: right;">
+                      {{ 'common.actions' | translate: 'Actions' }}
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -134,47 +179,79 @@ interface RegistrationPage {
                         <strong>{{ item.name }}</strong>
                         <span class="company-code">{{ item.code }}</span>
                         @if (item.taxId) {
-                          <span class="company-code" style="color: #93c5fd;">MST: {{ item.taxId }}</span>
+                          <span class="company-code" style="color: #145da0; font-weight: 600;"
+                            >MST: {{ item.taxId }}</span
+                          >
                         }
                       </th>
                       <td>
                         <div>{{ item.contactEmail }}</div>
                         @if (item.contactPersonName || item.contactPhone) {
-                          <div style="font-size: 0.8rem; color: #94a3b8;">
-                            {{ item.contactPersonName }} {{ item.contactPhone ? '· ' + item.contactPhone : '' }}
+                          <div style="font-size: 0.8rem; color: #52657c;">
+                            {{ item.contactPersonName }}
+                            {{ item.contactPhone ? '· ' + item.contactPhone : '' }}
                           </div>
                         }
                         @if (item.evidenceDocumentDownloadUrl) {
                           <div style="margin-top: 0.35rem;">
-                            <a [href]="item.evidenceDocumentDownloadUrl" target="_blank" rel="noopener" style="font-size: 0.8rem; color: #60a5fa; text-decoration: underline;">
+                            <a
+                              [href]="item.evidenceDocumentDownloadUrl"
+                              target="_blank"
+                              rel="noopener"
+                              style="font-size: 0.8rem; color: #2563eb; font-weight: 600; text-decoration: underline;"
+                            >
                               📄 {{ item.evidenceDocumentFileName || 'Legal Document' }}
                             </a>
                           </div>
                         }
                       </td>
                       <td>
-                        <span class="status-label status-{{ item.status.toLowerCase() }}">{{ labels[item.status] }}</span>
+                        <span class="status-label status-{{ item.status.toLowerCase() }}">{{
+                          labels[item.status]
+                        }}</span>
                       </td>
                       <td>
                         {{ item.createdAt | date: 'mediumDate' : 'UTC' }}
-                        <span class="company-code">{{ item.createdAt | date: 'shortTime' : 'UTC' }} UTC</span>
+                        <span class="company-code"
+                          >{{ item.createdAt | date: 'shortTime' : 'UTC' }} UTC</span
+                        >
                       </td>
                       <td style="text-align: right;">
                         <div class="action-buttons">
                           @if (item.status === 'PENDING') {
-                            <button mat-flat-button color="primary" class="btn-approve" (click)="openApproveModal(item)">
-                              Approve
+                            <button
+                              mat-flat-button
+                              color="primary"
+                              class="btn-approve"
+                              (click)="openApproveModal(item)"
+                            >
+                              {{ 'platform.approve' | translate: 'Approve' }}
                             </button>
-                            <button mat-stroked-button color="warn" class="btn-reject" (click)="openRejectModal(item)">
-                              Reject
+                            <button
+                              mat-stroked-button
+                              color="warn"
+                              class="btn-reject"
+                              (click)="openRejectModal(item)"
+                            >
+                              {{ 'platform.reject' | translate: 'Reject' }}
                             </button>
                           } @else if (item.status === 'ACTIVE') {
-                            <button mat-stroked-button color="warn" class="btn-suspend" (click)="updateStatus(item, 'SUSPENDED')">
-                              Suspend
+                            <button
+                              mat-stroked-button
+                              color="warn"
+                              class="btn-suspend"
+                              (click)="updateStatus(item, 'SUSPENDED')"
+                            >
+                              {{ 'platform.suspend' | translate: 'Suspend' }}
                             </button>
                           } @else if (item.status === 'SUSPENDED') {
-                            <button mat-stroked-button color="primary" class="btn-activate" (click)="updateStatus(item, 'ACTIVE')">
-                              Activate
+                            <button
+                              mat-stroked-button
+                              color="primary"
+                              class="btn-activate"
+                              (click)="updateStatus(item, 'ACTIVE')"
+                            >
+                              {{ 'platform.activate' | translate: 'Activate' }}
                             </button>
                           }
                         </div>
@@ -187,12 +264,25 @@ interface RegistrationPage {
           }
 
           <nav aria-label="Registration pages" class="pagination">
-            <span role="status">{{ data.total }} records · Page {{ data.page }}</span>
-            <button mat-stroked-button type="button" [disabled]="data.page <= 1" (click)="load(data.page - 1)">
-              Previous
+            <span role="status"
+              >{{ data.total }} {{ 'platform.records' | translate: 'records' }} ·
+              {{ 'common.page' | translate: 'Page' }} {{ data.page }}</span
+            >
+            <button
+              mat-stroked-button
+              type="button"
+              [disabled]="data.page <= 1"
+              (click)="load(data.page - 1)"
+            >
+              {{ 'common.previous' | translate: 'Previous' }}
             </button>
-            <button mat-stroked-button type="button" [disabled]="data.page * data.pageSize >= data.total" (click)="load(data.page + 1)">
-              Next
+            <button
+              mat-stroked-button
+              type="button"
+              [disabled]="data.page * data.pageSize >= data.total"
+              (click)="load(data.page + 1)"
+            >
+              {{ 'common.next' | translate: 'Next' }}
             </button>
           </nav>
         }
@@ -204,7 +294,8 @@ interface RegistrationPage {
           <div class="modal-card">
             <h2>Approve & Provision Workspace</h2>
             <p class="modal-desc">
-              Approving <strong>{{ item.name }}</strong> will atomically create their primary tenant workspace and seed their initial Company Administrator account.
+              Approving <strong>{{ item.name }}</strong> will atomically create their primary tenant
+              workspace and seed their initial Company Administrator account.
             </p>
 
             <form [formGroup]="approveForm" (ngSubmit)="confirmApprove(item)" class="modal-form">
@@ -235,11 +326,25 @@ interface RegistrationPage {
               </mat-form-field>
 
               <div class="modal-actions">
-                <button mat-button type="button" (click)="approvingItem.set(null)" [disabled]="actionBusy()">
+                <button
+                  mat-button
+                  type="button"
+                  (click)="approvingItem.set(null)"
+                  [disabled]="actionBusy()"
+                >
                   Cancel
                 </button>
-                <button mat-flat-button color="primary" type="submit" [disabled]="actionBusy() || approveForm.invalid">
-                  @if (actionBusy()) { Provisioning… } @else { Confirm & Provision }
+                <button
+                  mat-flat-button
+                  color="primary"
+                  type="submit"
+                  [disabled]="actionBusy() || approveForm.invalid"
+                >
+                  @if (actionBusy()) {
+                    Provisioning…
+                  } @else {
+                    Confirm & Provision
+                  }
                 </button>
               </div>
             </form>
@@ -253,24 +358,47 @@ interface RegistrationPage {
           <div class="modal-card">
             <h2>Reject Company Registration</h2>
             <p class="modal-desc">
-              Please provide a clear business reason for rejecting registration of <strong>{{ item.name }}</strong> (mandatory per BR-022).
+              Please provide a clear business reason for rejecting registration of
+              <strong>{{ item.name }}</strong> (mandatory per BR-022).
             </p>
 
             <form [formGroup]="rejectForm" (ngSubmit)="confirmReject(item)" class="modal-form">
               <mat-form-field appearance="outline">
                 <mat-label>Rejection Reason</mat-label>
-                <textarea matInput formControlName="reason" rows="4" placeholder="Specify why this registration was rejected (min 5 chars)…"></textarea>
-                @if (rejectForm.controls.reason.hasError('required') || rejectForm.controls.reason.hasError('minlength')) {
+                <textarea
+                  matInput
+                  formControlName="reason"
+                  rows="4"
+                  placeholder="Specify why this registration was rejected (min 5 chars)…"
+                ></textarea>
+                @if (
+                  rejectForm.controls.reason.hasError('required') ||
+                  rejectForm.controls.reason.hasError('minlength')
+                ) {
                   <mat-error>A reason of at least 5 characters is required.</mat-error>
                 }
               </mat-form-field>
 
               <div class="modal-actions">
-                <button mat-button type="button" (click)="rejectingItem.set(null)" [disabled]="actionBusy()">
+                <button
+                  mat-button
+                  type="button"
+                  (click)="rejectingItem.set(null)"
+                  [disabled]="actionBusy()"
+                >
                   Cancel
                 </button>
-                <button mat-flat-button color="warn" type="submit" [disabled]="actionBusy() || rejectForm.invalid">
-                  @if (actionBusy()) { Processing… } @else { Reject Registration }
+                <button
+                  mat-flat-button
+                  color="warn"
+                  type="submit"
+                  [disabled]="actionBusy() || rejectForm.invalid"
+                >
+                  @if (actionBusy()) {
+                    Processing…
+                  } @else {
+                    Reject Registration
+                  }
                 </button>
               </div>
             </form>
@@ -356,7 +484,10 @@ export class CompanyRegistrations {
   }
 
   openApproveModal(item: Registration) {
-    const slug = item.code.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    const slug = item.code
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '');
     this.approveForm.patchValue({
       tenantKey: slug || 'tenant',
       adminEmployeeCode: 'ADMIN01',
@@ -373,18 +504,23 @@ export class CompanyRegistrations {
     this.actionBusy.set(true);
     this.actionError.set(null);
 
-    this.http.post(`/api/v1/platform/company-registrations/${item.companyId}/approve`, this.approveForm.getRawValue()).subscribe({
-      next: () => {
-        this.actionBusy.set(false);
-        this.approvingItem.set(null);
-        this.actionSuccess.set(`Company ${item.name} approved and provisioned successfully!`);
-        this.load(this.page());
-      },
-      error: (err: HttpErrorResponse) => {
-        this.actionBusy.set(false);
-        this.actionError.set(err.error?.message || 'Failed to approve company registration.');
-      }
-    });
+    this.http
+      .post(
+        `/api/v1/platform/company-registrations/${item.companyId}/approve`,
+        this.approveForm.getRawValue(),
+      )
+      .subscribe({
+        next: () => {
+          this.actionBusy.set(false);
+          this.approvingItem.set(null);
+          this.actionSuccess.set(`Company ${item.name} approved and provisioned successfully!`);
+          this.load(this.page());
+        },
+        error: (err: HttpErrorResponse) => {
+          this.actionBusy.set(false);
+          this.actionError.set(err.error?.message || 'Failed to approve company registration.');
+        },
+      });
   }
 
   openRejectModal(item: Registration) {
@@ -397,30 +533,37 @@ export class CompanyRegistrations {
     this.actionBusy.set(true);
     this.actionError.set(null);
 
-    this.http.post(`/api/v1/platform/company-registrations/${item.companyId}/reject`, this.rejectForm.getRawValue()).subscribe({
-      next: () => {
-        this.actionBusy.set(false);
-        this.rejectingItem.set(null);
-        this.actionSuccess.set(`Company ${item.name} registration rejected.`);
-        this.load(this.page());
-      },
-      error: (err: HttpErrorResponse) => {
-        this.actionBusy.set(false);
-        this.actionError.set(err.error?.message || 'Failed to reject company registration.');
-      }
-    });
+    this.http
+      .post(
+        `/api/v1/platform/company-registrations/${item.companyId}/reject`,
+        this.rejectForm.getRawValue(),
+      )
+      .subscribe({
+        next: () => {
+          this.actionBusy.set(false);
+          this.rejectingItem.set(null);
+          this.actionSuccess.set(`Company ${item.name} registration rejected.`);
+          this.load(this.page());
+        },
+        error: (err: HttpErrorResponse) => {
+          this.actionBusy.set(false);
+          this.actionError.set(err.error?.message || 'Failed to reject company registration.');
+        },
+      });
   }
 
   updateStatus(item: Registration, status: 'ACTIVE' | 'SUSPENDED' | 'INACTIVE') {
     this.actionError.set(null);
-    this.http.patch(`/api/v1/platform/company-registrations/${item.companyId}/status`, { status }).subscribe({
-      next: () => {
-        this.actionSuccess.set(`Company ${item.name} status updated to ${status}.`);
-        this.load(this.page());
-      },
-      error: (err: HttpErrorResponse) => {
-        this.actionError.set(err.error?.message || 'Failed to update company status.');
-      }
-    });
+    this.http
+      .patch(`/api/v1/platform/company-registrations/${item.companyId}/status`, { status })
+      .subscribe({
+        next: () => {
+          this.actionSuccess.set(`Company ${item.name} status updated to ${status}.`);
+          this.load(this.page());
+        },
+        error: (err: HttpErrorResponse) => {
+          this.actionError.set(err.error?.message || 'Failed to update company status.');
+        },
+      });
   }
 }

@@ -8,6 +8,7 @@ import { RouterLink } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { SessionService } from '../../core/auth/session';
 import { InboxUpdates } from '../../core/notifications/inbox-updates';
+import { TranslatePipe } from '../../core/i18n/translate.pipe';
 
 export interface NotificationRow {
   notificationId: string;
@@ -30,7 +31,7 @@ export interface NotificationPage {
 @Component({
   selector: 'bf-notifications',
   providers: [InboxUpdates],
-  imports: [RouterLink, DatePipe, MatButtonModule, MatCheckboxModule],
+  imports: [RouterLink, DatePipe, MatButtonModule, MatCheckboxModule, TranslatePipe],
   templateUrl: './notifications.html',
   styleUrls: ['../organization/departments.scss', './notifications.scss'],
 })

@@ -9,6 +9,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { Router, RouterLink } from '@angular/router';
 import { SessionService } from '../../core/auth/session';
+import { TranslatePipe } from '../../core/i18n/translate.pipe';
 
 interface CategoryOption {
   serviceCategoryId: string;
@@ -33,6 +34,7 @@ interface ServiceOption {
     MatInputModule,
     MatSelectModule,
     RouterLink,
+    TranslatePipe,
   ],
   templateUrl: './request-create.html',
   styleUrls: ['../organization/departments.scss', '../tasks/task-editor.scss'],

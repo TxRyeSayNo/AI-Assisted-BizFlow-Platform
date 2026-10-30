@@ -12,6 +12,7 @@ import { SessionService } from '../../core/auth/session';
 import { requestPriorities, requestStates } from './requests';
 import { WorkItemComments } from '../collaboration/work-item-comments';
 import { WorkItemAttachments } from '../collaboration/work-item-attachments';
+import { TranslatePipe } from '../../core/i18n/translate.pipe';
 
 export interface RequestResolutionItemView {
   resolutionId: string;
@@ -102,6 +103,7 @@ export interface UserOption {
     MatSelectModule,
     WorkItemComments,
     WorkItemAttachments,
+    TranslatePipe,
   ],
   templateUrl: './request-detail.html',
   styleUrls: ['../organization/departments.scss', './requests.scss', './request-detail.scss'],
@@ -141,6 +143,8 @@ export class RequestDetail implements OnInit {
   readonly aiMultiIntent = signal<any>(null);
   readonly aiRouting = signal<any>(null);
   readonly aiBusy = signal(false);
+  readonly branchingPlan = signal<any>(null);
+  readonly executingBranchPlan = signal(false);
   readonly aiMessage = signal('');
 
   // Route form
@@ -284,6 +288,7 @@ export class RequestDetail implements OnInit {
     if (!d || this.aiBusy()) return;
     this.aiBusy.set(true);
     this.aiMessage.set('');
+    this.branchingPlan.set(null);
     this.http
       .post<any>('/api/v1/ai/request-multi-intent', {
         requestId: d.requestId,
@@ -308,33 +313,62 @@ export class RequestDetail implements OnInit {
       });
   }
 
-  recommendRouting() {
+  planBranching() {
     const d = this.data();
     if (!d || this.aiBusy()) return;
     this.aiBusy.set(true);
     this.aiMessage.set('');
+    this.aiMultiIntent.set(null);
     this.http
-      .post<any>('/api/v1/ai/request-routing', {
-        requestId: d.requestId,
+      .post<any>('/api/v1/ai/branching/plan', {
+        sourceType: 'Request',
+        sourceId: d.requestId,
         title: d.title,
-        description: d.description || '',
-        serviceId: d.serviceId,
+        description: d.description || d.title,
       })
       .pipe(takeUntilDestroyed(this.destroy))
       .subscribe({
         next: (res) => {
           this.aiBusy.set(false);
-          this.aiRouting.set(res);
-          if (res?.recommendedDepartmentId) {
-            this.routeDepartmentId.set(res.recommendedDepartmentId);
-            this.routeReason.set(res.rationale || 'Điều phối theo gợi ý AI');
-            this.routeSource.set('AI');
-            this.openModal('route');
-          }
+          this.branchingPlan.set(res);
+          this.activeModal.set('ai-split');
         },
-        error: () => {
+        error: (err) => {
           this.aiBusy.set(false);
-          this.aiMessage.set('Gợi ý điều phối thất bại.');
+          this.aiMessage.set(err?.error?.message || 'Phân nhánh kế hoạch AI thất bại.');
+        },
+      });
+  }
+
+  executeBranchingPlan() {
+    const d = this.data();
+    const plan = this.branchingPlan();
+    if (!d || !plan || this.executingBranchPlan()) return;
+
+    this.executingBranchPlan.set(true);
+    this.actionError.set(null);
+
+    this.http
+      .post<any>('/api/v1/ai/branching/execute', {
+        planId: plan.planId,
+        sourceType: 'Request',
+        sourceId: d.requestId,
+        branches: plan.branches,
+        confirmationToken: plan.confirmationToken,
+      })
+      .pipe(takeUntilDestroyed(this.destroy))
+      .subscribe({
+        next: (res) => {
+          this.executingBranchPlan.set(false);
+          this.activeModal.set(null);
+          this.actionSuccess.set(
+            `Đã khởi tạo thành công ${res.totalCreated} nhánh công việc (Yêu cầu con & Nhiệm vụ).`,
+          );
+          this.load();
+        },
+        error: (err: HttpErrorResponse) => {
+          this.executingBranchPlan.set(false);
+          this.actionError.set(err?.error?.message || 'Khởi chạy phân nhánh thất bại.');
         },
       });
   }
@@ -366,6 +400,37 @@ export class RequestDetail implements OnInit {
         error: (err: HttpErrorResponse) => {
           this.actionInProgress.set(false);
           this.actionError.set(err?.error?.message ?? 'Phân tách yêu cầu thất bại.');
+        },
+      });
+  }
+
+  recommendRouting() {
+    const d = this.data();
+    if (!d || this.aiBusy()) return;
+    this.aiBusy.set(true);
+    this.aiMessage.set('');
+    this.http
+      .post<any>('/api/v1/ai/request-routing', {
+        requestId: d.requestId,
+        title: d.title,
+        description: d.description || '',
+        serviceId: d.serviceId,
+      })
+      .pipe(takeUntilDestroyed(this.destroy))
+      .subscribe({
+        next: (res) => {
+          this.aiBusy.set(false);
+          this.aiRouting.set(res);
+          if (res?.recommendedDepartmentId) {
+            this.routeDepartmentId.set(res.recommendedDepartmentId);
+            this.routeReason.set(res.rationale || 'Điều phối theo gợi ý AI');
+            this.routeSource.set('AI');
+            this.openModal('route');
+          }
+        },
+        error: () => {
+          this.aiBusy.set(false);
+          this.aiMessage.set('Gợi ý điều phối thất bại.');
         },
       });
   }

@@ -31,6 +31,7 @@ describe('RobotWidgetComponent', () => {
 
     fixture = TestBed.createComponent(RobotWidgetComponent);
     component = fixture.componentInstance;
+    component.i18n.setLanguage('vi');
     http = TestBed.inject(HttpTestingController);
     router = TestBed.inject(Router);
   });
@@ -38,6 +39,7 @@ describe('RobotWidgetComponent', () => {
   afterEach(() => {
     http.verify();
     sessionStorage.clear();
+    localStorage.clear();
   });
 
   it('opens by default on initial session (BR-029)', () => {
@@ -80,7 +82,10 @@ describe('RobotWidgetComponent', () => {
 
     const req = http.expectOne('/api/v1/ai/chat');
     expect(req.request.method).toBe('POST');
-    expect(req.request.body).toEqual({ message: 'Hôm nay tôi có deadline nào không?' });
+    expect(req.request.body).toEqual({
+      message: 'Hôm nay tôi có deadline nào không?',
+      locale: 'vi',
+    });
 
     req.flush({
       response: 'Bạn có 1 nhiệm vụ đến hạn hôm nay: Triển khai Robot Chatbot',
@@ -113,17 +118,60 @@ describe('RobotWidgetComponent', () => {
     expect(navSpy).toHaveBeenCalledWith(['/tasks/ai-decomposition'], { queryParams: undefined });
   });
 
+  it('executes CONFIRM_ACTION and posts confirmation token to execute endpoint', () => {
+    component.executeAction({
+      actionType: 'CONFIRM_ACTION',
+      title: 'Xác nhận tạo việc',
+      linkUrl: '/api/v1/ai/actions/execute',
+      payload: {
+        toolName: 'create_task_draft',
+        argsJson: '{"title":"Test"}',
+        confirmationToken: 'valid-test-token',
+      },
+    });
+
+    expect(component.busy()).toBe(true);
+
+    const req = http.expectOne('/api/v1/ai/actions/execute');
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({
+      toolName: 'create_task_draft',
+      argsJson: '{"title":"Test"}',
+      confirmed: true,
+      confirmationToken: 'valid-test-token',
+    });
+
+    req.flush({ success: true, resultJson: '{"id":"task-123"}' });
+
+    expect(component.busy()).toBe(false);
+    const lastMsg = component.messages()[component.messages().length - 1];
+    expect(lastMsg.sender).toBe('robot');
+    expect(lastMsg.text).toContain('thành công');
+  });
+
   it('sends quick prompt when chip is clicked', () => {
     fixture.detectChanges();
     component.sendQuickPrompt('/task Cài đặt PostgreSQL 18');
 
     const req = http.expectOne('/api/v1/ai/chat');
-    expect(req.request.body).toEqual({ message: '/task Cài đặt PostgreSQL 18' });
+    expect(req.request.body).toEqual({
+      message: '/task Cài đặt PostgreSQL 18',
+      locale: 'vi',
+    });
     req.flush({
       response: 'Đã phân rã yêu cầu thành 2 nhiệm vụ đề xuất.',
       recognizedCommand: '/task',
     });
 
     expect(component.messages().length).toBeGreaterThan(1);
+  });
+
+  it('triggers localized quick prompt via onQuickPrompt', () => {
+    fixture.detectChanges();
+    component.onQuickPrompt('today');
+
+    const req = http.expectOne('/api/v1/ai/chat');
+    expect(req.request.body.message).toBe('Hôm nay tôi có deadline nào không?');
+    req.flush({ response: 'Không có deadline.' });
   });
 });

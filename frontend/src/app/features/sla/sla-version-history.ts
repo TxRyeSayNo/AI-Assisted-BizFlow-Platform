@@ -8,6 +8,7 @@ import { Subscription } from 'rxjs';
 import { SessionService } from '../../core/auth/session';
 import { SlaVersionDetail } from './sla-version-detail';
 import { SlaTimingEditor, SlaTimingOutcome } from './sla-timing-editor';
+import { TranslatePipe } from '../../core/i18n/translate.pipe';
 
 export interface SlaHistoryRow {
   slaVersionId: string;
@@ -35,7 +36,7 @@ export interface SlaHistoryPage {
 
 @Component({
   selector: 'bf-sla-version-history',
-  imports: [RouterLink, MatButtonModule],
+  imports: [RouterLink, MatButtonModule, TranslatePipe],
   templateUrl: './sla-version-history.html',
   styleUrls: ['../organization/departments.scss', './sla-version-history.scss'],
 })

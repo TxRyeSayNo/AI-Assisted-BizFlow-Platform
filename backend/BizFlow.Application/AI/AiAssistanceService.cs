@@ -42,7 +42,8 @@ public sealed class AiAssistanceService(
     IRequestSplitStore splitStore,
     IAiActionDispatcher actionDispatcher,
     TimeProvider clock,
-    IAiModelClient? modelClient = null)
+    IAiModelClient? modelClient = null,
+    IAiConfirmationTokenService? confirmationTokenService = null)
 {
     private Guid GetRequiredTenantId() =>
         tenantContext.TenantId ?? throw new ApplicationFault(FaultKind.Forbidden, "TENANT.REQUIRED", "An active tenant context is required.");
@@ -986,6 +987,8 @@ public sealed class AiAssistanceService(
         // Confirmation guardrail: if tool requires confirmation and caller has not confirmed yet
         if (tool.RequiresConfirmation && !command.Confirmed)
         {
+            var token = confirmationTokenService?.CreateConfirmationToken(tenantId, userId, tool.Name, command.ArgsJson);
+
             var pendingAction = await store.RecordActionAsync(
                 tenantId, interaction.Id, tool.Name, command.ArgsJson,
                 AgentAuthorizationResult.Authorized, AgentExecutionStatus.NotExecuted,
@@ -998,7 +1001,30 @@ public sealed class AiAssistanceService(
                 ExecutionStatus: "NOT_EXECUTED",
                 ResultRef: null,
                 Message: $"Tool '{tool.Name}' requires human confirmation before execution.",
-                Output: new { requiresConfirmation = true, tool = tool.Name });
+                Output: new { requiresConfirmation = true, tool = tool.Name, confirmationToken = token },
+                ConfirmationToken: token);
+        }
+
+        // If tool requires confirmation, enforce cryptographic token validation if service is active or token is supplied
+        if (tool.RequiresConfirmation)
+        {
+            if (confirmationTokenService != null)
+            {
+                if (string.IsNullOrWhiteSpace(command.ConfirmationToken))
+                {
+                    throw new ApplicationFault(
+                        FaultKind.Validation,
+                        "AI.CONFIRMATION_TOKEN_REQUIRED",
+                        $"Executing mutating tool '{tool.Name}' requires a valid confirmation token.");
+                }
+
+                confirmationTokenService.ValidateAndConsumeToken(
+                    command.ConfirmationToken,
+                    tenantId,
+                    userId,
+                    tool.Name,
+                    command.ArgsJson);
+            }
         }
 
         // Execute via dispatcher

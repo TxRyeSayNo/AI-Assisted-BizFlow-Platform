@@ -37,6 +37,9 @@ public static class AuthenticationRegistration
         services.AddSingleton<IAccessTokenIssuer, JwtAccessTokenIssuer>();
         services.AddSingleton<IRefreshTokenGenerator, RefreshTokenGenerator>();
         services.AddSingleton<IAuthenticationAttemptLimiter, AuthenticationAttemptLimiter>();
+        services.AddOptions<FirebaseSettings>().BindConfiguration("Firebase");
+        services.AddSingleton(sp => sp.GetRequiredService<IOptions<FirebaseSettings>>().Value);
+        services.AddHttpClient<IFirebaseTokenVerifier, FirebaseTokenVerifier>();
         services.AddScoped<AuthenticationService>();
         services.AddScoped<IEmailLinkAuthenticationService, EmailLinkAuthenticationService>();
         services.AddScoped<IAccessSnapshotProvider, AccessSnapshotProvider>();
