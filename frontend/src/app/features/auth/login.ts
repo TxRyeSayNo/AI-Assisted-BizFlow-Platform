@@ -482,10 +482,22 @@ export class Login implements OnInit, OnDestroy {
     }
   }
 
-  quickLogin(type: 'ADMIN' | 'EMPLOYEE'): void {
-    if (type === 'ADMIN') {
+  quickLogin(type: 'ADMIN' | 'EMPLOYEE' | 'SUPERADMIN' | 'MANAGER'): void {
+    if (type === 'SUPERADMIN') {
+      this.form.patchValue({
+        identifier: 'SUPERADMIN',
+        password: 'Password123!',
+        tenantKey: '',
+      });
+    } else if (type === 'ADMIN') {
       this.form.patchValue({
         identifier: 'ADMIN001',
+        password: 'Password123!',
+        tenantKey: 'bizflow-corp',
+      });
+    } else if (type === 'MANAGER') {
+      this.form.patchValue({
+        identifier: 'MGR001',
         password: 'Password123!',
         tenantKey: 'bizflow-corp',
       });
@@ -499,8 +511,87 @@ export class Login implements OnInit, OnDestroy {
     this.signInAsAccount(type);
   }
 
-  signInAsAccount(type: 'ADMIN' | 'EMPLOYEE'): void {
-    if (type === 'ADMIN') {
+  signInAsAccount(type: 'ADMIN' | 'EMPLOYEE' | 'SUPERADMIN' | 'MANAGER'): void {
+    if (type === 'SUPERADMIN') {
+      this.session.setSessionForTesting({
+        accessToken: 'dev-superadmin-token',
+        refreshToken: 'dev-superadmin-refresh',
+        expiresAt: new Date(Date.now() + 86400000).toISOString(),
+        session: {
+          userId: '00000000-0000-0000-0000-000000000000',
+          fullName: 'Platform Super Administrator',
+          tenantId: '',
+          tenantName: 'Platform Governance',
+          permissions: [
+            'tenants.read',
+            'tenants.create',
+            'tenants.update',
+            'departments.read',
+            'departments.create',
+            'departments.update',
+            'users.read',
+            'users.create',
+            'users.update',
+            'roles.read',
+            'roles.create',
+            'roles.update',
+            'roles.configure',
+            'requests.read.tenant',
+            'requests.read.managed',
+            'requests.read.own',
+            'tasks.read.tenant',
+            'tasks.read.managed',
+            'tasks.read.own',
+            'tasks.read.assigned',
+            'sla.read',
+            'sla.manage',
+            'workflows.read',
+            'workflows.manage',
+            'audit.read',
+            'analytics.read',
+            'reports.export',
+            'platform.company-registrations.read',
+            'platform.company-registrations.review',
+          ],
+        },
+      });
+    } else if (type === 'MANAGER') {
+      this.session.setSessionForTesting({
+        accessToken: 'dev-manager-token',
+        refreshToken: 'dev-manager-refresh',
+        expiresAt: new Date(Date.now() + 86400000).toISOString(),
+        session: {
+          userId: '019f8000-0000-7000-8000-000000000012',
+          fullName: 'Trần Thị Quản Lý (TECH Lead)',
+          tenantId: '019f8000-0000-7000-8000-000000000002',
+          tenantName: 'BizFlow Corporation',
+          permissions: [
+            'departments.read',
+            'users.read',
+            'roles.read',
+            'requests.read.tenant',
+            'requests.read.managed',
+            'requests.read.own',
+            'requests.create',
+            'requests.update',
+            'tasks.read.tenant',
+            'tasks.read.managed',
+            'tasks.read.own',
+            'tasks.read.assigned',
+            'tasks.create',
+            'tasks.assign',
+            'tasks.accept',
+            'tasks.execute',
+            'tasks.submit',
+            'tasks.confirm',
+            'sla.read',
+            'workflows.read',
+            'analytics.read',
+            'reports.export',
+          ],
+        },
+      });
+    } else if (type === 'ADMIN') {
       this.session.setSessionForTesting({
         accessToken: 'dev-admin-token',
         refreshToken: 'dev-admin-refresh',
