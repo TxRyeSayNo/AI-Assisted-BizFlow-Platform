@@ -8,9 +8,11 @@ namespace BizFlow.Application.Reports;
 
 public sealed class ReportingService(
     IReportingReader reader,
-    ITenantContext tenantContext)
+    ITenantContext tenantContext,
+    IBizFlowCacheService? cache = null)
 {
     private const int MaxWorkloadRangeDays = 366;
+    private static readonly TimeSpan CacheDuration = TimeSpan.FromSeconds(30);
 
     public async Task<ManagerDashboardResult> GetManagerDashboardAsync(
         Guid? departmentId,
@@ -20,6 +22,18 @@ public sealed class ReportingService(
     {
         var tenantId = GetRequiredTenantId();
         ValidateDateRange(from, to);
+
+        if (cache is not null)
+        {
+            var cacheKey = $"tenant:{tenantId}:report:manager:{departmentId}:{from?.UtcTicks}:{to?.UtcTicks}";
+            var cached = await cache.GetAsync<ManagerDashboardResult>(cacheKey, ct);
+            if (cached is not null)
+                return cached;
+
+            var fresh = await reader.GetManagerDashboardAsync(tenantId, departmentId, from, to, ct);
+            await cache.SetAsync(cacheKey, fresh, CacheDuration, ct);
+            return fresh;
+        }
 
         return await reader.GetManagerDashboardAsync(tenantId, departmentId, from, to, ct);
     }
@@ -31,6 +45,18 @@ public sealed class ReportingService(
     {
         var tenantId = GetRequiredTenantId();
         ValidateDateRange(from, to);
+
+        if (cache is not null)
+        {
+            var cacheKey = $"tenant:{tenantId}:report:company:{from?.UtcTicks}:{to?.UtcTicks}";
+            var cached = await cache.GetAsync<CompanyReportResult>(cacheKey, ct);
+            if (cached is not null)
+                return cached;
+
+            var fresh = await reader.GetCompanyReportAsync(tenantId, from, to, ct);
+            await cache.SetAsync(cacheKey, fresh, CacheDuration, ct);
+            return fresh;
+        }
 
         return await reader.GetCompanyReportAsync(tenantId, from, to, ct);
     }
@@ -52,6 +78,18 @@ public sealed class ReportingService(
                 $"Workload report date range cannot exceed {MaxWorkloadRangeDays} days.");
         }
 
+        if (cache is not null)
+        {
+            var cacheKey = $"tenant:{tenantId}:report:workload:{departmentId}:{from?.UtcTicks}:{to?.UtcTicks}";
+            var cached = await cache.GetAsync<WorkloadReportResult>(cacheKey, ct);
+            if (cached is not null)
+                return cached;
+
+            var fresh = await reader.GetWorkloadReportAsync(tenantId, departmentId, from, to, ct);
+            await cache.SetAsync(cacheKey, fresh, CacheDuration, ct);
+            return fresh;
+        }
+
         return await reader.GetWorkloadReportAsync(tenantId, departmentId, from, to, ct);
     }
 
@@ -63,6 +101,18 @@ public sealed class ReportingService(
     {
         var tenantId = GetRequiredTenantId();
         ValidateDateRange(from, to);
+
+        if (cache is not null)
+        {
+            var cacheKey = $"tenant:{tenantId}:report:sla:{serviceId}:{from?.UtcTicks}:{to?.UtcTicks}";
+            var cached = await cache.GetAsync<SlaPerformanceReportResult>(cacheKey, ct);
+            if (cached is not null)
+                return cached;
+
+            var fresh = await reader.GetSlaPerformanceReportAsync(tenantId, serviceId, from, to, ct);
+            await cache.SetAsync(cacheKey, fresh, CacheDuration, ct);
+            return fresh;
+        }
 
         return await reader.GetSlaPerformanceReportAsync(tenantId, serviceId, from, to, ct);
     }

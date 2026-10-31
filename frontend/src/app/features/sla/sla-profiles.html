@@ -6,13 +6,17 @@
 </header>
 <main id="main-content" class="page-content" tabindex="-1">
   <nav aria-label="Breadcrumb">
-    <a routerLink="/workspace">Workspace</a> / <a routerLink="/settings">Settings</a> /
-    <span>SLA profiles</span>
+    <a routerLink="/workspace">{{ 'common.workspace' | translate: 'Workspace' }}</a> /
+    <a routerLink="/settings">{{ 'nav.settings' | translate: 'Settings' }}</a> /
+    <span>{{ 'sla.title' | translate: 'SLA profiles' }}</span>
   </nav>
-  <h1>SLA profiles</h1>
+  <h1>{{ 'sla.title' | translate: 'SLA profiles' }}</h1>
   <p>
-    Organize service-level configurations. Creating a draft profile does not start a clock or
-    activate an SLA.
+    {{
+      'sla.subtitle'
+        | translate
+          : 'Organize service-level configurations. Creating a draft profile does not start a clock or activate an SLA.'
+    }}
   </p>
   @if (created(); as row) {
     <p class="inline-alert" role="status">Draft profile created: {{ row.name }}.</p>
@@ -21,7 +25,9 @@
     <p class="inline-alert" role="alert">{{ mutationError() }}</p>
   }
   @if (uncertain()) {
-    <button mat-stroked-button type="button" (click)="load(1)">Reload profiles</button>
+    <button mat-stroked-button type="button" (click)="load(1)">
+      {{ 'sla.reloadProfiles' | translate: 'Reload profiles' }}
+    </button>
   }
   <section
     class="directory-panel"
@@ -30,33 +36,48 @@
   >
     <form class="filters" [formGroup]="filters" (ngSubmit)="apply()">
       <mat-form-field appearance="outline" subscriptSizing="dynamic"
-        ><mat-label>Profile name</mat-label
+        ><mat-label>{{ 'sla.searchLabel' | translate: 'Profile name' }}</mat-label
         ><input matInput formControlName="search" maxlength="200" [readonly]="busy() || saving()"
       /></mat-form-field>
       <mat-form-field appearance="outline" subscriptSizing="dynamic"
-        ><mat-label>Profile status</mat-label
+        ><mat-label>{{ 'sla.statusLabel' | translate: 'Profile status' }}</mat-label
         ><mat-select formControlName="status"
-          ><mat-option value="">All statuses</mat-option><mat-option value="DRAFT">Draft</mat-option
-          ><mat-option value="ACTIVE">Active</mat-option
-          ><mat-option value="INACTIVE">Inactive</mat-option></mat-select
+          ><mat-option value="">{{
+            'departments.allStatuses' | translate: 'All statuses'
+          }}</mat-option
+          ><mat-option value="DRAFT">{{ 'reqStatus.DRAFT' | translate: 'Draft' }}</mat-option
+          ><mat-option value="ACTIVE">{{ 'departments.active' | translate: 'Active' }}</mat-option
+          ><mat-option value="INACTIVE">{{
+            'departments.inactive' | translate: 'Inactive'
+          }}</mat-option></mat-select
         ></mat-form-field
       >
-      <button mat-flat-button type="submit" [disabled]="busy() || saving()">Apply filters</button>
+      <button mat-flat-button type="submit" [disabled]="busy() || saving()">
+        {{ 'departments.applyFilters' | translate: 'Apply filters' }}
+      </button>
     </form>
     @if (busy()) {
-      <p role="status" class="directory-feedback">Loading SLA profiles…</p>
+      <p role="status" class="directory-feedback">
+        {{ 'sla.loading' | translate: 'Loading SLA profiles…' }}
+      </p>
     } @else if (denied()) {
       <p role="alert" class="directory-feedback">
-        You no longer have access to this SLA profile catalog.
+        {{ 'sla.denied' | translate: 'You no longer have access to this SLA profile catalog.' }}
       </p>
     } @else if (error()) {
       <div class="directory-feedback">
-        <p role="alert">SLA profiles could not be loaded. Please try again.</p>
-        <button mat-stroked-button type="button" (click)="load(page())">Retry</button>
+        <p role="alert">
+          {{ 'sla.error' | translate: 'SLA profiles could not be loaded. Please try again.' }}
+        </p>
+        <button mat-stroked-button type="button" (click)="load(page())">
+          {{ 'common.retry' | translate: 'Retry' }}
+        </button>
       </div>
     } @else if (result(); as data) {
       @if (data.items.length === 0) {
-        <p role="status" class="directory-feedback">No SLA profiles match these filters.</p>
+        <p role="status" class="directory-feedback">
+          {{ 'sla.empty' | translate: 'No SLA profiles match these filters.' }}
+        </p>
       } @else {
         <table>
           <caption>
@@ -64,8 +85,8 @@
           </caption>
           <thead>
             <tr>
-              <th scope="col">Profile</th>
-              <th scope="col">Status</th>
+              <th scope="col">{{ 'sla.col.profile' | translate: 'Profile' }}</th>
+              <th scope="col">{{ 'common.status' | translate: 'Status' }}</th>
             </tr>
           </thead>
           <tbody>
@@ -86,8 +107,13 @@
       }
       <nav class="pagination" aria-label="SLA profile pages">
         <span role="status"
-          >{{ data.total }} {{ data.total === 1 ? 'profile' : 'profiles' }} · Page
-          {{ data.page }}</span
+          >{{ data.total }}
+          {{
+            data.total === 1
+              ? ('sla.profile' | translate: 'profile')
+              : ('sla.profiles' | translate: 'profiles')
+          }}
+          · {{ 'common.page' | translate: 'Page' }} {{ data.page }}</span
         >
         <button
           mat-stroked-button
@@ -95,7 +121,7 @@
           [disabled]="saving() || data.page <= 1"
           (click)="load(data.page - 1)"
         >
-          Previous
+          {{ 'common.previous' | translate: 'Previous' }}
         </button>
         <button
           mat-stroked-button
@@ -103,28 +129,37 @@
           [disabled]="saving() || data.page * data.pageSize >= data.total"
           (click)="load(data.page + 1)"
         >
-          Next
+          {{ 'common.next' | translate: 'Next' }}
         </button>
       </nav>
       @if (session.hasPermission('sla.configure')) {
         <section class="profile-form" aria-labelledby="create-profile-title">
-          <h2 id="create-profile-title">Create SLA profile</h2>
+          <h2 id="create-profile-title">
+            {{ 'sla.createProfile' | translate: 'Create SLA profile' }}
+          </h2>
           <p>
-            This saves a named draft only. Open a profile to inspect its saved version history.
-            Calendar and version editing are not available in this screen yet.
+            {{
+              'sla.createProfileDesc'
+                | translate
+                  : 'This saves a named draft only. Open a profile to inspect its saved version history. Calendar and version editing are not available in this screen yet.'
+            }}
           </p>
           <form [formGroup]="createForm" (ngSubmit)="create()">
             <mat-form-field appearance="outline" subscriptSizing="dynamic"
-              ><mat-label>New profile name</mat-label
+              ><mat-label>{{ 'sla.newProfileName' | translate: 'New profile name' }}</mat-label
               ><input
                 matInput
                 formControlName="name"
                 maxlength="200"
                 [readonly]="saving()"
-              /><mat-error>Enter a name up to 200 characters.</mat-error></mat-form-field
+              /><mat-error>Vui lòng nhập tên tối đa 200 ký tự.</mat-error></mat-form-field
             >
             <button mat-flat-button type="submit" [disabled]="saving() || uncertain()">
-              {{ saving() ? 'Creating…' : 'Create draft profile' }}
+              {{
+                saving()
+                  ? ('services.creating' | translate: 'Creating…')
+                  : ('sla.createDraftProfile' | translate: 'Create draft profile')
+              }}
             </button>
           </form>
         </section>

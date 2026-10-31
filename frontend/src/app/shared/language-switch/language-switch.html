@@ -1,0 +1,42 @@
+<div class="lang-dropdown-wrapper" [class.open]="isOpen()">
+  <button
+    type="button"
+    class="lang-dropdown-trigger"
+    (click)="toggleDropdown()"
+    [attr.aria-expanded]="isOpen()"
+    aria-haspopup="listbox"
+    aria-label="Select language"
+    id="lang-menu-trigger"
+  >
+    <span class="lang-flag" aria-hidden="true">{{ i18n.currentLanguageOption().flag }}</span>
+    <span class="lang-current-code">{{ i18n.currentLanguageOption().code.toUpperCase() }}</span>
+    <span class="lang-chevron" [class.rotated]="isOpen()" aria-hidden="true">▾</span>
+  </button>
+
+  <div
+    class="lang-dropdown-menu"
+    role="listbox"
+    aria-labelledby="lang-menu-trigger"
+    [attr.aria-hidden]="!isOpen()"
+    tabindex="-1"
+  >
+    @for (lang of i18n.supportedLanguages; track lang.code) {
+      <button
+        type="button"
+        class="lang-dropdown-item lang-pill"
+        role="option"
+        [attr.aria-selected]="i18n.currentLanguage() === lang.code"
+        [class.active]="i18n.currentLanguage() === lang.code"
+        (click)="selectLanguage(lang.code)"
+        [title]="lang.nativeName"
+      >
+        <span class="lang-flag" aria-hidden="true">{{ lang.flag }}</span>
+        <span class="lang-item-name">{{ lang.nativeName }}</span>
+        <span class="lang-code-tag">({{ lang.code.toUpperCase() }})</span>
+        @if (i18n.currentLanguage() === lang.code) {
+          <span class="lang-check" aria-hidden="true">✓</span>
+        }
+      </button>
+    }
+  </div>
+</div>

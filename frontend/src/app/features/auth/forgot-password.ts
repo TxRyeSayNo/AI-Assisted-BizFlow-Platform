@@ -1,75 +1,32 @@
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { Component, OnDestroy, inject, signal } from '@angular/core';
+import { Component, OnDestroy, effect, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
+import { I18nService } from '../../core/i18n/i18n.service';
+import { TranslatePipe } from '../../core/i18n/translate.pipe';
+import { ToastService } from '../../core/toast/toast.service';
 
-interface ToastAlert {
+export interface ToastAlert {
   title: string;
   message: string;
 }
 
 @Component({
   selector: 'bf-forgot-password',
-  imports: [ReactiveFormsModule, MatButtonModule, MatFormFieldModule, MatInputModule, RouterLink],
+  imports: [
+    ReactiveFormsModule,
+    MatButtonModule,
+    MatFormFieldModule,
+    MatInputModule,
+    RouterLink,
+    TranslatePipe,
+  ],
   styleUrl: './forgot-password.scss',
   template: `
-    <!-- Top-Right Floating Pop-Up Alert (Fades out smoothly after 3s) -->
-    @if (toast(); as currentToast) {
-      <aside
-        id="auth-top-toast"
-        class="auth-top-toast"
-        [class.toast-fade-out]="toastFading()"
-        role="alert"
-        aria-live="assertive"
-      >
-        <div class="toast-icon-wrap" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" class="toast-svg">
-            <circle cx="12" cy="12" r="10" />
-            <line x1="12" y1="8" x2="12" y2="12" />
-            <line x1="12" y1="16" x2="12.01" y2="16" />
-          </svg>
-        </div>
-        <div class="toast-content">
-          <div class="toast-title">{{ currentToast.title }}</div>
-          <div class="toast-desc">{{ currentToast.message }}</div>
-        </div>
-        <button type="button" class="toast-close-btn" (click)="dismissToast()" aria-label="Close notification">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <line x1="18" y1="6" x2="6" y2="18" />
-            <line x1="6" y1="6" x2="18" y2="18" />
-          </svg>
-        </button>
-
-        <!-- Precise SVG Rounded Perimeter Border Runner (3s full loop, perfectly matches corner radius) -->
-        <svg class="toast-perimeter-svg" aria-hidden="true" width="100%" height="100%">
-          <rect
-            class="toast-perimeter-track"
-            x="1.5"
-            y="1.5"
-            width="calc(100% - 3px)"
-            height="calc(100% - 3px)"
-            rx="14.5"
-            ry="14.5"
-            pathLength="100"
-          />
-          <rect
-            class="toast-perimeter-runner"
-            x="1.5"
-            y="1.5"
-            width="calc(100% - 3px)"
-            height="calc(100% - 3px)"
-            rx="14.5"
-            ry="14.5"
-            pathLength="100"
-          />
-        </svg>
-      </aside>
-    }
-
     <div class="auth-page light-ocean-theme">
       <!-- Ambient Light Ocean Animated Atmosphere (CSS-Only, No Image) -->
       <div class="light-ocean-ambient" aria-hidden="true">
@@ -92,30 +49,53 @@ interface ToastAlert {
                   <span class="brand-dot" aria-hidden="true"></span>
                 </div>
                 <div class="eyebrow-badge">
-                  <span class="eyebrow">Account recovery</span>
+                  <span class="eyebrow">{{
+                    'forgot.eyebrow' | translate: 'Account recovery'
+                  }}</span>
                 </div>
-                <h1 id="reset-title">Forgot your password?</h1>
+                <h1 id="reset-title">
+                  {{ 'forgot.title' | translate: 'Forgot your password?' }}
+                </h1>
                 <p class="supporting-copy">
-                  Enter your employee code or company email to receive reset instructions.
+                  {{
+                    'forgot.subtitle'
+                      | translate
+                        : "We'll send a reset link to your company email. If you do not have access to that email, contact your company administrator."
+                  }}
                 </p>
               </div>
 
               @if (sent()) {
                 <div class="confirmation-panel" role="status">
                   <div class="status-icon-wrap" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="status-icon">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      class="status-icon"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                      />
                     </svg>
                   </div>
                   <p class="inline-alert success-message">
-                    If a matching account can receive email, reset instructions will be sent. Include your
-                    workspace key if your identifier is shared across companies.
+                    {{
+                      'forgot.successMessage'
+                        | translate
+                          : 'If a matching account can receive email, reset instructions will be sent. Include your workspace key if your identifier is shared across companies.'
+                    }}
                   </p>
                 </div>
               } @else {
                 <form [formGroup]="form" (ngSubmit)="submit()" [attr.aria-busy]="busy()">
                   <mat-form-field appearance="outline" subscriptSizing="dynamic">
-                    <mat-label>Employee code or company email</mat-label>
+                    <mat-label>{{
+                      'forgot.identifier' | translate: 'Employee code or company email'
+                    }}</mat-label>
                     <input
                       matInput
                       formControlName="identifier"
@@ -126,7 +106,9 @@ interface ToastAlert {
                   </mat-form-field>
 
                   <mat-form-field appearance="outline" subscriptSizing="dynamic">
-                    <mat-label>Workspace key</mat-label>
+                    <mat-label>{{
+                      'forgot.workspaceKey' | translate: 'Workspace key'
+                    }}</mat-label>
                     <input
                       matInput
                       formControlName="tenantKey"
@@ -136,6 +118,11 @@ interface ToastAlert {
                     />
                   </mat-form-field>
 
+                  <!-- Accessible alert announcement without layout displacement -->
+                  @if (error()) {
+                    <div class="sr-only" role="alert" aria-live="assertive">{{ error() }}</div>
+                  }
+
                   <!-- Primary Action Button with Animated Rotating Laser Border -->
                   <div class="sign-in-btn-animated-border">
                     <button
@@ -143,13 +130,12 @@ interface ToastAlert {
                       id="send-reset-btn"
                       class="sign-in-button"
                       type="submit"
-                      (click)="submit()"
                       [disabled]="busy()"
                     >
                       @if (busy()) {
-                        <span>Sending…</span>
+                        <span>{{ 'forgot.submitting' | translate: 'Sending…' }}</span>
                       } @else {
-                        <span>Send reset link</span>
+                        <span>{{ 'forgot.submit' | translate: 'Send reset link' }}</span>
                       }
                     </button>
                   </div>
@@ -157,7 +143,11 @@ interface ToastAlert {
               }
 
               <div class="auth-card-footer">
-                <p class="auth-help"><a routerLink="/login">Back to sign in</a></p>
+                <p class="auth-help">
+                  <a routerLink="/login">{{
+                    'auth.backToSignIn' | translate: 'Back to sign in'
+                  }}</a>
+                </p>
               </div>
             </section>
           </div>
@@ -172,6 +162,9 @@ interface ToastAlert {
 })
 export class ForgotPassword implements OnDestroy {
   private readonly http = inject(HttpClient);
+  private readonly i18n = inject(I18nService);
+  private readonly toastService = inject(ToastService);
+
   readonly busy = signal(false);
   readonly sent = signal(false);
   readonly error = signal('');
@@ -186,6 +179,15 @@ export class ForgotPassword implements OnDestroy {
     tenantKey: ['', [Validators.maxLength(80), Validators.pattern(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)]],
   });
 
+  constructor() {
+    effect(() => {
+      const err = this.error();
+      if (err) {
+        this.toastService.error(err);
+      }
+    });
+  }
+
   ngOnDestroy(): void {
     this.clearToastTimers();
   }
@@ -199,8 +201,8 @@ export class ForgotPassword implements OnDestroy {
     this.clearToastTimers();
     this.toast.set({ title, message });
     this.toastFading.set(false);
+    this.toastService.error(message, title);
 
-    // Visible for exactly 3s, then fades away gradually over 650ms without abrupt disappearance
     this.toastTimer = setTimeout(() => {
       this.toastFading.set(true);
       this.toastFadeTimer = setTimeout(() => {
@@ -268,14 +270,26 @@ export class ForgotPassword implements OnDestroy {
       .subscribe({
         next: () => {
           this.sent.set(true);
+          this.toastService.success(
+            this.i18n.t(
+              'forgot.successToast',
+              'Đã gửi liên kết khôi phục mật khẩu. Vui lòng kiểm tra email của bạn.',
+            ),
+          );
           this.dismissToast();
         },
         error: (failure: HttpErrorResponse) => {
           const title = failure.status === 429 ? 'Too many requests' : 'Service unavailable';
           const msg =
             failure.status === 429
-              ? 'Too many requests. Please wait before trying again.'
-              : 'Password reset is temporarily unavailable. Please try again or contact your administrator.';
+              ? this.i18n.t(
+                  'forgot.errTooMany',
+                  'Too many requests. Please wait before trying again.',
+                )
+              : this.i18n.t(
+                  'forgot.errUnavailable',
+                  'Password reset is temporarily unavailable. Please try again or contact your administrator.',
+                );
           this.error.set(msg);
           this.showToast(title, msg);
         },

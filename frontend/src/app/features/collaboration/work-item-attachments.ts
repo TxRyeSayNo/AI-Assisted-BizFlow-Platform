@@ -1,10 +1,13 @@
-import { Component, Input, OnInit, inject, signal } from '@angular/core';
+import { Component, Input, OnInit, effect, inject, signal } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { MatButtonModule } from '@angular/material/button';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { lastValueFrom } from 'rxjs';
 import { SessionService } from '../../core/auth/session';
+import { TranslatePipe } from '../../core/i18n/translate.pipe';
+import { DocumentSummarizerDialog } from '../../shared/ai/document-summarizer-dialog';
+import { ToastService } from '../../core/toast/toast.service';
 
 export interface AttachmentItem {
   attachmentId: string;
@@ -33,7 +36,14 @@ export interface UploadSessionResult {
 @Component({
   selector: 'bf-work-item-attachments',
   standalone: true,
-  imports: [CommonModule, DatePipe, MatButtonModule, MatProgressBarModule],
+  imports: [
+    CommonModule,
+    DatePipe,
+    MatButtonModule,
+    MatProgressBarModule,
+    TranslatePipe,
+    DocumentSummarizerDialog,
+  ],
   templateUrl: './work-item-attachments.html',
   styleUrls: ['./work-item-attachments.scss'],
 })
@@ -43,12 +53,39 @@ export class WorkItemAttachments implements OnInit {
 
   readonly session = inject(SessionService);
   private readonly http = inject(HttpClient);
+  private readonly toast = inject(ToastService);
 
   readonly attachments = signal<AttachmentItem[]>([]);
   readonly loading = signal(false);
   readonly error = signal('');
   readonly uploading = signal(false);
   readonly uploadMessage = signal('');
+
+  readonly summarizerOpen = signal(false);
+  readonly activeAttachmentForSummary = signal<AttachmentItem | null>(null);
+
+  constructor() {
+    effect(() => {
+      const err = this.error();
+      if (err) {
+        this.toast.error(err);
+      }
+    });
+  }
+
+  openAiSummarizer(att: AttachmentItem) {
+    this.activeAttachmentForSummary.set(att);
+    this.summarizerOpen.set(true);
+  }
+
+  closeAiSummarizer() {
+    this.summarizerOpen.set(false);
+    this.activeAttachmentForSummary.set(null);
+  }
+
+  onTasksCreatedFromSummary(_tasks: any[]) {
+    // Optionally trigger refresh if we are on a task/request view
+  }
 
   // 500 MB hard limit
   readonly MAX_FILE_SIZE = 524288000;
@@ -84,7 +121,7 @@ export class WorkItemAttachments implements OnInit {
 
     const file = files[0];
     if (file.size > this.MAX_FILE_SIZE) {
-      this.error.set('File size exceeds maximum limit of 500 MB.');
+      this.error.set('Dung lượng tệp vượt quá giới hạn tối đa 500 MB.');
       inputElement.value = '';
       return;
     }
@@ -102,7 +139,7 @@ export class WorkItemAttachments implements OnInit {
           fileName: file.name,
           contentType: file.type || 'application/octet-stream',
           sizeBytes: file.size,
-        })
+        }),
       );
 
       if (!sessionResult) throw new Error('Failed to create upload session.');
@@ -113,7 +150,7 @@ export class WorkItemAttachments implements OnInit {
       await lastValueFrom(
         this.http.put(sessionResult.uploadUrl, fileBytes, {
           headers: { 'Content-Type': file.type || 'application/octet-stream' },
-        })
+        }),
       );
 
       // Step 3: Compute SHA-256 hash
@@ -126,7 +163,7 @@ export class WorkItemAttachments implements OnInit {
         this.http.post<AttachmentItem>('/api/v1/attachments/finalize', {
           attachmentId: sessionResult.attachmentId,
           clientHash: hashHex,
-        })
+        }),
       );
 
       if (finalized) {
@@ -142,7 +179,7 @@ export class WorkItemAttachments implements OnInit {
   }
 
   deleteAttachment(attachmentId: string) {
-    if (!confirm('Are you sure you want to delete this attachment?')) return;
+    if (!confirm('Bạn có chắc chắn muốn xóa tệp đính kèm này không?')) return;
 
     this.error.set('');
     this.http.delete(`/api/v1/attachments/${attachmentId}`).subscribe({
@@ -170,7 +207,11 @@ export class WorkItemAttachments implements OnInit {
 
   private async computeSha256(buffer: ArrayBuffer): Promise<string> {
     try {
-      if (typeof crypto !== 'undefined' && crypto.subtle && typeof crypto.subtle.digest === 'function') {
+      if (
+        typeof crypto !== 'undefined' &&
+        crypto.subtle &&
+        typeof crypto.subtle.digest === 'function'
+      ) {
         const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
         const hashArray = Array.from(new Uint8Array(hashBuffer));
         return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');

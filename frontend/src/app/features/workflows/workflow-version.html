@@ -6,36 +6,49 @@
 </header>
 <main id="main-content" class="page-content" tabindex="-1">
   <nav aria-label="Breadcrumb">
-    <a routerLink="/workspace">Workspace</a> / <a routerLink="/settings">Settings</a> /
-    <a routerLink="/settings/workflows">Workflows</a> / <span>Version</span>
+    <a routerLink="/workspace">{{ 'common.workspace' | translate: 'Workspace' }}</a> /
+    <a routerLink="/settings">{{ 'nav.settings' | translate: 'Settings' }}</a> /
+    <a routerLink="/settings/workflows">{{ 'workflows.title' | translate: 'Workflows' }}</a> /
+    <span>{{ 'workflows.version' | translate: 'Version' }}</span>
   </nav>
-  <h1>Workflow version</h1>
+  <h1>{{ 'workflows.versionTitle' | translate: 'Workflow version' }}</h1>
   <section class="directory-panel" aria-label="Workflow version details" [attr.aria-busy]="busy()">
     @if (busy()) {
-      <p class="directory-feedback" role="status">Loading workflow version…</p>
+      <p class="directory-feedback" role="status">
+        {{ 'workflows.loadingVersion' | translate: 'Loading workflow version…' }}
+      </p>
     } @else if (failure()) {
       <div class="directory-feedback">
         <p role="alert">{{ failure() }}</p>
         @if (retryable()) {
-          <button mat-stroked-button type="button" (click)="load()">Retry</button>
+          <button mat-stroked-button type="button" (click)="load()">
+            {{ 'common.retry' | translate: 'Retry' }}
+          </button>
         }
       </div>
     } @else if (version(); as data) {
       <section class="version-section">
         <h2>{{ data.name }}</h2>
         <p>
-          {{ data.businessType === 'TASK' ? 'Task' : 'Request' }} · Version {{ data.versionNo }} ·
+          {{ data.businessType === 'TASK' ? 'Task' : 'Request' }} ·
+          {{ 'workflows.version' | translate: 'Version' }} {{ data.versionNo }} ·
           <span class="status-label">{{ data.status }}</span>
         </p>
         @if (data.status === 'DRAFT') {
           <p>
-            This draft is not published and cannot run. Step editing, validation and publishing are
-            not available yet.
+            {{
+              'workflows.draftNote'
+                | translate
+                  : 'This draft is not published and cannot run. Step editing, validation and publishing are not available yet.'
+            }}
           </p>
         } @else {
           <p>
-            Published configuration is immutable. This view is read-only; runtime execution is not
-            available yet.
+            {{
+              'workflows.publishedNote'
+                | translate
+                  : 'Published configuration is immutable. This view is read-only; runtime execution is not available yet.'
+            }}
           </p>
         }
         @if (data.publishedAt) {
@@ -48,10 +61,13 @@
           aria-label="New workflow version"
           [attr.aria-busy]="creating()"
         >
-          <h2>New version</h2>
+          <h2>{{ 'workflows.newVersion' | translate: 'New version' }}</h2>
           <p>
-            Create an empty draft with the next version number. Existing configuration is not copied
-            or changed.
+            {{
+              'workflows.newVersionDesc'
+                | translate
+                  : 'Create an empty draft with the next version number. Existing configuration is not copied or changed.'
+            }}
           </p>
           @if (created(); as draft) {
             <p role="status">Draft version {{ draft.latestVersionNo }} created.</p>
@@ -63,7 +79,7 @@
                 'versions',
                 draft.latestVersionId,
               ]"
-              >Open new draft</a
+              >{{ 'workflows.openNewDraft' | translate: 'Open new draft' }}</a
             >
           } @else {
             <button
@@ -72,7 +88,11 @@
               [disabled]="creating()"
               (click)="createNextVersion()"
             >
-              {{ creating() ? 'Creating draft…' : 'Create empty version' }}
+              {{
+                creating()
+                  ? ('workflows.creatingDraft' | translate: 'Creating draft…')
+                  : ('workflows.createEmptyVersion' | translate: 'Create empty version')
+              }}
             </button>
           }
           @if (createFailure()) {
@@ -81,9 +101,9 @@
         </section>
       }
       <section class="version-section">
-        <h2>Steps</h2>
+        <h2>{{ 'workflows.steps' | translate: 'Steps' }}</h2>
         @if (data.steps.length === 0) {
-          <p>No steps have been configured.</p>
+          <p>{{ 'workflows.noSteps' | translate: 'No steps have been configured.' }}</p>
         } @else {
           <ol>
             @for (step of data.steps; track step.stepId) {
@@ -91,7 +111,7 @@
                 <h3>{{ step.name }}</h3>
                 <p>{{ step.stepCode }} · {{ step.type }} · Order {{ step.orderNo }}</p>
                 <details>
-                  <summary>Stored step configuration</summary>
+                  <summary>Cấu hình bước đã lưu</summary>
                   <pre>{{ step.config | json }}</pre>
                 </details>
               </li>
@@ -100,9 +120,9 @@
         }
       </section>
       <section class="version-section">
-        <h2>Transitions</h2>
+        <h2>{{ 'workflows.transitions' | translate: 'Transitions' }}</h2>
         @if (data.transitions.length === 0) {
-          <p>No transitions have been configured.</p>
+          <p>{{ 'workflows.noTransitions' | translate: 'No transitions have been configured.' }}</p>
         } @else {
           <ul>
             @for (transition of data.transitions; track transition.transitionId) {
@@ -110,7 +130,7 @@
                 {{ transition.fromState }} → {{ transition.toState }}
                 @if (transition.guard) {
                   <details>
-                    <summary>Stored guard configuration</summary>
+                    <summary>Cấu hình điều kiện bảo vệ đã lưu</summary>
                     <pre>{{ transition.guard | json }}</pre>
                   </details>
                 }
@@ -120,12 +140,16 @@
         }
       </section>
       <section class="version-section">
-        <h2>Visual Workflow Flowchart</h2>
-        <bf-workflow-designer [businessType]="data.businessType === 'TASK' ? 'TASK' : 'REQUEST'"></bf-workflow-designer>
+        <h2>{{ 'workflows.visualFlowchart' | translate: 'Visual Workflow Flowchart' }}</h2>
+        <bf-workflow-designer
+          [businessType]="data.businessType === 'TASK' ? 'TASK' : 'REQUEST'"
+        ></bf-workflow-designer>
       </section>
       <section class="version-section">
         <details>
-          <summary>Stored definition snapshot</summary>
+          <summary>
+            {{ 'workflows.storedSnapshot' | translate: 'Stored definition snapshot' }}
+          </summary>
           <pre>{{ data.definition | json }}</pre>
         </details>
       </section>

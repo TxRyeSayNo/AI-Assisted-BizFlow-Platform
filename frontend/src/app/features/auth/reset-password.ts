@@ -1,6 +1,6 @@
 import { Location } from '@angular/common';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { Component, inject, signal } from '@angular/core';
+import { Component, effect, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -8,10 +8,20 @@ import { MatInputModule } from '@angular/material/input';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
 import { SessionService } from '../../core/auth/session';
+import { I18nService } from '../../core/i18n/i18n.service';
+import { TranslatePipe } from '../../core/i18n/translate.pipe';
+import { ToastService } from '../../core/toast/toast.service';
 
 @Component({
   selector: 'bf-reset-password',
-  imports: [ReactiveFormsModule, MatButtonModule, MatFormFieldModule, MatInputModule, RouterLink],
+  imports: [
+    ReactiveFormsModule,
+    MatButtonModule,
+    MatFormFieldModule,
+    MatInputModule,
+    RouterLink,
+    TranslatePipe,
+  ],
   template: `
     <div class="auth-page">
       <header class="public-header">
@@ -21,52 +31,75 @@ import { SessionService } from '../../core/auth/session';
       </header>
       <main id="main-content" class="auth-content" tabindex="-1">
         <section class="auth-intro">
-          <span class="eyebrow">Account security</span>
-          <h1>Choose a new password.</h1>
+          <span class="eyebrow">{{ 'reset.eyebrow' | translate: 'Account security' }}</span>
+          <h1>{{ 'reset.title' | translate: 'Choose a new password.' }}</h1>
           <p>
-            Reset links are short-lived and single-use. Changing your password signs out all
-            existing sessions.
+            {{
+              'reset.subtitle'
+                | translate
+                  : 'Reset links are short-lived and single-use. Changing your password signs out all existing sessions.'
+            }}
           </p>
         </section>
         <section class="auth-card" aria-labelledby="reset-title">
-          <h2 id="reset-title">Reset your password</h2>
+          <h2 id="reset-title">{{ 'reset.title' | translate: 'Reset your password' }}</h2>
           @if (complete()) {
             <p class="inline-alert" role="status">
-              Your password has been changed. Sign in with your new password.
+              {{
+                'reset.success'
+                  | translate: 'Your password has been changed. Sign in with your new password.'
+              }}
             </p>
           } @else if (!hasToken()) {
             <p class="inline-alert" role="alert">
-              Open the reset link from your email, or request a new link.
+              {{
+                'reset.noToken'
+                  | translate: 'Open the reset link from your email, or request a new link.'
+              }}
             </p>
           } @else {
             <p class="supporting-copy">
-              Use at least 12 characters and four distinct characters. Your company may require a
-              stronger password.
+              {{
+                'reset.passwordReqs'
+                  | translate
+                    : 'Use at least 12 characters and four distinct characters. Your company may require a stronger password.'
+              }}
             </p>
             <form [formGroup]="form" (ngSubmit)="submit()" [attr.aria-busy]="busy()">
               <mat-form-field appearance="outline"
-                ><mat-label>Employee code or company email</mat-label>
+                ><mat-label>{{
+                  'forgot.identifier' | translate: 'Employee code or company email'
+                }}</mat-label>
                 <input
                   matInput
                   formControlName="identifier"
                   autocomplete="username"
                   [readonly]="busy()"
                 />
-                <mat-error>Enter your employee code or company email.</mat-error></mat-form-field
+                <mat-error>{{
+                  'forgot.identifierReq' | translate: 'Enter your employee code or company email.'
+                }}</mat-error></mat-form-field
               >
               <mat-form-field appearance="outline" subscriptSizing="dynamic"
-                ><mat-label>Workspace key</mat-label>
+                ><mat-label>{{
+                  'forgot.workspaceKey' | translate: 'Workspace key'
+                }}</mat-label>
                 <input
                   matInput
                   formControlName="tenantKey"
                   autocomplete="organization"
                   [readonly]="busy()"
                 />
-                <mat-hint>Optional; the reset link is bound to your account.</mat-hint
-                ><mat-error>Use a valid company workspace key.</mat-error></mat-form-field
+                <mat-hint>{{
+                  'forgot.workspaceKeyHint'
+                    | translate: 'Optional; the reset link is bound to your account.'
+                }}</mat-hint
+                ><mat-error>{{
+                  'forgot.workspaceKeyInvalid' | translate: 'Use a valid company workspace key.'
+                }}</mat-error></mat-form-field
               >
               <mat-form-field appearance="outline"
-                ><mat-label>New password</mat-label>
+                ><mat-label>{{ 'reset.newPassword' | translate: 'New password' }}</mat-label>
                 <input
                   matInput
                   type="password"
@@ -74,10 +107,14 @@ import { SessionService } from '../../core/auth/session';
                   autocomplete="new-password"
                   [readonly]="busy()"
                 />
-                <mat-error>Use 12–1024 characters.</mat-error></mat-form-field
+                <mat-error>{{
+                  'reset.passwordLength' | translate: 'Use 12–1024 characters.'
+                }}</mat-error></mat-form-field
               >
               <mat-form-field appearance="outline"
-                ><mat-label>Confirm new password</mat-label>
+                ><mat-label>{{
+                  'reset.confirmPassword' | translate: 'Confirm new password'
+                }}</mat-label>
                 <input
                   matInput
                   type="password"
@@ -85,19 +122,29 @@ import { SessionService } from '../../core/auth/session';
                   autocomplete="new-password"
                   [readonly]="busy()"
                 />
-                <mat-error>Confirm your new password.</mat-error></mat-form-field
+                <mat-error>{{
+                  'reset.confirmPasswordReq' | translate: 'Confirm your new password.'
+                }}</mat-error></mat-form-field
               >
+              <!-- Accessible alert announcement without layout displacement -->
               @if (error()) {
-                <p class="inline-alert" role="alert">{{ error() }}</p>
+                <div class="sr-only" role="alert" aria-live="assertive">{{ error() }}</div>
               }
               <button mat-flat-button class="sign-in-button" type="submit" [disabled]="busy()">
-                {{ busy() ? 'Changing password…' : 'Change password' }}
+                {{
+                  busy()
+                    ? ('reset.submitting' | translate: 'Changing password…')
+                    : ('reset.submit' | translate: 'Change password')
+                }}
               </button>
             </form>
           }
           <p class="auth-help">
-            <a routerLink="/forgot-password">Request a new reset link</a> ·
-            <a routerLink="/login">Back to sign in</a>
+            <a routerLink="/forgot-password">{{
+              'reset.requestNewLink' | translate: 'Request a new reset link'
+            }}</a>
+            ·
+            <a routerLink="/login">{{ 'reset.backToSignIn' | translate: 'Back to sign in' }}</a>
           </p>
         </section>
       </main>
@@ -107,6 +154,8 @@ import { SessionService } from '../../core/auth/session';
 export class ResetPassword {
   private readonly http = inject(HttpClient);
   private readonly session = inject(SessionService);
+  private readonly i18n = inject(I18nService);
+  private readonly toast = inject(ToastService);
   private token =
     new URLSearchParams(inject(ActivatedRoute).snapshot.fragment ?? '').get('token') ?? '';
   readonly hasToken = signal(this.token.length > 0 && this.token.length <= 4096);
@@ -122,13 +171,20 @@ export class ResetPassword {
   constructor() {
     // Fragments never reach the server; remove the token from visible browser history immediately.
     inject(Location).replaceState('/reset-password');
+
+    effect(() => {
+      const err = this.error();
+      if (err) {
+        this.toast.error(err);
+      }
+    });
   }
   submit() {
     this.form.markAllAsTouched();
     if (this.busy() || this.form.invalid || !this.hasToken()) return;
     const values = this.form.getRawValue();
     if (values.newPassword !== values.confirmPassword) {
-      this.error.set('The new passwords do not match.');
+      this.error.set(this.i18n.t('reset.passwordMismatch', 'The new passwords do not match.'));
       return;
     }
     this.busy.set(true);

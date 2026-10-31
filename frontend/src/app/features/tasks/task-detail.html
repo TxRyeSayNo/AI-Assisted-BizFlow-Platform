@@ -4,90 +4,167 @@
   </a>
 </header>
 <main id="main-content" class="page-content" tabindex="-1" [attr.aria-busy]="busy()">
-  <nav aria-label="Breadcrumb"><a routerLink="/tasks">Tasks</a> / Task details</nav>
+  <nav aria-label="Breadcrumb">
+    <a routerLink="/tasks">{{ 'tasks.title' | translate: 'Tasks' }}</a> /
+    {{ 'taskDetail.breadcrumb' | translate: 'Task details' }}
+  </nav>
   @if (busy()) {
-    <p role="status">Loading task…</p>
+    <p role="status">{{ 'taskDetail.loading' | translate: 'Loading task…' }}</p>
   }
   @if (error()) {
     <p role="alert">{{ error() }}</p>
-    <button mat-stroked-button (click)="load()">Retry</button>
+    <button mat-stroked-button (click)="load()">{{ 'common.retry' | translate: 'Retry' }}</button>
   }
   @if (data(); as detail) {
-    <span class="eyebrow">Work management</span>
+    <span class="eyebrow">{{ 'tasks.eyebrow' | translate: 'Work management' }}</span>
     <h1>{{ detail.task.title }}</h1>
     @if (canStart()) {
       <button mat-flat-button type="button" (click)="start()">
-        {{ detail.task.status === 'OVERDUE' ? 'Resume work' : 'Start work' }}
+        {{
+          detail.task.status === 'OVERDUE'
+            ? 'Resume work'
+            : ('taskDetail.startWorkBtn' | translate: 'Start work')
+        }}
       </button>
     }
     @if (canSubmit()) {
-      <button mat-flat-button type="button" (click)="submit()">Submit result</button>
+      <button mat-flat-button type="button" (click)="submit()">
+        {{ 'taskDetail.submitResultBtn' | translate: 'Submit result' }}
+      </button>
     }
     @if (canConfirm()) {
-      <button mat-flat-button type="button" (click)="confirm()">Review result</button>
+      <button mat-flat-button type="button" (click)="confirm()">
+        {{ 'tasks.confirmTask' | translate: 'Review result' }}
+      </button>
     }
     @if (canAccept()) {
-      <button mat-flat-button type="button" (click)="accept()">Accept task</button>
+      <button mat-flat-button type="button" (click)="accept()">
+        {{ 'taskDetail.acceptBtn' | translate: 'Accept task' }}
+      </button>
     }
     @if (
       session.hasPermission('tasks.assign') &&
       (detail.task.status === 'DRAFT' || detail.task.status === 'REJECTED')
     ) {
-      <button mat-flat-button type="button" (click)="assign()">Assign task</button>
+      <button mat-flat-button type="button" (click)="assign()">
+        {{ 'taskDetail.assignBtn' | translate: 'Assign task' }}
+      </button>
     }
     @if (canArchive()) {
-      <button mat-stroked-button color="warn" type="button" (click)="archive()" [disabled]="archiving">
-        {{ archiving ? 'Archiving…' : 'Archive task' }}
+      <button
+        mat-stroked-button
+        color="warn"
+        type="button"
+        (click)="archive()"
+        [disabled]="archiving"
+      >
+        {{
+          archiving
+            ? ('taskDetail.archivingBtn' | translate: 'Archiving…')
+            : ('taskDetail.archiveBtn' | translate: 'Archive task')
+        }}
       </button>
     }
     <section class="directory-panel detail-section" aria-label="Task summary">
       <dl>
-        <dt>Status</dt>
-        <dd>{{ detail.task.status }}</dd>
-        <dt>Priority</dt>
-        <dd>{{ detail.task.priority }}</dd>
-        <dt>Created by</dt>
+        <dt>{{ 'common.status' | translate: 'Status' }}</dt>
+        <dd>{{ 'status.' + detail.task.status | translate: detail.task.status }}</dd>
+        <dt>{{ 'common.priority' | translate: 'Priority' }}</dt>
+        <dd>{{ 'priority.' + detail.task.priority | translate: detail.task.priority }}</dd>
+        <dt>{{ 'tasks.creator' | translate: 'Created by' }}</dt>
         <dd>{{ detail.creatorName ?? 'Unavailable' }}</dd>
-        <dt>Responsibility</dt>
+        <dt>{{ 'tasks.colResponsibility' | translate: 'Responsibility' }}</dt>
         <dd>
-          {{ detail.task.assignedUserName ?? detail.task.assignedDepartmentName ?? 'Unassigned' }}
+          {{
+            detail.task.assignedUserName ??
+              detail.task.assignedDepartmentName ??
+              ('tasks.unassigned' | translate: 'Unassigned')
+          }}
         </dd>
-        <dt>Deadline</dt>
+        <dt>{{ 'tasks.deadline' | translate: 'Deadline' }}</dt>
         <dd>
-          {{ detail.task.deadline ? (detail.task.deadline | date: 'medium') : 'No deadline' }}
+          {{
+            detail.task.deadline
+              ? (detail.task.deadline | date: 'medium')
+              : ('tasks.noDeadline' | translate: 'No deadline')
+          }}
         </dd>
-        <dt>Created</dt>
+        <dt>{{ 'taskDetail.created' | translate: 'Created' }}</dt>
         <dd>{{ detail.task.createdAt | date: 'medium' }}</dd>
       </dl>
-      <p>Dates shown in your local time.</p>
-      <p>{{ detail.description ?? 'No description' }}</p>
+      <p>Ngày giờ hiển thị theo giờ địa phương.</p>
+      <p>{{ detail.description ?? ('taskDetail.noDescription' | translate: 'No description') }}</p>
       @if (detail.task.requestId) {
-        <p>Linked request: <a [routerLink]="['/requests', detail.task.requestId]" class="request-link">{{ detail.task.requestId }}</a></p>
+        <p>
+          {{ 'taskDetail.sourceRequest' | translate: 'Linked request' }}:
+          <a [routerLink]="['/requests', detail.task.requestId]" class="request-link">{{
+            detail.task.requestId
+          }}</a>
+        </p>
       }
     </section>
 
     <section class="ai-assistant-card" aria-label="AI Task Intelligence">
       <div class="ai-header">
-        <span class="ai-badge">AI Intelligence</span>
-        <strong>AI Monitoring & Insights Assistant (FR-AI-005, FR-AI-006)</strong>
+        <span class="ai-badge">{{ 'ai.assistant' | translate: 'AI Intelligence' }}</span>
+        <strong>{{
+          'ai.predictiveAssessment'
+            | translate: 'Trợ lý Giám sát & Phân tích AI (FR-AI-005, FR-AI-006)'
+        }}</strong>
       </div>
-      <p class="ai-meta">Evaluate schedule risk against SLA commitments or generate automated business progress summaries from execution history.</p>
+      <p class="ai-meta">
+        Đánh giá rủi ro tiến độ theo cam kết thời gian hoặc tạo bản tóm tắt nghiệp vụ tự động từ
+        lịch sử thực hiện.
+      </p>
       <div class="ai-actions">
-        <button mat-stroked-button color="accent" type="button" (click)="evaluateRisk()" [disabled]="aiBusy()">
-          Evaluate Risk (AI Risk)
+        <button
+          mat-stroked-button
+          color="accent"
+          type="button"
+          (click)="evaluateRisk()"
+          [disabled]="aiBusy()"
+        >
+          {{ 'ai.risk' | translate: 'Đánh giá rủi ro (AI Risk)' }}
         </button>
-        <button mat-stroked-button type="button" (click)="summarizeProgress()" [disabled]="aiBusy()">
-          Progress Summary (AI Summary)
+        <button
+          mat-stroked-button
+          type="button"
+          (click)="summarizeProgress()"
+          [disabled]="aiBusy()"
+        >
+          {{ 'ai.summary' | translate: 'Tóm tắt tiến độ (AI Summary)' }}
+
         </button>
       </div>
       @if (aiError()) {
-        <p class="ai-meta" role="alert" style="color: #ef4444;">{{ aiError() }}</p>
+        <p class="ai-meta" role="alert" style="color: #ef4444">{{ aiError() }}</p>
       }
       @if (aiRisk(); as risk) {
-        <div class="ai-meta" style="margin-top: 0.75rem; padding: 0.5rem; background: rgba(0,0,0,0.02); border-radius: 4px;">
-          <p><strong>Risk Level:</strong> <span [style.color]="risk.riskLevel === 'CRITICAL' ? '#dc2626' : risk.riskLevel === 'HIGH' ? '#ea580c' : '#16a34a'">{{ risk.riskLevel }} (Score: {{ (risk.riskScore * 100).toFixed(0) }}%)</span></p>
+        <div
+          class="ai-meta"
+          style="
+            margin-top: 0.75rem;
+            padding: 0.5rem;
+            background: rgba(0, 0, 0, 0.02);
+            border-radius: 4px;
+          "
+        >
+          <p>
+            <strong>Mức độ rủi ro:</strong>
+            <span
+              [style.color]="
+                risk.riskLevel === 'CRITICAL'
+                  ? '#dc2626'
+                  : risk.riskLevel === 'HIGH'
+                    ? '#ea580c'
+                    : '#16a34a'
+              "
+              >{{ risk.riskLevel }} (Điểm: {{ (risk.riskScore * 100).toFixed(0) }}%)</span
+            >
+          </p>
+
           @if (risk.riskFactors?.length) {
-            <p><strong>Contributing Factors:</strong></p>
+            <p><strong>Yếu tố tác động:</strong></p>
             <ul>
               @for (factor of risk.riskFactors; track factor) {
                 <li>{{ factor }}</li>
@@ -95,21 +172,33 @@
             </ul>
           }
           @if (risk.mitigationAdvice?.length) {
-            <p><strong>Mitigation Recommendations:</strong></p>
+            <p><strong>Khuyến nghị giảm thiểu:</strong></p>
             <ul>
               @for (advice of risk.mitigationAdvice; track advice) {
                 <li>{{ advice }}</li>
               }
             </ul>
           }
-          <small style="color: #64748b;">* Advisory alert only; does not alter the formal status of the task.</small>
+          <small style="color: #64748b"
+            >* Cảnh báo mang tính tham vấn, không thay đổi trạng thái chính thức của công
+            việc.</small
+          >
         </div>
       }
       @if (aiSummary(); as sum) {
-        <div class="ai-meta" style="margin-top: 0.75rem; padding: 0.5rem; background: rgba(0,0,0,0.02); border-radius: 4px;">
-          <p><strong>Automated Summary:</strong> {{ sum.summary }}</p>
+        <div
+          class="ai-meta"
+          style="
+            margin-top: 0.75rem;
+            padding: 0.5rem;
+            background: rgba(0, 0, 0, 0.02);
+            border-radius: 4px;
+          "
+        >
+          <p><strong>Tóm tắt tự động:</strong> {{ sum.summary }}</p>
+
           @if (sum.keyMilestones?.length) {
-            <p><strong>Key Milestones:</strong></p>
+            <p><strong>Các cột mốc then chốt:</strong></p>
             <ul>
               @for (m of sum.keyMilestones; track m) {
                 <li>{{ m }}</li>
@@ -148,7 +237,7 @@
             [disabled]="detail[section.key].page <= 1"
             (click)="page(section.key, detail[section.key].page - 1)"
           >
-            Previous
+            {{ 'common.previous' | translate: 'Previous' }}
           </button>
           <button
             mat-stroked-button
@@ -157,7 +246,7 @@
             "
             (click)="page(section.key, detail[section.key].page + 1)"
           >
-            Next
+            {{ 'common.next' | translate: 'Next' }}
           </button>
         </nav>
       </section>

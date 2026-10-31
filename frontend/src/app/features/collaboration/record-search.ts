@@ -11,6 +11,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { SessionService } from '../../core/auth/session';
+import { TranslatePipe } from '../../core/i18n/translate.pipe';
 
 export interface RecordSearchResultItem {
   id: string;
@@ -48,9 +49,14 @@ export interface RecordSearchPagedResult {
     MatFormFieldModule,
     MatInputModule,
     MatSelectModule,
+    TranslatePipe,
   ],
   templateUrl: './record-search.html',
-  styleUrls: ['../organization/departments.scss', '../requests/requests.scss', './record-search.scss'],
+  styleUrls: [
+    '../organization/departments.scss',
+    '../requests/requests.scss',
+    './record-search.scss',
+  ],
 })
 export class RecordSearch implements OnInit {
   private readonly http = inject(HttpClient);
@@ -122,7 +128,7 @@ export class RecordSearch implements OnInit {
         priority: priority.toUpperCase(),
         includeArchived,
       },
-      { emitEvent: false }
+      { emitEvent: false },
     );
 
     this.currentPage = isNaN(page) || page < 1 ? 1 : page;

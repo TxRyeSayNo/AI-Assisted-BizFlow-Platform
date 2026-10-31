@@ -12,16 +12,22 @@ public sealed class AuthenticationService(IAuthenticationStore store, ICredentia
     public async Task<AuthenticationResponse> LoginAsync(string identifier, string password, string? tenantKey,
         CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrWhiteSpace(identifier) || identifier.Length > 320 || string.IsNullOrEmpty(password) || password.Length > 1024 || tenantKey?.Length > 80)
+        if (string.IsNullOrWhiteSpace(identifier) || identifier.Length > 320 ||
+            string.IsNullOrEmpty(password) || password.Length > 1024 ||
+            (tenantKey is not null && tenantKey.Length > 80))
+        {
             throw new ApplicationFault(FaultKind.Validation, "VALIDATION.FAILED", "Please correct the invalid fields.");
+        }
         var candidates = await store.FindCandidatesAsync(identifier.Trim().ToUpperInvariant(),
             string.IsNullOrWhiteSpace(tenantKey) ? null : tenantKey.Trim().ToLowerInvariant(), cancellationToken);
         if (candidates.Count != 1)
         {
             passwords.VerifyDummy(password);
-            if (candidates.Count > 1 && string.IsNullOrWhiteSpace(tenantKey))
-                throw new ApplicationFault(FaultKind.Conflict, "AUTH.TENANT_CONTEXT_REQUIRED", "Enter your company's workspace key to continue.",
-                    new Dictionary<string, string[]> { ["companyNames"] = candidates.Select(x => x.TenantName).OfType<string>().Distinct().ToArray() });
+            throw InvalidCredentials();
+        }
+        if (candidates[0].TenantId is not null && string.IsNullOrWhiteSpace(tenantKey))
+        {
+            passwords.VerifyDummy(password);
             throw InvalidCredentials();
         }
         attempts.Check(candidates[0]);
@@ -40,6 +46,30 @@ public sealed class AuthenticationService(IAuthenticationStore store, ICredentia
             throw InvalidCredentials();
         }
         transaction.User.RecordSuccessfulLogin(now, check.UpgradedHash);
+        var refresh = refreshTokens.Generate();
+        var session = AuthenticationSession.Create(transaction.User.Id, refresh.Hash, now, now.AddDays(policy.RefreshLifetimeDays));
+        transaction.AddSession(session);
+        transaction.Audit(AuthenticationEvent.LoginSucceeded, now, session.FamilyId);
+        var response = Response(transaction, access!, refresh.Secret, session.FamilyId, now);
+        await transaction.CommitAsync(cancellationToken);
+        return response;
+    }
+
+    public async Task<AuthenticationResponse> CreateSessionForCandidateAsync(AuthenticationCandidate candidate,
+        CancellationToken cancellationToken = default)
+    {
+        attempts.Check(candidate);
+        await using var transaction = await store.BeginAsync(candidate, cancellationToken);
+        if (transaction is null) throw InvalidCredentials();
+        var now = clock.GetUtcNow();
+        var access = await transaction.ResolveAccessAsync(cancellationToken);
+        if (!Allowed(transaction, access, now))
+        {
+            transaction.Audit(AuthenticationEvent.LoginFailed, now);
+            await transaction.CommitAsync(cancellationToken);
+            throw InvalidCredentials();
+        }
+        transaction.User.RecordSuccessfulLogin(now, null);
         var refresh = refreshTokens.Generate();
         var session = AuthenticationSession.Create(transaction.User.Id, refresh.Hash, now, now.AddDays(policy.RefreshLifetimeDays));
         transaction.AddSession(session);

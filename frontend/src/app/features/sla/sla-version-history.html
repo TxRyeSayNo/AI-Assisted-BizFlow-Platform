@@ -6,28 +6,43 @@
 </header>
 <main id="main-content" class="page-content" tabindex="-1">
   <nav aria-label="Breadcrumb">
-    <a routerLink="/workspace">Workspace</a> / <a routerLink="/settings">Settings</a> /
-    <a routerLink="/settings/sla-profiles">SLA profiles</a> / <span>Version history</span>
+    <a routerLink="/workspace">{{ 'common.workspace' | translate: 'Workspace' }}</a> /
+    <a routerLink="/settings">{{ 'nav.settings' | translate: 'Settings' }}</a> /
+    <a routerLink="/settings/sla-profiles">{{ 'sla.title' | translate: 'SLA profiles' }}</a> /
+    <span>{{ 'sla.historyTitle' | translate: 'Version history' }}</span>
   </nav>
-  <h1>SLA version history</h1>
+  <h1>{{ 'sla.historyTitle' | translate: 'SLA version history' }}</h1>
   <p>
-    Saved versions are immutable snapshots. Inspect a version to see its frozen calendar and
-    escalation policy.
+    {{
+      'sla.historySubtitle'
+        | translate
+          : 'Saved versions are immutable snapshots. Inspect a version to see its frozen calendar and escalation policy.'
+    }}
   </p>
   @if (notice()) {
     <p role="status">{{ notice() }}</p>
   }
   <section class="directory-panel" aria-label="SLA version history" [attr.aria-busy]="busy()">
     @if (busy()) {
-      <p class="directory-feedback" role="status">Loading saved versions…</p>
+      <p class="directory-feedback" role="status">
+        {{ 'sla.loadingVersions' | translate: 'Loading saved versions…' }}
+      </p>
     } @else if (error() === 'denied') {
-      <p class="directory-feedback" role="alert">You no longer have access to this SLA history.</p>
+      <p class="directory-feedback" role="alert">
+        {{ 'sla.deniedHistory' | translate: 'You no longer have access to this SLA history.' }}
+      </p>
     } @else if (error() === 'missing') {
-      <p class="directory-feedback" role="alert">SLA profile not found.</p>
+      <p class="directory-feedback" role="alert">
+        {{ 'sla.missingProfile' | translate: 'SLA profile not found.' }}
+      </p>
     } @else if (error() === 'failed') {
       <div class="directory-feedback">
-        <p role="alert">SLA history could not be loaded. Please try again.</p>
-        <button mat-stroked-button type="button" (click)="load(page())">Retry</button>
+        <p role="alert">
+          {{ 'sla.errorHistory' | translate: 'SLA history could not be loaded. Please try again.' }}
+        </p>
+        <button mat-stroked-button type="button" (click)="load(page())">
+          {{ 'common.retry' | translate: 'Retry' }}
+        </button>
       </div>
     } @else if (result(); as data) {
       <h2 class="profile-name">{{ data.profileName }}</h2>
@@ -35,7 +50,7 @@
         <p class="directory-feedback" role="status">
           {{
             data.total === 0
-              ? 'This profile has no saved versions.'
+              ? ('sla.noVersions' | translate: 'This profile has no saved versions.')
               : 'No saved versions on this page.'
           }}
         </p>
@@ -46,9 +61,9 @@
           </caption>
           <thead>
             <tr>
-              <th scope="col">Version</th>
-              <th scope="col">Target</th>
-              <th scope="col">Warning from start</th>
+              <th scope="col">{{ 'sla.col.version' | translate: 'Version' }}</th>
+              <th scope="col">{{ 'sla.col.target' | translate: 'Target' }}</th>
+              <th scope="col">{{ 'sla.col.warning' | translate: 'Warning from start' }}</th>
             </tr>
           </thead>
           <tbody>
@@ -61,7 +76,7 @@
                     (click)="inspect(row)"
                     [attr.aria-label]="'Inspect version ' + row.versionNo"
                   >
-                    Version {{ row.versionNo }}
+                    {{ 'workflows.version' | translate: 'Version' }} {{ row.versionNo }}
                   </button>
                   @if (session.hasPermission('sla.configure')) {
                     <button
@@ -70,7 +85,7 @@
                       (click)="createTimingVersion(row)"
                       [attr.aria-label]="'Create timing version from version ' + row.versionNo"
                     >
-                      Adjust timing
+                      {{ 'sla.adjustTiming' | translate: 'Adjust timing' }}
                     </button>
                   }
                 </th>
@@ -83,8 +98,8 @@
       }
       <nav class="pagination" aria-label="SLA version pages">
         <span role="status"
-          >{{ data.total }} {{ data.total === 1 ? 'version' : 'versions' }} · Page
-          {{ data.page }}</span
+          >{{ data.total }} {{ data.total === 1 ? 'version' : 'versions' }} ·
+          {{ 'common.page' | translate: 'Page' }} {{ data.page }}</span
         >
         <button
           mat-stroked-button
@@ -92,7 +107,7 @@
           [disabled]="data.page <= 1"
           (click)="load(data.page - 1)"
         >
-          Previous
+          {{ 'common.previous' | translate: 'Previous' }}
         </button>
         <button
           mat-stroked-button
@@ -100,7 +115,7 @@
           [disabled]="data.page * data.pageSize >= data.total"
           (click)="load(data.page + 1)"
         >
-          Next
+          {{ 'common.next' | translate: 'Next' }}
         </button>
       </nav>
     }

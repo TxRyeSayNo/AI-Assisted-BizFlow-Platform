@@ -765,4 +765,110 @@ public sealed class AuditLog
 
     public static AuditLog RecordArchived(WorkRequest request, Guid actorId, DateTimeOffset now) =>
         RecordArchived("REQUEST", request.Id, request.TenantId, actorId, request.Status.ToString().ToUpperInvariant(), request.DeletedAt ?? now, now);
+
+    public static AuditLog CompanyApproved(Guid companyId, Guid platformAdminId, Guid tenantId, string tenantKey, DateTimeOffset now) => new()
+    {
+        Id = Guid.CreateVersion7(),
+        TenantId = null,
+        ActorType = AuditActorType.User,
+        ActorId = platformAdminId,
+        ObjectType = "Company",
+        ObjectId = companyId,
+        Action = "TENANT.APPROVED",
+        BeforeJson = JsonSerializer.Serialize(new { status = "PENDING" }),
+        AfterJson = JsonSerializer.Serialize(new { status = "ACTIVE", tenantId, tenantKey }),
+        CreatedAt = now.ToUniversalTime()
+    };
+
+    public static AuditLog CompanyRejected(Guid companyId, Guid platformAdminId, string reason, DateTimeOffset now) => new()
+    {
+        Id = Guid.CreateVersion7(),
+        TenantId = null,
+        ActorType = AuditActorType.User,
+        ActorId = platformAdminId,
+        ObjectType = "Company",
+        ObjectId = companyId,
+        Action = "TENANT.REJECTED",
+        BeforeJson = JsonSerializer.Serialize(new { status = "PENDING" }),
+        AfterJson = JsonSerializer.Serialize(new { status = "INACTIVE", reason }),
+        CreatedAt = now.ToUniversalTime()
+    };
+
+    public static AuditLog CompanyStatusUpdated(Guid companyId, Guid platformAdminId, string previousStatus, string newStatus, DateTimeOffset now) => new()
+    {
+        Id = Guid.CreateVersion7(),
+        TenantId = null,
+        ActorType = AuditActorType.User,
+        ActorId = platformAdminId,
+        ObjectType = "Company",
+        ObjectId = companyId,
+        Action = "TENANT.STATUS_UPDATED",
+        BeforeJson = JsonSerializer.Serialize(new { status = previousStatus }),
+        AfterJson = JsonSerializer.Serialize(new { status = newStatus }),
+        CreatedAt = now.ToUniversalTime()
+    };
+
+    public static AuditLog UserCreated(Guid tenantId, Guid actorId, Guid userId, string employeeCode, string email, DateTimeOffset now) => new()
+    {
+        Id = Guid.CreateVersion7(),
+        TenantId = tenantId,
+        ActorType = AuditActorType.User,
+        ActorId = actorId,
+        ObjectType = "User",
+        ObjectId = userId,
+        Action = "USER.CREATED",
+        AfterJson = JsonSerializer.Serialize(new { userId, employeeCode, email }),
+        CreatedAt = now.ToUniversalTime()
+    };
+
+    public static AuditLog UserUpdated(Guid tenantId, Guid actorId, Guid userId, DateTimeOffset now) => new()
+    {
+        Id = Guid.CreateVersion7(),
+        TenantId = tenantId,
+        ActorType = AuditActorType.User,
+        ActorId = actorId,
+        ObjectType = "User",
+        ObjectId = userId,
+        Action = "USER.UPDATED",
+        CreatedAt = now.ToUniversalTime()
+    };
+
+    public static AuditLog UserStatusChanged(Guid tenantId, Guid actorId, Guid userId, string newStatus, DateTimeOffset now) => new()
+    {
+        Id = Guid.CreateVersion7(),
+        TenantId = tenantId,
+        ActorType = AuditActorType.User,
+        ActorId = actorId,
+        ObjectType = "User",
+        ObjectId = userId,
+        Action = "USER.STATUS_CHANGED",
+        AfterJson = JsonSerializer.Serialize(new { status = newStatus }),
+        CreatedAt = now.ToUniversalTime()
+    };
+
+    public static AuditLog DepartmentCreated(Guid tenantId, Guid actorId, Guid departmentId, string code, string name, DateTimeOffset now) => new()
+    {
+        Id = Guid.CreateVersion7(),
+        TenantId = tenantId,
+        ActorType = AuditActorType.User,
+        ActorId = actorId,
+        ObjectType = "Department",
+        ObjectId = departmentId,
+        Action = "DEPARTMENT.CREATED",
+        AfterJson = JsonSerializer.Serialize(new { departmentId, code, name }),
+        CreatedAt = now.ToUniversalTime()
+    };
+
+    public static AuditLog DepartmentUpdated(Guid tenantId, Guid actorId, Guid departmentId, string code, string name, DateTimeOffset now) => new()
+    {
+        Id = Guid.CreateVersion7(),
+        TenantId = tenantId,
+        ActorType = AuditActorType.User,
+        ActorId = actorId,
+        ObjectType = "Department",
+        ObjectId = departmentId,
+        Action = "DEPARTMENT.UPDATED",
+        AfterJson = JsonSerializer.Serialize(new { departmentId, code, name }),
+        CreatedAt = now.ToUniversalTime()
+    };
 }

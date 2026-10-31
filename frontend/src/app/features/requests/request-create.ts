@@ -9,6 +9,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { Router, RouterLink } from '@angular/router';
 import { SessionService } from '../../core/auth/session';
+import { TranslatePipe } from '../../core/i18n/translate.pipe';
 
 interface CategoryOption {
   serviceCategoryId: string;
@@ -33,6 +34,7 @@ interface ServiceOption {
     MatInputModule,
     MatSelectModule,
     RouterLink,
+    TranslatePipe,
   ],
   templateUrl: './request-create.html',
   styleUrls: ['../organization/departments.scss', '../tasks/task-editor.scss'],
@@ -99,7 +101,7 @@ export class RequestCreate implements OnInit {
         },
         error: () => {
           this.loadingServices.set(false);
-          this.error.set('Could not load service catalog. Please refresh.');
+          this.error.set('Không thể tải danh mục dịch vụ. Vui lòng làm mới trang.');
         },
       });
   }
@@ -152,10 +154,10 @@ export class RequestCreate implements OnInit {
           } else if (failure.status === 409) {
             this.form.enable();
             this.key = crypto.randomUUID();
-            this.error.set('Request conflicting with a previous submission. Please retry.');
+            this.error.set('Yêu cầu bị xung đột với một yêu cầu đã gửi trước đó. Vui lòng thử lại.');
           } else if (failure.status === 403 || failure.status === 401) {
             this.done.set(true);
-            this.error.set('You do not have permission to create requests.');
+            this.error.set('Bạn không có quyền tạo yêu cầu dịch vụ.');
           } else {
             this.unknown();
           }
@@ -166,6 +168,6 @@ export class RequestCreate implements OnInit {
   private unknown() {
     this.form.enable();
     this.key = crypto.randomUUID();
-    this.error.set('Unexpected error creating request. Please try again.');
+    this.error.set('Đã xảy ra lỗi không xác định khi tạo yêu cầu. Vui lòng thử lại.');
   }
 }

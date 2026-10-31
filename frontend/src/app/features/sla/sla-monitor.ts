@@ -3,6 +3,7 @@ import { CommonModule, DatePipe } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { RouterLink } from '@angular/router';
 import { SessionService } from '../../core/auth/session';
+import { TranslatePipe } from '../../core/i18n/translate.pipe';
 
 export interface SlaBreachItem {
   id: string;
@@ -20,7 +21,7 @@ export interface SlaBreachItem {
 @Component({
   selector: 'bf-sla-monitor',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, TranslatePipe],
   template: `
     <header class="public-header directory-header">
       <a class="wordmark" routerLink="/workspace">
@@ -31,13 +32,13 @@ export interface SlaBreachItem {
 
     <main id="main-content" class="page-content" tabindex="-1">
       <nav aria-label="Breadcrumb">
-        <a routerLink="/workspace">Workspace</a> <span aria-hidden="true"> / </span> <span>SLA Monitor</span>
+        <a routerLink="/workspace">{{ 'common.workspace' | translate: 'Workspace' }}</a> <span aria-hidden="true"> / </span> <span>{{ 'slaMonitor.breadcrumb' | translate: 'SLA Monitor' }}</span>
       </nav>
 
       <div class="sla-header">
         <div>
-          <span class="eyebrow">Real-Time Operational Clocks</span>
-          <h1>SLA Monitor & Escalation Center</h1>
+          <span class="eyebrow">{{ 'slaMonitor.eyebrow' | translate: 'Real-Time Operational Clocks' }}</span>
+          <h1>{{ 'slaMonitor.title' | translate: 'SLA Monitor & Escalation Center' }}</h1>
           <p class="subtitle">
             Continuous tracking of delivery deadlines, at-risk work items, and multi-tier escalation thresholds.
           </p>
@@ -53,46 +54,46 @@ export interface SlaBreachItem {
       <section class="sla-kpi-grid">
         <div class="kpi-card highlight-azure">
           <div class="kpi-head">
-            <span class="kpi-label">On-Time Compliance</span>
+            <span class="kpi-label">{{ 'slaMonitor.onTimeCompliance' | translate: 'On-Time Compliance' }}</span>
             <span class="live-beacon"></span>
           </div>
           <div class="kpi-value text-azure">98.6%</div>
-          <p class="kpi-meta">Last 30 rolling business days</p>
+          <p class="kpi-meta">{{ 'slaMonitor.rollingDays' | translate: 'Last 30 rolling business days' }}</p>
         </div>
 
         <div class="kpi-card highlight-danger">
           <div class="kpi-head">
-            <span class="kpi-label">Overdue Items</span>
+            <span class="kpi-label">{{ 'slaMonitor.overdueItems' | translate: 'Overdue Items' }}</span>
             <span class="pulse-beacon"></span>
           </div>
           <div class="kpi-value text-danger">{{ overdueCount() }}</div>
-          <p class="kpi-meta">Immediate intervention required</p>
+          <p class="kpi-meta">{{ 'slaMonitor.immediateIntervention' | translate: 'Immediate intervention required' }}</p>
         </div>
 
         <div class="kpi-card highlight-warning">
           <div class="kpi-head">
-            <span class="kpi-label">At-Risk (< 4 Hours)</span>
+            <span class="kpi-label">{{ 'slaMonitor.atRisk' | translate: 'At-Risk (< 4 Hours)' }}</span>
             <span class="warning-icon">⚠</span>
           </div>
           <div class="kpi-value text-warning">{{ warningCount() }}</div>
-          <p class="kpi-meta">Approaching SLA threshold</p>
+          <p class="kpi-meta">{{ 'slaMonitor.approachingThreshold' | translate: 'Approaching SLA threshold' }}</p>
         </div>
 
         <div class="kpi-card highlight-neutral">
           <div class="kpi-head">
-            <span class="kpi-label">Active Working Calendar</span>
+            <span class="kpi-label">{{ 'slaMonitor.activeCalendar' | translate: 'Active Working Calendar' }}</span>
             <span class="calendar-icon">📅</span>
           </div>
-          <div class="kpi-value text-navy">Default 8x5</div>
-          <p class="kpi-meta">Mon–Fri 08:00 – 17:00 (UTC+7)</p>
+          <div class="kpi-value text-navy">{{ 'slaMonitor.defaultCalendar' | translate: 'Default 8x5' }}</div>
+          <p class="kpi-meta">{{ 'slaMonitor.calendarHours' | translate: 'Mon–Fri 08:00 – 17:00 (UTC+7)' }}</p>
         </div>
       </section>
 
       <!-- Active Escalations & At-Risk Items -->
       <section class="directory-panel">
         <div class="panel-header-row">
-          <h2>Monitored Items Requiring Attention</h2>
-          <span class="badge-count">{{ monitoredItems().length }} Active Watch</span>
+          <h2>{{ 'slaMonitor.monitoredItems' | translate: 'Monitored Items Requiring Attention' }}</h2>
+          <span class="badge-count">{{ monitoredItems().length }} {{ 'slaMonitor.activeWatch' | translate: 'Active Watch' }}</span>
         </div>
 
         <div class="table-container">
@@ -135,11 +136,11 @@ export interface SlaBreachItem {
                 </td>
                 <td class="col-action">
                   <a *ngIf="item.type === 'TASK'" [routerLink]="['/tasks', item.id]" class="view-link" title="Open task details">
-                    <span>Open Task</span>
+                    <span>{{ 'slaMonitor.openTask' | translate: 'Open Task' }}</span>
                     <span class="arrow-icon" aria-hidden="true">→</span>
                   </a>
                   <a *ngIf="item.type === 'REQUEST'" [routerLink]="['/requests', item.id]" class="view-link" title="Open request details">
-                    <span>Open Request</span>
+                    <span>{{ 'slaMonitor.openRequest' | translate: 'Open Request' }}</span>
                     <span class="arrow-icon" aria-hidden="true">→</span>
                   </a>
                 </td>
@@ -151,25 +152,25 @@ export interface SlaBreachItem {
 
       <!-- Escalation Policy Matrix Reference -->
       <section class="directory-panel policy-box">
-        <h3>Tiered Escalation Matrix</h3>
+        <h3>{{ 'slaMonitor.matrixTitle' | translate: 'Tiered Escalation Matrix' }}</h3>
         <p class="policy-desc">
           When an operational work item reaches critical SLA thresholds, the system automatically triggers designated notifications and updates escalation authority:
         </p>
         <div class="matrix-grid">
           <div class="matrix-card">
-            <span class="tier-tag">Tier 1 · 80% Elapsed</span>
-            <h4>Direct Warning</h4>
-            <p>Immediate in-app notification delivered to assigned user and line manager.</p>
+            <span class="tier-tag">{{ 'slaMonitor.tier1Tag' | translate: 'Tier 1 · 80% Elapsed' }}</span>
+            <h4>{{ 'slaMonitor.tier1Title' | translate: 'Direct Warning' }}</h4>
+            <p>{{ 'slaMonitor.tier1Desc' | translate: 'Immediate in-app notification delivered to assigned user and line manager.' }}</p>
           </div>
           <div class="matrix-card">
-            <span class="tier-tag tier-2">Tier 2 · 100% Breached</span>
-            <h4>Manager Escalation</h4>
-            <p>State flagged as OVERDUE. Reassignment authority granted to Department Lead.</p>
+            <span class="tier-tag tier-2">{{ 'slaMonitor.tier2Tag' | translate: 'Tier 2 · 100% Breached' }}</span>
+            <h4>{{ 'slaMonitor.tier2Title' | translate: 'Manager Escalation' }}</h4>
+            <p>{{ 'slaMonitor.tier2Desc' | translate: 'State flagged as OVERDUE. Reassignment authority granted to Department Lead.' }}</p>
           </div>
           <div class="matrix-card">
-            <span class="tier-tag tier-3">Tier 3 · > 24h Overdue</span>
-            <h4>Executive Alert</h4>
-            <p>Executive report highlight; included in Daily Operational Workload Digest.</p>
+            <span class="tier-tag tier-3">{{ 'slaMonitor.tier3Tag' | translate: 'Tier 3 · > 24h Overdue' }}</span>
+            <h4>{{ 'slaMonitor.tier3Title' | translate: 'Executive Alert' }}</h4>
+            <p>{{ 'slaMonitor.tier3Desc' | translate: 'Executive report highlight; included in Daily Operational Workload Digest.' }}</p>
           </div>
         </div>
       </section>

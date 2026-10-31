@@ -7,56 +7,72 @@
 
 <main id="main-content" class="page-content" tabindex="-1">
   <nav aria-label="Breadcrumb">
-    <a routerLink="/workspace">Workspace</a>
+    <a routerLink="/workspace">{{ 'common.workspace' | translate: 'Workspace' }}</a>
     <span aria-hidden="true"> / </span>
-    <span>Unified Record Search</span>
+    <span>{{ 'search.breadcrumb' | translate: 'Unified Record Search' }}</span>
   </nav>
 
-  <span class="eyebrow">Enterprise Intelligence</span>
+  <span class="eyebrow">{{ 'search.eyebrow' | translate: 'Enterprise Intelligence' }}</span>
   <div class="search-header-row">
-    <h1>Search Records</h1>
+    <h1>{{ 'search.title' | translate: 'Search Records' }}</h1>
   </div>
   <p class="search-subhead">
-    Find tasks, service requests, and archived historical business records across your organization workspace.
+    {{
+      'search.subtitle'
+        | translate
+          : 'Find tasks, service requests, and archived historical business records across your organization workspace.'
+    }}
   </p>
 
   <section class="directory-panel search-panel" aria-label="Record filters">
     <form [formGroup]="filters" (ngSubmit)="applyFilters()" class="record-filters-form">
       <div class="filter-row">
         <mat-form-field appearance="outline" subscriptSizing="dynamic" class="search-field">
-          <mat-label>Search text or keywords</mat-label>
+          <mat-label>{{ 'search.queryLabel' | translate: 'Search text or keywords' }}</mat-label>
           <input
             matInput
             formControlName="query"
-            placeholder="e.g. deliverable, onboarding, audit"
+            [placeholder]="
+              'search.queryPlaceholder' | translate: 'e.g. deliverable, onboarding, audit'
+            "
             maxlength="200"
             [readonly]="busy()"
           />
         </mat-form-field>
 
         <mat-form-field appearance="outline" subscriptSizing="dynamic">
-          <mat-label>Record Type</mat-label>
+          <mat-label>{{ 'search.recordType' | translate: 'Record Type' }}</mat-label>
           <mat-select formControlName="type">
             @for (opt of typeOptions; track opt.value) {
-              <mat-option [value]="opt.value">{{ opt.label }}</mat-option>
+              <mat-option [value]="opt.value">{{
+                'search.type.' + opt.value | translate: opt.label
+              }}</mat-option>
             }
           </mat-select>
         </mat-form-field>
 
         <mat-form-field appearance="outline" subscriptSizing="dynamic">
-          <mat-label>Status</mat-label>
+          <mat-label>{{ 'common.status' | translate: 'Status' }}</mat-label>
           <mat-select formControlName="status">
             @for (opt of statusOptions; track opt.value) {
-              <mat-option [value]="opt.value">{{ opt.label }}</mat-option>
+              <mat-option [value]="opt.value">{{
+                opt.value
+                  ? ('reqStatus.' + opt.value | translate: opt.label)
+                  : ('tasks.allStates' | translate: opt.label)
+              }}</mat-option>
             }
           </mat-select>
         </mat-form-field>
 
         <mat-form-field appearance="outline" subscriptSizing="dynamic">
-          <mat-label>Priority</mat-label>
+          <mat-label>{{ 'common.priority' | translate: 'Priority' }}</mat-label>
           <mat-select formControlName="priority">
             @for (opt of priorityOptions; track opt.value) {
-              <mat-option [value]="opt.value">{{ opt.label }}</mat-option>
+              <mat-option [value]="opt.value">{{
+                opt.value
+                  ? ('priority.' + opt.value | translate: opt.label)
+                  : ('tasks.allPriorities' | translate: opt.label)
+              }}</mat-option>
             }
           </mat-select>
         </mat-form-field>
@@ -64,15 +80,15 @@
 
       <div class="filter-actions-row">
         <mat-checkbox formControlName="includeArchived" color="primary">
-          Include archived records
+          {{ 'search.includeArchived' | translate: 'Include archived records' }}
         </mat-checkbox>
 
         <div class="actions-group">
           <button mat-stroked-button type="button" (click)="resetFilters()" [disabled]="busy()">
-            Reset
+            {{ 'common.reset' | translate: 'Reset' }}
           </button>
           <button mat-flat-button color="primary" type="submit" [disabled]="busy()">
-            Search
+            {{ 'common.search' | translate: 'Search' }}
           </button>
         </div>
       </div>
@@ -80,7 +96,9 @@
   </section>
 
   @if (busy()) {
-    <p role="status" class="loading-state">Searching records…</p>
+    <p role="status" class="loading-state">
+      {{ 'search.searching' | translate: 'Searching records…' }}
+    </p>
   }
 
   @if (error()) {
@@ -88,45 +106,70 @@
   }
 
   @if (data(); as result) {
-    <section class="directory-panel results-panel" aria-label="Search results" [attr.aria-busy]="busy()">
+    <section
+      class="directory-panel results-panel"
+      aria-label="Search results"
+      [attr.aria-busy]="busy()"
+    >
       <div class="results-header">
-        <h2>Results</h2>
-        <span class="count-badge">{{ result.totalCount }} record{{ result.totalCount === 1 ? '' : 's' }} found</span>
+        <h2>{{ 'search.results' | translate: 'Results' }}</h2>
+        <span class="count-badge"
+          >{{ result.totalCount }}
+          {{
+            result.totalCount === 1
+              ? ('search.recordFound' | translate: 'record found')
+              : ('search.recordsFound' | translate: 'records found')
+          }}</span
+        >
       </div>
 
       @if (result.items.length === 0) {
         <div class="empty-state">
-          <p>No records matched your search criteria.</p>
-          <p class="empty-hint">Try adjusting keywords, removing filters, or enabling "Include archived records".</p>
+          <p>{{ 'search.noRecords' | translate: 'No records matched your search criteria.' }}</p>
+          <p class="empty-hint">
+            {{
+              'search.noRecordsHint'
+                | translate
+                  : 'Try adjusting keywords, removing filters, or enabling "Include archived records".'
+            }}
+          </p>
         </div>
       } @else {
         <div class="table-container">
           <table class="records-table">
             <thead>
               <tr>
-                <th scope="col">Type</th>
-                <th scope="col">Title</th>
-                <th scope="col">Status</th>
-                <th scope="col">Priority</th>
-                <th scope="col">Owner / Requester</th>
-                <th scope="col">Created</th>
-                <th scope="col">Actions</th>
+                <th scope="col">{{ 'search.col.type' | translate: 'Type' }}</th>
+                <th scope="col">{{ 'common.title' | translate: 'Title' }}</th>
+                <th scope="col">{{ 'common.status' | translate: 'Status' }}</th>
+                <th scope="col">{{ 'common.priority' | translate: 'Priority' }}</th>
+                <th scope="col">{{ 'search.col.owner' | translate: 'Owner / Requester' }}</th>
+                <th scope="col">{{ 'search.col.created' | translate: 'Created' }}</th>
+                <th scope="col">{{ 'common.actions' | translate: 'Actions' }}</th>
               </tr>
             </thead>
             <tbody>
               @for (item of result.items; track item.id) {
                 <tr [class.archived-row]="item.isArchived">
                   <td>
-                    <span class="type-pill" [class.type-task]="item.recordType === 'TASK'" [class.type-request]="item.recordType === 'REQUEST'">
+                    <span
+                      class="type-pill"
+                      [class.type-task]="item.recordType === 'TASK'"
+                      [class.type-request]="item.recordType === 'REQUEST'"
+                    >
                       {{ item.recordType }}
                     </span>
                   </td>
                   <td>
                     <div class="record-title-cell">
                       @if (item.recordType === 'TASK') {
-                        <a [routerLink]="['/tasks', item.id]" class="record-title-link">{{ item.title }}</a>
+                        <a [routerLink]="['/tasks', item.id]" class="record-title-link">{{
+                          item.title
+                        }}</a>
                       } @else {
-                        <a [routerLink]="['/requests', item.id]" class="record-title-link">{{ item.title }}</a>
+                        <a [routerLink]="['/requests', item.id]" class="record-title-link">{{
+                          item.title
+                        }}</a>
                       }
                       @if (item.description) {
                         <span class="record-desc-preview">{{ item.description }}</span>
@@ -134,16 +177,20 @@
                     </div>
                   </td>
                   <td>
-                    <span class="status-badge status-{{ item.status.toLowerCase().replace('_', '-') }}">
-                      {{ item.status }}
+                    <span
+                      class="status-badge status-{{ item.status.toLowerCase().replace('_', '-') }}"
+                    >
+                      {{ 'reqStatus.' + item.status | translate: item.status }}
                     </span>
                     @if (item.isArchived) {
-                      <span class="archived-tag">Archived</span>
+                      <span class="archived-tag">{{
+                        'search.archived' | translate: 'Archived'
+                      }}</span>
                     }
                   </td>
                   <td>
                     <span class="priority-badge priority-{{ item.priority.toLowerCase() }}">
-                      {{ item.priority }}
+                      {{ 'priority.' + item.priority | translate: item.priority }}
                     </span>
                   </td>
                   <td>
@@ -154,9 +201,16 @@
                   </td>
                   <td>
                     @if (item.recordType === 'TASK') {
-                      <a mat-stroked-button [routerLink]="['/tasks', item.id]" class="view-btn">View</a>
+                      <a mat-stroked-button [routerLink]="['/tasks', item.id]" class="view-btn">{{
+                        'audit.view' | translate: 'View'
+                      }}</a>
                     } @else {
-                      <a mat-stroked-button [routerLink]="['/requests', item.id]" class="view-btn">View</a>
+                      <a
+                        mat-stroked-button
+                        [routerLink]="['/requests', item.id]"
+                        class="view-btn"
+                        >{{ 'audit.view' | translate: 'View' }}</a
+                      >
                     }
                   </td>
                 </tr>
@@ -167,21 +221,25 @@
 
         @if (result.totalPages > 1) {
           <nav class="pagination" aria-label="Record search pagination">
-            <span>Page {{ result.page }} of {{ result.totalPages }} ({{ result.totalCount }} total)</span>
+            <span
+              >{{ 'common.page' | translate: 'Page' }} {{ result.page }}
+              {{ 'common.of' | translate: 'of' }} {{ result.totalPages }} ({{ result.totalCount }}
+              {{ 'common.total' | translate: 'total' }})</span
+            >
             <div class="page-buttons">
               <button
                 mat-stroked-button
                 [disabled]="result.page <= 1 || busy()"
                 (click)="goToPage(result.page - 1)"
               >
-                Previous
+                {{ 'common.previous' | translate: 'Previous' }}
               </button>
               <button
                 mat-stroked-button
                 [disabled]="result.page >= result.totalPages || busy()"
                 (click)="goToPage(result.page + 1)"
               >
-                Next
+                {{ 'common.next' | translate: 'Next' }}
               </button>
             </div>
           </nav>

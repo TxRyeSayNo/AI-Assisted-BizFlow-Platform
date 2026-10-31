@@ -7,8 +7,10 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
+import { RouterLink } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { SessionService } from '../../core/auth/session';
+import { TranslatePipe } from '../../core/i18n/translate.pipe';
 
 export interface TaskMetricsView {
   totalTasks: number;
@@ -130,6 +132,8 @@ export interface DepartmentOption {
     MatFormFieldModule,
     MatInputModule,
     MatSelectModule,
+    RouterLink,
+    TranslatePipe,
   ],
   templateUrl: './reports.html',
   styleUrls: ['../organization/departments.scss', '../requests/requests.scss', './reports.scss'],

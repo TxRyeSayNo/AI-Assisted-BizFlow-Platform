@@ -10,6 +10,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { RouterLink } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { SessionService } from '../../core/auth/session';
+import { TranslatePipe } from '../../core/i18n/translate.pipe';
 
 interface CategoryRow {
   serviceCategoryId: string;
@@ -44,6 +45,7 @@ interface ServicePage {
     MatFormFieldModule,
     MatInputModule,
     MatSelectModule,
+    TranslatePipe,
   ],
   templateUrl: './services.html',
   styleUrls: ['../organization/departments.scss', './services.scss'],

@@ -16,7 +16,8 @@ public sealed class SeedDevDatabase
     [Fact]
     public async Task Seed_Dev_Database_With_Accounts()
     {
-        var connectionString = "Host=localhost;Port=5432;Database=bizflow;Username=bizflow;Password=bizflow_local_secret_2026";
+        var connectionString = Environment.GetEnvironmentVariable("ConnectionStrings__BizFlow")
+            ?? "Host=127.0.0.1;Port=5433;Database=bizflow;Username=bizflow;Password=bizflow_secret_123";
         var options = new DbContextOptionsBuilder<BizFlowDbContext>()
             .UseBizFlowPostgres(connectionString)
             .Options;
@@ -110,5 +111,23 @@ public sealed class SeedDevDatabase
             VALUES ({Guid.NewGuid()}, {tenantId}, {adminUserId}, {departmentId}, TRUE, {adminUserId}, {now})
             ON CONFLICT DO NOTHING;
             """);
+
+        // Seed Platform Administrator (platform@bizflow.local / Password123!)
+        var platformUserId = Guid.Parse("019f8000-0000-7000-8000-000000000001");
+        var platformRole = await db.Roles.IgnoreQueryFilters().FirstAsync(r => r.IsSystem && r.Name == "PLATFORM_ADMIN");
+        await db.Database.ExecuteSqlInterpolatedAsync($"""
+            INSERT INTO "User" ("UserId", "TenantId", "IsPlatformAdministrator", "EmployeeCode", "NormalizedEmployeeCode",
+                "Email", "NormalizedEmail", "FullName", "PasswordHash", "SecurityStamp", "DepartmentId", "Status",
+                "AccessFailedCount", "MustChangePassword", "CreatedAt", "UpdatedAt")
+            VALUES ({platformUserId}, NULL, TRUE, 'SUPERADMIN', 'SUPERADMIN', 'platform@bizflow.local', 'PLATFORM@BIZFLOW.LOCAL',
+                'Platform Administrator', {adminHash}, {Guid.NewGuid().ToString("N")}, NULL, 'ACTIVE'::user_status,
+                0, FALSE, {now}, {now})
+            ON CONFLICT ("UserId") DO NOTHING;
+
+            INSERT INTO "UserRole" ("UserId", "RoleId")
+            VALUES ({platformUserId}, {platformRole.Id})
+            ON CONFLICT DO NOTHING;
+            """);
     }
 }
+

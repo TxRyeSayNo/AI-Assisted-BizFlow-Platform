@@ -19,6 +19,7 @@
   border: var(--tp-bw) solid var(--tp-line);
   border-radius: var(--tp-r);
   overflow: hidden;
+  box-shadow: var(--bf-shadow-card);
 }
 .filters {
   display: flex;
@@ -44,7 +45,7 @@
 }
 table {
   width: 100%;
-  min-width: 52rem;
+  min-width: 58rem;
   border-collapse: collapse;
   text-align: left;
 }
@@ -58,7 +59,7 @@ th,
 td {
   padding: var(--tp-space-4) var(--tp-space-6);
   border-bottom: var(--tp-bw) solid var(--tp-line);
-  vertical-align: top;
+  vertical-align: middle;
 }
 thead {
   background: var(--tp-surf-2);
@@ -70,13 +71,7 @@ td {
   overflow-wrap: anywhere;
 }
 td:nth-child(2) {
-  min-width: 18rem;
-}
-.scroll-hint {
-  display: none;
-  padding-inline: var(--tp-space-4);
-  color: var(--tp-mute);
-  font-size: var(--tp-small-size);
+  min-width: 16rem;
 }
 .company-code {
   display: block;
@@ -88,10 +83,123 @@ td:nth-child(2) {
 }
 .status-label {
   display: inline-block;
-  border: var(--tp-bw) solid var(--tp-line);
-  border-radius: var(--tp-r-sm);
-  padding: var(--tp-space-1) var(--tp-space-2);
+  border-radius: 9999px;
+  padding: 0.2rem 0.65rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
 }
+.status-pending {
+  background: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fde68a;
+}
+.status-active {
+  background: #ecfdf5;
+  color: #047857;
+  border: 1px solid #a7f3d0;
+}
+.status-suspended {
+  background: #fef2f2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+}
+.status-inactive {
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid #cbd5e1;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+  align-items: center;
+}
+.btn-approve {
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+.btn-reject {
+  font-size: 0.85rem;
+}
+
+.banner-success {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.85rem 1.25rem;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  border-left: 4px solid #059669;
+  color: #065f46;
+  font-weight: 500;
+  border-radius: 10px;
+  margin-bottom: 1.5rem;
+}
+.banner-error {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.85rem 1.25rem;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-left: 4px solid #dc2626;
+  color: #991b1b;
+  font-weight: 500;
+  border-radius: 10px;
+  margin-bottom: 1.5rem;
+}
+
+/* Modal styling */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(7, 27, 51, 0.45);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+.modal-card {
+  width: 100%;
+  max-width: 520px;
+  background: #ffffff;
+  border: 1px solid #d5e3f4;
+  border-radius: 16px;
+  padding: 2rem;
+  box-shadow: 0 20px 48px rgba(7, 27, 51, 0.2);
+}
+.modal-card h2 {
+  margin: 0 0 0.5rem;
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #071b33;
+}
+.modal-desc {
+  color: #52657c;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  margin-bottom: 1.5rem;
+}
+.modal-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+.modal-form mat-form-field {
+  width: 100%;
+}
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
 .pagination {
   display: flex;
   align-items: center;
@@ -103,10 +211,8 @@ td:nth-child(2) {
 .pagination span {
   margin-right: auto;
 }
+
 @media (max-width: 40rem) {
-  .scroll-hint {
-    display: block;
-  }
   .filters {
     align-items: stretch;
     flex-direction: column;

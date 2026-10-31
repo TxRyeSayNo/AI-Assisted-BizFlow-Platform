@@ -40,7 +40,7 @@ describe('WorkItemAttachments component', () => {
     },
   ];
 
-  const tick = () => new Promise((resolve) => setTimeout(resolve, 10));
+  const tick = (ms = 35) => new Promise((resolve) => setTimeout(resolve, ms));
 
   beforeEach(() => {
     TestBed.configureTestingModule({
@@ -52,7 +52,9 @@ describe('WorkItemAttachments component', () => {
           provide: SessionService,
           useValue: {
             hasPermission: (perm: string) =>
-              perm === 'attachments.upload' || perm === 'attachments.read' || perm === 'attachments.delete',
+              perm === 'attachments.upload' ||
+              perm === 'attachments.read' ||
+              perm === 'attachments.delete',
             identity: () => ({
               userId: 'user-1',
               fullName: 'Alice Developer',

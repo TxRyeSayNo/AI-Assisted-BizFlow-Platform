@@ -139,4 +139,51 @@ public sealed class ReportingServiceTests
         Assert.Equal(25, result.TotalTracked);
         Assert.Equal(92.0, result.ComplianceRatePercent);
     }
+
+    private sealed class FakeCacheService : IBizFlowCacheService
+    {
+        public readonly Dictionary<string, object?> Store = new();
+        public int GetCalls { get; private set; }
+        public int SetCalls { get; private set; }
+
+        public Task<T?> GetAsync<T>(string key, CancellationToken cancellationToken = default)
+        {
+            GetCalls++;
+            return Task.FromResult(Store.TryGetValue(key, out var val) && val is T typed ? typed : default);
+        }
+
+        public Task SetAsync<T>(string key, T value, TimeSpan? expiration = null, CancellationToken cancellationToken = default)
+        {
+            SetCalls++;
+            Store[key] = value;
+            return Task.CompletedTask;
+        }
+
+        public Task RemoveAsync(string key, CancellationToken cancellationToken = default)
+        {
+            Store.Remove(key);
+            return Task.CompletedTask;
+        }
+
+        public Task RemoveByPrefixAsync(string prefix, CancellationToken cancellationToken = default) => Task.CompletedTask;
+    }
+
+    [Fact]
+    public async Task ReportingService_uses_cache_when_available()
+    {
+        var tenantId = Guid.NewGuid();
+        var reader = new FakeReportingReader();
+        var cache = new FakeCacheService();
+        var service = new ReportingService(reader, new FakeTenantContext(tenantId), cache);
+
+        var first = await service.GetCompanyReportAsync(null, null);
+        Assert.NotNull(first);
+        Assert.Equal(1, cache.GetCalls);
+        Assert.Equal(1, cache.SetCalls);
+
+        var second = await service.GetCompanyReportAsync(null, null);
+        Assert.NotNull(second);
+        Assert.Equal(2, cache.GetCalls);
+        Assert.Equal(1, cache.SetCalls);
+    }
 }

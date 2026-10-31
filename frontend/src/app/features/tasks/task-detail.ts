@@ -14,6 +14,7 @@ import { TaskSubmissionEditor } from './task-submission';
 import { TaskConfirmationEditor } from './task-confirmation';
 import { WorkItemComments } from '../collaboration/work-item-comments';
 import { WorkItemAttachments } from '../collaboration/work-item-attachments';
+import { TranslatePipe } from '../../core/i18n/translate.pipe';
 
 interface Evidence {
   id: string;
@@ -51,7 +52,14 @@ interface Detail {
 }
 @Component({
   selector: 'bf-task-detail',
-  imports: [DatePipe, MatButtonModule, RouterLink, WorkItemComments, WorkItemAttachments],
+  imports: [
+    DatePipe,
+    MatButtonModule,
+    RouterLink,
+    WorkItemComments,
+    WorkItemAttachments,
+    TranslatePipe,
+  ],
   templateUrl: './task-detail.html',
   styleUrls: ['../organization/departments.scss', './task-editor.scss'],
 })
@@ -239,7 +247,11 @@ export class TaskDetail {
   archive() {
     const task = this.data()?.task;
     if (!task || this.archiving || !this.canArchive()) return;
-    if (!confirm(`Are you sure you want to archive task "${task.title}"? Once archived, it will be moved to historical records.`)) {
+    if (
+      !confirm(
+        `Bạn có chắc chắn muốn lưu trữ nhiệm vụ "${task.title}"? Sau khi lưu trữ, nhiệm vụ sẽ được chuyển vào hồ sơ lịch sử.`,
+      )
+    ) {
       return;
     }
     this.archiving = true;
@@ -294,7 +306,8 @@ export class TaskDetail {
     if (this.aiBusy()) return;
     this.aiBusy.set(true);
     this.aiError.set('');
-    this.http.post<any>('/api/v1/ai/task-risk', { taskId: this.id })
+    this.http
+      .post<any>('/api/v1/ai/task-risk', { taskId: this.id })
       .pipe(takeUntilDestroyed(this.destroy))
       .subscribe({
         next: (res) => {
@@ -303,8 +316,9 @@ export class TaskDetail {
         },
         error: (err: HttpErrorResponse) => {
           this.aiBusy.set(false);
-          this.aiError.set(err?.error?.message ?? 'Could not evaluate risk.');
-        }
+          this.aiError.set(err?.error?.message ?? 'Không thể đánh giá rủi ro.');
+        },
+
       });
   }
 
@@ -312,7 +326,8 @@ export class TaskDetail {
     if (this.aiBusy()) return;
     this.aiBusy.set(true);
     this.aiError.set('');
-    this.http.post<any>('/api/v1/ai/task-summary', { taskId: this.id })
+    this.http
+      .post<any>('/api/v1/ai/task-summary', { taskId: this.id })
       .pipe(takeUntilDestroyed(this.destroy))
       .subscribe({
         next: (res) => {
@@ -321,8 +336,9 @@ export class TaskDetail {
         },
         error: (err: HttpErrorResponse) => {
           this.aiBusy.set(false);
-          this.aiError.set(err?.error?.message ?? 'Could not generate progress summary.');
-        }
+          this.aiError.set(err?.error?.message ?? 'Không thể tạo tóm tắt tiến độ.');
+        },
+
       });
   }
 }

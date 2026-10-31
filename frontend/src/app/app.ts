@@ -2,20 +2,31 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { SessionService } from './core/auth/session';
-import { AiAssistantComponent } from './shared/ai/ai-assistant';
+import { TranslatePipe } from './core/i18n/translate.pipe';
+import { RobotWidgetComponent } from './shared/ai/robot-widget';
+import { ToastContainerComponent } from './core/toast/toast-container.component';
+import { AiAgentService } from './core/ai/ai-agent.service';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive, AiAssistantComponent],
+  imports: [
+    CommonModule,
+    RouterOutlet,
+    RouterLink,
+    RouterLinkActive,
+    TranslatePipe,
+    RobotWidgetComponent,
+    ToastContainerComponent,
+  ],
   templateUrl: './app.html',
   styleUrl: './app.scss',
 })
 export class App {
   readonly session = inject(SessionService, { optional: true });
+  readonly aiAgent = inject(AiAgentService);
   private readonly router = inject(Router);
 
-  readonly isAiOpen = signal(false);
   readonly avatarFailed = signal(false);
 
   readonly identity = computed(() => this.session?.identity() ?? null);
@@ -23,7 +34,7 @@ export class App {
 
   readonly profilePhotoUrl = computed(() => {
     const id = this.identity();
-    return id?.avatarUrl || id?.picture || id?.photoUrl || null;
+    return id?.avatarUrl || (id as any)?.picture || (id as any)?.photoUrl || null;
   });
 
   onAvatarError(): void {
@@ -49,6 +60,10 @@ export class App {
 
   hasPermission(perm: string): boolean {
     return this.session?.hasPermission(perm) ?? false;
+  }
+
+  openAiAgent(): void {
+    this.aiAgent.open('chat');
   }
 
   signOut(): void {

@@ -34,10 +34,11 @@ export interface WorkflowVersionView {
 }
 
 import { WorkflowDesigner } from './workflow-designer';
+import { TranslatePipe } from '../../core/i18n/translate.pipe';
 
 @Component({
   selector: 'bf-workflow-version',
-  imports: [RouterLink, MatButtonModule, DatePipe, JsonPipe, WorkflowDesigner],
+  imports: [RouterLink, MatButtonModule, DatePipe, JsonPipe, WorkflowDesigner, TranslatePipe],
   templateUrl: './workflow-version.html',
   styleUrls: ['../organization/departments.scss', './workflows.scss'],
 })

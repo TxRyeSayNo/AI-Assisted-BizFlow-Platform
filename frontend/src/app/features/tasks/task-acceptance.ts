@@ -91,7 +91,7 @@ export class TaskAcceptanceEditor {
           if (!this.uncertain() && failure.status === 422) {
             this.note.enable();
             this.key = crypto.randomUUID();
-            this.error.set('Review your acceptance note and try again.');
+            this.error.set('Vui lòng kiểm tra lại ghi chú nghiệm thu và thử lại.');
           } else if ([401, 403, 404, 409].includes(failure.status)) {
             this.terminal.set(true);
             this.error.set(

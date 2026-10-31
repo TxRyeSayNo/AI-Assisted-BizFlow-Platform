@@ -41,7 +41,11 @@ public sealed class AiAssistanceService(
     IAiToolRegistry toolRegistry,
     IRequestSplitStore splitStore,
     IAiActionDispatcher actionDispatcher,
-    TimeProvider clock)
+    TimeProvider clock,
+    IAiModelClient? modelClient = null,
+    IAiConfirmationTokenService? confirmationTokenService = null,
+    IAiVectorMemoryStore? vectorMemoryStore = null,
+    IAiSelfReflectionService? selfReflectionService = null)
 {
     private Guid GetRequiredTenantId() =>
         tenantContext.TenantId ?? throw new ApplicationFault(FaultKind.Forbidden, "TENANT.REQUIRED", "An active tenant context is required.");
@@ -67,6 +71,120 @@ public sealed class AiAssistanceService(
             throw new ApplicationFault(FaultKind.Validation, "AI.PROMPT_TOO_LONG", "Task prompt cannot exceed 4000 characters.");
 
         var context = await contextReader.GetTenantContextAsync(tenantId, cancellationToken);
+
+        // Pillar 1 (RAG): Retrieve relevant enterprise vector memory guidelines
+        var memoryChunks = vectorMemoryStore != null
+            ? await vectorMemoryStore.SearchMemoriesAsync(tenantId, prompt, null, 2, 0.35f, cancellationToken)
+            : Array.Empty<AiMemorySearchResult>();
+        var memoryContextText = memoryChunks.Count > 0
+            ? string.Join("\n", memoryChunks.Select(m => $"- [{m.MemoryScope}] {m.Title}: {m.Content}"))
+            : "Không có quy định nội bộ đặc thù nào khớp trực tiếp với truy vấn.";
+
+        // Pillar 3 (Self-Reflection): Retrieve in-context critique directives from past human decisions
+        var reflectionDirectives = selfReflectionService != null
+            ? await selfReflectionService.BuildReflectionDirectivesPromptAsync(tenantId, "DRAFT", cancellationToken)
+            : "";
+
+        if (modelClient?.IsConfigured == true)
+        {
+            try
+            {
+                var sysInstructions = $"""
+                    You are BizFlow AI Assistant. Analyze user task instructions and return a JSON object with:
+                    - "title": concise task title (string, max 100 chars)
+                    - "description": clear task description (string)
+                    - "priority": "LOW", "MEDIUM", or "HIGH"
+                    - "departmentId": string UUID of best matched department from: [{string.Join(", ", context.Departments.Select(d => $"{d.DepartmentId}:{d.Name}"))}] or null
+                    - "assigneeId": string UUID of best matched user from: [{string.Join(", ", context.Users.Select(u => $"{u.UserId}:{u.FullName}"))}] or null
+                    - "serviceId": string UUID of best matched service from: [{string.Join(", ", context.Services.Select(s => $"{s.ServiceId}:{s.Name}"))}] or null
+                    - "suggestedDurationDays": integer days (3 to 14)
+                    - "checklistItems": array of string checklist tasks
+                    - "rationale": concise Vietnamese rationale
+
+                    Enterprise Long-Term Memory (RAG Context):
+                    {memoryContextText}
+
+                    {reflectionDirectives}
+
+                    Return ONLY a JSON object.
+                    """;
+
+                var aiResp = await modelClient.CompleteAsync(prompt, sysInstructions, cancellationToken);
+                using var doc = JsonDocument.Parse(aiResp.Content);
+                var root = doc.RootElement;
+
+                var aiTitle = root.TryGetProperty("title", out var tp) ? tp.GetString() : null;
+                var aiDesc = root.TryGetProperty("description", out var dp) ? dp.GetString() : null;
+                var aiPri = root.TryGetProperty("priority", out var pp) ? pp.GetString()?.ToUpperInvariant() : null;
+                if (aiPri != "LOW" && aiPri != "HIGH") aiPri = "MEDIUM";
+
+                Guid? aiDeptId = null;
+                if (root.TryGetProperty("departmentId", out var didp) && Guid.TryParse(didp.GetString(), out var did))
+                    aiDeptId = context.Departments.Any(d => d.DepartmentId == did) ? did : null;
+
+                Guid? aiAssigneeId = null;
+                if (root.TryGetProperty("assigneeId", out var aidp) && Guid.TryParse(aidp.GetString(), out var aid))
+                    aiAssigneeId = context.Users.Any(u => u.UserId == aid) ? aid : null;
+
+                Guid? aiServiceId = null;
+                if (root.TryGetProperty("serviceId", out var sidp) && Guid.TryParse(sidp.GetString(), out var sid))
+                    aiServiceId = context.Services.Any(s => s.ServiceId == sid) ? sid : null;
+
+                var aiDuration = root.TryGetProperty("suggestedDurationDays", out var durp) && durp.TryGetInt32(out var dur) ? Math.Clamp(dur, 1, 30) : 7;
+                var aiRationale = root.TryGetProperty("rationale", out var rp) ? rp.GetString() : "Gợi ý tự động từ OpenAI Model.";
+
+                var aiChecklist = new List<string>();
+                if (root.TryGetProperty("checklistItems", out var clp) && clp.ValueKind == JsonValueKind.Array)
+                {
+                    foreach (var elem in clp.EnumerateArray())
+                    {
+                        var itemStr = elem.GetString();
+                        if (!string.IsNullOrWhiteSpace(itemStr)) aiChecklist.Add(itemStr.Trim());
+                    }
+                }
+                if (aiChecklist.Count == 0)
+                {
+                    aiChecklist.Add("Xác nhận yêu cầu và phạm vi công việc chi tiết");
+                    aiChecklist.Add("Thực hiện các bước nghiệp vụ theo tiêu chuẩn");
+                    aiChecklist.Add("Kiểm tra kết quả và đính kèm biên bản/bằng chứng");
+                }
+
+                var matchedDeptObj = aiDeptId.HasValue ? context.Departments.FirstOrDefault(d => d.DepartmentId == aiDeptId.Value) : null;
+                var matchedUserObj = aiAssigneeId.HasValue ? context.Users.FirstOrDefault(u => u.UserId == aiAssigneeId.Value) : null;
+                var matchedServiceObj = aiServiceId.HasValue ? context.Services.FirstOrDefault(s => s.ServiceId == aiServiceId.Value) : null;
+
+                var aiDraft = new TaskDraftSuggestion(
+                    Title: string.IsNullOrWhiteSpace(aiTitle) ? (prompt.Length <= 80 ? prompt : prompt[..77] + "...") : aiTitle,
+                    Description: string.IsNullOrWhiteSpace(aiDesc) ? prompt : aiDesc,
+                    Priority: aiPri,
+                    DepartmentId: matchedDeptObj?.DepartmentId,
+                    DepartmentName: matchedDeptObj?.Name,
+                    AssigneeId: matchedUserObj?.UserId,
+                    AssigneeName: matchedUserObj?.FullName,
+                    ServiceId: matchedServiceObj?.ServiceId,
+                    ServiceName: matchedServiceObj?.Name,
+                    SuggestedDurationDays: aiDuration,
+                    ChecklistItems: aiChecklist,
+                    Confidence: 0.95m,
+                    Reasoning: aiRationale ?? "Gợi ý tự động từ OpenAI Model.");
+
+                var aiInteraction = await store.RecordInteractionAsync(
+                    tenantId, userId, "ai.001", aiResp.ModelName, null, null,
+                    AIInteractionStatus.Succeeded, aiResp.LatencyMs,
+                    JsonSerializer.Serialize(new { prompt_tokens = aiResp.PromptTokens, completion_tokens = aiResp.CompletionTokens }),
+                    cancellationToken);
+
+                await store.RecordRecommendationAsync(
+                    tenantId, aiInteraction.Id, RecommendationObjectType.Task, null,
+                    "DRAFT", JsonSerializer.Serialize(aiDraft), aiDraft.Confidence, cancellationToken);
+
+                return aiDraft;
+            }
+            catch (Exception)
+            {
+                // Fall back cleanly to deterministic catalog-grounded logic on any OpenAI parsing or network error
+            }
+        }
 
         // Ground draft generation using real tenant context
         var lowerPrompt = prompt.ToLowerInvariant();
@@ -127,6 +245,18 @@ public sealed class AiAssistanceService(
             title = prompt.Split('\n')[0].Trim();
         if (title.Length > 100) title = title[..97] + "...";
 
+        var memoryReasoningPart = memoryChunks.Count > 0
+            ? $" (Tham chiếu quy chuẩn bộ nhớ: '{memoryChunks[0].Title}')"
+            : "";
+
+        var confidencePenalty = 0.00m;
+        if (selfReflectionService != null)
+        {
+            var rules = await selfReflectionService.GetCritiqueRulesAsync(tenantId, "DRAFT", cancellationToken);
+            confidencePenalty = rules.Sum(r => r.ConfidencePenalty);
+        }
+        var finalConfidence = Math.Clamp(0.92m - confidencePenalty, 0.50m, 0.99m);
+
         var draft = new TaskDraftSuggestion(
             Title: title,
             Description: prompt,
@@ -139,8 +269,8 @@ public sealed class AiAssistanceService(
             ServiceName: matchedService?.Name,
             SuggestedDurationDays: priority == "HIGH" ? 3 : 7,
             ChecklistItems: checklistItems,
-            Confidence: 0.92m,
-            Reasoning: $"Khởi tạo từ yêu cầu tự nhiên. Đề xuất gán cho phòng ban {matchedDept?.Name ?? "N/A"} với mức ưu tiên {priority}.");
+            Confidence: finalConfidence,
+            Reasoning: $"Khởi tạo từ yêu cầu tự nhiên{memoryReasoningPart}. Đề xuất gán cho phòng ban {matchedDept?.Name ?? "N/A"} với mức ưu tiên {priority}.");
 
         // Record AI interaction & recommendation
         var interaction = await store.RecordInteractionAsync(
@@ -150,7 +280,7 @@ public sealed class AiAssistanceService(
 
         await store.RecordRecommendationAsync(
             tenantId, interaction.Id, RecommendationObjectType.Task, null,
-            "DRAFT", JsonSerializer.Serialize(draft), 0.92m, cancellationToken);
+            "DRAFT", JsonSerializer.Serialize(draft), finalConfidence, cancellationToken);
 
         return draft;
     }
@@ -191,14 +321,28 @@ public sealed class AiAssistanceService(
 
         var top = candidates.FirstOrDefault();
 
+        var assignmentPenalty = 0.00m;
+        string? reflectionRationalePrefix = null;
+        if (selfReflectionService != null)
+        {
+            var rules = await selfReflectionService.GetCritiqueRulesAsync(tenantId, "ASSIGNMENT", cancellationToken);
+            if (rules.Count > 0 && rules.Any(r => r.RuleId.Contains("OVERRIDE")))
+            {
+                assignmentPenalty = rules.Sum(r => r.ConfidencePenalty);
+                reflectionRationalePrefix = "[Tự soi chiếu: Đã tối ưu hóa phân bổ tải để hạn chế ghi đè] ";
+            }
+        }
+
+        var confidence = Math.Clamp((top?.Score ?? 0.80m) - assignmentPenalty, 0.40m, 0.99m);
+
         var result = new TaskAssignmentRecommendationResult(
             DepartmentId: matchedDept?.DepartmentId,
             DepartmentName: matchedDept?.Name,
             RecommendedAssigneeId: top?.UserId,
             RecommendedAssigneeName: top?.FullName,
-            Confidence: top?.Score ?? 0.80m,
+            Confidence: confidence,
             Rationale: top != null
-                ? $"Nhân sự {top.FullName} đang có khối lượng công việc tối ưu ({top.ActiveTaskCount} công việc đang xử lý) và đúng chuyên môn phụ trách."
+                ? $"{reflectionRationalePrefix}Nhân sự {top.FullName} đang có khối lượng công việc tối ưu ({top.ActiveTaskCount} công việc đang xử lý) và đúng chuyên môn phụ trách."
                 : "Không tìm thấy nhân sự phù hợp trực tiếp trong phòng ban.",
             Candidates: candidates);
 
@@ -289,6 +433,83 @@ public sealed class AiAssistanceService(
 
         if (string.IsNullOrWhiteSpace(command.Title))
             throw new ApplicationFault(FaultKind.Validation, "AI.TITLE_REQUIRED", "Task title is required.");
+
+        var reflectionDirectives = selfReflectionService != null
+            ? await selfReflectionService.BuildReflectionDirectivesPromptAsync(tenantId, "BREAKDOWN", cancellationToken)
+            : "";
+
+        if (modelClient?.IsConfigured == true)
+        {
+            try
+            {
+                var sysInstructions = $"""
+                    You are BizFlow AI Assistant. Break down a complex work task into sequential, ordered subtasks.
+                    Return a JSON object with:
+                    - "subtasks": array of objects, each with:
+                      - "orderIndex": integer starting at 1
+                      - "title": short action title
+                      - "description": description of subtask
+                      - "estimatedDays": integer days (1-5)
+                      - "dependsOnOrderIndex": null for first, or an orderIndex strictly less than current orderIndex
+                    - "strategy": Vietnamese summary of decomposition strategy
+                    Strict rule: dependsOnOrderIndex MUST be strictly less than orderIndex (DAG acyclic guarantee).
+
+                    {reflectionDirectives}
+
+                    Return ONLY a JSON object.
+                    """;
+
+                var promptText = $"Task title: {command.Title}. Description: {command.Description}";
+                var aiResp = await modelClient.CompleteAsync(promptText, sysInstructions, cancellationToken);
+                using var doc = JsonDocument.Parse(aiResp.Content);
+                var root = doc.RootElement;
+
+                var aiSubtasks = new List<SubtaskProposal>();
+                if (root.TryGetProperty("subtasks", out var stp) && stp.ValueKind == JsonValueKind.Array)
+                {
+                    var idx = 1;
+                    foreach (var item in stp.EnumerateArray())
+                    {
+                        var stTitle = item.TryGetProperty("title", out var tp) ? tp.GetString() : $"Bước {idx}";
+                        var stDesc = item.TryGetProperty("description", out var dp) ? dp.GetString() : $"Thực hiện bước {idx}";
+                        var stDays = item.TryGetProperty("estimatedDays", out var ep) && ep.TryGetInt32(out var ed) ? Math.Clamp(ed, 1, 14) : 1;
+                        int? dep = null;
+                        if (item.TryGetProperty("dependsOnOrderIndex", out var depp) && depp.TryGetInt32(out var dval) && dval < idx && dval >= 1)
+                        {
+                            dep = dval;
+                        }
+                        else if (idx > 1)
+                        {
+                            dep = idx - 1;
+                        }
+                        aiSubtasks.Add(new(idx, stTitle ?? $"Bước {idx}", stDesc ?? string.Empty, stDays, dep));
+                        idx++;
+                    }
+                }
+
+                if (aiSubtasks.Count >= 2)
+                {
+                    var strategy = root.TryGetProperty("strategy", out var strp) ? strp.GetString() : $"Phân rã thành {aiSubtasks.Count} nhiệm vụ con theo chuỗi thực thi tuần tự (DAG không chu trình).";
+                    var aiResult = new TaskBreakdownResult(aiSubtasks, 0.95m, strategy ?? "Phân rã nhiệm vụ tự động.");
+
+                    var aiInteraction = await store.RecordInteractionAsync(
+                        tenantId, userId, "ai.004", aiResp.ModelName, null, null,
+                        AIInteractionStatus.Succeeded, aiResp.LatencyMs,
+                        JsonSerializer.Serialize(new { prompt_tokens = aiResp.PromptTokens, completion_tokens = aiResp.CompletionTokens }),
+                        cancellationToken);
+
+                    await store.RecordRecommendationAsync(
+                        tenantId, aiInteraction.Id, RecommendationObjectType.Task, command.TaskId,
+                        "BREAKDOWN", JsonSerializer.Serialize(aiResult), 0.95m, cancellationToken);
+
+                    return aiResult;
+                }
+            }
+            catch (Exception)
+            {
+                // Fall back cleanly
+            }
+        }
 
         var count = Math.Clamp(command.TargetSubtaskCount ?? 3, 2, 8);
         var subtasks = new List<SubtaskProposal>();
@@ -493,6 +714,88 @@ public sealed class AiAssistanceService(
             throw new ApplicationFault(FaultKind.Validation, "AI.CONTENT_REQUIRED", "Request title or description is required for multi-intent analysis.");
 
         var context = await contextReader.GetTenantContextAsync(tenantId, cancellationToken);
+
+        if (modelClient?.IsConfigured == true)
+        {
+            try
+            {
+                var sysInstructions = $"""
+                    You are BizFlow AI Assistant. Analyze whether a user request contains multiple distinct business intents.
+                    Available services in tenant catalog: [{string.Join(", ", context.Services.Select(s => $"{s.ServiceId}:{s.Name}"))}].
+                    Return a JSON object with:
+                    - "isMultiIntent": boolean (true if request contains multiple distinct actions or requirements)
+                    - "intents": array of intent objects, each with:
+                      - "title": concise child request title
+                      - "description": child request scope
+                      - "serviceId": string UUID of matching service from catalog or null
+                      - "suggestedServiceName": name of matching service or "Dịch vụ chung"
+                    - "reasoning": Vietnamese explanation of detected intents
+                    Return ONLY a JSON object.
+                    """;
+
+                var promptText = $"Request Title: {command.Title}\nDescription: {command.Description}";
+                var aiResp = await modelClient.CompleteAsync(promptText, sysInstructions, cancellationToken);
+                using var doc = JsonDocument.Parse(aiResp.Content);
+                var root = doc.RootElement;
+
+                var detectedMulti = root.TryGetProperty("isMultiIntent", out var imp) && imp.GetBoolean();
+                var reasoning = root.TryGetProperty("reasoning", out var rp) ? rp.GetString() : "Phân tích đa mục tiêu từ OpenAI Model.";
+
+                var intentsList = new List<IntentProposal>();
+                if (root.TryGetProperty("intents", out var intp) && intp.ValueKind == JsonValueKind.Array)
+                {
+                    var idx = 1;
+                    foreach (var item in intp.EnumerateArray())
+                    {
+                        var itTitle = item.TryGetProperty("title", out var tp) ? tp.GetString() : $"Yêu cầu con {idx}";
+                        var itDesc = item.TryGetProperty("description", out var dp) ? dp.GetString() : command.Description;
+                        Guid? sid = null;
+                        if (item.TryGetProperty("serviceId", out var sidp) && Guid.TryParse(sidp.GetString(), out var parsedSid))
+                            sid = context.Services.Any(s => s.ServiceId == parsedSid) ? parsedSid : null;
+                        var matchedSvc = sid.HasValue ? context.Services.FirstOrDefault(s => s.ServiceId == sid.Value) : null;
+                        var sName = matchedSvc?.Name ?? (item.TryGetProperty("suggestedServiceName", out var snp) ? snp.GetString() : "Dịch vụ chung");
+                        var catId = matchedSvc?.Categories.FirstOrDefault()?.CategoryId;
+                        var catName = matchedSvc?.Categories.FirstOrDefault()?.Name;
+
+                        intentsList.Add(new(
+                            IntentIndex: idx,
+                            Title: itTitle ?? $"Yêu cầu con {idx}",
+                            Description: itDesc ?? string.Empty,
+                            SuggestedServiceId: sid,
+                            SuggestedServiceName: sName,
+                            SuggestedCategoryId: catId,
+                            SuggestedCategoryName: catName,
+                            Confidence: 0.92m));
+                        idx++;
+                    }
+                }
+
+                if (intentsList.Count >= 2)
+                {
+                    var aiResult = new MultiIntentAnalysisResult(
+                        IsMultiIntent: detectedMulti || intentsList.Count > 1,
+                        Intents: intentsList,
+                        Confidence: 0.94m,
+                        Rationale: reasoning ?? "Phát hiện nhiều mục tiêu nghiệp vụ độc lập.");
+
+                    var aiInteraction = await store.RecordInteractionAsync(
+                        tenantId, userId, "ai.007", aiResp.ModelName, null, null,
+                        AIInteractionStatus.Succeeded, aiResp.LatencyMs,
+                        JsonSerializer.Serialize(new { prompt_tokens = aiResp.PromptTokens, completion_tokens = aiResp.CompletionTokens }),
+                        cancellationToken);
+
+                    await store.RecordRecommendationAsync(
+                        tenantId, aiInteraction.Id, RecommendationObjectType.Request, command.RequestId,
+                        "MULTI_INTENT", JsonSerializer.Serialize(aiResult), 0.94m, cancellationToken);
+
+                    return aiResult;
+                }
+            }
+            catch (Exception)
+            {
+                // Fall back cleanly
+            }
+        }
 
         var fullText = $"{command.Title}\n{command.Description}".Trim();
         var lower = fullText.ToLowerInvariant();
@@ -738,6 +1041,8 @@ public sealed class AiAssistanceService(
         // Confirmation guardrail: if tool requires confirmation and caller has not confirmed yet
         if (tool.RequiresConfirmation && !command.Confirmed)
         {
+            var token = confirmationTokenService?.CreateConfirmationToken(tenantId, userId, tool.Name, command.ArgsJson);
+
             var pendingAction = await store.RecordActionAsync(
                 tenantId, interaction.Id, tool.Name, command.ArgsJson,
                 AgentAuthorizationResult.Authorized, AgentExecutionStatus.NotExecuted,
@@ -750,7 +1055,30 @@ public sealed class AiAssistanceService(
                 ExecutionStatus: "NOT_EXECUTED",
                 ResultRef: null,
                 Message: $"Tool '{tool.Name}' requires human confirmation before execution.",
-                Output: new { requiresConfirmation = true, tool = tool.Name });
+                Output: new { requiresConfirmation = true, tool = tool.Name, confirmationToken = token },
+                ConfirmationToken: token);
+        }
+
+        // If tool requires confirmation, enforce cryptographic token validation if service is active or token is supplied
+        if (tool.RequiresConfirmation)
+        {
+            if (confirmationTokenService != null)
+            {
+                if (string.IsNullOrWhiteSpace(command.ConfirmationToken))
+                {
+                    throw new ApplicationFault(
+                        FaultKind.Validation,
+                        "AI.CONFIRMATION_TOKEN_REQUIRED",
+                        $"Executing mutating tool '{tool.Name}' requires a valid confirmation token.");
+                }
+
+                confirmationTokenService.ValidateAndConsumeToken(
+                    command.ConfirmationToken,
+                    tenantId,
+                    userId,
+                    tool.Name,
+                    command.ArgsJson);
+            }
         }
 
         // Execute via dispatcher

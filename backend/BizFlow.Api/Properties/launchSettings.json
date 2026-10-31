@@ -8,10 +8,10 @@
       "applicationUrl": "http://localhost:5154",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",
-        "ConnectionStrings__BizFlow": "Host=localhost;Port=5432;Database=bizflow;Username=bizflow;Password=bizflow_local_secret_2026",
+        "ConnectionStrings__BizFlow": "Host=127.0.0.1;Port=5433;Database=bizflow;Username=bizflow;Password=bizflow_secret_123",
         "Jwt__Issuer": "BizFlow",
         "Jwt__Audience": "BizFlow.Web",
-        "Jwt__SigningKeyBase64": "NV5no+IE5Nu+Ii3crBzkZFDGLZfIj2+5DPHFdRH898Y="
+        "Jwt__SigningKeyBase64": "Loizdg9h99sl7lZJSV1LJwNCNTIdi7PjAtR3yib+brk="
       }
     }
   }

@@ -121,3 +121,27 @@ internal sealed class AIAgentActionModelConfiguration : IEntityTypeConfiguration
         b.HasIndex(a => new { a.TenantId, a.AIInteractionId });
     }
 }
+
+internal sealed class AiVectorMemoryModelConfiguration : IEntityTypeConfiguration<AiVectorMemory>
+{
+    public void Configure(EntityTypeBuilder<AiVectorMemory> b)
+    {
+        b.ToTable("AIVectorMemory");
+
+        b.HasKey(m => m.Id);
+        b.Property(m => m.Id).HasColumnName("MemoryId");
+        b.Property(m => m.TenantId).IsRequired();
+        b.Property(m => m.MemoryScope).HasMaxLength(64).IsRequired();
+        b.Property(m => m.Title).HasMaxLength(255).IsRequired();
+        b.Property(m => m.Content).IsRequired();
+        b.Property(m => m.MetadataJson).HasColumnType("jsonb");
+        b.Property(m => m.EmbeddingJson).HasColumnType("jsonb").IsRequired();
+        b.Property(m => m.CreatedAt).IsRequired();
+        b.Property(m => m.UpdatedAt);
+
+        b.HasOne<Tenant>().WithMany().HasForeignKey(m => m.TenantId).OnDelete(DeleteBehavior.Cascade);
+
+        b.HasIndex(m => new { m.TenantId, m.MemoryScope });
+        b.HasIndex(m => new { m.TenantId, m.CreatedAt });
+    }
+}

@@ -8,6 +8,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { SessionService } from '../../core/auth/session';
+import { TranslatePipe } from '../../core/i18n/translate.pipe';
 
 @Component({
   selector: 'bf-task-create',
@@ -19,6 +20,7 @@ import { SessionService } from '../../core/auth/session';
     MatInputModule,
     MatSelectModule,
     RouterLink,
+    TranslatePipe,
   ],
   templateUrl: './task-create.html',
   styleUrls: ['../organization/departments.scss', './task-editor.scss'],
@@ -45,6 +47,14 @@ export class TaskCreate {
       if (params['requestId']) {
         this.requestId.set(params['requestId']);
       }
+      if (params['aiTitle'] || params['title']) {
+        this.form.patchValue({
+          title: params['aiTitle'] || params['title'] || '',
+          description: params['aiDescription'] || params['description'] || '',
+          priority: params['aiPriority'] || params['priority'] || 'MEDIUM',
+          checklist: params['aiChecklist'] || params['checklist'] || '',
+        });
+      }
     });
   }
 
@@ -61,7 +71,8 @@ export class TaskCreate {
     if (!prompt || this.aiBusy()) return;
     this.aiBusy.set(true);
     this.aiMessage.set('');
-    this.http.post<any>('/api/v1/ai/task-assistance', { prompt })
+    this.http
+      .post<any>('/api/v1/ai/task-assistance', { prompt })
       .pipe(takeUntilDestroyed(this.destroy))
       .subscribe({
         next: (draft) => {
@@ -73,13 +84,17 @@ export class TaskCreate {
               priority: draft.priority || 'MEDIUM',
               checklist: (draft.checklistItems || []).join('\n'),
             });
-            this.aiMessage.set(`AI generated draft (Confidence: ${(draft.confidence * 100).toFixed(0)}%): ${draft.reasoning}`);
+            this.aiMessage.set(
+              `AI đã tạo bản thảo (Độ tin cậy: ${(draft.confidence * 100).toFixed(0)}%): ${draft.reasoning}`,
+            );
+
           }
         },
         error: () => {
           this.aiBusy.set(false);
-          this.aiMessage.set('Could not connect to AI assistant. Please try again.');
-        }
+          this.aiMessage.set('Không thể kết nối trợ lý AI. Vui lòng thử lại.');
+        },
+
       });
   }
 
@@ -87,21 +102,32 @@ export class TaskCreate {
     const title = this.form.controls.title.value.trim();
     if (!title || this.aiBusy()) return;
     this.aiBusy.set(true);
-    this.http.post<any>('/api/v1/ai/task-breakdown', { title, description: this.form.controls.description.value, targetSubtaskCount: 4 })
+    this.http
+      .post<any>('/api/v1/ai/task-breakdown', {
+        title,
+        description: this.form.controls.description.value,
+        targetSubtaskCount: 4,
+      })
       .pipe(takeUntilDestroyed(this.destroy))
       .subscribe({
         next: (res) => {
           this.aiBusy.set(false);
           if (res?.subtasks?.length) {
-            const list = res.subtasks.map((s: any) => `${s.orderIndex}. ${s.title}: ${s.description}`).join('\n');
+            const list = res.subtasks
+              .map((s: any) => `${s.orderIndex}. ${s.title}: ${s.description}`)
+              .join('\n');
             this.form.patchValue({ checklist: list });
-            this.aiMessage.set(`AI broke down into ${res.subtasks.length} subtasks: ${res.strategy}`);
+            this.aiMessage.set(
+              `AI đã phân rã thành ${res.subtasks.length} nhiệm vụ con: ${res.strategy}`,
+            );
+
           }
         },
         error: () => {
           this.aiBusy.set(false);
-          this.aiMessage.set('Breakdown failed. Please check the title.');
-        }
+          this.aiMessage.set('Phân rã thất bại. Vui lòng kiểm tra tiêu đề.');
+        },
+
       });
   }
   save() {
@@ -114,7 +140,7 @@ export class TaskCreate {
       const value = this.form.getRawValue();
       const deadline = value.deadline ? new Date(value.deadline) : null;
       if (deadline && (!Number.isFinite(deadline.getTime()) || deadline.getTime() <= Date.now())) {
-        this.error.set('Choose a future deadline in your local time.');
+        this.error.set('Vui lòng chọn thời hạn trong tương lai theo giờ địa phương.');
         return;
       }
       this.submitted = {
@@ -152,10 +178,10 @@ export class TaskCreate {
           if (failure.status === 422 && !this.uncertain()) {
             this.form.enable();
             this.key = crypto.randomUUID();
-            this.error.set('Check the title, checklist and future deadline. No task was created.');
+            this.error.set('Vui lòng kiểm tra lại tiêu đề, danh mục kiểm tra và hạn chót. Nhiệm vụ chưa được tạo.');
           } else if (failure.status === 403 || failure.status === 401) {
             this.done.set(true);
-            this.error.set('You no longer have permission to create tasks.');
+            this.error.set('Bạn không còn quyền tạo nhiệm vụ.');
           } else {
             this.unknown();
           }

@@ -1,4 +1,12 @@
-<a class="skip-link" href="#main-content">Skip to main content</a>
+<a class="skip-link" href="#main-content">{{
+  'app.skipToMain' | translate: 'Skip to main content'
+}}</a>
+
+<!-- Global Floating Pop-up Toast Container -->
+<bf-toast-container />
+
+<!-- Floating Robot AI Widget (Draggable / Chat / Document Summarizer / Multi-branch) -->
+<bf-robot-widget />
 
 @if (signedIn()) {
   <div class="app-authenticated-shell">
@@ -25,12 +33,12 @@
         <button
           type="button"
           class="ai-trigger-btn"
-          (click)="isAiOpen.set(true)"
-          title="Open AI Assistant"
-          aria-label="Open AI Assistant"
+          (click)="openAiAgent()"
+          title="Mở Trợ lý AI Agent"
+          aria-label="Mở Trợ lý AI Agent"
         >
           <span class="sparkle" aria-hidden="true">✦</span>
-          <span>AI Assistant</span>
+          <span>AI Agent</span>
         </button>
 
         <!-- Notification Bell -->
@@ -70,14 +78,14 @@
           title="Sign out"
           aria-label="Sign out of BizFlow"
         >
-          Sign out
+          {{ 'common.signOut' | translate: 'Sign out' }}
         </button>
       </div>
     </header>
 
     <!-- Main Shell with Left Sidebar & Viewport -->
     <div class="app-body-layout">
-      <!-- Left Distinct Navy-Blue Sidebar with Icons and Visible Labels -->
+      <!-- Left Distinct Light-Ocean Sidebar with Icons, Visible Labels, and Luminous Active Border -->
       <aside class="app-sidebar" aria-label="Primary navigation">
         <nav class="sidebar-nav" aria-label="Main application">
           @if (identity()?.tenantId) {
@@ -94,7 +102,7 @@
                 <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
                 <polyline points="9 22 9 12 15 12 15 22"/>
               </svg>
-              <span class="nav-label">Home</span>
+              <span class="nav-label">{{ 'nav.home' | translate: 'Home' }}</span>
             </a>
 
             <!-- 2. Tasks -->
@@ -115,7 +123,7 @@
                   <path d="M9 11l3 3L22 4"/>
                   <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
                 </svg>
-                <span class="nav-label">Tasks</span>
+                <span class="nav-label">{{ 'nav.tasks' | translate: 'Tasks' }}</span>
               </a>
             }
 
@@ -136,7 +144,7 @@
                   <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
                   <polyline points="22,6 12,13 2,6"/>
                 </svg>
-                <span class="nav-label">Requests</span>
+                <span class="nav-label">{{ 'nav.requests' | translate: 'Requests' }}</span>
               </a>
             }
 
@@ -152,7 +160,7 @@
                 <circle cx="12" cy="12" r="10"/>
                 <path d="m9 12 2 2 4-4"/>
               </svg>
-              <span class="nav-label">Approvals</span>
+              <span class="nav-label">{{ 'nav.approvals' | translate: 'Approvals' }}</span>
             </a>
 
             <!-- 5. Reports -->
@@ -174,7 +182,7 @@
                   <line x1="12" y1="20" x2="12" y2="4"/>
                   <line x1="6" y1="20" x2="6" y2="14"/>
                 </svg>
-                <span class="nav-label">Reports</span>
+                <span class="nav-label">{{ 'nav.reports' | translate: 'Reports' }}</span>
               </a>
             }
 
@@ -190,7 +198,7 @@
                 <circle cx="12" cy="12" r="10"/>
                 <polyline points="12 6 12 12 16 14"/>
               </svg>
-              <span class="nav-label">SLA Monitor</span>
+              <span class="nav-label">{{ 'nav.slaMonitor' | translate: 'SLA Monitor' }}</span>
             </a>
 
             <!-- 7. Search -->
@@ -206,7 +214,7 @@
                   <circle cx="11" cy="11" r="8"/>
                   <line x1="21" y1="21" x2="16.65" y2="16.65"/>
                 </svg>
-                <span class="nav-label">Search</span>
+                <span class="nav-label">{{ 'nav.search' | translate: 'Search' }}</span>
               </a>
             }
 
@@ -222,9 +230,10 @@
                 <circle cx="12" cy="12" r="3"/>
                 <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
               </svg>
-              <span class="nav-label">Settings</span>
+              <span class="nav-label">{{ 'nav.settings' | translate: 'Settings' }}</span>
             </a>
           } @else {
+            <!-- Platform Administrator Nav Links -->
             <a
               routerLink="/workspace"
               routerLinkActive="active"
@@ -237,7 +246,7 @@
                 <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
                 <polyline points="9 22 9 12 15 12 15 22"/>
               </svg>
-              <span class="nav-label">Home</span>
+              <span class="nav-label">{{ 'nav.home' | translate: 'Home' }}</span>
             </a>
             <a
               routerLink="/platform/companies"
@@ -250,7 +259,7 @@
                 <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
                 <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
               </svg>
-              <span class="nav-label">Companies</span>
+              <span class="nav-label">{{ 'nav.companies' | translate: 'Companies' }}</span>
             </a>
             <a
               routerLink="/platform/audit"
@@ -265,7 +274,7 @@
                 <line x1="16" y1="13" x2="8" y2="13"/>
                 <line x1="16" y1="17" x2="8" y2="17"/>
               </svg>
-              <span class="nav-label">Platform Audit</span>
+              <span class="nav-label">{{ 'nav.platformAudit' | translate: 'Platform Audit' }}</span>
             </a>
           }
         </nav>
@@ -276,12 +285,8 @@
         <router-outlet />
       </div>
     </div>
-
-    <!-- Global AI Assistant modal -->
-    @if (isAiOpen()) {
-      <bf-ai-assistant [isOpen]="isAiOpen()" (closeModal)="isAiOpen.set(false)" />
-    }
   </div>
 } @else {
+  <!-- Unauthenticated Views (Login, Forgot Password, Register Company, Reset Password) -->
   <router-outlet />
 }

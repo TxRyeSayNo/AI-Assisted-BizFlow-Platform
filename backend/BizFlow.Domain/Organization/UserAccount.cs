@@ -83,4 +83,28 @@ public sealed class UserAccount
             Status = UserStatus.Active, CreatedAt = now.ToUniversalTime(), UpdatedAt = now.ToUniversalTime()
         };
     }
+
+    public void UpdateProfile(string fullName, Guid? departmentId, DateTimeOffset now)
+    {
+        FullName = EntityRules.Text(fullName, 200, nameof(fullName));
+        DepartmentId = departmentId is { } id ? EntityRules.Id(id, nameof(departmentId)) : null;
+        UpdatedAt = now.ToUniversalTime();
+    }
+
+    public void SetStatus(UserStatus newStatus, DateTimeOffset now)
+    {
+        Status = newStatus;
+        UpdatedAt = now.ToUniversalTime();
+        if (newStatus != UserStatus.Active)
+        {
+            SecurityStamp = Guid.NewGuid().ToString("N");
+        }
+    }
+
+    public void SoftDelete(DateTimeOffset now)
+    {
+        DeletedAt = now.ToUniversalTime();
+        UpdatedAt = now.ToUniversalTime();
+        SecurityStamp = Guid.NewGuid().ToString("N");
+    }
 }

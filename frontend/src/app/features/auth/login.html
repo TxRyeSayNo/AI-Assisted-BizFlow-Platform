@@ -1,56 +1,3 @@
-<!-- Top-Right Floating Pop-Up Alert (Fades out smoothly after 3s) -->
-@if (toast(); as currentToast) {
-  <aside
-    id="auth-top-toast"
-    class="auth-top-toast"
-    [class.toast-fade-out]="toastFading()"
-    role="alert"
-    aria-live="assertive"
-  >
-    <div class="toast-icon-wrap" aria-hidden="true">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" class="toast-svg">
-        <circle cx="12" cy="12" r="10" />
-        <line x1="12" y1="8" x2="12" y2="12" />
-        <line x1="12" y1="16" x2="12.01" y2="16" />
-      </svg>
-    </div>
-    <div class="toast-content">
-      <div class="toast-title">{{ currentToast.title }}</div>
-      <div class="toast-desc">{{ currentToast.message }}</div>
-    </div>
-    <button type="button" class="toast-close-btn" (click)="dismissToast()" aria-label="Close notification">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <line x1="18" y1="6" x2="6" y2="18" />
-        <line x1="6" y1="6" x2="18" y2="18" />
-      </svg>
-    </button>
-
-    <!-- Precise SVG Rounded Perimeter Border Runner (3s full loop, perfectly matches corner radius) -->
-    <svg class="toast-perimeter-svg" aria-hidden="true" width="100%" height="100%">
-      <rect
-        class="toast-perimeter-track"
-        x="1.5"
-        y="1.5"
-        width="calc(100% - 3px)"
-        height="calc(100% - 3px)"
-        rx="14.5"
-        ry="14.5"
-        pathLength="100"
-      />
-      <rect
-        class="toast-perimeter-runner"
-        x="1.5"
-        y="1.5"
-        width="calc(100% - 3px)"
-        height="calc(100% - 3px)"
-        rx="14.5"
-        ry="14.5"
-        pathLength="100"
-      />
-    </svg>
-  </aside>
-}
-
 <div class="auth-page light-ocean-theme">
   <!-- Ambient Light Ocean Animated Atmosphere (CSS-Only, No Image) -->
   <div class="light-ocean-ambient" aria-hidden="true">
@@ -72,93 +19,217 @@
               <span class="brand-text">BizFlow</span>
               <span class="brand-dot" aria-hidden="true"></span>
             </div>
-            <h1 id="login-title">Sign in to your workspace</h1>
-            <p class="supporting-copy">Use your employee code or company email to continue.</p>
+            <h1 id="login-title">{{ 'auth.loginTitle' | translate }}</h1>
+            <p class="supporting-copy">
+              {{
+                (authMethod() === 'email-link' ? 'auth.emailLinkSubtitle' : 'auth.loginSubtitle')
+                  | translate
+              }}
+            </p>
           </div>
 
-          <!-- Separated Method Selector with Distinct Laser Animated Buttons -->
-          <div class="toggle-group-container">
-            <mat-button-toggle-group
-              class="toggle-group-separated"
-              aria-label="Sign-in method"
-              hideSingleSelectionIndicator="true"
-              [value]="mode()"
-              (change)="changeMode($event.value)"
-              [disabled]="busy()"
-            >
-              <mat-button-toggle value="code">Employee code</mat-button-toggle>
-              <mat-button-toggle value="email">Company email</mat-button-toggle>
-            </mat-button-toggle-group>
-          </div>
+          @if (authMethod() === 'password') {
+            <!-- Standard Authentication Form -->
+            <form [formGroup]="form" (ngSubmit)="submit()" [attr.aria-busy]="busy()">
+              <!-- 1. Workspace Key (Top Field as requested) -->
+              <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                <mat-label>{{ 'auth.workspaceKey' | translate }}</mat-label>
+                <input
+                  matInput
+                  formControlName="tenantKey"
+                  autocomplete="organization"
+                  [readonly]="busy()"
+                  [placeholder]="'auth.workspaceKeyPlaceholder' | translate"
+                  [required]="!isSuperAdmin()"
+                  [attr.aria-required]="!isSuperAdmin()"
+                />
+              </mat-form-field>
 
-          <!-- Authentication Form (Stable Height, Non-Stretching) -->
-          <form [formGroup]="form" (ngSubmit)="submit()" [attr.aria-busy]="busy()">
-            <mat-form-field appearance="outline" subscriptSizing="dynamic">
-              <mat-label>{{ mode() === 'email' ? 'Company email' : 'Employee code' }}</mat-label>
-              <input
-                matInput
-                formControlName="identifier"
-                autocomplete="username"
-                [type]="mode() === 'email' ? 'email' : 'text'"
-                [readonly]="busy()"
-                [placeholder]="mode() === 'email' ? 'name@company.com' : 'e.g. EMP001'"
-              />
-            </mat-form-field>
+              <!-- Sub-selector for Identifier Type in ID Login (Employee Code vs Company Email) -->
+              <div class="toggle-group-container">
+                <mat-button-toggle-group
+                  class="toggle-group-separated"
+                  aria-label="Sign-in identifier type"
+                  hideSingleSelectionIndicator="true"
+                  [value]="mode()"
+                  (change)="changeMode($event.value)"
+                  [disabled]="busy()"
+                >
+                  <mat-button-toggle value="code">{{
+                    'auth.employeeCode' | translate
+                  }}</mat-button-toggle>
+                  <mat-button-toggle value="email">{{
+                    'auth.companyEmail' | translate
+                  }}</mat-button-toggle>
+                </mat-button-toggle-group>
+              </div>
 
-            <mat-form-field appearance="outline" subscriptSizing="dynamic">
-              <mat-label>Password</mat-label>
-              <input
-                matInput
-                formControlName="password"
-                autocomplete="current-password"
-                [type]="showPassword() ? 'text' : 'password'"
-                [readonly]="busy()"
-              />
+              <!-- 2. Identifier (Employee code or Company email) -->
+              <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                <mat-label>{{
+                  (mode() === 'email' ? 'auth.companyEmail' : 'auth.employeeCode') | translate
+                }}</mat-label>
+                <input
+                  matInput
+                  formControlName="identifier"
+                  autocomplete="username"
+                  [type]="mode() === 'email' ? 'email' : 'text'"
+                  [readonly]="busy()"
+                  [placeholder]="
+                    (mode() === 'email' ? 'auth.emailPlaceholder' : 'auth.codePlaceholder') | translate
+                  "
+                />
+              </mat-form-field>
+
+              <!-- 3. Password -->
+              <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                <mat-label>{{ 'auth.password' | translate }}</mat-label>
+                <input
+                  matInput
+                  formControlName="password"
+                  autocomplete="current-password"
+                  [type]="showPassword() ? 'text' : 'password'"
+                  [readonly]="busy()"
+                  [placeholder]="'auth.passwordPlaceholder' | translate"
+                />
+                <button
+                  mat-button
+                  matSuffix
+                  type="button"
+                  [attr.aria-label]="
+                    (showPassword() ? 'auth.hidePassword' : 'auth.showPassword') | translate
+                  "
+                  [attr.aria-pressed]="showPassword()"
+                  (click)="showPassword.set(!showPassword())"
+                >
+                  {{ (showPassword() ? 'auth.hidePassword' : 'auth.showPassword') | translate }}
+                </button>
+              </mat-form-field>
+
+              <!-- 4. Forgot Password Link directly below password field -->
+              <div class="forgot-password-row">
+                <a routerLink="/forgot-password" class="forgot-link-inline">{{
+                  'auth.forgotPassword' | translate
+                }}</a>
+              </div>
+
+              <!-- 5. Remember Me Checkbox -->
+              <div class="remember-row">
+                <input
+                  type="checkbox"
+                  id="login-remember"
+                  [checked]="rememberMe()"
+                  (change)="rememberMe.set(!rememberMe())"
+                />
+                <label for="login-remember">{{ 'auth.rememberMe' | translate }}</label>
+              </div>
+
+              <!-- Accessible alert announcement without layout displacement -->
+              @if (error()) {
+                <div class="sr-only" role="alert" aria-live="assertive">{{ error() }}</div>
+              }
+
+              <!-- Primary Sign-In Action Button with Animated Rotating Laser Border -->
+              <div class="sign-in-btn-animated-border">
+                <button
+                  mat-flat-button
+                  id="sign-in-btn"
+                  class="sign-in-button"
+                  type="submit"
+                  [disabled]="busy()"
+                >
+                  @if (busy()) {
+                    <span>{{ 'auth.signingIn' | translate }}</span>
+                  } @else {
+                    <span>{{ 'auth.signInNow' | translate }} &rarr;</span>
+                  }
+                </button>
+              </div>
+
+              <!-- Clean Divider with OR -->
+              <div class="clean-divider">
+                <span class="divider-text">{{ 'common.or' | translate }}</span>
+              </div>
+
+              <!-- Secondary Email-Link Sign In Button -->
               <button
-                mat-button
-                matSuffix
                 type="button"
-                [attr.aria-label]="showPassword() ? 'Hide password' : 'Show password'"
-                [attr.aria-pressed]="showPassword()"
-                (click)="showPassword.set(!showPassword())"
-              >
-                {{ showPassword() ? 'Hide' : 'Show' }}
-              </button>
-            </mat-form-field>
-
-            <mat-form-field appearance="outline" subscriptSizing="dynamic">
-              <mat-label>Workspace key</mat-label>
-              <input
-                matInput
-                formControlName="tenantKey"
-                autocomplete="organization"
-                [readonly]="busy()"
-                placeholder="e.g. bizflow-corp"
-              />
-            </mat-form-field>
-
-            <!-- Primary Sign-In Action Button with Animated Rotating Laser Border -->
-            <div class="sign-in-btn-animated-border">
-              <button
-                mat-flat-button
-                id="sign-in-btn"
-                class="sign-in-button"
-                type="submit"
-                (click)="submit()"
+                class="btn-secondary-outline"
+                (click)="setAuthMethod('email-link')"
                 [disabled]="busy()"
               >
-                @if (busy()) {
-                  <span>Signing in…</span>
-                } @else {
-                  <span>Sign in to Workspace</span>
-                }
+                <span class="alt-icon" aria-hidden="true">✉️</span>
+                <span>{{ 'auth.signInWithEmailLink' | translate }}</span>
               </button>
-            </div>
-          </form>
+            </form>
+          } @else {
+            <!-- Passwordless Email Link Form (FR-AUTH-005, INT-029) -->
+            <form [formGroup]="emailForm" (ngSubmit)="submitEmailLink()" [attr.aria-busy]="busy()">
+              <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                <mat-label>{{ 'auth.companyEmail' | translate }}</mat-label>
+                <input
+                  matInput
+                  formControlName="email"
+                  type="email"
+                  autocomplete="email"
+                  [readonly]="busy()"
+                  placeholder="name@company.com"
+                  required
+                />
+              </mat-form-field>
 
+              @if (emailSentMessage()) {
+                <div class="sr-only" role="status" aria-live="polite">✉️ {{ emailSentMessage() }}</div>
+              }
+
+              <!-- Accessible alert announcement without layout displacement -->
+              @if (error()) {
+                <div class="sr-only" role="alert" aria-live="assertive">{{ error() }}</div>
+              }
+
+              <div class="sign-in-btn-animated-border" style="margin-top: 0.5rem">
+                <button
+                  mat-flat-button
+                  class="sign-in-button"
+                  type="submit"
+                  [disabled]="busy()"
+                >
+                  <span>{{ (busy() ? 'auth.sendingLink' : 'auth.sendEmailLink') | translate }}</span>
+                </button>
+              </div>
+
+              <div class="clean-divider">
+                <span class="divider-text">{{ 'common.or' | translate }}</span>
+              </div>
+
+              <button
+                type="button"
+                class="btn-secondary-outline"
+                (click)="setAuthMethod('password')"
+                [disabled]="busy()"
+              >
+                <span class="alt-icon" aria-hidden="true">🔑</span>
+                <span>{{ 'auth.signInWithPassword' | translate }}</span>
+              </button>
+            </form>
+          }
+
+          <!-- Footer Links: "Bạn muốn tạo doanh nghiệp mới? Đăng ký doanh nghiệp" -->
           <div class="auth-card-footer">
-            <p class="auth-help"><a routerLink="/forgot-password">Forgot your password?</a></p>
-            <p class="small-copy auth-help">Need access? Contact your company administrator.</p>
+            @if (showRegisterLink()) {
+              <p class="register-text" style="margin-bottom: 0.5rem">
+                <a routerLink="/register-company" class="register-link"
+                  >&rarr; {{ 'auth.registerCompanyPrompt' | translate }}</a
+                >
+              </p>
+            }
+            <p class="register-text">
+              <span>{{ 'auth.noAccountPrompt' | translate }} </span>
+              <a routerLink="/register-company" class="register-link">{{
+                'auth.registerCompany' | translate
+              }}</a>
+            </p>
+            <p class="small-copy auth-help">{{ 'auth.needAccess' | translate }}</p>
           </div>
         </section>
       </div>

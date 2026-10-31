@@ -1,0 +1,133 @@
+RequirementId,Category,Module,Title,Priority,SpecStatus,ImplementationStatus,VerificationMethod,TestScenarios,BusinessGoals,BusinessRules,UseCases,SourceRefs,OpenDecisions
+FR-AUTH-001,FR,M01,"Đăng nhập Người dùng Doanh nghiệp bằng ID với Đúng 3 Trường Bắt buộc",P0,CONFIRMED,PARTIAL,"T;D",TST-032,BG-006,"BR-001;BR-025",UC-002,"SRC-002;ADR-0002;SRC-033",OD-025
+FR-AUTH-005,FR,M01,"Đăng nhập bằng Email-Link và Bộ chọn Không gian làm việc",P0,CONFIRMED,NOT_IMPLEMENTED,"T;D","TST-032;TST-033",BG-006,BR-025,UC-014,"BR-025;OD-025",OD-025
+FR-AUTH-002,FR,M01,"Đăng nhập Quản trị viên Nền tảng (PLATFORM_ADMIN)",P0,CONFIRMED,IMPLEMENTED,"T;D",TST-001,BG-006,BR-001,UC-002,"SRC-002;ADR-0002;SRC-033",
+FR-AUTH-003,FR,M01,"Duy trì Phiên, Xoay vòng Refresh Token và Đăng xuất Thu hồi Phiên",P0,CONFIRMED,IMPLEMENTED,T,TST-002,BG-006,,UC-002,"SRC-002;ADR-0002;SRC-033",
+FR-AUTH-004,FR,M01,"Khôi phục Mật khẩu qua Email hoặc Mật khẩu Tạm thời do Quản trị viên Cấp",P0,OPEN,PARTIAL,"T;I",TST-003,BG-006,BR-001,UC-002,"SRC-002;ADR-0002;SRC-020","OD-004;OD-007"
+FR-TEN-001,FR,M02,"Gửi Hồ sơ Đăng ký Doanh nghiệp Đầy đủ 6 Trường, Kiểm tra Mã Workspace và Tải lên Tài liệu",P0,CONFIRMED,PARTIAL,"T;D","TST-004;TST-031;TST-034",BG-006,"BR-024;BR-026",UC-001,"SRC-002;SRC-020;SRC-033","OD-009;OD-022;OD-023;OD-026;OD-027"
+FR-TEN-002,FR,M02,"Thẩm định Hồ sơ Doanh nghiệp, Phê duyệt/Từ chối và Khởi tạo Nguyên tử Primary Tenant + COMPANY_ADMIN",P0,CONFIRMED,PARTIAL,"T;D","TST-004;TST-031;TST-035",BG-006,"BR-022;BR-023",UC-001,"SRC-002;DEC-WS-001;OD-024","OD-005;OD-024;OD-027"
+FR-TEN-003,FR,M02,"Quản lý Trạng thái Hoạt động của Doanh nghiệp và Thuê bao",P1,CONFIRMED,NOT_IMPLEMENTED,T,TST-005,BG-006,,UC-001,"SRC-002;SRC-020",
+FR-TEN-004,FR,M02,"Thực thi Cách ly Dữ liệu Đa thuê bao Tuyệt đối theo TenantId",P0,CONFIRMED,IMPLEMENTED,"T;I",TST-006,BG-006,BR-002,UC-001,"SRC-002;SRC-031",
+FR-TEN-005,FR,M02,"Tự đăng ký Doanh nghiệp, Xác minh Email và Khởi tạo Tự động Primary Tenant (Self-Service Onboarding)",P1,PROPOSED,NOT_IMPLEMENTED,"T;D",TST-031,BG-006,"BR-023;BR-024",UC-013,"SRC-001;SRC-002;DEC-WS-001","OD-021;OD-022;OD-023;OD-024"
+FR-ORG-001,FR,M03,"Tạo mới Tài khoản Người dùng trong Doanh nghiệp",P0,CONFIRMED,NOT_IMPLEMENTED,"T;D",TST-007,BG-006,BR-001,UC-003,"SRC-002;SRC-020","OD-004;OD-007"
+FR-ORG-002,FR,M03,"Cập nhật Thông tin Hồ sơ, Phòng ban và Vai trò của Người dùng",P0,CONFIRMED,NOT_IMPLEMENTED,T,TST-007,BG-006,,UC-003,"SRC-002;SRC-020",
+FR-ORG-003,FR,M03,"Vô hiệu hóa hoặc Kích hoạt lại Tài khoản Người dùng",P0,CONFIRMED,NOT_IMPLEMENTED,T,TST-007,BG-006,,UC-003,"SRC-002;SRC-020",
+FR-ORG-004,FR,M03,"Quản lý Cơ cấu Phòng ban Phân cấp và Phạm vi Quản lý (ManagementScope)",P0,CONFIRMED,PARTIAL,"T;D",TST-007,BG-006,BR-003,UC-003,"SRC-002;SRC-031;SRC-033",OD-006
+FR-ORG-005,FR,M03,"Tạo Vai trò Tùy chỉnh và Cấu hình Quyền hạn (Custom Role & Permission Matrix)",P1,CONFIRMED,IMPLEMENTED,"T;D",TST-008,BG-006,BR-003,UC-003,"SRC-002;SRC-033",
+FR-SVC-001,FR,M04,"Tạo và Quản lý Danh mục Dịch vụ Nội bộ và Phân loại Dịch vụ",P0,CONFIRMED,IMPLEMENTED,"T;D",TST-009,BG-001,,UC-004,"SRC-002;ADR-0008;SRC-033",
+FR-SVC-002,FR,M04,"Cấu hình Quy tắc Định tuyến Tự động cho Dịch vụ (RoutingRule)",P0,CONFIRMED,NOT_IMPLEMENTED,T,TST-010,BG-001,BR-008,UC-004,"SRC-002;SRC-003;SRC-025",
+FR-SVC-003,FR,M04,"Gắn Phiên bản Quy trình Công việc và Hồ sơ SLA Mặc định cho Dịch vụ",P1,CONFIRMED,NOT_IMPLEMENTED,T,TST-010,BG-004,"BR-013;BR-014",UC-004,"SRC-002;SRC-020",
+FR-SVC-004,FR,M04,"Cấu hình Quy tắc Phê duyệt cho Dịch vụ (ApprovalRule)",P1,CONFIRMED,NOT_IMPLEMENTED,T,TST-010,BG-004,BR-012,UC-004,"SRC-002;SRC-003",OD-011
+FR-TASK-001,FR,M05,"Tạo mới Công việc Độc lập hoặc Liên kết Yêu cầu kèm Danh sách Kiểm tra (Checklist)",P0,CONFIRMED,IMPLEMENTED,"T;D",TST-011,BG-002,BR-004,UC-007,"SRC-002;ADR-0011;ADR-0012;SRC-033",
+FR-TASK-002,FR,M05,"Giao Công việc cho Cá nhân hoặc Phòng ban",P0,CONFIRMED,IMPLEMENTED,"T;D",TST-012,BG-002,BR-005,UC-007,"SRC-002;SRC-033",
+FR-TASK-003,FR,M05,"Người được giao Xác nhận Nhận việc hoặc Từ chối Nhận việc (Kèm Claim Phòng ban)",P0,CONFIRMED,PARTIAL,"T;D",TST-012,BG-002,"BR-005;BR-006;BR-022",UC-007,"SRC-002;ADR-0010;SRC-033",OD-001
+FR-TASK-004,FR,M05,"Bắt đầu Thực hiện Công việc hoặc Tiếp tục Công việc Quá hạn",P0,CONFIRMED,IMPLEMENTED,"T;D",TST-013,BG-002,,"UC-007;UC-008","SRC-002;ADR-0003;SRC-033",
+FR-TASK-005,FR,M05,"Cập nhật Trạng thái Checklist và Phần trăm Tiến độ Công việc",P1,OPEN,PARTIAL,T,TST-014,BG-002,,UC-007,"SRC-002;SRC-020",OD-002
+FR-TASK-006,FR,M05,"Gửi Báo cáo Tiến độ Định kỳ hoặc Phát sinh Vướng mắc (TaskProgressReport)",P1,OPEN,PARTIAL,T,TST-014,BG-002,,UC-007,"SRC-002;SRC-020",OD-002
+FR-TASK-007,FR,M05,"Nộp Kết quả Thực hiện Công việc (TaskResult)",P0,CONFIRMED,IMPLEMENTED,"T;D",TST-013,BG-002,BR-006,UC-008,"SRC-002;ADR-0003;SRC-033",
+FR-TASK-008,FR,M05,"Quản lý Nghiệm thu Kết quả Hoàn thành hoặc Từ chối Yêu cầu Làm lại",P0,CONFIRMED,IMPLEMENTED,"T;D",TST-013,BG-002,"BR-006;BR-022",UC-008,"SRC-002;ADR-0003;SRC-033",
+FR-TASK-009,FR,M05,"Giao lại Công việc Đang thực hiện và Bảo toàn Lịch sử (Task Reassignment)",P1,CONFIRMED,NOT_IMPLEMENTED,T,TST-014,BG-002,"BR-007;BR-022",UC-007,"SRC-002;SRC-020",
+FR-TASK-010,FR,M05,"Hủy Công việc Trước khi Hoàn thành (Cancel Task)",P1,CONFIRMED,NOT_IMPLEMENTED,T,TST-014,BG-002,BR-022,UC-007,"SRC-002;SRC-020",
+FR-REQ-001,FR,M06,"Tạo Bản nháp và Gửi Yêu cầu Dịch vụ Nội bộ (Create & Submit Request)",P0,CONFIRMED,IMPLEMENTED,"T;D",TST-015,BG-001,,UC-005,"SRC-002;SRC-025;SRC-033",
+FR-REQ-002,FR,M06,"Yêu cầu Người gửi Bổ sung Thông tin (Request Additional Information)",P1,OPEN,NOT_IMPLEMENTED,T,TST-018,BG-001,"BR-016;BR-022",UC-005,"SRC-002;SRC-025",OD-003
+FR-REQ-003,FR,M06,"Định tuyến Tự động hoặc Định tuyến Thủ công Yêu cầu Dịch vụ (Request Routing)",P0,CONFIRMED,IMPLEMENTED,"T;D",TST-015,BG-001,BR-008,UC-005,"SRC-002;SRC-025;SRC-033",
+FR-REQ-004,FR,M06,"Bộ phận Phụ trách Xác nhận Tiếp nhận Yêu cầu (Receive Request)",P0,CONFIRMED,IMPLEMENTED,"T;D",TST-015,BG-001,BR-009,UC-005,"SRC-002;SRC-025;SRC-033",
+FR-REQ-005,FR,M06,"Bắt đầu Xử lý, Từ chối hoặc Hủy Yêu cầu Nội bộ",P0,CONFIRMED,PARTIAL,"T;D",TST-015,BG-001,BR-022,UC-005,"SRC-002;ADR-0009;SRC-025;SRC-033",OD-003
+FR-REQ-006,FR,M06,"Tạo và Liên kết Công việc Thực thi (Task) từ Yêu cầu Đang xử lý",P0,CONFIRMED,IMPLEMENTED,"T;D",TST-016,BG-001,BR-004,UC-006,"SRC-002;SRC-025;SRC-033",
+FR-REQ-007,FR,M06,"Đánh dấu Yêu cầu Đã Giải quyết (Resolve Request) với Điều kiện Chặn BR-011",P0,CONFIRMED,IMPLEMENTED,"T;D",TST-016,BG-001,BR-011,UC-006,"SRC-002;SRC-026;SRC-033",
+FR-REQ-008,FR,M06,"Người gửi Xác nhận Đóng Yêu cầu hoặc Từ chối Kết quả Giải quyết để Xử lý lại",P0,CONFIRMED,IMPLEMENTED,"T;D",TST-017,BG-001,"BR-010;BR-022",UC-006,"SRC-002;ADR-0009;SRC-026;SRC-033",
+FR-REQ-009,FR,M06,"Tạo Yêu cầu Sửa đổi Mới từ Yêu cầu Đã bị Từ chối (Revise Rejected Request)",P1,CONFIRMED,IMPLEMENTED,"T;D",TST-017,BG-001,,UC-005,"SRC-002;SRC-025;SRC-033",
+FR-WF-001,FR,M07,"Thiết kế, Kiểm tra Hợp lệ và Phát hành Phiên bản Quy trình Công việc",P1,CONFIRMED,PARTIAL,"T;D",TST-019,BG-004,BR-013,UC-004,"SRC-002;SRC-033",OD-008
+FR-WF-002,FR,M07,"Thực thi Chuyển Bước theo Phiên bản Quy trình Đã Ghim",P1,CONFIRMED,NOT_IMPLEMENTED,T,TST-019,BG-004,BR-013,UC-009,"SRC-002;ADR-0012",OD-008
+FR-WF-003,FR,M07,"Khởi tạo Phiên Phê duyệt và Định tuyến tới Người có Thẩm quyền",P1,CONFIRMED,NOT_IMPLEMENTED,T,TST-019,BG-004,BR-012,UC-009,"SRC-002;SRC-003",OD-011
+FR-WF-004,FR,M07,"Ra Quyết định Chấp thuận hoặc Từ chối Phê duyệt",P1,CONFIRMED,NOT_IMPLEMENTED,T,TST-019,BG-004,"BR-012;BR-022",UC-009,"SRC-002;SRC-003",OD-011
+FR-SLA-001,FR,M08,"Cấu hình Hồ sơ SLA, Phiên bản SLA Bất biến và Lịch làm việc",P0,CONFIRMED,PARTIAL,"T;D",TST-020,BG-003,BR-014,UC-004,"SRC-002;ADR-0004;ADR-0005;ADR-0006;ADR-0007;SRC-033",OD-010
+FR-SLA-002,FR,M08,"Theo dõi Đồng hồ SLA theo Giờ làm việc và Phát Cảnh báo Sớm",P1,CONFIRMED,NOT_IMPLEMENTED,T,TST-021,BG-003,BR-015,UC-010,"SRC-002;ADR-0005",
+FR-SLA-003,FR,M08,"Tự động Leo thang Thông báo theo Cấp khi Quá hạn",P1,CONFIRMED,NOT_IMPLEMENTED,T,TST-021,BG-003,BR-015,UC-010,"SRC-002;ADR-0006",
+FR-SLA-004,FR,M08,"Tạm dừng và Tiếp tục Đồng hồ SLA ở các Trạng thái Chờ Hợp lệ",P1,CONFIRMED,NOT_IMPLEMENTED,T,TST-021,BG-003,BR-016,UC-010,"SRC-002;SRC-006",OD-012
+FR-COL-001,FR,"M09;M10","Trao đổi Bình luận trên Công việc và Yêu cầu",P0,CONFIRMED,IMPLEMENTED,"T;D",TST-022,BG-002,,"UC-007;UC-008","SRC-002;SRC-033",
+FR-COL-002,FR,M10,"Đính kèm, Tải xuống và Quản lý Tệp Bằng chứng Dung lượng lớn tới 500 MB",P0,CONFIRMED,IMPLEMENTED,"T;D",TST-023,"BG-002;BG-007",BR-020,UC-008,"SRC-002;SRC-023;SRC-033",
+FR-COL-003,FR,M10,"Lưu trữ Hồ sơ Đã Hoàn tất (Archive Completed / Closed Records)",P1,CONFIRMED,IMPLEMENTED,"T;D",TST-024,BG-007,,UC-012,"SRC-002;SRC-033",OD-015
+FR-COL-004,FR,M10,"Tìm kiếm và Lọc Hợp nhất trên Công việc và Yêu cầu (Unified Record Search)",P1,CONFIRMED,IMPLEMENTED,"T;D",TST-024,BG-007,,UC-012,"SRC-002;SRC-033",
+FR-NOTIF-003,FR,M09,"Lệnh Quản trị Nhắc việc và Cấu hình Lịch Thông báo (/notifications)",P0,CONFIRMED,NOT_IMPLEMENTED,"T;D",TST-037,BG-002,BR-030,UC-017,"BR-030;OD-032",OD-032
+FR-NOTIF-004,FR,M09,"Điều phối Thông báo Deadline Đa kênh Trong trang và Ngoài trang",P0,CONFIRMED,PARTIAL,"T;D",TST-037,"BG-002;BG-003",BR-030,UC-017,"BR-030;OD-030","OD-030;OD-032"
+FR-REP-001,FR,M11,"Bảng điều khiển Quản lý theo Phạm vi Phòng ban (Scoped Manager Dashboard)",P0,CONFIRMED,IMPLEMENTED,"T;D",TST-025,BG-008,BR-003,UC-012,"SRC-002;SRC-024;SRC-033",
+FR-REP-002,FR,M11,"Báo cáo Tổng hợp Vận hành Toàn Doanh nghiệp (Company-Wide Summary Report)",P1,CONFIRMED,IMPLEMENTED,"T;D",TST-025,BG-008,,UC-012,"SRC-002;SRC-024;SRC-033",
+FR-REP-003,FR,M11,"Báo cáo Phân bổ Khối lượng Công việc theo Nhân sự và Phòng ban",P1,CONFIRMED,IMPLEMENTED,"T;D",TST-025,BG-008,,UC-012,"SRC-002;SRC-024;SRC-033",
+FR-REP-004,FR,M11,"Báo cáo Tuân thủ Cam kết Mức dịch vụ (SLA Compliance Report)",P1,CONFIRMED,IMPLEMENTED,"T;D",TST-025,"BG-003;BG-008",,UC-012,"SRC-002;SRC-024;SRC-033",
+FR-AI-001,FR,M12,"Hỗ trợ Soạn thảo Bản nháp Công việc từ Mô tả Ngôn ngữ Tự nhiên",P1,CONFIRMED,IMPLEMENTED,"T;D",TST-026,BG-005,"BR-017;BR-018;BR-019",UC-011,"SRC-002;SRC-022;SRC-033",
+FR-AI-002,FR,M12,"Gợi ý Người hoặc Phòng ban Nhận việc Phù hợp",P1,CONFIRMED,IMPLEMENTED,"T;D",TST-026,BG-005,"BR-017;BR-018;BR-019",UC-011,"SRC-002;SRC-022;SRC-033",
+FR-AI-003,FR,M12,"Tóm tắt Nội dung và Lịch sử Trao đổi của Công việc hoặc Yêu cầu",P1,CONFIRMED,IMPLEMENTED,"T;D",TST-026,BG-005,"BR-017;BR-018;BR-019",UC-011,"SRC-002;SRC-022;SRC-033",
+FR-AI-004,FR,M12,"Đánh giá Chất lượng Kết quả Nộp và Độ đầy đủ Thông tin",P2,CONFIRMED,IMPLEMENTED,"T;D",TST-026,BG-005,"BR-017;BR-018;BR-019",UC-011,"SRC-002;SRC-022;SRC-033",
+FR-AI-005,FR,M12,"Phân tích Rủi ro Trễ hạn và Điểm nghẽn Tiến độ",P2,CONFIRMED,IMPLEMENTED,"T;D",TST-026,"BG-003;BG-005","BR-017;BR-018;BR-019",UC-011,"SRC-002;SRC-022;SRC-033",
+FR-AI-006,FR,M12,"Phát hiện Bất thường trong Vận hành",P2,CONFIRMED,IMPLEMENTED,"T;D",TST-026,"BG-005;BG-008","BR-017;BR-018;BR-019",UC-011,"SRC-002;SRC-022;SRC-033",
+FR-AI-007,FR,M12,"Gợi ý Dịch vụ và Phân loại Dịch vụ cho Yêu cầu Mới",P1,CONFIRMED,IMPLEMENTED,"T;D",TST-026,"BG-001;BG-005","BR-017;BR-018;BR-019",UC-011,"SRC-002;SRC-022;SRC-033",
+FR-AI-008,FR,M12,"Kiểm tra Độ đầy đủ Thông tin trước khi Gửi Yêu cầu",P2,CONFIRMED,IMPLEMENTED,"T;D",TST-026,"BG-001;BG-005","BR-017;BR-018;BR-019",UC-011,"SRC-002;SRC-022;SRC-033",
+FR-AI-009,FR,M12,"Hỏi đáp Trạng thái Hồ sơ bằng Ngôn ngữ Tự nhiên",P2,CONFIRMED,IMPLEMENTED,"T;D","TST-026;TST-027",BG-005,"BR-017;BR-018;BR-019",UC-011,"SRC-002;SRC-022;SRC-033",
+FR-AI-010,FR,M12,"Tổng hợp Nhận định Thông minh trên Bảng điều khiển Quản lý",P2,CONFIRMED,IMPLEMENTED,"T;D",TST-026,"BG-005;BG-008","BR-017;BR-018;BR-019",UC-011,"SRC-002;SRC-022;SRC-033",
+FR-AI-011,FR,M12,"Widget Robot Trợ lý Ảo Nhúng và Quản lý Vòng đời Phiên",P0,CONFIRMED,PARTIAL,"T;D",TST-037,BG-005,BR-029,UC-015,"BR-029;OD-029",OD-029
+FR-AI-012,FR,M12,"Truy vấn Ngôn ngữ Tự nhiên Giới hạn theo Phân quyền và Chống Ảo giác",P0,CONFIRMED,PARTIAL,"T;D",TST-037,BG-005,BR-027,UC-015,"BR-027;OD-031",OD-031
+FR-AI-013,FR,M12,"Phân rã Công việc Hỗ trợ bởi AI kèm Xác nhận Con người Bắt buộc",P0,CONFIRMED,NOT_IMPLEMENTED,"T;D",TST-036,BG-005,BR-028,UC-016,"BR-028;OD-028",OD-028
+IR-UI-001,IR,UI,"Phân tách Giao diện Mặt phẳng Quản trị Nền tảng và Không gian làm việc Tenant",P0,CONFIRMED,IMPLEMENTED,"T;D",TST-029,BG-006,BR-002,"UC-001;UC-002","SRC-004;ADR-0001;SRC-030",
+IR-UI-002,IR,UI,"Đáp ứng 4 Trạng thái Hiển thị Bắt buộc trên Toàn bộ 16 Màn hình Chuẩn",P0,CONFIRMED,IMPLEMENTED,"T;D",TST-029,"BG-001;BG-002;BG-008",,"UC-001;UC-012","SRC-002;SRC-004;SRC-030",
+IR-UI-003,IR,UI,"Hiển thị Nhãn Nhận diện Đề xuất AI và Điều khiển Xác nhận của Con người",P0,CONFIRMED,IMPLEMENTED,"T;D","TST-026;TST-029",BG-005,"BR-017;BR-018",UC-011,"SRC-004;SRC-022",
+IR-UI-004,IR,UI,"Giao diện Điểm Vào Đăng ký Doanh nghiệp Công khai (/register-company), Liên kết CTA từ /login và Màn hình Xác minh Email",P1,PROPOSED,NOT_IMPLEMENTED,"T;D",TST-031,BG-006,"BR-023;BR-024",UC-013,"SRC-004;SRC-030","OD-021;OD-022"
+IR-UI-005,IR,UI,"Giao diện Robot Trợ lý Ảo và Bộ chọn Không gian làm việc",P0,CONFIRMED,NOT_IMPLEMENTED,"T;D","TST-033;TST-037",BG-005,"BR-025;BR-029","UC-014;UC-015","BR-029;OD-029","OD-025;OD-029"
+IR-UI-006,IR,UI,"Giao diện Xem và Kiểm tra Hồ sơ Pháp lý Doanh nghiệp cho Platform Admin",P0,CONFIRMED,NOT_IMPLEMENTED,"T;D",TST-035,BG-006,"BR-022;BR-026",UC-001,"BR-026;OD-027",OD-027
+IR-API-001,IR,API,"Giao thức RESTful JSON API Phiên bản hóa (/api/v1/*) và Cấu trúc Phản hồi Chuẩn",P0,CONFIRMED,IMPLEMENTED,T,TST-001,BG-001,,UC-002,"SRC-003;SRC-033",
+IR-API-002,IR,API,"Kiểm soát Tương tranh Lạc quan (ETag / If-Match) và Khóa Chống Trùng lặp (Idempotency-Key)",P0,CONFIRMED,IMPLEMENTED,T,"TST-009;TST-011","BG-001;BG-002",,"UC-004;UC-007","ADR-0008;ADR-0012",
+IR-API-003,IR,API,"Chuẩn hóa Phân trang, Sắp xếp và Chống Lộ Thông tin trên các Truy vấn Danh sách/Chi tiết",P0,CONFIRMED,IMPLEMENTED,T,"TST-006;TST-011",BG-006,BR-002,UC-007,"SRC-003;ADR-0012",
+IR-API-004,IR,API,"API Xác thực Email-Link và Bộ chọn Workspace",P0,CONFIRMED,NOT_IMPLEMENTED,T,"TST-032;TST-033",BG-006,BR-025,UC-014,"BR-025;OD-025",OD-025
+IR-API-005,IR,API,"API Kiểm tra Khả dụng và Sinh Mã Workspace Tự động",P0,CONFIRMED,NOT_IMPLEMENTED,T,TST-034,BG-006,BR-026,UC-001,"BR-026;OD-026",OD-026
+IR-API-006,IR,API,"API Tạo Công việc Hàng loạt từ Đề xuất AI Đã Xác nhận",P0,CONFIRMED,NOT_IMPLEMENTED,T,TST-036,BG-005,BR-028,UC-016,"BR-028;OD-028",OD-028
+IR-API-007,IR,API,"API Quản lý Lịch Nhắc việc và Đăng ký Web Push",P0,CONFIRMED,NOT_IMPLEMENTED,T,TST-037,BG-003,BR-030,UC-017,"BR-030;OD-032",OD-032
+IR-EXT-001,IR,EXT,"Giao diện Tích hợp Nhà cung cấp Mô hình Ngôn ngữ Lớn (OpenAI / LLM Provider Adapter)",P1,CONFIRMED,IMPLEMENTED,T,TST-026,BG-005,BR-019,UC-011,"SRC-002;SRC-022",OD-014
+IR-EXT-002,IR,EXT,"Giao diện Dịch vụ Gửi Thư điện tử Giao dịch (Transactional Email / SMTP Interface)",P0,CONFIRMED,PARTIAL,T,"TST-003;TST-031",BG-006,"BR-001;BR-024","UC-002;UC-013",SRC-003,OD-022
+IR-EXT-003,IR,EXT,"Bộ Điều hợp Nhà cung cấp Dịch vụ Đẩy Tin Trình duyệt (Web Push / VAPID)",P0,CONFIRMED,NOT_IMPLEMENTED,T,TST-037,BG-003,BR-030,UC-017,"BR-030;OD-030",OD-030
+IR-FILE-002,IR,FILE,"Kiểm tra Kích thước 500 MB, Kiểu MIME, Toàn vẹn SHA-256 và Tải xuống Được Ủy quyền",P0,CONFIRMED,IMPLEMENTED,T,TST-023,"BG-002;BG-007",BR-020,UC-008,"SRC-023;SRC-033",
+IR-NOTIF-001,IR,NOTIF,"Giao diện Hộp thư Thông báo Nội bộ và Đẩy Tín hiệu Thời gian thực qua SignalR",P0,CONFIRMED,IMPLEMENTED,"T;D",TST-022,"BG-002;BG-003",,"UC-007;UC-010","SRC-003;SRC-033",OD-009
+IR-NOTIF-002,IR,NOTIF,"Giao diện Phát Thông báo Nhắc việc, Cảnh báo Sớm và Leo thang SLA từ Tác vụ Nền",P1,CONFIRMED,NOT_IMPLEMENTED,T,TST-021,BG-003,BR-015,UC-010,"SRC-002;ADR-0006",
+DR-001,DR,DATA,"Định danh Thuê bao Bắt buộc (TenantId) và Cách ly Logic Toàn cục",P0,CONFIRMED,IMPLEMENTED,"T;I","TST-006;TST-028",BG-006,BR-002,UC-001,"ADR-0002;SRC-031",
+DR-002,DR,DATA,"Dữ liệu Doanh nghiệp, Thuê bao và Thiết lập Cấu hình Cấp Tenant",P0,CONFIRMED,PARTIAL,"T;I","TST-004;TST-005;TST-031",BG-006,"BR-023;BR-024","UC-001;UC-013","DEC-WS-001;SRC-031","OD-005;OD-018;OD-022;OD-023;OD-024"
+DR-003,DR,DATA,"Dữ liệu Cơ cấu Phòng ban Phân cấp, Người dùng và Phạm vi Quản lý",P0,CONFIRMED,IMPLEMENTED,"T;I",TST-007,BG-006,"BR-001;BR-003",UC-003,SRC-031,"OD-004;OD-006"
+DR-004,DR,DATA,"Dữ liệu Vai trò, Quyền hạn RBAC và Phiên Xác thực Có Thu hồi",P0,CONFIRMED,IMPLEMENTED,"T;I","TST-001;TST-002;TST-008",BG-006,,"UC-002;UC-003","ADR-0002;SRC-031",
+DR-005,DR,DATA,"Dữ liệu Danh mục Dịch vụ Nội bộ, Phân loại và Quy tắc Định tuyến",P0,CONFIRMED,PARTIAL,"T;I","TST-009;TST-010",BG-001,BR-008,UC-004,"SRC-003;SRC-031",
+DR-006,DR,DATA,"Dữ liệu Yêu cầu Dịch vụ, Lịch sử Định tuyến và Kết quả Giải quyết",P0,CONFIRMED,IMPLEMENTED,"T;I","TST-015;TST-016;TST-017",BG-001,"BR-008;BR-009;BR-010;BR-011","UC-005;UC-006","SRC-025;SRC-026;SRC-031",
+DR-007,DR,DATA,"Dữ liệu Công việc, Phân công, Danh sách Kiểm tra, Báo cáo Tiến độ và Kết quả",P0,CONFIRMED,IMPLEMENTED,"T;I","TST-011;TST-012;TST-013;TST-014",BG-002,"BR-004;BR-005;BR-006;BR-007","UC-007;UC-008","ADR-0010;ADR-0012;SRC-031",
+DR-008,DR,DATA,"Dữ liệu Xác nhận Hai Mốc Nghiệp vụ (Confirmation)",P0,CONFIRMED,IMPLEMENTED,"T;I","TST-012;TST-013;TST-017","BG-001;BG-002","BR-006;BR-010","UC-006;UC-008",SRC-031,
+DR-009,DR,DATA,"Dữ liệu Quy trình Công việc, Phiên bản Quy trình và Phê duyệt",P1,CONFIRMED,PARTIAL,"T;I",TST-019,BG-004,"BR-012;BR-013","UC-004;UC-009","SRC-003;SRC-031","OD-008;OD-011"
+DR-010,DR,DATA,"Dữ liệu Hồ sơ SLA, Phiên bản SLA Bất biến, Lịch làm việc và Đồng hồ SLA",P0,CONFIRMED,PARTIAL,"T;I","TST-020;TST-021",BG-003,"BR-014;BR-015;BR-016","UC-004;UC-010","ADR-0004;ADR-0005;ADR-0006;SRC-031","OD-010;OD-012"
+DR-011,DR,DATA,"Dữ liệu Bình luận, Tệp Bằng chứng Đính kèm và Thông báo",P0,CONFIRMED,IMPLEMENTED,"T;I","TST-022;TST-023","BG-002;BG-007",BR-020,UC-008,"SRC-023;SRC-031",OD-009
+DR-012,DR,DATA,"Dữ liệu Tương tác AI, Đề xuất AI và Hành động Tác nhân AI",P1,CONFIRMED,IMPLEMENTED,"T;I",TST-026,BG-005,"BR-017;BR-018",UC-011,"SRC-022;SRC-031",
+DR-013,DR,DATA,"Dữ liệu Nhật ký Kiểm toán Bất biến Toàn Hệ thống (AuditLog)",P0,CONFIRMED,IMPLEMENTED,"T;I",TST-028,BG-007,BR-021,UC-012,SRC-031,
+DR-014,DR,DATA,"Quy tắc Xóa mềm, Lưu trữ Hồ sơ và Cấm Xóa cứng Dữ liệu Lịch sử",P0,CONFIRMED,IMPLEMENTED,"T;I","TST-024;TST-028",BG-007,BR-021,UC-012,SRC-031,OD-015
+DR-015,DR,DATA,"Chuẩn hóa Kiểu dữ liệu Thời gian UTC, Định danh UUID và Mã hóa UTF-8",P0,CONFIRMED,IMPLEMENTED,"T;I",TST-011,BG-001,,UC-007,"ADR-0012;SRC-031",OD-017
+DR-016,DR,DATA,"Dữ liệu Phiên Trợ lý Robot, Lịch sử Hội thoại và Lịch Nhắc việc Deadline",P0,CONFIRMED,NOT_IMPLEMENTED,"T;I",TST-037,"BG-003;BG-005","BR-029;BR-030","UC-015;UC-017","BR-030;OD-030","OD-030;OD-032"
+DR-017,DR,DATA,"Dữ liệu Tài liệu Pháp lý Hồ sơ Doanh nghiệp trên MinIO/S3",P0,CONFIRMED,NOT_IMPLEMENTED,"T;I","TST-034;TST-035",BG-006,BR-026,UC-001,"BR-026;OD-027",OD-027
+NFR-PERF-001,NFR,PERF,"Độ trễ Phản hồi API Đọc/Ghi Nghiệp vụ Thông thường (<= 500 ms)",P0,OPEN,PARTIAL,"T;A",TST-030,"BG-001;BG-002",,UC-007,SRC-002,OD-013
+NFR-PERF-002,NFR,PERF,"Độ trễ Truy vấn Bảng điều khiển và Báo cáo Tổng hợp (<= 2000 ms)",P1,OPEN,PARTIAL,"T;A","TST-025;TST-030",BG-008,,UC-012,SRC-002,OD-013
+NFR-SCAL-001,NFR,SCAL,"Khả năng Chịu tải 100 Người dùng Đồng thời và Mở rộng Ngang Không Trạng thái",P1,CONFIRMED,IMPLEMENTED,"T;I",TST-030,BG-008,,UC-012,SRC-002,OD-013
+NFR-REL-001,NFR,REL,"Độ Sẵn sàng Dịch vụ và Khả năng Chịu lỗi Tác vụ Nền",P1,OPEN,IMPLEMENTED,"T;A","TST-021;TST-030",BG-003,,UC-010,SRC-002,OD-016
+NFR-SEC-001,NFR,SEC,"Bảo mật Mật khẩu, Vòng đời Token và Mã hóa Truyền tải",P0,CONFIRMED,IMPLEMENTED,"T;I","TST-001;TST-002",BG-006,,UC-002,"SRC-002;ADR-0002",
+NFR-SEC-002,NFR,SEC,"Bảo đảm Cách ly Đa thuê bao Tuyệt đối ở Mọi Tầng (0% Cross-Tenant Leakage)",P0,CONFIRMED,IMPLEMENTED,"T;I",TST-006,BG-006,BR-002,UC-001,"SRC-002;SRC-031",
+NFR-DATA-001,NFR,DATA,"Tính Bất biến của Nhật ký Kiểm toán và Bản chụp Phiên bản Cấu hình",P0,CONFIRMED,IMPLEMENTED,"T;I","TST-020;TST-028","BG-004;BG-007","BR-013;BR-014;BR-021",UC-012,"SRC-002;ADR-0004;SRC-031",
+NFR-AI-001,NFR,AI,"Độ trễ Phản hồi AI, Suy giảm An toàn và An toàn Human-in-the-Loop",P1,OPEN,IMPLEMENTED,T,TST-026,BG-005,"BR-017;BR-018;BR-019",UC-011,"SRC-002;SRC-022",OD-014
+NFR-FILE-001,NFR,FILE,"Năng lực Xử lý Tệp Đính kèm Dung lượng Lớn tới 500 MB",P0,CONFIRMED,IMPLEMENTED,"T;I",TST-023,BG-002,BR-020,UC-008,"SRC-002;SRC-023",
+NFR-USAB-001,NFR,USAB,"Tính Nhất quán Giao diện GRID, Khả năng Tiếp cận và Phản hồi Trạng thái Rõ ràng",P1,CONFIRMED,IMPLEMENTED,"T;D",TST-029,BG-001,,UC-012,"SRC-002;ADR-0001",
+NFR-MAINT-001,NFR,MAINT,"Khả năng Bảo trì Kiến trúc Modular Monolith và Kiểm thử Tự động",P0,CONFIRMED,IMPLEMENTED,"I;T",TST-029,BG-001,,UC-012,"SRC-002;SRC-029;SRC-035",
+NFR-OBS-001,NFR,OBS,"Khả năng Quan sát Hệ thống, Nhật ký Có Cấu trúc và Mã Tương quan Truy vết",P1,PROPOSED,IMPLEMENTED,"I;T",TST-028,"BG-007;BG-008",,UC-012,SRC-003,
+NFR-AI-002,NFR,AI,"Kiểm soát Chi phí, Giới hạn Tốc độ Gọi AI và Phòng chống Lạm dụng",P2,OPEN,NOT_IMPLEMENTED,T,TST-026,BG-005,BR-019,UC-011,"SRC-022;SRC-028",OD-014
+NFR-I18N-001,NFR,I18N,"Hỗ trợ Bảng mã Unicode Tiếng Việt / Tiếng Anh và Múi giờ Lịch làm việc",P1,CONFIRMED,IMPLEMENTED,"T;D","TST-020;TST-029",BG-003,,UC-010,"ADR-0005;SRC-030",OD-017
+NFR-BCDR-001,NFR,BCDR,"Sao lưu Dữ liệu, Mục tiêu Điểm Khôi phục (RPO) và Thời gian Khôi phục (RTO)",P2,OPEN,NOT_IMPLEMENTED,"I;A",TST-028,BG-007,,UC-012,SRC-028,OD-016
+SEC-001,SEC,SEC,"Xác thực Đa Chế độ Định danh và Chống Dò quét Tài khoản",P0,CONFIRMED,IMPLEMENTED,T,"TST-001;TST-003",BG-006,BR-001,UC-002,"SRC-002;SRC-033",
+SEC-002,SEC,SEC,"Quản lý Vòng đời Refresh Token Xoay vòng và Phát hiện Tấn công Phát lại",P0,CONFIRMED,IMPLEMENTED,T,TST-002,BG-006,,UC-002,"ADR-0002;SRC-033",
+SEC-003,SEC,SEC,"Ủy quyền RBAC Kết hợp Phạm vi Quản lý (ManagementScope) và Quyền Đọc Phân tầng",P0,CONFIRMED,IMPLEMENTED,T,"TST-007;TST-008;TST-011;TST-025",BG-006,BR-003,UC-003,"ADR-0011;SRC-034",
+SEC-004,SEC,SEC,"Thực thi Cách ly Tenant Tự động và Mặc định Đóng (Fail-Closed) tại Tầng Truy vấn DB",P0,CONFIRMED,IMPLEMENTED,"T;I",TST-006,BG-006,BR-002,UC-001,SRC-031,
+SEC-005,SEC,SEC,"Cách ly Tenant trên Bộ nhớ đệm, Tác vụ Nền và Kênh Thời gian thực SignalR",P0,CONFIRMED,IMPLEMENTED,"T;I","TST-006;TST-022",BG-006,BR-002,UC-010,"SRC-003;SRC-033",
+SEC-006,SEC,SEC,"Cách ly Đường dẫn Lưu trữ Tệp Đối tượng và Kiểm tra Quyền Trước khi Tải xuống",P0,CONFIRMED,IMPLEMENTED,T,TST-023,"BG-002;BG-006","BR-002;BR-020",UC-008,"SRC-023;SRC-033",
+SEC-007,SEC,SEC,"Bảo vệ Tính Bất biến của Trường Định danh Sở hữu và Chặn Xóa cứng tại Tầng Lưu trữ",P0,CONFIRMED,IMPLEMENTED,"T;I",TST-028,BG-007,BR-021,UC-012,SRC-031,
+SEC-008,SEC,SEC,"Ranh giới Không Tự trị của Tác nhân AI (AI Non-Autonomy Boundary)",P0,CONFIRMED,IMPLEMENTED,"T;I",TST-026,BG-005,BR-017,UC-011,"SRC-022;SRC-033",
+SEC-009,SEC,SEC,"Cách ly Ngữ cảnh Dữ liệu Đưa vào AI và Phòng chống Tiêm lệnh Gián tiếp",P0,CONFIRMED,IMPLEMENTED,"T;I",TST-027,"BG-005;BG-006","BR-002;BR-017",UC-011,"SRC-022;SRC-034",
+SEC-010,SEC,SEC,"Quản lý Bí mật Cấu hình và Ẩn Thông tin Nhạy cảm trong Nhật ký",P0,CONFIRMED,IMPLEMENTED,I,TST-028,"BG-006;BG-007",,UC-012,"SRC-001;SRC-031",
+SEC-011,SEC,SEC,"Ghi nhận Nhật ký Kiểm toán Bắt buộc cho Mọi Sự kiện Bảo mật và Thay đổi Nghiệp vụ",P0,CONFIRMED,IMPLEMENTED,T,"TST-001;TST-028",BG-007,BR-021,UC-012,"SRC-031;SRC-033",
+SEC-012,SEC,SEC,"Chính sách Phản hồi Không Tiết lộ (Non-Revealing 404 Policy) đối với Tài nguyên Ngoài Phạm vi",P0,CONFIRMED,IMPLEMENTED,T,"TST-006;TST-011",BG-006,BR-002,UC-007,"ADR-0012;SRC-033",

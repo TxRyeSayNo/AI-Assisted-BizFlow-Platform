@@ -1,3 +1,17 @@
+.global-floating-lang-switch {
+  position: fixed;
+  top: 14px;
+  right: 18px;
+  z-index: 950;
+}
+
+@media (max-width: 640px) {
+  .global-floating-lang-switch {
+    top: 10px;
+    right: 12px;
+  }
+}
+
 .app-authenticated-shell {
   display: flex;
   flex-direction: column;

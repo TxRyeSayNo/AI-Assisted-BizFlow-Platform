@@ -1,16 +1,17 @@
 <section class="comments-section" aria-label="Collaboration and comments">
   <div class="comments-header">
     <div class="header-title-group">
-      <h2>Discussion & Collaboration</h2>
+      <h2>{{ 'comments.title' | translate: 'Discussion & Collaboration' }}</h2>
       <span class="badge comments-count">{{ comments().length }}</span>
     </div>
     @if (loading()) {
-      <span class="loading-indicator">Loading…</span>
+      <span class="loading-indicator">{{ 'common.loading' | translate: 'Loading…' }}</span>
     }
   </div>
 
+  <!-- Accessible alert announcement without layout displacement -->
   @if (error()) {
-    <p class="error-banner" role="alert">{{ error() }}</p>
+    <div class="sr-only" role="alert" aria-live="assertive">{{ error() }}</div>
   }
 
   <div class="timeline-container">
@@ -23,24 +24,30 @@
           <div class="comment-meta">
             <span class="author-name">{{ comment.authorName }}</span>
             @if (comment.isOwner) {
-              <span class="owner-pill">You</span>
+              <span class="owner-pill">{{ 'comments.you' | translate: 'You' }}</span>
             }
             <time class="comment-time" [attr.datetime]="comment.createdAt">
               {{ comment.createdAt | date: 'medium' }}
             </time>
             @if (comment.editedAt) {
-              <span class="edited-tag" title="Edited on {{ comment.editedAt | date: 'medium' }}">(edited)</span>
+              <span class="edited-tag" title="Edited on {{ comment.editedAt | date: 'medium' }}">{{
+                'comments.edited' | translate: '(edited)'
+              }}</span>
             }
 
             <div class="comment-actions">
               @if (comment.isOwner && editingCommentId !== comment.commentId) {
                 <button type="button" class="btn-action edit-btn" (click)="startEdit(comment)">
-                  Edit
+                  {{ 'common.edit' | translate: 'Edit' }}
                 </button>
               }
               @if (comment.canDelete && editingCommentId !== comment.commentId) {
-                <button type="button" class="btn-action delete-btn" (click)="deleteComment(comment.commentId)">
-                  Delete
+                <button
+                  type="button"
+                  class="btn-action delete-btn"
+                  (click)="deleteComment(comment.commentId)"
+                >
+                  {{ 'common.delete' | translate: 'Delete' }}
                 </button>
               }
             </div>
@@ -49,7 +56,7 @@
           @if (editingCommentId === comment.commentId) {
             <div class="edit-box">
               <mat-form-field appearance="outline" class="full-width">
-                <mat-label>Edit Comment</mat-label>
+                <mat-label>{{ 'comments.editComment' | translate: 'Edit Comment' }}</mat-label>
                 <textarea
                   matInput
                   [(ngModel)]="editingText"
@@ -60,10 +67,17 @@
                 <mat-hint align="end">{{ editingText.length }} / 4000</mat-hint>
               </mat-form-field>
               <div class="edit-actions">
-                <button mat-flat-button color="primary" [disabled]="savingEdit || !editingText.trim()" (click)="saveEdit(comment.commentId)">
-                  {{ savingEdit ? 'Saving…' : 'Save' }}
+                <button
+                  mat-flat-button
+                  color="primary"
+                  [disabled]="savingEdit || !editingText.trim()"
+                  (click)="saveEdit(comment.commentId)"
+                >
+                  {{ savingEdit ? 'Saving…' : ('common.save' | translate: 'Save') }}
                 </button>
-                <button mat-stroked-button type="button" (click)="cancelEdit()">Cancel</button>
+                <button mat-stroked-button type="button" (click)="cancelEdit()">
+                  {{ 'common.cancel' | translate: 'Cancel' }}
+                </button>
               </div>
             </div>
           } @else {
@@ -73,7 +87,9 @@
       </article>
     } @empty {
       @if (!loading()) {
-        <p class="empty-state">No comments yet. Start the conversation!</p>
+        <p class="empty-state">
+          {{ 'comments.empty' | translate: 'No comments yet. Start the conversation!' }}
+        </p>
       }
     }
   </div>
@@ -81,13 +97,15 @@
   @if (session.hasPermission('comments.create')) {
     <div class="new-comment-form">
       <mat-form-field appearance="outline" class="full-width">
-        <mat-label>Add a comment</mat-label>
+        <mat-label>{{ 'comments.addComment' | translate: 'Add a comment' }}</mat-label>
         <textarea
           matInput
           [(ngModel)]="newCommentText"
           rows="3"
           maxlength="4000"
-          placeholder="Write a message, update, or ask a question…"
+          [placeholder]="
+            'comments.placeholder' | translate: 'Write a message, update, or ask a question…'
+          "
         ></textarea>
         <mat-hint align="end">{{ newCommentText.length }} / 4000</mat-hint>
       </mat-form-field>
@@ -100,7 +118,11 @@
           [disabled]="submitting() || !newCommentText.trim()"
           (click)="postComment()"
         >
-          {{ submitting() ? 'Posting…' : 'Post Comment' }}
+          {{
+            submitting()
+              ? ('comments.posting' | translate: 'Posting…')
+              : ('comments.postComment' | translate: 'Post Comment')
+          }}
         </button>
       </div>
     </div>

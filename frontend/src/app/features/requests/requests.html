@@ -6,9 +6,10 @@
 </header>
 <main id="main-content" class="page-content" tabindex="-1">
   <nav aria-label="Breadcrumb">
-    <a routerLink="/workspace">Workspace</a><span aria-hidden="true"> / </span><span>Requests</span>
+    <a routerLink="/workspace">{{ 'common.workspace' | translate: 'Workspace' }}</a
+    ><span aria-hidden="true"> / </span><span>{{ 'requests.title' | translate: 'Requests' }}</span>
   </nav>
-  <span class="eyebrow">Service Requests</span>
+  <span class="eyebrow">{{ 'requests.eyebrow' | translate: 'Service Requests' }}</span>
   <div
     style="
       display: flex;
@@ -18,83 +19,114 @@
       gap: 1rem;
     "
   >
-    <h1>Requests</h1>
-    <div style="display: flex; gap: 0.5rem;">
+    <h1>{{ 'requests.title' | translate: 'Requests' }}</h1>
+    <div style="display: flex; gap: 0.5rem">
       @if (session.hasPermission('requests.create')) {
-        <a mat-flat-button routerLink="/requests/new">New request</a>
+        <a mat-flat-button routerLink="/requests/new">{{
+          'requests.newRequest' | translate: 'New request'
+        }}</a>
       }
       @if (session.hasPermission('records.search')) {
-        <a mat-stroked-button routerLink="/records/search">Search records</a>
+        <a mat-stroked-button routerLink="/records/search">{{
+          'requests.searchRecords' | translate: 'Search records'
+        }}</a>
       }
     </div>
   </div>
   <p>
-    Browse and track enterprise service requests. Only requests within your access scope appear
-    here.
+    {{
+      'requests.subtitle'
+        | translate
+          : 'Browse and track enterprise service requests. Only requests within your access scope appear here.'
+    }}
   </p>
   <section aria-label="Request list" class="directory-panel" [attr.aria-busy]="busy()">
     <form [formGroup]="filters" (ngSubmit)="apply()" class="filters">
       <mat-form-field appearance="outline" subscriptSizing="dynamic">
-        <mat-label>Search request title</mat-label>
+        <mat-label>{{ 'requests.searchLabel' | translate: 'Search request title' }}</mat-label>
         <input matInput formControlName="search" maxlength="200" [readonly]="busy()" />
       </mat-form-field>
       <mat-form-field appearance="outline" subscriptSizing="dynamic">
-        <mat-label>Status</mat-label>
+        <mat-label>{{ 'common.status' | translate: 'Status' }}</mat-label>
         <mat-select formControlName="status">
-          <mat-option value="">All statuses</mat-option>
+          <mat-option value="">{{ 'requests.allStates' | translate: 'All statuses' }}</mat-option>
           @for (option of stateOptions; track option[0]) {
-            <mat-option [value]="option[0]">{{ option[1] }}</mat-option>
+            <mat-option [value]="option[0]">{{
+              'reqStatus.' + option[0] | translate: option[1]
+            }}</mat-option>
           }
         </mat-select>
       </mat-form-field>
       <mat-form-field appearance="outline" subscriptSizing="dynamic">
-        <mat-label>Priority</mat-label>
+        <mat-label>{{ 'common.priority' | translate: 'Priority' }}</mat-label>
         <mat-select formControlName="priority">
-          <mat-option value="">All priorities</mat-option>
+          <mat-option value="">{{
+            'requests.allPriorities' | translate: 'All priorities'
+          }}</mat-option>
           @for (option of priorityOptions; track option[0]) {
-            <mat-option [value]="option[0]">{{ option[1] }}</mat-option>
+            <mat-option [value]="option[0]">{{
+              'priority.' + option[0] | translate: option[1]
+            }}</mat-option>
           }
         </mat-select>
       </mat-form-field>
       @if (services().length > 0) {
         <mat-form-field appearance="outline" subscriptSizing="dynamic">
-          <mat-label>Service</mat-label>
+          <mat-label>{{ 'requests.serviceLabel' | translate: 'Service' }}</mat-label>
           <mat-select formControlName="serviceId">
-            <mat-option value="">All services</mat-option>
+            <mat-option value="">{{
+              'requests.allServices' | translate: 'All services'
+            }}</mat-option>
             @for (svc of services(); track svc.serviceId) {
               <mat-option [value]="svc.serviceId">{{ svc.name }}</mat-option>
             }
           </mat-select>
         </mat-form-field>
       }
-      <button mat-flat-button type="submit" [disabled]="busy()">Apply filters</button>
+      <button mat-flat-button type="submit" [disabled]="busy()">
+        {{ 'tasks.applyFilters' | translate: 'Apply filters' }}
+      </button>
     </form>
     @if (busy()) {
-      <p role="status" class="directory-feedback">Loading requests…</p>
+      <p role="status" class="directory-feedback">
+        {{ 'requests.loading' | translate: 'Loading requests…' }}
+      </p>
     } @else if (denied()) {
       <p role="alert" class="directory-feedback">
-        You do not have permission to view requests in this scope.
+        {{
+          'requests.denied'
+            | translate: 'You do not have permission to view requests in this scope.'
+        }}
       </p>
     } @else if (error()) {
       <div class="directory-feedback">
-        <p role="alert">Requests could not be loaded. Please try again.</p>
-        <button mat-stroked-button type="button" (click)="load(page())">Retry</button>
+        <p role="alert">
+          {{ 'requests.error' | translate: 'Requests could not be loaded. Please try again.' }}
+        </p>
+        <button mat-stroked-button type="button" (click)="load(page())">
+          {{ 'common.retry' | translate: 'Retry' }}
+        </button>
       </div>
     } @else if (result(); as data) {
       @if (data.items.length === 0) {
         <p role="status" class="directory-feedback">
-          No requests match your access scope and filters.
+          {{ 'requests.empty' | translate: 'No requests match your access scope and filters.' }}
         </p>
       } @else {
         <table>
           <caption>
-            Accessible requests · Newest first · Dates shown in your local time
+            {{
+              'requests.caption'
+                | translate: 'Accessible requests · Newest first · Dates shown in your local time'
+            }}
           </caption>
           <thead>
             <tr>
-              <th scope="col">Request & Service</th>
-              <th scope="col">Requester</th>
-              <th scope="col">Status & Priority</th>
+              <th scope="col">{{ 'requests.col.request' | translate: 'Request & Service' }}</th>
+              <th scope="col">{{ 'requests.col.requester' | translate: 'Requester' }}</th>
+              <th scope="col">
+                {{ 'requests.col.statusPriority' | translate: 'Status & Priority' }}
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -115,18 +147,18 @@
                   }}</time>
                 </td>
                 <td>
-                  <span
+<span
                     class="status-badge"
                     [attr.data-status]="item.status"
                     [ngClass]="statusClass(item.status)"
                   >{{
-                    getStateName(item.status)
+                    'reqStatus.' + item.status | translate: getStateName(item.status)
                   }}</span>
                   <span class="request-meta">
                     <span class="priority-indicator" [ngClass]="priorityClass(item.priority)">
-                      {{ getPriorityName(item.priority) }}
+                      {{ 'priority.' + item.priority | translate: getPriorityName(item.priority) }}
                     </span>
-                    priority
+                    {{ 'tasks.prioritySuffix' | translate: 'priority' }}
                   </span>
                 </td>
               </tr>
@@ -143,11 +175,12 @@
           "
         >
           <span style="font-size: 0.875rem; color: var(--tp-mute)">
-            Showing page {{ data.page }} of
+            {{ 'common.showingPage' | translate: 'Showing page' }} {{ data.page }}
+            {{ 'common.of' | translate: 'of' }}
             {{ (data.total + data.pageSize - 1) / data.pageSize | number: '1.0-0' }} ({{
               data.total
             }}
-            total)
+            {{ 'common.total' | translate: 'total' }})
           </span>
           <div style="display: flex; gap: 0.5rem">
             <button
@@ -156,7 +189,7 @@
               [disabled]="data.page <= 1 || busy()"
               (click)="load(data.page - 1)"
             >
-              Previous
+              {{ 'common.previous' | translate: 'Previous' }}
             </button>
             <button
               mat-stroked-button
@@ -164,7 +197,7 @@
               [disabled]="data.page * data.pageSize >= data.total || busy()"
               (click)="load(data.page + 1)"
             >
-              Next
+              {{ 'common.next' | translate: 'Next' }}
             </button>
           </div>
         </div>

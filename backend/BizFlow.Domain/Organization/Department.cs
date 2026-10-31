@@ -24,4 +24,14 @@ public sealed class Department
         ParentDepartmentId = parentId is { } id ? EntityRules.Id(id, nameof(parentId)) : null,
         Status = RecordStatus.Active, CreatedAt = now.ToUniversalTime(), UpdatedAt = now.ToUniversalTime()
     };
+
+    public void Update(string name, Guid? parentId, RecordStatus status, DateTimeOffset now)
+    {
+        if (parentId == Id)
+            throw new ArgumentException("A department cannot be its own parent.", nameof(parentId));
+        Name = EntityRules.Text(name, 200, nameof(name));
+        ParentDepartmentId = parentId is { } id ? EntityRules.Id(id, nameof(parentId)) : null;
+        Status = status;
+        UpdatedAt = now.ToUniversalTime();
+    }
 }

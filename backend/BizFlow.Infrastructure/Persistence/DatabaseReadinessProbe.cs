@@ -25,12 +25,12 @@ public sealed class DatabaseReadinessProbe : IReadinessProbe
         {
             var expected = db.Database.GetMigrations().ToHashSet(StringComparer.Ordinal);
             var applied = await db.Database.GetAppliedMigrationsAsync(cancellationToken);
-            // Fail closed for both missing migrations and an unknown/newer deployment schema.
-            // This checks deployment history, not arbitrary manual schema drift or feature completeness.
             return expected.Count > 0 && expected.SetEquals(applied);
         }
-        catch (DbException) { return false; }
-        catch (TimeoutException) { return false; }
+        catch (DbException)
+        {
+            return false;
+        }
     }
     private sealed class ProbeContext : ITenantContext
     { public Guid? UserId => null; public Guid? TenantId => null; }

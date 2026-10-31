@@ -7,6 +7,8 @@ using Microsoft.AspNetCore.Mvc;
 using Serilog;
 using Serilog.Formatting.Compact;
 
+LoadDotEnvIfExists();
+
 var builder = WebApplication.CreateBuilder(args);
 builder.Logging.ClearProviders();
 builder.Services.AddSerilog(configuration => configuration
@@ -22,12 +24,18 @@ builder.Services.AddSingleton<BizFlow.Application.Common.IReadinessProbe>(_ => n
     builder.Configuration.GetConnectionString("BizFlow") ?? throw new InvalidOperationException("ConnectionStrings:BizFlow is required.")));
 builder.Services.AddScoped<BizFlow.Application.Tenancy.CompanyRegistrationQuery>();
 builder.Services.AddScoped<BizFlow.Application.Tenancy.ICompanyRegistrationReader, BizFlow.Infrastructure.Tenancy.CompanyRegistrationReader>();
+builder.Services.AddScoped<BizFlow.Application.Tenancy.CompanyRegistrationManagement>();
+builder.Services.AddScoped<BizFlow.Application.Tenancy.ICompanyProvisioningStore, BizFlow.Infrastructure.Tenancy.CompanyProvisioningStore>();
 builder.Services.AddScoped<TenantMembershipAuthorizer>();
 builder.Services.AddScoped<BizFlow.Application.Organization.DepartmentQuery>();
 builder.Services.AddScoped<BizFlow.Application.Organization.IDepartmentReader, BizFlow.Infrastructure.Organization.DepartmentReader>();
+builder.Services.AddScoped<BizFlow.Application.Organization.DepartmentManagement>();
+builder.Services.AddScoped<BizFlow.Application.Organization.IDepartmentManagementStore, BizFlow.Infrastructure.Organization.DepartmentManagementStore>();
 builder.Services.AddScoped<BizFlow.Application.Organization.RoleManagement>();
 builder.Services.AddScoped<BizFlow.Application.Organization.IRoleStore, BizFlow.Infrastructure.Organization.RoleStore>();
 builder.Services.AddScoped<BizFlow.Application.Organization.UserDirectoryQuery>();
+builder.Services.AddScoped<BizFlow.Application.Organization.UserManagement>();
+builder.Services.AddScoped<BizFlow.Application.Organization.IUserManagementStore, BizFlow.Infrastructure.Organization.UserManagementStore>();
 builder.Services.AddScoped<BizFlow.Application.Tasks.TaskListQuery>();
 builder.Services.AddScoped<BizFlow.Application.Tasks.TaskCreation>();
 builder.Services.AddScoped<BizFlow.Application.Tasks.TaskAssignmentCommand>();
@@ -86,10 +94,26 @@ builder.Services.AddScoped<BizFlow.Application.Sla.ISlaVersionHistoryStore, BizF
 builder.Services.AddScoped<BizFlow.Application.Sla.ISlaVersionStore, BizFlow.Infrastructure.Sla.SlaVersionStore>();
 builder.Services.AddScoped<BizFlow.Application.Notifications.NotificationInbox>();
 builder.Services.AddScoped<BizFlow.Application.Notifications.INotificationInboxStore, BizFlow.Infrastructure.Notifications.NotificationInboxStore>();
+builder.Services.AddScoped<BizFlow.Application.Notifications.IDeadlineReminderStore, BizFlow.Infrastructure.Notifications.DeadlineReminderStore>();
+builder.Services.AddSingleton<BizFlow.Application.Notifications.IVapidKeyProvider, BizFlow.Infrastructure.Notifications.ConfigVapidKeyProvider>();
+builder.Services.AddScoped<BizFlow.Application.Notifications.IEmailNotificationDispatcher, BizFlow.Infrastructure.Notifications.EmailNotificationDispatcher>();
+builder.Services.AddScoped<BizFlow.Application.Notifications.IWebPushDispatcher, BizFlow.Infrastructure.Notifications.WebPushDispatcher>();
+builder.Services.AddScoped<BizFlow.Application.Notifications.IDeadlineReminderService, BizFlow.Application.Notifications.DeadlineReminderService>();
 builder.Services.AddScoped<BizFlow.Application.Collaboration.CommentService>();
 builder.Services.AddScoped<BizFlow.Application.Collaboration.ICommentStore, BizFlow.Infrastructure.Collaboration.CommentStore>();
 builder.Services.AddScoped<BizFlow.Application.Collaboration.ICommentReader, BizFlow.Infrastructure.Collaboration.CommentReader>();
-builder.Services.AddScoped<BizFlow.Application.Collaboration.IObjectStorageProvider, BizFlow.Infrastructure.Collaboration.LocalStorageProvider>();
+var storageProvider = builder.Configuration["Storage:Provider"] ?? builder.Configuration["STORAGE_PROVIDER"];
+if (string.Equals(storageProvider, "S3", StringComparison.OrdinalIgnoreCase)
+    || string.Equals(storageProvider, "MinIO", StringComparison.OrdinalIgnoreCase))
+{
+    builder.Services.AddHttpClient<BizFlow.Application.Collaboration.IObjectStorageProvider, BizFlow.Infrastructure.Collaboration.S3CompatibleStorageProvider>();
+}
+else
+{
+    builder.Services.AddScoped<BizFlow.Application.Collaboration.IObjectStorageProvider, BizFlow.Infrastructure.Collaboration.LocalStorageProvider>();
+}
+
+builder.Services.AddSingleton<BizFlow.Application.Common.IBizFlowCacheService, BizFlow.Infrastructure.Caching.BizFlowRedisCacheService>();
 builder.Services.AddScoped<BizFlow.Application.Collaboration.IAttachmentStore, BizFlow.Infrastructure.Collaboration.AttachmentStore>();
 builder.Services.AddScoped<BizFlow.Application.Collaboration.IAttachmentReader, BizFlow.Infrastructure.Collaboration.AttachmentReader>();
 builder.Services.AddScoped<BizFlow.Application.Collaboration.AttachmentService>();
@@ -98,12 +122,27 @@ builder.Services.AddScoped<BizFlow.Application.Collaboration.IRecordSearchReader
 builder.Services.AddScoped<BizFlow.Application.Collaboration.RecordService>();
 builder.Services.AddScoped<BizFlow.Application.Reports.IReportingReader, BizFlow.Infrastructure.Reports.ReportingReader>();
 builder.Services.AddScoped<BizFlow.Application.Reports.ReportingService>();
+builder.Services.AddHttpClient<BizFlow.Application.AI.IAiModelClient, BizFlow.Infrastructure.AI.OpenAiModelClient>();
+builder.Services.AddHttpClient<BizFlow.Application.AI.IAiEmbeddingService, BizFlow.Infrastructure.AI.AiEmbeddingService>();
+builder.Services.AddScoped<BizFlow.Application.AI.IAiVectorMemoryStore, BizFlow.Infrastructure.AI.AiVectorMemoryStore>();
+builder.Services.AddScoped<BizFlow.Application.AI.IProactiveAgentScanner, BizFlow.Infrastructure.AI.ProactiveAgentScanner>();
+builder.Services.AddHostedService<BizFlow.Infrastructure.AI.ProactiveAgentDaemon>();
+builder.Services.AddScoped<BizFlow.Application.AI.IAiSelfReflectionService, BizFlow.Infrastructure.AI.AiSelfReflectionService>();
 builder.Services.AddScoped<BizFlow.Application.AI.IAiStore, BizFlow.Infrastructure.AI.AiStore>();
 builder.Services.AddScoped<BizFlow.Application.AI.IAiContextReader, BizFlow.Infrastructure.AI.AiContextReader>();
+builder.Services.AddMemoryCache();
 builder.Services.AddSingleton<BizFlow.Application.AI.IAiToolRegistry, BizFlow.Infrastructure.AI.AiToolRegistry>();
+builder.Services.AddSingleton<BizFlow.Application.AI.IAiConfirmationTokenService, BizFlow.Infrastructure.AI.AiConfirmationTokenService>();
 builder.Services.AddScoped<BizFlow.Application.AI.IRequestSplitStore, BizFlow.Infrastructure.AI.RequestSplitStore>();
 builder.Services.AddScoped<BizFlow.Application.AI.IAiActionDispatcher, BizFlow.Infrastructure.AI.AiActionDispatcher>();
 builder.Services.AddScoped<BizFlow.Application.AI.AiAssistanceService>();
+builder.Services.AddScoped<BizFlow.Application.AI.ITaskDecompositionStore, BizFlow.Infrastructure.AI.TaskDecompositionStore>();
+builder.Services.AddScoped<BizFlow.Application.AI.IAiTaskDecompositionService, BizFlow.Application.AI.AiTaskDecompositionService>();
+builder.Services.AddScoped<BizFlow.Application.AI.IAiBranchingStore, BizFlow.Infrastructure.AI.AiBranchingStore>();
+builder.Services.AddScoped<BizFlow.Application.AI.IAiBranchingService, BizFlow.Infrastructure.AI.AiBranchingService>();
+builder.Services.AddScoped<BizFlow.Application.AI.IAiDocumentSummarizerStore, BizFlow.Infrastructure.AI.AiDocumentSummarizerStore>();
+builder.Services.AddScoped<BizFlow.Application.AI.IAiDocumentSummarizerService, BizFlow.Infrastructure.AI.AiDocumentSummarizerService>();
+builder.Services.AddScoped<BizFlow.Application.AI.IRobotChatService, BizFlow.Application.AI.RobotChatService>();
 builder.Services.AddScoped<BizFlow.Application.Audit.IAuditReader, BizFlow.Infrastructure.Audit.AuditReader>();
 builder.Services.AddExceptionHandler<ApiExceptionHandler>();
 builder.Services.AddProblemDetails();
@@ -156,5 +195,45 @@ _ = Task.Run(async () =>
 });
 
 app.Run();
+
+static void LoadDotEnvIfExists()
+{
+    try
+    {
+        var current = Directory.GetCurrentDirectory();
+        var candidates = new[]
+        {
+            Path.Combine(current, "deploy", ".env"),
+            Path.Combine(current, "..", "deploy", ".env"),
+            Path.Combine(current, "..", "..", "deploy", ".env"),
+            Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "deploy", ".env"),
+            Path.Combine(current, ".env")
+        };
+        foreach (var candidate in candidates)
+        {
+            if (File.Exists(candidate))
+            {
+                foreach (var line in File.ReadAllLines(candidate))
+                {
+                    var trimmed = line.Trim();
+                    if (string.IsNullOrWhiteSpace(trimmed) || trimmed.StartsWith('#')) continue;
+                    var sep = trimmed.IndexOf('=');
+                    if (sep <= 0) continue;
+                    var key = trimmed[..sep].Trim();
+                    var val = trimmed[(sep + 1)..].Trim();
+                    if (val.Length > 0 && string.IsNullOrEmpty(Environment.GetEnvironmentVariable(key)))
+                    {
+                        Environment.SetEnvironmentVariable(key, val);
+                    }
+                }
+                break;
+            }
+        }
+    }
+    catch
+    {
+        // Ignore dot-env loading exceptions in locked/read-only environments
+    }
+}
 
 public partial class Program;

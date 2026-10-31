@@ -6,28 +6,38 @@
 </header>
 <main id="main-content" class="page-content" tabindex="-1">
   <nav aria-label="Breadcrumb">
-    <a routerLink="/workspace">Workspace</a> / <span>Notifications</span>
+    <a routerLink="/workspace">{{ 'common.workspace' | translate: 'Workspace' }}</a> /
+    <span>{{ 'notifications.title' | translate: 'Notifications' }}</span>
   </nav>
-  <h1>Notifications</h1>
+  <h1>{{ 'notifications.title' | translate: 'Notifications' }}</h1>
   <p role="status" aria-label="Live notification connection">
     @switch (updates.status()) {
       @case ('live') {
-        Live updates connected.
+        {{ 'notifications.liveConnected' | translate: 'Live updates connected.' }}
       }
       @case ('connecting') {
-        Connecting live updates…
+        {{ 'notifications.liveConnecting' | translate: 'Connecting live updates…' }}
       }
       @case ('reconnecting') {
-        Reconnecting live updates. You can still refresh the inbox.
+        {{
+          'notifications.liveReconnecting'
+            | translate: 'Reconnecting live updates. You can still refresh the inbox.'
+        }}
       }
       @default {
-        Live updates unavailable. Use Refresh inbox to check for updates.
+        {{
+          'notifications.liveUnavailable'
+            | translate: 'Live updates unavailable. Use Refresh inbox to check for updates.'
+        }}
       }
     }
   </p>
   <p>
-    Updates addressed to you in this workspace. Reading a notification does not change the related
-    work.
+    {{
+      'notifications.subtitle'
+        | translate
+          : 'Updates addressed to you in this workspace. Reading a notification does not change the related work.'
+    }}
   </p>
   <section class="directory-panel" aria-label="Your notifications" [attr.aria-busy]="busy()">
     <div class="filters">
@@ -35,7 +45,7 @@
         [checked]="unreadOnly()"
         [disabled]="reading() !== null"
         (change)="filter($event.checked)"
-        >Unread only</mat-checkbox
+        >{{ 'notifications.unreadOnly' | translate: 'Unread only' }}</mat-checkbox
       >
       <button
         mat-stroked-button
@@ -43,7 +53,7 @@
         [disabled]="busy() || reading() !== null"
         (click)="load(page())"
       >
-        Refresh inbox
+        {{ 'notifications.refreshInbox' | translate: 'Refresh inbox' }}
       </button>
     </div>
     @if (receiptMessage()) {
@@ -53,47 +63,69 @@
       <p class="directory-feedback" role="alert">{{ receiptError() }}</p>
     }
     @if (busy()) {
-      <p class="directory-feedback" role="status">Loading notifications…</p>
+      <p class="directory-feedback" role="status">
+        {{ 'notifications.loading' | translate: 'Loading notifications…' }}
+      </p>
     } @else if (denied()) {
       <p class="directory-feedback" role="alert">
-        You no longer have access to this workspace inbox.
+        {{
+          'notifications.denied' | translate: 'You no longer have access to this workspace inbox.'
+        }}
       </p>
     } @else if (error()) {
       <p class="directory-feedback" role="alert">
-        Notifications could not be loaded. Refresh the inbox to try again.
+        {{
+          'notifications.error'
+            | translate: 'Notifications could not be loaded. Refresh the inbox to try again.'
+        }}
       </p>
     } @else if (result(); as data) {
       <p class="directory-feedback" role="status">
-        {{ data.unreadCount }} unread
-        {{ data.unreadCount === 1 ? 'notification' : 'notifications' }}
+        {{ data.unreadCount }} {{ 'notifications.unreadCount' | translate: 'unread' }}
+        {{
+          data.unreadCount === 1
+            ? ('notifications.notification' | translate: 'notification')
+            : ('notifications.notifications' | translate: 'notifications')
+        }}
       </p>
       @if (data.items.length === 0) {
         <p class="directory-feedback">
-          {{ unreadOnly() ? 'You have no unread notifications.' : 'No notifications yet.' }}
+          {{
+            unreadOnly()
+              ? ('notifications.noUnread' | translate: 'You have no unread notifications.')
+              : ('notifications.empty' | translate: 'No notifications yet.')
+          }}
         </p>
       } @else {
         <ol class="notification-list" aria-label="Notification list">
           @for (row of data.items; track row.notificationId) {
             <li>
               <article [attr.aria-label]="row.title">
-                <span class="status-label">{{ row.readAt ? 'Read' : 'Unread' }}</span>
+                <span class="status-label">{{
+                  row.readAt
+                    ? ('notifications.read' | translate: 'Read')
+                    : ('notifications.unread' | translate: 'Unread')
+                }}</span>
                 <h2>{{ row.title }}</h2>
                 <p class="notification-content">{{ row.content }}</p>
                 <p class="notification-meta">{{ row.type }}</p>
                 @if (row.objectType) {
                   <p class="notification-meta">
-                    Related: {{ row.objectType }}
+                    {{ 'notifications.related' | translate: 'Related:' }} {{ row.objectType }}
                     @if (row.objectId) {
                       · {{ row.objectId }}
                     }
                   </p>
                 }
                 @if (row.objectType === 'Task' && row.objectId) {
-                  <a mat-stroked-button [routerLink]="['/tasks', row.objectId]">Open task</a>
+                  <a mat-stroked-button [routerLink]="['/tasks', row.objectId]">{{
+                    'notifications.openTask' | translate: 'Open task'
+                  }}</a>
                 }
                 @if (row.readAt) {
                   <p class="notification-meta">
-                    Read {{ row.readAt | date: 'yyyy-MM-dd HH:mm:ss' : 'UTC' }} UTC
+                    {{ 'notifications.read' | translate: 'Read' }}
+                    {{ row.readAt | date: 'yyyy-MM-dd HH:mm:ss' : 'UTC' }} UTC
                   </p>
                 } @else {
                   <button
@@ -103,7 +135,11 @@
                     (click)="markRead(row)"
                     [attr.aria-label]="'Mark read: ' + row.title"
                   >
-                    {{ reading() === row.notificationId ? 'Saving…' : 'Mark read' }}
+                    {{
+                      reading() === row.notificationId
+                        ? ('notifications.saving' | translate: 'Saving…')
+                        : ('notifications.markRead' | translate: 'Mark read')
+                    }}
                   </button>
                 }
               </article>
@@ -113,8 +149,13 @@
       }
       <nav class="pagination" aria-label="Notification pages">
         <span
-          >{{ data.total }} {{ data.total === 1 ? 'notification' : 'notifications' }} · Page
-          {{ data.page }}</span
+          >{{ data.total }}
+          {{
+            data.total === 1
+              ? ('notifications.notification' | translate: 'notification')
+              : ('notifications.notifications' | translate: 'notifications')
+          }}
+          · {{ 'common.page' | translate: 'Page' }} {{ data.page }}</span
         >
         <button
           mat-stroked-button
@@ -122,7 +163,7 @@
           [disabled]="data.page <= 1 || reading() !== null"
           (click)="load(data.page - 1)"
         >
-          Previous
+          {{ 'common.previous' | translate: 'Previous' }}
         </button>
         <button
           mat-stroked-button
@@ -130,7 +171,7 @@
           [disabled]="data.page * data.pageSize >= data.total || reading() !== null"
           (click)="load(data.page + 1)"
         >
-          Next
+          {{ 'common.next' | translate: 'Next' }}
         </button>
       </nav>
     }

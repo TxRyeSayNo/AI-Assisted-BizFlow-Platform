@@ -9,6 +9,7 @@ import { MatInputModule } from '@angular/material/input';
 import { RouterLink } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { SessionService } from '../../core/auth/session';
+import { TranslatePipe } from '../../core/i18n/translate.pipe';
 
 export interface RoleRow {
   roleId: string;
@@ -42,6 +43,7 @@ interface RolePage {
     MatCheckboxModule,
     MatFormFieldModule,
     MatInputModule,
+    TranslatePipe,
   ],
   templateUrl: './roles.html',
   styleUrls: ['./departments.scss', './roles.scss'],

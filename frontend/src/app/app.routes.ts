@@ -32,6 +32,12 @@ export const routes: Routes = [
     loadComponent: () => import('./features/tasks/task-create').then((m) => m.TaskCreate),
   },
   {
+    path: 'tasks/ai-decomposition',
+    canActivate: [tenantGuard],
+    loadComponent: () =>
+      import('./features/tasks/task-decomposition-preview').then((m) => m.TaskDecompositionPreview),
+  },
+  {
     path: 'tasks/:id',
     canActivate: [tenantGuard, permissionGuard],
     data: {
@@ -174,7 +180,15 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./features/platform/company-registrations').then((m) => m.CompanyRegistrations),
   },
+  {
+    path: 'register-company',
+    loadComponent: () => import('./features/auth/register-company').then((m) => m.RegisterCompany),
+  },
   { path: 'login', loadComponent: () => import('./features/auth/login').then((m) => m.Login) },
+  {
+    path: 'auth/verify-email-link',
+    loadComponent: () => import('./features/auth/login').then((m) => m.Login),
+  },
   {
     path: 'forgot-password',
     loadComponent: () => import('./features/auth/forgot-password').then((m) => m.ForgotPassword),
