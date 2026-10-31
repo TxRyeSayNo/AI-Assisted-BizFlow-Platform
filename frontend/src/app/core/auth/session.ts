@@ -116,7 +116,6 @@ export class SessionService {
     this.refreshRequest = request$;
     return request$;
   }
-
   hasPermission(permission: string): boolean {
     return this.identity()?.permissions.includes(permission) ?? false;
   }
