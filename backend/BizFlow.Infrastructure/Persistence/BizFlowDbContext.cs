@@ -60,6 +60,7 @@ public sealed class BizFlowDbContext(DbContextOptions<BizFlowDbContext> options,
     public DbSet<WorkflowVersion> WorkflowVersions => Set<WorkflowVersion>();
     public DbSet<WorkflowStep> WorkflowSteps => Set<WorkflowStep>();
     public DbSet<WorkflowTransition> WorkflowTransitions => Set<WorkflowTransition>();
+    public DbSet<AiVectorMemory> AIVectorMemories => Set<AiVectorMemory>();
 
     protected override void OnModelCreating(ModelBuilder model)
     {
@@ -86,6 +87,7 @@ public sealed class BizFlowDbContext(DbContextOptions<BizFlowDbContext> options,
         model.Entity<AIInteraction>().HasQueryFilter(x => CurrentUserId != null && CurrentTenantId != null && x.TenantId == CurrentTenantId);
         model.Entity<AIRecommendation>().HasQueryFilter(x => CurrentUserId != null && CurrentTenantId != null && x.TenantId == CurrentTenantId);
         model.Entity<AIAgentAction>().HasQueryFilter(x => CurrentUserId != null && CurrentTenantId != null && x.TenantId == CurrentTenantId);
+        model.Entity<AiVectorMemory>().HasQueryFilter(x => CurrentUserId != null && CurrentTenantId != null && x.TenantId == CurrentTenantId);
         model.Entity<Company>().HasQueryFilter(x => Tenants.Any(t => t.CompanyId == x.Id));
         model.Entity<UserAccount>().HasQueryFilter(x => CurrentUserId != null && CurrentTenantId != null && x.TenantId == CurrentTenantId && x.DeletedAt == null);
         model.Entity<Department>().HasQueryFilter(x => CurrentUserId != null && CurrentTenantId != null && x.TenantId == CurrentTenantId);
@@ -494,7 +496,7 @@ public sealed class BizFlowDbContext(DbContextOptions<BizFlowDbContext> options,
                     break;
                 case AIInteraction interaction:
                     AssertTenant(interaction.TenantId);
-                    if (entry.State != EntityState.Added || interaction.UserId != CurrentUserId) throw Denied();
+                    if (entry.State != EntityState.Added || (interaction.ModelName != "proactive-autonomous-daemon" && interaction.ModelName != "system-internal" && interaction.UserId != CurrentUserId)) throw Denied();
                     break;
                 case AIRecommendation recommendation:
                     AssertTenant(recommendation.TenantId);
@@ -514,6 +516,9 @@ public sealed class BizFlowDbContext(DbContextOptions<BizFlowDbContext> options,
                     AssertTenant(action.TenantId);
                     if (entry.State != EntityState.Added ||
                         !await AIInteractions.AnyAsync(i => i.Id == action.AIInteractionId, cancellationToken)) throw Denied();
+                    break;
+                case AiVectorMemory memory:
+                    AssertTenant(memory.TenantId);
                     break;
                 default:
                     // New entities must explicitly declare their persistence boundary.

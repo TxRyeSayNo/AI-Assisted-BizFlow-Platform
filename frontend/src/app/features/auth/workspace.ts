@@ -2,13 +2,13 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { SessionService } from '../../core/auth/session';
-import { AiAssistantComponent } from '../../shared/ai/ai-assistant';
+import { AiAgentService } from '../../core/ai/ai-agent.service';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
 
 @Component({
   selector: 'bf-workspace',
   standalone: true,
-  imports: [CommonModule, RouterLink, AiAssistantComponent, TranslatePipe],
+  imports: [CommonModule, RouterLink, TranslatePipe],
   template: `
     <!-- Top Frosted Ocean Header -->
     <header class="public-header workspace-nav">
@@ -83,7 +83,7 @@ import { TranslatePipe } from '../../core/i18n/translate.pipe';
         <button
           type="button"
           class="ai-trigger-btn"
-          (click)="isAiOpen.set(true)"
+          (click)="openAiAgent()"
           title="Open AI Assistant"
         >
           <span class="sparkle">✦</span>
@@ -139,7 +139,7 @@ import { TranslatePipe } from '../../core/i18n/translate.pipe';
                 'workspace.newRequest' | translate: '+ New Request'
               }}</a>
             }
-            <button type="button" class="btn-hero-ai" (click)="isAiOpen.set(true)">
+            <button type="button" class="btn-hero-ai" (click)="openAiAgent()">
               {{ 'workspace.aiCopilot' | translate: '✦ Ask AI Assistant' }}
             </button>
             <a routerLink="/approvals" class="btn-hero-ghost">
@@ -459,7 +459,7 @@ import { TranslatePipe } from '../../core/i18n/translate.pipe';
     </main>
 
     <!-- Shared AI Assistant Drawer -->
-    <bf-ai-assistant [isOpen]="isAiOpen()" (closeRequested)="isAiOpen.set(false)"></bf-ai-assistant>
+
   `,
   styles: [
     `
@@ -871,7 +871,12 @@ import { TranslatePipe } from '../../core/i18n/translate.pipe';
 export class Workspace {
   readonly session = inject(SessionService);
   private readonly router = inject(Router);
+  readonly aiAgent = inject(AiAgentService);
   readonly identity = this.session.identity;
+
+  openAiAgent(): void {
+    this.aiAgent.open('chat');
+  }
 
   readonly isAiOpen = signal(false);
   readonly avatarFailed = signal(false);

@@ -13,7 +13,10 @@ namespace BizFlow.Api.Controllers;
 [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
 public sealed class AiController(
     AiAssistanceService aiService,
-    IAiStore aiStore) : ControllerBase
+    IAiStore aiStore,
+    IAiVectorMemoryStore? vectorMemoryStore = null,
+    IProactiveAgentScanner? proactiveScanner = null,
+    IAiSelfReflectionService? selfReflectionService = null) : ControllerBase
 {
     // FR-AI-001: Assist task creation
     [HttpPost("task-assistance")]
@@ -128,5 +131,110 @@ public sealed class AiController(
 
         await aiStore.RecordDecisionAsync(tenantId, id, decision, userId, cancellationToken);
         return NoContent();
+    }
+
+    private Guid GetTenantId() =>
+        HttpContext.User.FindFirst("TenantId")?.Value is { } tidStr && Guid.TryParse(tidStr, out var tid)
+            ? tid
+            : throw new ApplicationFault(FaultKind.Forbidden, "TENANT.REQUIRED", "Active tenant context required.");
+
+    // --- Pillar 1: Long-term Vector Memory & RAG ---
+    [HttpPost("memory")]
+    public async Task<ActionResult<AiMemoryItemDto>> StoreMemory(
+        [FromBody] StoreMemoryCommand command,
+        CancellationToken cancellationToken = default)
+    {
+        if (vectorMemoryStore == null)
+            throw new ApplicationFault(FaultKind.Unavailable, "AI.MEMORY_UNAVAILABLE", "Vector memory service is not available.");
+
+        var tenantId = GetTenantId();
+        var item = await vectorMemoryStore.StoreMemoryAsync(
+            tenantId, command.MemoryScope, command.Title, command.Content, command.MetadataJson, cancellationToken);
+
+        return Ok(new AiMemoryItemDto(
+            item.Id, item.MemoryScope, item.Title, item.Content, item.MetadataJson, item.CreatedAt));
+    }
+
+    [HttpPost("memory/search")]
+    public async Task<ActionResult<IReadOnlyList<AiMemorySearchResult>>> SearchMemory(
+        [FromBody] SearchMemoryQuery query,
+        CancellationToken cancellationToken = default)
+    {
+        if (vectorMemoryStore == null)
+            return Ok(Array.Empty<AiMemorySearchResult>());
+
+        var tenantId = GetTenantId();
+        var results = await vectorMemoryStore.SearchMemoriesAsync(
+            tenantId, query.Query, query.MemoryScope, query.MaxResults, query.MinScore, cancellationToken);
+
+        return Ok(results);
+    }
+
+    [HttpGet("memory/recent")]
+    public async Task<ActionResult<IReadOnlyList<AiMemoryItemDto>>> GetRecentMemories(
+        [FromQuery] string? scope = null,
+        [FromQuery] int limit = 20,
+        CancellationToken cancellationToken = default)
+    {
+        if (vectorMemoryStore == null)
+            return Ok(Array.Empty<AiMemoryItemDto>());
+
+        var tenantId = GetTenantId();
+        var list = await vectorMemoryStore.GetRecentMemoriesAsync(tenantId, scope, limit, cancellationToken);
+        var dtos = list.Select(m => new AiMemoryItemDto(
+            m.Id, m.MemoryScope, m.Title, m.Content, m.MetadataJson, m.CreatedAt)).ToList();
+
+        return Ok(dtos);
+    }
+
+    // --- Pillar 2: Proactive Autonomous Agent ---
+    [HttpPost("proactive/trigger-scan")]
+    public async Task<ActionResult<ProactiveScanResult>> TriggerProactiveScan(
+        CancellationToken cancellationToken = default)
+    {
+        if (proactiveScanner == null)
+            throw new ApplicationFault(FaultKind.Unavailable, "AI.SCANNER_UNAVAILABLE", "Proactive scanner service is not available.");
+
+        var tenantId = GetTenantId();
+        var result = await proactiveScanner.RunProactiveScanAsync(tenantId, cancellationToken);
+        return Ok(result);
+    }
+
+    [HttpGet("proactive/insights")]
+    public async Task<ActionResult<IReadOnlyList<ProactiveInsightDto>>> GetProactiveInsights(
+        CancellationToken cancellationToken = default)
+    {
+        if (proactiveScanner == null)
+            return Ok(Array.Empty<ProactiveInsightDto>());
+
+        var tenantId = GetTenantId();
+        var insights = await proactiveScanner.GetActiveProactiveInsightsAsync(tenantId, cancellationToken);
+        return Ok(insights);
+    }
+
+    // --- Pillar 3: Self-Reflection & Adaptive Learning ---
+    [HttpGet("reflection/metrics")]
+    public async Task<ActionResult<ReflectionMetricsDto>> GetReflectionMetrics(
+        CancellationToken cancellationToken = default)
+    {
+        if (selfReflectionService == null)
+            throw new ApplicationFault(FaultKind.Unavailable, "AI.REFLECTION_UNAVAILABLE", "Self-reflection service is not available.");
+
+        var tenantId = GetTenantId();
+        var metrics = await selfReflectionService.GetReflectionMetricsAsync(tenantId, cancellationToken);
+        return Ok(metrics);
+    }
+
+    [HttpGet("reflection/rules")]
+    public async Task<ActionResult<IReadOnlyList<ReflectionCritiqueRule>>> GetCritiqueRules(
+        [FromQuery] string? type = null,
+        CancellationToken cancellationToken = default)
+    {
+        if (selfReflectionService == null)
+            return Ok(Array.Empty<ReflectionCritiqueRule>());
+
+        var tenantId = GetTenantId();
+        var rules = await selfReflectionService.GetCritiqueRulesAsync(tenantId, type, cancellationToken);
+        return Ok(rules);
     }
 }

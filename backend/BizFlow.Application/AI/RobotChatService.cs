@@ -20,7 +20,9 @@ public sealed class RobotChatService(
     TimeProvider clock,
     IAiModelClient? modelClient = null,
     IAiToolRegistry? toolRegistry = null,
-    AiAssistanceService? assistanceService = null) : IRobotChatService
+    AiAssistanceService? assistanceService = null,
+    IAiVectorMemoryStore? vectorMemoryStore = null,
+    IProactiveAgentScanner? proactiveScanner = null) : IRobotChatService
 {
     public async Task<RobotChatResponse> ProcessMessageAsync(
         RobotChatCommand command,
@@ -51,7 +53,19 @@ public sealed class RobotChatService(
             return await HandleCreateTaskCommandAsync(message, cancellationToken);
         }
 
-        // 4. Natural Language Task and Deadline Query with Tool Orchestration, RBAC & Anti-Hallucination
+        // 4. Command /memory (Semantic Vector Memory RAG Query)
+        if (message.StartsWith("/memory", StringComparison.OrdinalIgnoreCase) && vectorMemoryStore != null)
+        {
+            return await HandleMemoryCommandAsync(message, cancellationToken);
+        }
+
+        // 5. Command /proactive (Proactive Autonomous Risk & Workload Insights)
+        if (message.StartsWith("/proactive", StringComparison.OrdinalIgnoreCase) && proactiveScanner != null)
+        {
+            return await HandleProactiveCommandAsync(cancellationToken);
+        }
+
+        // 6. Natural Language Task and Deadline Query with Tool Orchestration, RBAC & Anti-Hallucination
         return await HandleNaturalLanguageQueryAsync(message, command.Locale, cancellationToken);
     }
 
@@ -97,7 +111,7 @@ public sealed class RobotChatService(
         return new RobotChatResponse(
             sb.ToString().TrimEnd(),
             "/task",
-            [new RobotActionCard("OPEN_DECOMPOSITION", "Xem & Xác nhận tạo việc", "/tasks/ai-decomposition", new { prompt })]);
+            [new RobotActionCard("OPEN_DECOMPOSITION", "Xem & Xác nhận tạo việc", "/tasks/ai-decomposition", new { prompt, proposals = preview.Proposals })]);
     }
 
     private async Task<RobotChatResponse> HandleNotificationsCommandAsync(string message, CancellationToken cancellationToken)
@@ -168,6 +182,82 @@ public sealed class RobotChatService(
         }
     }
 
+    private async Task<RobotChatResponse> HandleMemoryCommandAsync(string message, CancellationToken cancellationToken)
+    {
+        var query = message["/memory".Length..].Trim();
+        if (string.IsNullOrWhiteSpace(query))
+        {
+            var recent = await vectorMemoryStore!.GetRecentMemoriesAsync(tenantContext.TenantId!.Value, null, 5, cancellationToken);
+            if (recent.Count == 0)
+            {
+                return new RobotChatResponse(
+                    "🧠 **Bộ nhớ dài hạn & Tri thức doanh nghiệp (Vector Memory):**\n" +
+                    "Chưa có tài liệu chính sách hoặc tiền lệ công việc nào được lập chỉ mục.\n" +
+                    "Bạn có thể tra cứu theo cú pháp: `/memory <nội dung cần tìm>`.",
+                    "/memory");
+            }
+
+            var sb = new StringBuilder();
+            sb.AppendLine("🧠 **Bộ nhớ dài hạn & Quy định nội bộ gần nhất:**");
+            foreach (var m in recent)
+            {
+                sb.AppendLine($"• [{m.MemoryScope}] **{m.Title}**: {Truncate(m.Content, 100)}");
+            }
+            sb.AppendLine("\nGõ `/memory <từ khóa>` để tìm kiếm tương đồng ngữ nghĩa (Cosine RAG).");
+            return new RobotChatResponse(sb.ToString().TrimEnd(), "/memory");
+        }
+
+        var results = await vectorMemoryStore!.SearchMemoriesAsync(tenantContext.TenantId!.Value, query, null, 3, 0.30f, cancellationToken);
+        if (results.Count == 0)
+        {
+            return new RobotChatResponse(
+                $"🔍 Không tìm thấy chính sách hoặc tiền lệ nào khớp với nội dung '{query}' trong bộ nhớ doanh nghiệp.",
+                "/memory");
+        }
+
+        var rsb = new StringBuilder();
+        rsb.AppendLine($"🔍 **Kết quả tra cứu Bộ nhớ Vector (Khớp ngữ nghĩa cao nhất):**");
+        foreach (var r in results)
+        {
+            var matchPercent = Math.Round(r.SimilarityScore * 100, 1);
+            rsb.AppendLine($"\n📌 **{r.Title}** (Phạm vi: {r.MemoryScope} | Độ khớp: {matchPercent}%)");
+            rsb.AppendLine(r.Content);
+        }
+
+        return new RobotChatResponse(rsb.ToString().TrimEnd(), "/memory");
+    }
+
+    private async Task<RobotChatResponse> HandleProactiveCommandAsync(CancellationToken cancellationToken)
+    {
+        var insights = await proactiveScanner!.GetActiveProactiveInsightsAsync(tenantContext.TenantId!.Value, cancellationToken);
+        if (insights.Count == 0)
+        {
+            return new RobotChatResponse(
+                "⚡ **Agent Giám sát Chủ động (Autonomous Daemon):**\n" +
+                "Hiện tại không có rủi ro trễ hạn SLA hoặc tình trạng quá tải nhân sự nào được phát hiện trong hệ thống. Mọi thứ đang vận hành ổn định!",
+                "/proactive");
+        }
+
+        var sb = new StringBuilder();
+        sb.AppendLine($"⚡ **Phát hiện {insights.Count} khuyến nghị từ Agent Giám sát Chủ động:**\n");
+        var cards = new List<RobotActionCard>();
+
+        foreach (var insight in insights)
+        {
+            sb.AppendLine($"• **{insight.Title}** (Độ tin cậy: {Math.Round(insight.Confidence * 100)}%)");
+            sb.AppendLine($"  {insight.Description}");
+            if (insight.ObjectId.HasValue)
+            {
+                cards.Add(new RobotActionCard("VIEW_TASK", "Xem chi tiết", $"/tasks/{insight.ObjectId.Value}"));
+            }
+        }
+
+        return new RobotChatResponse(sb.ToString().TrimEnd(), "/proactive", cards.Take(3).ToList());
+    }
+
+    private static string Truncate(string text, int maxLen) =>
+        text.Length <= maxLen ? text : text[..maxLen] + "...";
+
     private async Task<RobotChatResponse> HandleNaturalLanguageQueryAsync(string message, string? locale, CancellationToken cancellationToken)
     {
         var now = clock.GetUtcNow();
@@ -204,6 +294,12 @@ public sealed class RobotChatService(
             .ToList();
 
         // 2. Identify Intent & Grounded Response
+        if (lowerMsg.StartsWith("phân rã") || lowerMsg.StartsWith("bóc tách") || lowerMsg.StartsWith("lên kế hoạch") ||
+            lowerMsg.Contains("phân chia công việc") || lowerMsg.Contains("bóc tách công việc"))
+        {
+            return await HandleTaskCommandAsync($"/task {message}", cancellationToken);
+        }
+
         if (lowerMsg.Contains("hôm nay") || lowerMsg.Contains("today") || (lowerMsg.Contains("deadline") && !lowerMsg.Contains("quá hạn")))
         {
             if (dueTodayTasks.Count == 0)
@@ -260,6 +356,22 @@ public sealed class RobotChatService(
                 sb.AppendLine($"... và còn {pendingTasks.Count - 5} công việc khác.");
             }
             return new RobotChatResponse(sb.ToString().TrimEnd(), "QUERY_PENDING");
+        }
+
+        // Long-term enterprise vector memory RAG check for policies and guidelines
+        if (vectorMemoryStore != null && (lowerMsg.Contains("quy định") || lowerMsg.Contains("chính sách") || lowerMsg.Contains("nội quy") || lowerMsg.Contains("tiêu chuẩn") || lowerMsg.Contains("hướng dẫn")))
+        {
+            var memoryMatches = await vectorMemoryStore.SearchMemoriesAsync(tenantContext.TenantId!.Value, message, null, 2, 0.35f, cancellationToken);
+            if (memoryMatches.Count > 0)
+            {
+                var msb = new StringBuilder();
+                msb.AppendLine("📖 **Căn cứ theo Tri thức & Quy định doanh nghiệp (RAG):**");
+                foreach (var match in memoryMatches)
+                {
+                    msb.AppendLine($"\n📌 **{match.Title}** [{match.MemoryScope}]:\n{match.Content}");
+                }
+                return new RobotChatResponse(msb.ToString().TrimEnd(), "ENTERPRISE_MEMORY");
+            }
         }
 
         // 3. Fallback / General Query with LLM Grounding & Tool Calling Support

@@ -16,19 +16,11 @@ import { Router } from '@angular/router';
 import { SessionService } from '../../core/auth/session';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
-
-export interface ChatMessage {
-  id: string;
-  sender: 'user' | 'robot';
-  text: string;
-  time: string;
-  actionCards?: Array<{
-    actionType: string;
-    title: string;
-    linkUrl?: string;
-    payload?: any;
-  }>;
-}
+import {
+  AiAgentService,
+  ChatMessage,
+  SubtaskBranch,
+} from '../../core/ai/ai-agent.service';
 
 @Component({
   selector: 'bf-robot-widget',
@@ -38,6 +30,7 @@ export interface ChatMessage {
   styleUrls: ['./robot-widget.scss'],
 })
 export class RobotWidgetComponent implements OnInit {
+  readonly agent = inject(AiAgentService);
   readonly session = inject(SessionService);
   readonly i18n = inject(I18nService);
   private readonly http = inject(HttpClient);
@@ -46,58 +39,60 @@ export class RobotWidgetComponent implements OnInit {
 
   @ViewChild('chatBody') chatBodyRef?: ElementRef<HTMLDivElement>;
 
-  // Widget visibility & session lifecycle (BR-029)
-  readonly isOpen = signal(false);
-  readonly busy = signal(false);
+  // Local input field
   readonly inputMessage = signal('');
 
+  // Convenience computed signals delegated to unified agent
+  readonly isOpen = computed(() => this.agent.isOpen());
+  readonly isExpanded = computed(() => this.agent.isExpanded());
+  readonly activeTab = computed(() => this.agent.activeTab());
+  readonly messages = computed(() => this.agent.messages());
+  readonly branches = computed(() => this.agent.branches());
+  readonly selectedBranch = computed(() => this.agent.selectedBranch());
+  readonly chatSessions = computed(() => this.agent.chatSessions());
+  readonly busy = computed(() => this.agent.busy());
   readonly isAuthenticated = computed(() => this.session.signedIn());
-
-  readonly messages = signal<ChatMessage[]>([
-    {
-      id: 'welcome',
-      sender: 'robot',
-      text: 'Xin chào! Tôi là Trợ lý Robot BizFlow 🤖.\nTôi có thể hỗ trợ bạn kiểm tra deadline, việc quá hạn, việc chờ xử lý, hoặc bóc tách công việc bằng lệnh `/task`.',
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-    },
-  ]);
 
   ngOnInit() {
     this.checkSessionDisplayState();
-    this.messages.set([
-      {
-        id: 'welcome',
-        sender: 'robot',
-        text: this.i18n.t('ai.welcomeMsg'),
-        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      },
-    ]);
   }
 
   checkSessionDisplayState() {
     try {
       const dismissed = sessionStorage.getItem('bizflow_robot_dismissed');
       // Default open unless explicitly closed in current session (BR-029)
-      this.isOpen.set(dismissed !== 'true');
+      if (dismissed !== 'true') {
+        this.agent.isOpen.set(true);
+      } else {
+        this.agent.isOpen.set(false);
+      }
     } catch {
-      this.isOpen.set(true);
+      this.agent.isOpen.set(true);
     }
   }
 
   openWidget() {
-    this.isOpen.set(true);
-    try {
-      sessionStorage.removeItem('bizflow_robot_dismissed');
-    } catch {}
+    this.agent.open('chat');
     this.scrollToBottom();
   }
 
   closeWidget() {
-    // Small [X] button closes only for current browser session (BR-029)
-    this.isOpen.set(false);
-    try {
-      sessionStorage.setItem('bizflow_robot_dismissed', 'true');
-    } catch {}
+    this.agent.close();
+  }
+
+  toggleExpand() {
+    this.agent.toggleExpand();
+  }
+
+  setTab(tab: 'chat' | 'branches' | 'history') {
+    this.agent.setTab(tab);
+    if (tab === 'chat') {
+      this.scrollToBottom();
+    }
+  }
+
+  selectBranch(branch: SubtaskBranch | null) {
+    this.agent.selectBranch(branch);
   }
 
   onQuickPrompt(type: 'today' | 'overdue' | 'pending' | 'task' | 'notifications') {
@@ -118,9 +113,9 @@ export class RobotWidgetComponent implements OnInit {
         ja: '未処理のタスクを一覧表示してください',
       },
       task: {
-        vi: '/task ',
-        en: '/task ',
-        ja: '/task ',
+        vi: '/task Lên kế hoạch tiếp nhận nhân viên mới và bàn giao thiết bị',
+        en: '/task Onboard new employees and assign equipment',
+        ja: '/task 新入社員の受け入れと備品配布',
       },
       notifications: {
         vi: '/notifications',
@@ -144,7 +139,7 @@ export class RobotWidgetComponent implements OnInit {
 
   sendMessage() {
     const text = this.inputMessage().trim();
-    if (!text || this.busy()) return;
+    if (!text || this.agent.busy()) return;
 
     const userMsg: ChatMessage = {
       id: crypto.randomUUID(),
@@ -153,11 +148,20 @@ export class RobotWidgetComponent implements OnInit {
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     };
 
-    this.messages.update((list) => [...list, userMsg]);
+    // Append user message
+    this.agent.messages.update((list) => [...list, userMsg]);
     this.inputMessage.set('');
-    this.busy.set(true);
     this.scrollToBottom();
 
+    // 1. Check if user is asking to modify the current branching view in real time
+    if (this.agent.handleInPlaceMutation(text)) {
+      this.scrollToBottom();
+      return;
+    }
+
+    this.agent.busy.set(true);
+
+    // 2. Dispatch to backend AI Chat
     this.http
       .post<{ response: string; recognizedCommand?: string; actionCards?: any[] }>(
         '/api/v1/ai/chat',
@@ -166,19 +170,38 @@ export class RobotWidgetComponent implements OnInit {
       .pipe(takeUntilDestroyed(this.destroy))
       .subscribe({
         next: (res) => {
-          this.busy.set(false);
+          this.agent.busy.set(false);
+
+          // Check if response contains decomposition proposals
+          let actionCards = res.actionCards;
+          const decompCard = res.actionCards?.find(
+            (c) => c.actionType === 'OPEN_DECOMPOSITION' || c.actionType === 'OPEN_BRANCHES',
+          );
+
+          if (decompCard?.payload?.proposals) {
+            this.agent.setProposals(decompCard.payload.proposals);
+            actionCards = [
+              {
+                actionType: 'VIEW_BRANCHES',
+                title: `🌿 Xem các nhánh phân rã (${decompCard.payload.proposals.length} nhánh)`,
+              },
+            ];
+          }
+
           const robotMsg: ChatMessage = {
             id: crypto.randomUUID(),
             sender: 'robot',
             text: res.response,
             time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-            actionCards: res.actionCards,
+            actionCards,
           };
-          this.messages.update((list) => [...list, robotMsg]);
+
+          this.agent.messages.update((list) => [...list, robotMsg]);
+          this.agent.persistCurrentSession();
           this.scrollToBottom();
         },
-        error: (err) => {
-          this.busy.set(false);
+        error: () => {
+          this.agent.busy.set(false);
           const localFallback = this.generateLocalRobotResponse(text);
           const robotMsg: ChatMessage = {
             id: crypto.randomUUID(),
@@ -187,7 +210,8 @@ export class RobotWidgetComponent implements OnInit {
             time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
             actionCards: localFallback.actionCards,
           };
-          this.messages.update((list) => [...list, robotMsg]);
+          this.agent.messages.update((list) => [...list, robotMsg]);
+          this.agent.persistCurrentSession();
           this.scrollToBottom();
         },
       });
@@ -197,18 +221,50 @@ export class RobotWidgetComponent implements OnInit {
     const trimmed = text.trim();
     const lower = trimmed.toLowerCase();
 
-    if (lower.startsWith('/task')) {
-      const prompt = trimmed.slice('/task'.length).trim();
+    if (lower.startsWith('/task') || lower.startsWith('phân rã') || lower.startsWith('lên kế hoạch')) {
+      const prompt = trimmed.replace(/^\/task/i, '').trim();
+      const demoProposals = [
+        {
+          title: 'Khảo sát và lập kế hoạch chi tiết',
+          description: `Thu thập yêu cầu thực tế và phân tích giải pháp cho: ${prompt || 'Dự án mới'}.`,
+          type: 'Assignment',
+          departmentName: 'Phòng Kế hoạch & Điều hành',
+          priority: 'HIGH',
+          suggestedDurationDays: 2,
+          checklistItems: ['Xác định phạm vi công việc', 'Phân bổ nhân sự', 'Xác nhận mốc thời gian'],
+          reasoning: 'Bước khởi động đảm bảo định hướng chính xác trước khi triển khai.',
+        },
+        {
+          title: 'Chuẩn bị hạ tầng & phân bổ tài nguyên',
+          description: 'Cấp phát tài nguyên hệ thống, môi trường làm việc và tài khoản liên quan.',
+          type: 'SupportRequest',
+          departmentName: 'Phòng Công nghệ Thông tin',
+          priority: 'MEDIUM',
+          suggestedDurationDays: 3,
+          checklistItems: ['Cấp quyền truy cập hệ thống', 'Cấu hình phân quyền', 'Kiểm thử kết nối'],
+          reasoning: 'Đảm bảo môi trường làm việc sẵn sàng không gây gián đoạn.',
+        },
+        {
+          title: 'Đào tạo nội bộ và bàn giao nghiệp vụ',
+          description: 'Hướng dẫn quy trình vận hành và ký kết biên bản bàn giao công việc.',
+          type: 'Assignment',
+          departmentName: 'Phòng Hành chính - Nhân sự',
+          priority: 'MEDIUM',
+          suggestedDurationDays: 4,
+          checklistItems: ['Tài liệu hóa quy trình', 'Tổ chức buổi hướng dẫn', 'Nghiệm thu kết quả'],
+          reasoning: 'Giai đoạn nghiệm thu và đảm bảo tính tuần thủ quy định.',
+        },
+      ];
+
+      this.agent.setProposals(demoProposals);
+
       return {
-        text: `🤖 Trợ lý Robot BizFlow đã tiếp nhận yêu cầu bóc tách công việc: "${prompt || 'Dự án mới'}".\n\n` +
-          `• Phân tích: Đã chia thành các đầu mục công việc, kiểm tra phòng ban và mốc hoàn thành dự kiến.\n` +
-          `👉 Bạn có thể bấm nút bên dưới để mở giao diện Phân rã AI chuyên dụng:`,
+        text: `🤖 Trợ lý AI Agent đã phân rã yêu cầu thành **${demoProposals.length} nhánh nhiệm vụ**.\n` +
+          `👉 Bạn có thể bấm nút bên dưới để mở giao diện các nhánh, xem chi tiết và tạo việc ngay!`,
         actionCards: [
           {
-            actionType: 'OPEN_DECOMPOSITION',
-            title: 'Mở công cụ Phân rã AI',
-            linkUrl: '/tasks/ai-decomposition',
-            payload: { prompt },
+            actionType: 'VIEW_BRANCHES',
+            title: `🌿 Xem các nhánh phân rã (${demoProposals.length} nhánh)`,
           },
         ],
       };
@@ -245,54 +301,38 @@ export class RobotWidgetComponent implements OnInit {
       };
     }
 
-    if (lower.includes('quá hạn') || lower.includes('overdue')) {
-      return {
-        text: '⚠️ Trạng thái SLA: Hiện tại hệ thống ghi nhận 1 đầu việc chạm ngưỡng quá hạn (Overdue):\n' +
-          '• "Xử lý lỗ hổng bảo mật máy chủ" - Đang thuộc diện Giám sát Cấp 2.\n' +
-          '👉 Bạn có thể xem ngay tại Trung tâm Giám sát SLA:',
-        actionCards: [
-          {
-            actionType: 'NAVIGATE',
-            title: 'Mở SLA Monitor',
-            linkUrl: '/sla-monitor',
-          },
-        ],
-      };
-    }
-
-    if (lower.includes('chờ xử lý') || lower.includes('pending')) {
-      return {
-        text: '📋 Danh sách việc chờ bạn xử lý:\n' +
-          '1. Tiếp nhận và phản hồi yêu cầu IT phòng Kế toán.\n' +
-          '2. Nộp kết quả thực hiện tác vụ "Kiểm thử phân quyền RBAC".\n' +
-          'Chúc bạn một ngày làm việc hiệu quả!',
-        actionCards: [
-          {
-            actionType: 'NAVIGATE',
-            title: 'Xem công việc của tôi',
-            linkUrl: '/tasks',
-          },
-        ],
-      };
-    }
-
     return {
-      text: `Xin chào! Tôi là Trợ lý Robot AI của BizFlow 🤖.\n` +
+      text: `Xin chào! Tôi là Trợ lý AI Agent của BizFlow 🤖.\n` +
         `Tôi luôn sẵn sàng hỗ trợ bạn quản lý công việc, theo dõi tiến độ, kiểm tra deadline và phân rã nhiệm vụ.\n` +
         `Bạn có thể thử các câu hỏi nhanh bên dưới hoặc gõ lệnh \`/task <mô tả>\` để bóc tách quy trình làm việc!`,
       actionCards: [
         {
-          actionType: 'OPEN_DECOMPOSITION',
-          title: 'Phân rã công việc với AI',
-          linkUrl: '/tasks/ai-decomposition',
+          actionType: 'VIEW_BRANCHES',
+          title: 'Phân nhánh công việc với AI',
         },
       ],
     };
   }
 
   executeAction(card: { actionType: string; title: string; linkUrl?: string; payload?: any }) {
+    // 1. In-agent branching navigation (stays inside agent workspace)
+    if (
+      card.actionType === 'VIEW_BRANCHES' ||
+      card.actionType === 'OPEN_BRANCHES' ||
+      (card.actionType === 'OPEN_DECOMPOSITION' && !card.linkUrl)
+    ) {
+      if (card.payload?.proposals) {
+        this.agent.setProposals(card.payload.proposals);
+      }
+      this.agent.selectBranch(null);
+      this.agent.setTab('branches');
+      this.agent.isExpanded.set(true);
+      return;
+    }
+
+    // 2. Action confirmation
     if (card.actionType === 'CONFIRM_ACTION') {
-      this.busy.set(true);
+      this.agent.busy.set(true);
       this.http
         .post<{ success: boolean; resultJson?: string; error?: string }>(
           card.linkUrl || '/api/v1/ai/actions/execute',
@@ -306,31 +346,32 @@ export class RobotWidgetComponent implements OnInit {
         .pipe(takeUntilDestroyed(this.destroy))
         .subscribe({
           next: (res) => {
-            this.busy.set(false);
+            this.agent.busy.set(false);
             const msg: ChatMessage = {
               id: crypto.randomUUID(),
               sender: 'robot',
               text: res.success ? `✅ ${card.title} thành công!` : `❌ Thất bại: ${res.error}`,
               time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
             };
-            this.messages.update((list) => [...list, msg]);
+            this.agent.messages.update((list) => [...list, msg]);
             this.scrollToBottom();
           },
           error: (err) => {
-            this.busy.set(false);
+            this.agent.busy.set(false);
             const msg: ChatMessage = {
               id: crypto.randomUUID(),
               sender: 'robot',
               text: `❌ Lỗi thực thi hành động: ${err?.error?.message || err.message}`,
               time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
             };
-            this.messages.update((list) => [...list, msg]);
+            this.agent.messages.update((list) => [...list, msg]);
             this.scrollToBottom();
           },
         });
       return;
     }
 
+    // 3. Fallback standard navigation
     if (card.linkUrl) {
       this.router.navigate([card.linkUrl], {
         queryParams: card.payload ? card.payload : undefined,

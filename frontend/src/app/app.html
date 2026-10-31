@@ -33,12 +33,12 @@
         <button
           type="button"
           class="ai-trigger-btn"
-          (click)="isAiOpen.set(true)"
-          title="Open AI Assistant"
-          aria-label="Open AI Assistant"
+          (click)="openAiAgent()"
+          title="Mở Trợ lý AI Agent"
+          aria-label="Mở Trợ lý AI Agent"
         >
           <span class="sparkle" aria-hidden="true">✦</span>
-          <span>{{ 'nav.aiAssistant' | translate: 'AI Assistant' }}</span>
+          <span>AI Agent</span>
         </button>
 
         <!-- Notification Bell -->
@@ -285,11 +285,6 @@
         <router-outlet />
       </div>
     </div>
-
-    <!-- Global AI Assistant modal -->
-    @if (isAiOpen()) {
-      <bf-ai-assistant [isOpen]="isAiOpen()" (closeModal)="isAiOpen.set(false)" />
-    }
   </div>
 } @else {
   <!-- Unauthenticated Views (Login, Forgot Password, Register Company, Reset Password) -->

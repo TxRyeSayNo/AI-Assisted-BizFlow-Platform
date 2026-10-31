@@ -43,7 +43,9 @@ public sealed class AiAssistanceService(
     IAiActionDispatcher actionDispatcher,
     TimeProvider clock,
     IAiModelClient? modelClient = null,
-    IAiConfirmationTokenService? confirmationTokenService = null)
+    IAiConfirmationTokenService? confirmationTokenService = null,
+    IAiVectorMemoryStore? vectorMemoryStore = null,
+    IAiSelfReflectionService? selfReflectionService = null)
 {
     private Guid GetRequiredTenantId() =>
         tenantContext.TenantId ?? throw new ApplicationFault(FaultKind.Forbidden, "TENANT.REQUIRED", "An active tenant context is required.");
@@ -70,6 +72,19 @@ public sealed class AiAssistanceService(
 
         var context = await contextReader.GetTenantContextAsync(tenantId, cancellationToken);
 
+        // Pillar 1 (RAG): Retrieve relevant enterprise vector memory guidelines
+        var memoryChunks = vectorMemoryStore != null
+            ? await vectorMemoryStore.SearchMemoriesAsync(tenantId, prompt, null, 2, 0.35f, cancellationToken)
+            : Array.Empty<AiMemorySearchResult>();
+        var memoryContextText = memoryChunks.Count > 0
+            ? string.Join("\n", memoryChunks.Select(m => $"- [{m.MemoryScope}] {m.Title}: {m.Content}"))
+            : "Không có quy định nội bộ đặc thù nào khớp trực tiếp với truy vấn.";
+
+        // Pillar 3 (Self-Reflection): Retrieve in-context critique directives from past human decisions
+        var reflectionDirectives = selfReflectionService != null
+            ? await selfReflectionService.BuildReflectionDirectivesPromptAsync(tenantId, "DRAFT", cancellationToken)
+            : "";
+
         if (modelClient?.IsConfigured == true)
         {
             try
@@ -85,6 +100,12 @@ public sealed class AiAssistanceService(
                     - "suggestedDurationDays": integer days (3 to 14)
                     - "checklistItems": array of string checklist tasks
                     - "rationale": concise Vietnamese rationale
+
+                    Enterprise Long-Term Memory (RAG Context):
+                    {memoryContextText}
+
+                    {reflectionDirectives}
+
                     Return ONLY a JSON object.
                     """;
 
@@ -224,6 +245,18 @@ public sealed class AiAssistanceService(
             title = prompt.Split('\n')[0].Trim();
         if (title.Length > 100) title = title[..97] + "...";
 
+        var memoryReasoningPart = memoryChunks.Count > 0
+            ? $" (Tham chiếu quy chuẩn bộ nhớ: '{memoryChunks[0].Title}')"
+            : "";
+
+        var confidencePenalty = 0.00m;
+        if (selfReflectionService != null)
+        {
+            var rules = await selfReflectionService.GetCritiqueRulesAsync(tenantId, "DRAFT", cancellationToken);
+            confidencePenalty = rules.Sum(r => r.ConfidencePenalty);
+        }
+        var finalConfidence = Math.Clamp(0.92m - confidencePenalty, 0.50m, 0.99m);
+
         var draft = new TaskDraftSuggestion(
             Title: title,
             Description: prompt,
@@ -236,8 +269,8 @@ public sealed class AiAssistanceService(
             ServiceName: matchedService?.Name,
             SuggestedDurationDays: priority == "HIGH" ? 3 : 7,
             ChecklistItems: checklistItems,
-            Confidence: 0.92m,
-            Reasoning: $"Khởi tạo từ yêu cầu tự nhiên. Đề xuất gán cho phòng ban {matchedDept?.Name ?? "N/A"} với mức ưu tiên {priority}.");
+            Confidence: finalConfidence,
+            Reasoning: $"Khởi tạo từ yêu cầu tự nhiên{memoryReasoningPart}. Đề xuất gán cho phòng ban {matchedDept?.Name ?? "N/A"} với mức ưu tiên {priority}.");
 
         // Record AI interaction & recommendation
         var interaction = await store.RecordInteractionAsync(
@@ -247,7 +280,7 @@ public sealed class AiAssistanceService(
 
         await store.RecordRecommendationAsync(
             tenantId, interaction.Id, RecommendationObjectType.Task, null,
-            "DRAFT", JsonSerializer.Serialize(draft), 0.92m, cancellationToken);
+            "DRAFT", JsonSerializer.Serialize(draft), finalConfidence, cancellationToken);
 
         return draft;
     }
@@ -288,14 +321,28 @@ public sealed class AiAssistanceService(
 
         var top = candidates.FirstOrDefault();
 
+        var assignmentPenalty = 0.00m;
+        string? reflectionRationalePrefix = null;
+        if (selfReflectionService != null)
+        {
+            var rules = await selfReflectionService.GetCritiqueRulesAsync(tenantId, "ASSIGNMENT", cancellationToken);
+            if (rules.Count > 0 && rules.Any(r => r.RuleId.Contains("OVERRIDE")))
+            {
+                assignmentPenalty = rules.Sum(r => r.ConfidencePenalty);
+                reflectionRationalePrefix = "[Tự soi chiếu: Đã tối ưu hóa phân bổ tải để hạn chế ghi đè] ";
+            }
+        }
+
+        var confidence = Math.Clamp((top?.Score ?? 0.80m) - assignmentPenalty, 0.40m, 0.99m);
+
         var result = new TaskAssignmentRecommendationResult(
             DepartmentId: matchedDept?.DepartmentId,
             DepartmentName: matchedDept?.Name,
             RecommendedAssigneeId: top?.UserId,
             RecommendedAssigneeName: top?.FullName,
-            Confidence: top?.Score ?? 0.80m,
+            Confidence: confidence,
             Rationale: top != null
-                ? $"Nhân sự {top.FullName} đang có khối lượng công việc tối ưu ({top.ActiveTaskCount} công việc đang xử lý) và đúng chuyên môn phụ trách."
+                ? $"{reflectionRationalePrefix}Nhân sự {top.FullName} đang có khối lượng công việc tối ưu ({top.ActiveTaskCount} công việc đang xử lý) và đúng chuyên môn phụ trách."
                 : "Không tìm thấy nhân sự phù hợp trực tiếp trong phòng ban.",
             Candidates: candidates);
 
@@ -387,11 +434,15 @@ public sealed class AiAssistanceService(
         if (string.IsNullOrWhiteSpace(command.Title))
             throw new ApplicationFault(FaultKind.Validation, "AI.TITLE_REQUIRED", "Task title is required.");
 
+        var reflectionDirectives = selfReflectionService != null
+            ? await selfReflectionService.BuildReflectionDirectivesPromptAsync(tenantId, "BREAKDOWN", cancellationToken)
+            : "";
+
         if (modelClient?.IsConfigured == true)
         {
             try
             {
-                var sysInstructions = """
+                var sysInstructions = $"""
                     You are BizFlow AI Assistant. Break down a complex work task into sequential, ordered subtasks.
                     Return a JSON object with:
                     - "subtasks": array of objects, each with:
@@ -402,6 +453,9 @@ public sealed class AiAssistanceService(
                       - "dependsOnOrderIndex": null for first, or an orderIndex strictly less than current orderIndex
                     - "strategy": Vietnamese summary of decomposition strategy
                     Strict rule: dependsOnOrderIndex MUST be strictly less than orderIndex (DAG acyclic guarantee).
+
+                    {reflectionDirectives}
+
                     Return ONLY a JSON object.
                     """;
 
