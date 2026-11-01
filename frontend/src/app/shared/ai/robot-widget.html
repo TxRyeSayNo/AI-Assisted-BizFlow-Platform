@@ -1,533 +1,550 @@
 @if (isAuthenticated()) {
-  <aside class="robot-widget-container" [attr.aria-label]="'ai.widgetAria' | translate">
-    <!-- Minimized Floating Circular Launcher -->
-    @if (!isOpen()) {
-      <button
-        type="button"
-        class="robot-fab-button"
-        (click)="openWidget()"
-        title="Mở Trợ lý AI Agent"
-        aria-label="Mở Trợ lý AI Agent"
-      >
-        <span class="robot-icon" aria-hidden="true">🤖</span>
-        <span class="robot-pulse-ring" aria-hidden="true"></span>
-      </button>
+<aside class="robot-widget-container" [attr.aria-label]="'ai.widgetAria' | translate">
+  <!-- Minimized Floating Circular Launcher -->
+  @if (!isOpen()) {
+  <button type="button" class="robot-fab-button" (click)="openWidget()" title="Mở Trợ lý AI Agent"
+    aria-label="Mở Trợ lý AI Agent">
+    <span class="robot-icon" aria-hidden="true">🤖</span>
+    <span class="robot-pulse-ring" aria-hidden="true"></span>
+  </button>
+  }
+
+  <!-- Open Unified AI Agent Workspace Window -->
+  @if (isOpen()) {
+  <div class="robot-chat-window" [class.workspace-expanded]="isExpanded()" role="dialog"
+    aria-labelledby="robot-chat-title" aria-modal="false">
+    <!-- Header with Agent Info, Tabs (Chat & History), and Controls -->
+    <div class="chat-header">
+      <div class="header-left">
+        <span class="robot-avatar" aria-hidden="true">🤖</span>
+        <div class="header-info">
+          <div class="title-row">
+            <h3 id="robot-chat-title" class="robot-title">BizFlow AI Agent</h3>
+            <!-- + New Chat button placed immediately beside the conversation title -->
+            <button type="button" class="btn-new-chat-pill" (click)="agent.startNewChat(); setTab('chat')"
+              title="Tạo cuộc trò chuyện mới" aria-label="Tạo cuộc trò chuyện mới">
+              <span class="new-chat-icon" aria-hidden="true">＋</span>
+              <span class="new-chat-label">New Chat</span>
+            </button>
+          </div>
+          <span class="status-indicator">
+            <span class="status-dot"></span>
+            @if (busy()) {
+            Đang xử lý...
+            } @else {
+            Trợ lý điều hành
+            }
+          </span>
+        </div>
+      </div>
+
+      <!-- Main Navigation Tabs: Chat & History -->
+      <nav class="agent-tabs-nav" aria-label="AI Agent Modes">
+        <button type="button" class="agent-tab-btn" [class.active]="activeTab() === 'chat'" (click)="setTab('chat')"
+          title="Giao diện trò chuyện">
+          💬 Trò chuyện
+        </button>
+        <button type="button" class="agent-tab-btn" [class.active]="activeTab() === 'history'"
+          (click)="setTab('history')" title="Lịch sử hội thoại">
+          🕒 Lịch sử
+          @if (chatSessions().length > 0) {
+          <span class="tab-badge-neutral">{{ chatSessions().length }}</span>
+          }
+        </button>
+      </nav>
+
+      <!-- Window Controls (Expand / Close) -->
+      <div class="header-right">
+        <!-- Toggle Expand / Maximize Workspace -->
+        <button type="button" class="control-icon-btn" (click)="toggleExpand()"
+          [title]="isExpanded() ? 'Thu nhỏ cửa sổ' : 'Phóng to không gian làm việc'"
+          [attr.aria-label]="isExpanded() ? 'Thu nhỏ cửa sổ' : 'Phóng to không gian làm việc'">
+          @if (isExpanded()) {
+          ⤡
+          } @else {
+          ⤢
+          }
+        </button>
+
+        <!-- Close / Minimize Window -->
+        <button type="button" class="control-icon-btn close-btn" (click)="closeWidget()" title="Đóng cửa sổ AI"
+          aria-label="Đóng cửa sổ AI">
+          ✕
+        </button>
+      </div>
+    </div>
+
+    <!-- Optional Floating Toast Bar Inside Agent -->
+    @if (agent.toastMessage(); as toast) {
+    <div class="agent-toast-bar" [class]="'toast-' + toast.type">
+      <span>{{ toast.text }}</span>
+    </div>
     }
 
-    <!-- Open Unified AI Agent Workspace Window -->
-    @if (isOpen()) {
-      <div
-        class="robot-chat-window"
-        [class.workspace-expanded]="isExpanded()"
-        role="dialog"
-        aria-labelledby="robot-chat-title"
-        aria-modal="false"
-      >
-        <!-- Header with Agent Info, Tabs (Chat & History), and Controls -->
-        <div class="chat-header">
-          <div class="header-left">
-            <span class="robot-avatar" aria-hidden="true">🤖</span>
-            <div class="header-info">
-              <div class="title-row">
-                <h3 id="robot-chat-title" class="robot-title">BizFlow AI Agent</h3>
-                <!-- + New Chat button placed immediately beside the conversation title -->
-                <button
-                  type="button"
-                  class="btn-new-chat-pill"
-                  (click)="agent.startNewChat(); setTab('chat')"
-                  title="Tạo cuộc trò chuyện mới"
-                  aria-label="Tạo cuộc trò chuyện mới"
-                >
-                  <span class="new-chat-icon" aria-hidden="true">＋</span>
-                  <span class="new-chat-label">New Chat</span>
-                </button>
-              </div>
-              <span class="status-indicator">
-                <span class="status-dot"></span>
-                @if (busy()) {
-                  Đang xử lý...
-                } @else {
-                  Trợ lý điều hành
-                }
-              </span>
+    <!-- TAB 1: CONVERSATION CHAT VIEW -->
+    @if (activeTab() === 'chat') {
+    @if (branches().length > 0) {
+    <div class="active-branches-banner" (click)="openBranchModal()" role="button" tabindex="0">
+      <div class="branches-banner-left">
+        <span class="leaf-icon">🌿</span>
+        <span class="banner-text">Đang có <strong>{{ branches().length }} nhánh công việc</strong> đề xuất</span>
+      </div>
+      <button type="button" class="btn-open-modal-chip">
+        Mở phân nhánh →
+      </button>
+    </div>
+    }
+    <!-- Single Coherent Conversation Thread -->
+    <div class="chat-body" #chatBody>
+      @for (msg of messages(); track msg.id) {
+      <div class="message-wrapper" [class.user]="msg.sender === 'user'" [class.robot]="msg.sender === 'robot'">
+        @if (msg.sender === 'robot') {
+        <span class="msg-avatar" aria-hidden="true">🤖</span>
+        }
+        <div class="message-bubble">
+          <div class="message-text" style="white-space: pre-wrap">
+            {{ msg.text }}
+          </div>
+
+          @if (msg.actionCards && msg.actionCards.length > 0) {
+          <div class="action-cards-container">
+            @for (card of msg.actionCards; track card.title) {
+            <button type="button" class="action-card-btn" (click)="executeAction(card)">
+              <span class="card-icon">✦</span>
+              <span class="card-title">{{ card.title }}</span>
+              <span class="card-arrow">→</span>
+            </button>
+            }
+          </div>
+          }
+
+          <span class="message-time">{{ msg.time }}</span>
+        </div>
+      </div>
+      }
+
+      @if (busy()) {
+      <div class="message-wrapper robot">
+        <span class="msg-avatar" aria-hidden="true">🤖</span>
+        <div class="message-bubble loading-bubble">
+          <span class="typing-dot"></span>
+          <span class="typing-dot"></span>
+          <span class="typing-dot"></span>
+        </div>
+      </div>
+      }
+    </div>
+
+    <!-- Clean Input Footer Row -->
+    <div class="chat-footer">
+      <input type="text" class="chat-input" placeholder="Hỏi deadline, bóc tách công việc hoặc gõ lệnh chỉnh sửa..."
+        [ngModel]="inputMessage()" (ngModelChange)="inputMessage.set($event)" (keydown.enter)="sendMessage()"
+        [disabled]="busy()" />
+      <button type="button" class="send-btn" (click)="sendMessage()" [disabled]="busy() || !inputMessage().trim()"
+        title="Gửi tin nhắn" aria-label="Gửi tin nhắn">
+        ➤
+      </button>
+    </div>
+    }
+
+
+
+    <!-- TAB 3: CHAT HISTORY SCREEN (Lưu và quản lý các phiên trò chuyện) -->
+    @if (activeTab() === 'history') {
+    <div class="history-screen-body">
+      <div class="history-header">
+        <div class="history-title-block">
+          <h4 class="history-title">🕒 Lịch sử trò chuyện với AI Agent</h4>
+          <p class="history-subtitle">
+            Các phiên làm việc trước đó được lưu tự động. Bạn có thể mở lại để tiếp tục hoặc xóa phiên cũ.
+          </p>
+        </div>
+
+        <div class="history-top-actions">
+          <button type="button" class="btn-new-chat-action" (click)="agent.startNewChat(); setTab('chat')">
+            ＋ Cuộc trò chuyện mới
+          </button>
+          @if (chatSessions().length > 0) {
+          <button type="button" class="btn-clear-all-history" (click)="agent.clearAllHistory()">
+            Xóa toàn bộ
+          </button>
+          }
+        </div>
+      </div>
+
+      @if (chatSessions().length === 0) {
+      <div class="history-empty-state">
+        <span class="empty-icon">💬</span>
+        <h5 class="empty-title">Chưa có lịch sử trò chuyện</h5>
+        <p class="empty-desc">
+          Mỗi khi bạn bắt đầu một cuộc hội thoại mới, phiên trước đó sẽ được tự động lưu vào đây.
+        </p>
+        <button type="button" class="btn-start-chat-now" (click)="setTab('chat')">
+          Bắt đầu trò chuyện ngay
+        </button>
+      </div>
+      } @else {
+      <div class="history-sessions-list">
+        @for (s of chatSessions(); track s.id) {
+        <div class="history-session-card" [class.current]="s.id === agent.currentSessionId()">
+          <div class="session-card-info" (click)="agent.loadSession(s.id); setTab('chat')" role="button" tabindex="0">
+            <div class="session-card-top">
+              <h5 class="session-title">{{ s.title }}</h5>
+              @if (s.id === agent.currentSessionId()) {
+              <span class="current-session-badge">Đang mở</span>
+              }
+            </div>
+            <div class="session-meta">
+              <span class="session-time">{{ s.updatedAt | date:'dd/MM/yyyy HH:mm' }}</span>
+              <span class="meta-dot">•</span>
+              <span class="session-msg-count">{{ s.messageCount }} tin nhắn</span>
             </div>
           </div>
 
-          <!-- Main Navigation Tabs: Chat, Branches & History -->
-          <nav class="agent-tabs-nav" aria-label="AI Agent Modes">
-            <button
-              type="button"
-              class="agent-tab-btn"
-              [class.active]="activeTab() === 'chat'"
-              (click)="setTab('chat')"
-              title="Giao diện trò chuyện"
-            >
-              💬 Trò chuyện
+          <div class="session-card-actions">
+            <button type="button" class="btn-open-session" (click)="agent.loadSession(s.id); setTab('chat')"
+              title="Mở lại cuộc trò chuyện này">
+              Tiếp tục →
             </button>
-            @if (branches().length > 0) {
-              <button
-                type="button"
-                class="agent-tab-btn"
-                [class.active]="activeTab() === 'branches'"
-                (click)="setTab('branches')"
-                title="Nhánh tác vụ đề xuất"
-              >
-                🌿 Nhánh tác vụ
-                <span class="tab-badge-accent">{{ branches().length }}</span>
-              </button>
-            }
-            <button
-              type="button"
-              class="agent-tab-btn"
-              [class.active]="activeTab() === 'history'"
-              (click)="setTab('history')"
-              title="Lịch sử hội thoại"
-            >
-              🕒 Lịch sử
-              @if (chatSessions().length > 0) {
-                <span class="tab-badge-neutral">{{ chatSessions().length }}</span>
-              }
-            </button>
-          </nav>
-
-          <!-- Window Controls (Expand / Close) -->
-          <div class="header-right">
-            <!-- Toggle Expand / Maximize Workspace -->
-            <button
-              type="button"
-              class="control-icon-btn"
-              (click)="toggleExpand()"
-              [title]="isExpanded() ? 'Thu nhỏ cửa sổ' : 'Phóng to không gian làm việc'"
-              [attr.aria-label]="isExpanded() ? 'Thu nhỏ cửa sổ' : 'Phóng to không gian làm việc'"
-            >
-              @if (isExpanded()) {
-                ⤡
-              } @else {
-                ⤢
-              }
-            </button>
-
-            <!-- Close / Minimize Window -->
-            <button
-              type="button"
-              class="control-icon-btn close-btn"
-              (click)="closeWidget()"
-              title="Đóng cửa sổ AI"
-              aria-label="Đóng cửa sổ AI"
-            >
-              ✕
+            <button type="button" class="btn-delete-session" (click)="agent.deleteSession(s.id)"
+              title="Xóa đoạn chat này">
+              🗑️
             </button>
           </div>
         </div>
-
-        <!-- Optional Floating Toast Bar Inside Agent -->
-        @if (agent.toastMessage(); as toast) {
-          <div class="agent-toast-bar" [class]="'toast-' + toast.type">
-            <span>{{ toast.text }}</span>
-          </div>
         }
+      </div>
+      }
+    </div>
+    }
+  </div>
+  }
+</aside>
 
-        <!-- TAB 1: CONVERSATION CHAT VIEW -->
-        @if (activeTab() === 'chat') {
-          <!-- Single Coherent Conversation Thread -->
-          <div class="chat-body" #chatBody>
-            @for (msg of messages(); track msg.id) {
-              <div
-                class="message-wrapper"
-                [class.user]="msg.sender === 'user'"
-                [class.robot]="msg.sender === 'robot'"
-              >
-                @if (msg.sender === 'robot') {
-                  <span class="msg-avatar" aria-hidden="true">🤖</span>
-                }
-                <div class="message-bubble">
-                  @if (msg.agentThought) {
-                    <div class="agent-thought-container" [class.collapsed]="!msg.isThoughtExpanded">
-                      <button
-                        type="button"
-                        class="thought-toggle-btn"
-                        (click)="toggleThought(msg)"
-                        [title]="msg.isThoughtExpanded ? 'Thu gọn suy nghĩ' : 'Xem suy nghĩ của Agent'"
-                      >
-                        <span class="thought-icon">🧠</span>
-                        <span class="thought-title">Quá trình Suy nghĩ & Đánh giá của Agent</span>
-                        <span class="thought-arrow">{{ msg.isThoughtExpanded ? '▲' : '▼' }}</span>
-                      </button>
-                      @if (msg.isThoughtExpanded) {
-                        <div class="thought-content">
-                          <div class="thought-text" style="white-space: pre-wrap">{{ msg.agentThought }}</div>
-                        </div>
-                      }
-                    </div>
-                  }
+<!-- ========================================================================
+       DEDICATED BRANCHING WORKSPACE MODAL (CENTER SCREEN NEXT TO CHAT)
+       ======================================================================== -->
+@if (isBranchModalOpen()) {
+<div class="branch-modal-overlay" (click)="closeBranchModal()">
+  <div class="branch-modal-dialog" (click)="$event.stopPropagation()" role="dialog" aria-modal="true"
+    aria-labelledby="branch-modal-title">
+    <!-- MODAL HEADER -->
+    <div class="branch-modal-header">
+      <div class="modal-header-left">
+        <div class="modal-icon-badge" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="header-svg">
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" />
+          </svg>
+        </div>
+        <div>
+          <h3 id="branch-modal-title" class="modal-title">Không gian Phân rã Nhiệm vụ AI</h3>
+          <p class="modal-subtitle">Bóc tách kế hoạch thành các nhánh công việc độc lập theo từng phòng ban</p>
+        </div>
+      </div>
 
-                  <div class="message-text" style="white-space: pre-wrap">
-                    {{ msg.text }}
-                  </div>
+      <div class="modal-header-right">
+        <span class="branches-count-chip">
+          <span class="chip-spark" aria-hidden="true">✦</span> {{ branches().length }} nhánh nhiệm vụ
+        </span>
+        <button type="button" class="btn-close-modal" (click)="closeBranchModal()" title="Đóng không gian phân nhánh">
+          ✕
+        </button>
+      </div>
+    </div>
 
-                  <!-- Interactive Clarification Questionnaire Card (ChatGPT Agent style) -->
-                  @if (msg.questionnaire && !msg.questionnaireAnswered) {
-                    <div class="agent-questionnaire-card">
-                      <div class="card-badge">
-                        <span class="badge-icon">📋</span>
-                        <span class="badge-label">Khảo sát làm rõ tương tác (AI Agent Form)</span>
-                      </div>
-
-                      @if (msg.questionnaire.contextExplanation) {
-                        <div class="form-context-desc">
-                          {{ msg.questionnaire.contextExplanation }}
-                        </div>
-                      }
-
-                      @if (msg.questionnaire.riskAnalysis) {
-                        <div class="form-risk-alert">
-                          <span class="alert-icon">⚠️</span>
-                          <span class="alert-text">{{ msg.questionnaire.riskAnalysis }}</span>
-                        </div>
-                      }
-
-                      <div class="questions-list">
-                        @for (q of msg.questionnaire.questions; track q.id; let qIdx = $index) {
-                          <div class="question-item">
-                            <div class="question-header">
-                              <span class="q-number">{{ qIdx + 1 }}.</span>
-                              <span class="q-title">{{ q.title }}</span>
-                              @if (q.required) {
-                                <span class="required-star" title="Bắt buộc">*</span>
-                              }
-                            </div>
-
-                            <!-- Single choice (Radio buttons) -->
-                            @if (q.type === 'single_choice' && q.options) {
-                              <div class="options-group radio-group" role="radiogroup">
-                                @for (opt of q.options; track opt.id) {
-                                  <label
-                                    class="option-row"
-                                    [class.selected]="isOptionSelected(msg.id, q.id, opt.id, opt.isDefault)"
-                                    (click)="toggleSingleChoice(msg.id, q.id, opt.id)"
-                                  >
-                                    <span class="choice-indicator radio-indicator">
-                                      @if (isOptionSelected(msg.id, q.id, opt.id, opt.isDefault)) {
-                                        <span class="dot-inner"></span>
-                                      }
-                                    </span>
-                                    <span class="option-label">{{ opt.label }}</span>
-                                  </label>
-                                }
-                              </div>
-                            }
-
-                            <!-- Multiple choice (Checkboxes) -->
-                            @if (q.type === 'multiple_choice' && q.options) {
-                              <div class="options-group checkbox-group">
-                                @for (opt of q.options; track opt.id) {
-                                  <label
-                                    class="option-row"
-                                    [class.selected]="isOptionSelected(msg.id, q.id, opt.id, opt.isDefault)"
-                                    (click)="toggleMultipleChoice(msg.id, q.id, opt.id)"
-                                  >
-                                    <span class="choice-indicator checkbox-indicator">
-                                      @if (isOptionSelected(msg.id, q.id, opt.id, opt.isDefault)) {
-                                        ✓
-                                      }
-                                    </span>
-                                    <span class="option-label">{{ opt.label }}</span>
-                                  </label>
-                                }
-                              </div>
-                            }
-
-                            <!-- Optional custom text input -->
-                            @if (q.allowCustomInput || q.type === 'text') {
-                              <div class="custom-input-row">
-                                <input
-                                  type="text"
-                                  class="custom-q-input"
-                                  [placeholder]="q.placeholder || 'Nhập chi tiết khác (tùy chọn)...'"
-                                  [value]="getCustomText(msg.id, q.id)"
-                                  (input)="onCustomTextInput(msg.id, q.id, $event)"
-                                />
-                              </div>
-                            }
-                          </div>
-                        }
-                      </div>
-
-                      <div class="form-actions-row">
-                        <button
-                          type="button"
-                          class="btn-submit-questionnaire"
-                          (click)="submitQuestionnaire(msg)"
-                          [disabled]="agent.busy()"
-                        >
-                          <span>✓</span>
-                          <span>{{ msg.questionnaire.submitButtonText || 'Xác nhận & Gửi câu trả lời' }}</span>
-                        </button>
-                        <button
-                          type="button"
-                          class="btn-skip-questionnaire"
-                          (click)="skipQuestionnaire(msg)"
-                          [disabled]="agent.busy()"
-                        >
-                          {{ msg.questionnaire.skipButtonText || 'Bỏ qua & Sử dụng mặc định' }}
-                        </button>
-                      </div>
-                    </div>
-                  }
-
-                  @if (msg.questionnaire && msg.questionnaireAnswered) {
-                    <div class="answered-summary-pill">
-                      <span class="pill-check">✓</span>
-                      <span class="pill-text">Đã cung cấp thông tin làm rõ cho AI Agent</span>
-                    </div>
-                  }
-
-                  @if (msg.actionCards && msg.actionCards.length > 0) {
-                    <div class="action-cards-container">
-                      @for (card of msg.actionCards; track card.title) {
-                        <button type="button" class="action-card-btn" (click)="executeAction(card)">
-                          <span class="card-icon">✦</span>
-                          <span class="card-title">{{ card.title }}</span>
-                          <span class="card-arrow">→</span>
-                        </button>
-                      }
-                    </div>
-                  }
-
-                  <span class="message-time">{{ msg.time }}</span>
-                </div>
-              </div>
-            }
-
-            @if (busy()) {
-              <div class="message-wrapper robot">
-                <span class="msg-avatar" aria-hidden="true">🤖</span>
-                <div class="message-bubble loading-bubble">
-                  <span class="typing-dot"></span>
-                  <span class="typing-dot"></span>
-                  <span class="typing-dot"></span>
-                </div>
-              </div>
-            }
+    <!-- MODAL BODY -->
+    <div class="branch-modal-body">
+      <!-- SCREEN 2A: BRANCH OVERVIEW SCREEN -->
+      @if (!selectedBranch()) {
+      <div class="branch-overview-screen">
+        <div class="branch-overview-header">
+          <div class="overview-title-group">
+            <h4 class="overview-title">
+              Danh sách các nhánh nhiệm vụ
+              <span class="overview-count">({{ branches().length }} nhánh)</span>
+            </h4>
+            <p class="overview-subtitle">
+              Kiểm tra các nhánh nhiệm vụ được AI phân rã. Bấm vào từng nhánh để xem chi tiết hoặc bấm <strong>"Gửi tất
+                cả nhiệm vụ"</strong> để tạo trực tiếp vào hệ thống.
+            </p>
           </div>
+        </div>
 
-          <!-- Clean Input Footer Row -->
-          <div class="chat-footer">
-            <input
-              type="text"
-              class="chat-input"
-              placeholder="Hỏi deadline, bóc tách công việc hoặc gõ lệnh chỉnh sửa..."
-              [ngModel]="inputMessage()"
-              (ngModelChange)="inputMessage.set($event)"
-              (keydown.enter)="sendMessage()"
-              [disabled]="busy()"
-            />
-            <button
-              type="button"
-              class="send-btn"
-              (click)="sendMessage()"
-              [disabled]="busy() || !inputMessage().trim()"
-              title="Gửi tin nhắn"
-              aria-label="Gửi tin nhắn"
-            >
-              ➤
-            </button>
+        @if (branches().length === 0) {
+        <div class="branch-empty-state">
+          <div class="empty-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="empty-svg">
+              <path stroke-linecap="round" stroke-linejoin="round"
+                d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+            </svg>
           </div>
-        }
-
-        <!-- TAB 2: SUBTASK BRANCHES WORKSPACE VIEW -->
-        @if (activeTab() === 'branches') {
-          <div class="branches-screen-body">
-            @if (!selectedBranch()) {
-              <!-- Overview of branches -->
-              <div class="branches-overview-header">
-                <div class="branches-header-title">
-                  <h4>🌿 Danh sách các nhánh nhiệm vụ đề xuất ({{ branches().length }})</h4>
-                  <p>Nhấp vào từng nhánh để xem chi tiết, xóa trực tiếp hoặc gửi tạo toàn bộ vào hệ thống.</p>
+          <h5 class="empty-title">Chưa có nhánh nhiệm vụ nào</h5>
+          <p class="empty-desc">
+            Bạn có thể bấm nút bên dưới để AI tự động phân rã một kế hoạch mẫu liên phòng ban, hoặc gõ yêu cầu trong
+            Chatbox.
+          </p>
+          <button type="button" class="btn-start-decompose" (click)="agent.initDefaultBranches()">
+            ✦ Bóc tách kế hoạch mẫu ngay
+          </button>
+        </div>
+        } @else {
+        <div class="branch-cards-list">
+          @for (b of branches(); track b.id; let idx = $index) {
+          <div class="branch-summary-card" [class.created]="b.status === 'created'" (click)="selectBranch(b)"
+            role="button" tabindex="0">
+            <div class="branch-card-left">
+              <span class="branch-index-badge">Nhánh #{{ idx + 1 }}</span>
+              <div class="branch-main-info">
+                <h5 class="branch-item-title">{{ b.title }}</h5>
+                <div class="branch-item-meta">
+                  <span class="dept-badge">
+                    <svg class="meta-svg" width="14" height="14" viewBox="0 0 20 20" fill="currentColor"
+                      aria-hidden="true">
+                      <path fill-rule="evenodd"
+                        d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a1 1 0 110 2h-3a1 1 0 01-1-1v-2a1 1 0 00-1-1H9a1 1 0 00-1 1v2a1 1 0 01-1 1H4a1 1 0 110-2V4zm3 1h2v2H7V5zm2 4H7v2h2V9zm2-4h2v2h-2V5zm2 4h-2v2h2V9z"
+                        clip-rule="evenodd" />
+                    </svg>
+                    {{ b.departmentName }}
+                  </span>
+                  <span class="prio-tag" [class]="'prio-' + b.priority.toLowerCase()">
+                    <span class="prio-dot" aria-hidden="true"></span>
+                    {{ b.priority === 'HIGH' ? 'Cao' : (b.priority === 'LOW' ? 'Thấp' : 'Trung bình') }}
+                  </span>
+                  @if (b.checklistItems?.length) {
+                  <span class="checklist-count-tag">
+                    <svg class="meta-svg" width="13" height="13" viewBox="0 0 20 20" fill="currentColor"
+                      aria-hidden="true">
+                      <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
+                      <path fill-rule="evenodd"
+                        d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z"
+                        clip-rule="evenodd" />
+                    </svg>
+                    {{ b.checklistItems.length }} bước
+                  </span>
+                  }
+                  <span class="duration-tag">
+                    <svg class="meta-svg" width="13" height="13" viewBox="0 0 20 20" fill="currentColor"
+                      aria-hidden="true">
+                      <path fill-rule="evenodd"
+                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z"
+                        clip-rule="evenodd" />
+                    </svg>
+                    {{ b.suggestedDurationDays }} ngày
+                  </span>
                 </div>
-                <div class="branches-top-actions">
-                  <button type="button" class="btn-back-to-chat" (click)="setTab('chat')">
-                    ← Quay lại chat
-                  </button>
-                  <button
-                    type="button"
-                    class="btn-submit-all-branches"
-                    (click)="agent.submitAllBranches()"
-                    [disabled]="agent.busy() || branches().length === 0"
-                  >
-                    🚀 Gửi tất cả nhiệm vụ
-                  </button>
-                </div>
-              </div>
-
-              <div class="branches-cards-grid">
-                @for (b of branches(); track b.id; let i = $index) {
-                  <div class="branch-summary-card" [class.created]="b.status === 'created'">
-                    <div class="branch-card-main" (click)="selectBranch(b)" role="button" tabindex="0">
-                      <div class="branch-header-row">
-                        <span class="branch-index-badge">Nhánh #{{ b.branchIndex || (i + 1) }}</span>
-                        <span class="branch-dept-tag">🏢 {{ b.departmentName }}</span>
-                        <span class="branch-prio-tag prio-{{ b.priority.toLowerCase() }}">{{ b.priority }}</span>
-                      </div>
-                      <h5 class="branch-title">{{ b.title }}</h5>
-                      <div class="branch-footer-row">
-                        <span class="branch-type-label">{{ b.type === 'Assignment' ? '📋 Giao việc' : '🤝 Hỗ trợ' }}</span>
-                        <span class="branch-action-hint">Xem chi tiết →</span>
-                      </div>
-                    </div>
-                    <div class="branch-card-actions">
-                      @if (b.status === 'created') {
-                        <span class="branch-created-check">✓ Đã tạo</span>
-                      } @else {
-                        <button type="button" class="btn-send-single-branch" (click)="agent.submitSingleBranch(b)" [disabled]="b.status === 'submitting'">
-                          Gửi
-                        </button>
-                        <button type="button" class="btn-delete-branch" (click)="agent.deleteBranch(i)" title="Xóa nhánh này">
-                          🗑️
-                        </button>
-                      }
-                    </div>
-                  </div>
-                }
-              </div>
-            } @else {
-              <!-- Detail view for selected branch -->
-              @if (selectedBranch(); as branch) {
-                <div class="branch-detail-view">
-                  <div class="branch-detail-header">
-                    <button type="button" class="btn-back-branches" (click)="selectBranch(null)">
-                      ← Quay lại danh sách nhánh
-                    </button>
-                    <div class="branch-detail-actions">
-                      @if (branch.status === 'created') {
-                        <span class="badge-created">✅ Nhiệm vụ đã được tạo</span>
-                      } @else {
-                        <button type="button" class="btn-delete-branch-detail" (click)="agent.deleteBranch(branch.branchIndex - 1)">
-                          🗑️ Xóa nhánh
-                        </button>
-                        <button type="button" class="btn-send-branch-detail" (click)="agent.submitSingleBranch(branch)" [disabled]="branch.status === 'submitting'">
-                          🚀 Gửi & Tạo nhiệm vụ này
-                        </button>
-                      }
-                    </div>
-                  </div>
-
-                  <div class="branch-detail-content">
-                    <div class="detail-badge-row">
-                      <span class="branch-index-pill">Nhánh #{{ branch.branchIndex }}</span>
-                      <span class="detail-dept-badge">🏢 Phòng ban: <strong>{{ branch.departmentName }}</strong></span>
-                      <span class="detail-type-badge">{{ branch.type === 'Assignment' ? 'Giao việc trực tiếp' : 'Yêu cầu hỗ trợ phòng ban' }}</span>
-                      <span class="detail-prio-badge prio-{{ branch.priority.toLowerCase() }}">Ưu tiên: {{ branch.priority }}</span>
-                    </div>
-
-                    <h3 class="detail-title">{{ branch.title }}</h3>
-
-                    <div class="detail-section">
-                      <label class="detail-label">Mô tả công việc & Yêu cầu:</label>
-                      <p class="detail-desc">{{ branch.description }}</p>
-                    </div>
-
-                    @if (branch.checklistItems && branch.checklistItems.length > 0) {
-                      <div class="detail-section">
-                        <label class="detail-label">Các hạng mục thực hiện (Checklist):</label>
-                        <ul class="detail-checklist">
-                          @for (item of branch.checklistItems; track item) {
-                            <li><span>☑</span> {{ item }}</li>
-                          }
-                        </ul>
-                      </div>
-                    }
-
-                    @if (branch.reasoning) {
-                      <div class="detail-section detail-reasoning">
-                        <label class="detail-label">💡 Lý do phân rã từ AI Agent:</label>
-                        <p>{{ branch.reasoning }}</p>
-                      </div>
-                    }
-                  </div>
-                </div>
-              }
-            }
-          </div>
-        }
-
-        <!-- TAB 2: CHAT HISTORY SCREEN (Lưu và quản lý các phiên trò chuyện) -->
-        @if (activeTab() === 'history') {
-          <div class="history-screen-body">
-            <div class="history-header">
-              <div class="history-title-block">
-                <h4 class="history-title">🕒 Lịch sử trò chuyện với AI Agent</h4>
-                <p class="history-subtitle">
-                  Các phiên làm việc trước đó được lưu tự động. Bạn có thể mở lại để tiếp tục hoặc xóa phiên cũ.
-                </p>
-              </div>
-
-              <div class="history-top-actions">
-                <button type="button" class="btn-new-chat-action" (click)="agent.startNewChat(); setTab('chat')">
-                  ＋ Cuộc trò chuyện mới
-                </button>
-                @if (chatSessions().length > 0) {
-                  <button type="button" class="btn-clear-all-history" (click)="agent.clearAllHistory()">
-                    Xóa toàn bộ
-                  </button>
-                }
               </div>
             </div>
 
-            @if (chatSessions().length === 0) {
-              <div class="history-empty-state">
-                <span class="empty-icon">💬</span>
-                <h5 class="empty-title">Chưa có lịch sử trò chuyện</h5>
-                <p class="empty-desc">
-                  Mỗi khi bạn bắt đầu một cuộc hội thoại mới, phiên trước đó sẽ được tự động lưu vào đây.
-                </p>
-                <button type="button" class="btn-start-chat-now" (click)="setTab('chat')">
-                  Bắt đầu trò chuyện ngay
-                </button>
-              </div>
-            } @else {
-              <div class="history-sessions-list">
-                @for (s of chatSessions(); track s.id) {
-                  <div class="history-session-card" [class.current]="s.id === agent.currentSessionId()">
-                    <div class="session-card-info" (click)="agent.loadSession(s.id); setTab('chat')" role="button" tabindex="0">
-                      <div class="session-card-top">
-                        <h5 class="session-title">{{ s.title }}</h5>
-                        @if (s.id === agent.currentSessionId()) {
-                          <span class="current-session-badge">Đang mở</span>
-                        }
-                      </div>
-                      <div class="session-meta">
-                        <span class="session-time">{{ s.updatedAt | date:'dd/MM/yyyy HH:mm' }}</span>
-                        <span class="meta-dot">•</span>
-                        <span class="session-msg-count">{{ s.messageCount }} tin nhắn</span>
-                      </div>
-                    </div>
-
-                    <div class="session-card-actions">
-                      <button
-                        type="button"
-                        class="btn-open-session"
-                        (click)="agent.loadSession(s.id); setTab('chat')"
-                        title="Mở lại cuộc trò chuyện này"
-                      >
-                        Tiếp tục →
-                      </button>
-                      <button
-                        type="button"
-                        class="btn-delete-session"
-                        (click)="agent.deleteSession(s.id)"
-                        title="Xóa đoạn chat này"
-                      >
-                        🗑️
-                      </button>
-                    </div>
-                  </div>
-                }
-              </div>
-            }
+            <div class="branch-card-right">
+              @if (b.status === 'created') {
+              <span class="status-badge-created">
+                <svg class="meta-svg-check" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                  <path fill-rule="evenodd"
+                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                    clip-rule="evenodd" />
+                </svg>
+                Đã tạo thành công
+              </span>
+              } @else if (b.status === 'submitting') {
+              <span class="status-badge-submitting">
+                <span class="submitting-spinner" aria-hidden="true"></span>
+                Đang gửi...
+              </span>
+              } @else {
+              <span class="status-badge-pending">Chờ gửi</span>
+              <button type="button" class="btn-card-quick-submit"
+                (click)="$event.stopPropagation(); agent.submitSingleBranch(b)"
+                title="Tạo nhanh nhánh này thành nhiệm vụ">
+                <svg class="btn-mini-svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                  <path fill-rule="evenodd"
+                    d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"
+                    clip-rule="evenodd" />
+                </svg>
+                Tạo task
+              </button>
+              }
+              <span class="view-detail-hint">Chi tiết <span class="arrow-glyph" aria-hidden="true">→</span></span>
+            </div>
           </div>
+          }
+        </div>
+
+        <!-- Branch Overview Actions Footer -->
+        <div class="branch-overview-footer">
+          <div class="overview-footer-left">
+            <button type="button" class="btn-submit-all" (click)="agent.submitAllBranches()"
+              [disabled]="busy() || branches().length === 0" title="Gửi tất cả các nhánh nhiệm vụ để tạo vào hệ thống">
+              <svg class="btn-svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                <path
+                  d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
+              </svg>
+              <span>Gửi tất cả nhiệm vụ vào hệ thống</span>
+            </button>
+            <button type="button" class="btn-add-branch" (click)="agent.addCustomBranch()"
+              title="Thêm một nhánh công việc mới">
+              <svg class="btn-mini-svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                <path fill-rule="evenodd"
+                  d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z"
+                  clip-rule="evenodd" />
+              </svg>
+              Thêm nhánh mới
+            </button>
+          </div>
+
+          <div class="overview-footer-right">
+            <button type="button" class="btn-danger-ghost" (click)="agent.branches.set([])"
+              title="Xóa toàn bộ các nhánh">
+              Xóa tất cả
+            </button>
+            <button type="button" class="btn-close-secondary" (click)="closeBranchModal()">
+              Đóng
+            </button>
+          </div>
+        </div>
         }
       </div>
-    }
-  </aside>
+      }
+
+      <!-- SCREEN 2B: BRANCH DETAIL SCREEN -->
+      @if (selectedBranch(); as branch) {
+      <div class="branch-detail-screen">
+        <div class="detail-nav-bar">
+          <button type="button" class="btn-back-to-overview" (click)="selectBranch(null)"
+            title="Quay về danh sách các nhánh">
+            ← Quay về danh sách các nhánh
+          </button>
+          <span class="detail-badge-num">Nhánh #{{ branch.branchIndex }} / {{ branches().length }}</span>
+        </div>
+
+        <div class="detail-content-card">
+          <div class="detail-header-block">
+            <h4 class="detail-task-title">{{ branch.title }}</h4>
+            <div class="detail-meta-grid">
+              <div class="meta-item">
+                <span class="meta-label">Phòng ban nhận việc:</span>
+                <span class="meta-value dept-highlight">
+                  <svg class="meta-svg" width="15" height="15" viewBox="0 0 20 20" fill="currentColor"
+                    aria-hidden="true">
+                    <path fill-rule="evenodd"
+                      d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a1 1 0 110 2h-3a1 1 0 01-1-1v-2a1 1 0 00-1-1H9a1 1 0 00-1 1v2a1 1 0 01-1 1H4a1 1 0 110-2V4zm3 1h2v2H7V5zm2 4H7v2h2V9zm2-4h2v2h-2V5zm2 4h-2v2h2V9z"
+                      clip-rule="evenodd" />
+                  </svg>
+                  <span>{{ branch.departmentName }}</span>
+                </span>
+              </div>
+              <div class="meta-item">
+                <span class="meta-label">Loại hình xử lý:</span>
+                <span class="meta-value">{{ branch.type === 'SupportRequest' ? 'Yêu cầu hỗ trợ' : 'Giao việc trực tiếp'
+                  }}</span>
+              </div>
+              <div class="meta-item">
+                <span class="meta-label">Mức ưu tiên:</span>
+                <span class="meta-value priority-badge" [class]="'prio-' + branch.priority.toLowerCase()">
+                  <span class="prio-dot" aria-hidden="true"></span>
+                  {{ branch.priority }}
+                </span>
+              </div>
+              <div class="meta-item">
+                <span class="meta-label">Thời gian dự kiến:</span>
+                <span class="meta-value duration-highlight">
+                  <svg class="meta-svg" width="15" height="15" viewBox="0 0 20 20" fill="currentColor"
+                    aria-hidden="true">
+                    <path fill-rule="evenodd"
+                      d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z"
+                      clip-rule="evenodd" />
+                  </svg>
+                  <span>{{ branch.suggestedDurationDays }} ngày</span>
+                </span>
+              </div>
+              <div class="meta-item">
+                <span class="meta-label">Trạng thái:</span>
+                <span class="meta-value">
+                  @if (branch.status === 'created') {
+                  <span class="status-badge-created">
+                    <svg class="meta-svg-check" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                      <path fill-rule="evenodd"
+                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                        clip-rule="evenodd" />
+                    </svg>
+                    Đã tạo thành công
+                  </span>
+                  } @else if (branch.status === 'submitting') {
+                  <span class="status-badge-submitting">
+                    <span class="submitting-spinner" aria-hidden="true"></span>
+                    Đang gửi...
+                  </span>
+                  } @else {
+                  <span class="status-badge-pending">Chờ gửi</span>
+                  }
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Description -->
+          <div class="detail-section">
+            <h5 class="section-title">Mô tả công việc</h5>
+            <p class="section-desc-text">{{ branch.description }}</p>
+          </div>
+
+          <!-- Checklist -->
+          @if (branch.checklistItems && branch.checklistItems.length > 0) {
+          <div class="detail-section">
+            <h5 class="section-title">Danh mục kiểm tra & Các bước thực hiện (Checklist)</h5>
+            <ol class="checklist-items-list">
+              @for (step of branch.checklistItems; track step) {
+              <li class="checklist-item">{{ step }}</li>
+              }
+            </ol>
+          </div>
+          }
+
+          <!-- AI Reasoning -->
+          @if (branch.reasoning) {
+          <div class="detail-section reasoning-section">
+            <h5 class="section-title">
+              <span class="sparkle-icon" aria-hidden="true">✦</span> Căn cứ đề xuất từ AI Agent
+            </h5>
+            <p class="reasoning-text">{{ branch.reasoning }}</p>
+          </div>
+          }
+        </div>
+
+        <!-- Detail Action Buttons -->
+        <div class="detail-actions-footer">
+          <div class="detail-actions-left">
+            <button type="button" class="btn-submit-single" (click)="agent.submitSingleBranch(branch)"
+              [disabled]="branch.status === 'created' || branch.status === 'submitting'"
+              title="Gửi tạo nhiệm vụ nhánh này vào hệ thống">
+              @if (branch.status === 'created') {
+              <span>Đã tạo thành công</span>
+              } @else if (branch.status === 'submitting') {
+              <span>Đang gửi tạo việc...</span>
+              } @else {
+              <svg class="btn-svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                <path
+                  d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
+              </svg>
+              <span>Gửi / Tạo nhiệm vụ này ngay</span>
+              }
+            </button>
+            <button type="button" class="btn-delete-single"
+              (click)="agent.deleteBranch(branch.branchIndex - 1); selectBranch(null)" title="Xóa nhánh nhiệm vụ này">
+              Xóa nhánh này
+            </button>
+          </div>
+
+          <div class="detail-actions-right">
+            <button type="button" class="btn-back-overview-secondary" (click)="selectBranch(null)">
+              Quay lại danh sách
+            </button>
+          </div>
+        </div>
+      </div>
+      }
+    </div>
+  </div>
+</div>
+}
 }

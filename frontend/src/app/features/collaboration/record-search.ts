@@ -52,11 +52,7 @@ export interface RecordSearchPagedResult {
     TranslatePipe,
   ],
   templateUrl: './record-search.html',
-  styleUrls: [
-    '../organization/departments.scss',
-    '../requests/requests.scss',
-    './record-search.scss',
-  ],
+  styleUrls: ['./record-search.scss'],
 })
 export class RecordSearch implements OnInit {
   private readonly http = inject(HttpClient);
