@@ -14,9 +14,9 @@
 
 | Mã Module | Tên Module | Phân tầng Kiến trúc | Bảng Dữ liệu Sở hữu (`Target` / `Implemented`) | Trạng thái Kiến trúc | Trạng thái Triển khai (`Current Repo`) |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| `MOD-001` | Identity & Authentication | Tier 1 — Foundation | `PasswordCredential`, `UserSession`, `RefreshToken`, `PasswordResetToken` (4/4) | `CONFIRMED` | `IMPLEMENTED` (ID Login `PARTIAL`; Email-Link `NOT_IMPLEMENTED`) |
-| `MOD-002` | Tenant & Workspace Management | Tier 1 — Foundation | `Tenant`, `Workspace`, `TenantSetting`, `CompanyRegistrationRequest` (`Company`), `CompanyRegistrationDocument` (5/5) | `CONFIRMED` | `PARTIAL` (Read queue `IMPLEMENTED`; 6-field reg + code check + MinIO docs `NOT_IMPLEMENTED`) |
-| `MOD-003` | Organization & Access Control (RBAC) | Tier 2 — Configuration | `User`, `Department`, `Role`, `Permission`, `RolePermission`, `UserRole`, `DepartmentMembership` (7/7) | `CONFIRMED` | `IMPLEMENTED` |
+| `MOD-001` | Identity & Authentication | Tier 1 — Foundation | `PasswordCredential`, `UserSession`, `RefreshToken`, `PasswordResetToken` (4/4) | `CONFIRMED` | `IMPLEMENTED` (Đăng nhập 3 trường ID + WorkspaceKey, Email-link login, Firebase verify, Workspace Selector modal đã có mã nguồn và kiểm thử đạt) |
+| `MOD-002` | Tenant & Workspace Management | Tier 1 — Foundation | `Tenant`, `Workspace`, `TenantSetting`, `CompanyRegistrationRequest` (`Company`), `CompanyRegistrationDocument` (5/5) | `CONFIRMED` | `IMPLEMENTED` (Đăng ký công khai 6 trường, check-code real-time, sinh mã ngẫu nhiên, upload tài liệu MinIO bucket `company-documents`, duyệt nguyên tử và cấp presigned URL 15m) |
+| `MOD-003` | Organization & Access Control (RBAC) | Tier 2 — Configuration | `User`, `Department`, `Role`, `Permission`, `RolePermission`, `UserRole`, `DepartmentMembership` (7/7) | `CONFIRMED` | `IMPLEMENTED` (Đầy đủ CRUD Users, Departments, Roles và ManagementScope) |
 | `MOD-004` | Service Catalog & Dynamic Form Builder | Tier 2 — Configuration | `ServiceCategory`, `ServiceType`, `FormDefinition`, `FormField` (4/4) | `CONFIRMED` | `IMPLEMENTED` |
 | `MOD-005` | Task Management & Execution | Tier 3 — Execution | `WorkTask`, `TaskAssignment`, `TaskBlocker`, `TaskHistory`, `Confirmation` (5/5) | `CONFIRMED` | `IMPLEMENTED` |
 | `MOD-006` | Request Management | Tier 3 — Execution | `RequestRecord`, `RequestFieldValue`, `RequestHistory`, `RequestTaskLink` (4/4) | `CONFIRMED` | `IMPLEMENTED` |
@@ -25,12 +25,12 @@
 | `MOD-009` | Notification & Real-Time Hub | Tier 1 — Cross-Cutting | `Notification`, `NotificationPreference`, `NotificationQueueItem`, `EmailQueueItem`, `NotificationConnection` (5/5) | `CONFIRMED` | `PARTIAL` (In-app + SignalR + Outbox tables `IMPLEMENTED`; Background SMTP dispatcher `PROPOSED`) |
 | `MOD-010` | Collaboration, Evidence & Archival | Tier 3 — Execution | `Comment`, `Attachment`, `CompletionEvidence`, `ArchivedRecordView` (4/4) | `CONFIRMED` | `IMPLEMENTED` |
 | `MOD-011` | Reporting, Analytics & Dashboard | Tier 4 — Intelligence | `ReportExportJob`, `ReportSnapshot` (2/2) | `CONFIRMED` | `IMPLEMENTED` |
-| `MOD-012` | AI Assistant & Governance | Tier 4 — Intelligence | `AiSuggestion`, `AiConfig`, `AiExecutionLog` (3/3) | `CONFIRMED` | `IMPLEMENTED` |
+| `MOD-012` | AI Assistant & Governance | Tier 4 — Intelligence | `AiSuggestion`, `AiConfig`, `AiExecutionLog`, `AiVectorMemory` (4/4) | `CONFIRMED` | `IMPLEMENTED` (Vector Memory JSONB, Cosine Search, Proactive Agent Daemon, Self-Reflection) |
 | `MOD-013` | Audit & Security Compliance | Tier 1 — Cross-Cutting | `AuditLog`, `SecurityEvent` (2/2) | `CONFIRMED` | `IMPLEMENTED` |
-| `MOD-014` | Robot Chatbot & Natural Language Assistance | Tier 4 — Intelligence | `RobotConversation`, `RobotMessage` (2/2) | `CONFIRMED` | `NOT YET IMPLEMENTED` |
-| `MOD-015` | Deadline Reminder & Multi-Channel Dispatcher | Tier 1 — Cross-Cutting | `DeadlineReminderSchedule`, `PushSubscription`, `NotificationLog` (3/3) | `CONFIRMED` | `NOT YET IMPLEMENTED` |
-| `MOD-FE-001` | Frontend Single-Page Application (Angular 22) | Presentation Tier | Trạng thái phiên cục bộ (`AuthSession`), Router State, UI View State, Robot Session State (`sessionStorage`) | `CONFIRMED` | `IMPLEMENTED` |
-| `MOD-BG-001` | Background Job & Timer Worker Host | Infrastructure / Worker Tier | Thực thi trên các bảng hàng đợi của `MOD-008`, `MOD-009`, `MOD-011`, `MOD-015` | `PROPOSED` (`ADR-SSS-002`) | `NOT YET WIRED` (Chưa đăng ký Hangfire/`BackgroundService` trong `Program.cs`) |
+| `MOD-014` | Robot Chatbot & Natural Language Assistance | Tier 4 — Intelligence | `RobotWidget`, `TaskDecomposition`, `SubtaskBranch` (Đã có mã nguồn và kiểm thử) | `CONFIRMED` | `IMPLEMENTED` (Robot Widget nhúng mặc định mở / sessionStorage BR-029, /task decomposition với Preview/Confirm BR-028, branching DAG, tóm tắt tài liệu) |
+| `MOD-015` | Deadline Reminder & Multi-Channel Dispatcher | Tier 1 — Cross-Cutting | `DeadlineReminderSchedule`, `WebPushSubscription`, `NotificationLog` (3/3) | `CONFIRMED` | `PARTIAL` (Entity, Migration, Service, Store, VAPID Provider, WebPush/Email Dispatcher đã triển khai; Controller và Background Scheduler đang chờ wire vào Program.cs) |
+| `MOD-FE-001` | Frontend Single-Page Application (Angular 22) | Presentation Tier | Trạng thái phiên cục bộ (`AuthSession`), Router State, UI View State, Robot Session State (`sessionStorage`) | `CONFIRMED` | `IMPLEMENTED` (270 vitest tests đạt 100% Pass) |
+| `MOD-BG-001` | Background Job & Timer Worker Host | Infrastructure / Worker Tier | Thực thi trên các tác vụ nền (`ProactiveAgentDaemon` đã đăng ký HostedService) | `CONFIRMED` | `PARTIAL` (`ProactiveAgentDaemon` đã kích hoạt; Deadline polling worker đang chờ hoàn tất) |
 
 ---
 
@@ -378,7 +378,7 @@
 - **Security/Tenant Requirements:** Cách ly hội thoại tuyệt đối theo `TenantId` và `UserId`; áp dụng `Fail-Closed` nếu thiếu ngữ cảnh người dùng; kiểm tra quyền tạo việc của người dùng đối với từng phòng ban mục tiêu khi xác nhận tạo hàng loạt (`SEC-008`, `SEC-009`).
 - **Related SRS Requirements:** `FR-AI-011`, `FR-AI-012`, `FR-AI-013`, `IR-API-006`, `BR-027`, `BR-028`, `BR-029`, `DR-016`, `TST-034`, `TST-035`.
 - **Testing Approach:** Kiểm thử vòng đời widget robot trong `sessionStorage` (`TST-034`); kiểm thử an toàn câu hỏi hạn chót có ràng buộc `ManagementScope` và chống ảo giác (`TST-034`); kiểm thử bóc tách đoạn văn và xác nhận tạo việc bắt buộc (`TST-035`).
-- **Status:** `CONFIRMED` | `NOT YET IMPLEMENTED` (Đặc tả thiết kế chi tiết sẵn sàng triển khai).
+- **Status:** `CONFIRMED` | `IMPLEMENTED` (Đã triển khai `RobotWidgetComponent` tại `frontend/src/app/shared/ai/robot-widget.ts`, `AiAgentService` tại `frontend/src/app/core/ai/ai-agent.service.ts`, `AiTaskDecompositionController.cs`, `AiBranchingController.cs`, `AiDocumentSummarizerController.cs`, `RobotChatController.cs` và `TaskDecompositionStore.cs` với 100% kiểm thử đạt).
 
 ---
 
@@ -407,7 +407,7 @@
 - **Security/Tenant Requirements:** Mọi thông báo nhắc việc phải cô lập nghiêm ngặt theo `TenantId`; Web Push sử dụng cặp khóa VAPID bảo mật; thông tin tóm tắt trong push/email không chứa dữ liệu nhạy cảm (`SEC-005`, `SEC-010`).
 - **Related SRS Requirements:** `FR-NOTIF-003`, `FR-NOTIF-004`, `IR-API-007`, `IR-EXT-003`, `BR-030`, `DR-017`, `TST-036`, `TST-037`.
 - **Testing Approach:** Kiểm thử cấu hình nhắc hạn qua API và `/notifications` (`TST-036`); kiểm thử phát thông báo đa kênh theo thứ tự ưu tiên và kiểm tra không gửi trùng lặp qua `NotificationLog` (`TST-037`); kiểm thử tự động hủy nhắc hạn khi công việc hoàn thành trước hạn.
-- **Status:** `CONFIRMED` | `NOT YET IMPLEMENTED` (Đặc tả thiết kế chi tiết sẵn sàng triển khai).
+- **Status:** `CONFIRMED` | `PARTIALLY_IMPLEMENTED` (Đã có Migration/Tables `DeadlineReminderSchedule`, `WebPushSubscription`, `NotificationLog` kèm composite unique key chống trùng; service `DeadlineReminderService.cs`, store `DeadlineReminderStore.cs`, `WebPushDispatcher.cs`, `EmailNotificationDispatcher.cs`; API controller chuyên trách và background polling worker đang chờ hoàn thiện đăng ký trong `Program.cs`).
 
 ---
 

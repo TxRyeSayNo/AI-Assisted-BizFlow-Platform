@@ -12,7 +12,7 @@
 | Backend | Các project backend target `net10.0`; `global.json` yêu cầu SDK `10.0.401`, cho phép `latestPatch`. [Solution](../../BizFlow.slnx), [API project](../../backend/BizFlow.Api/BizFlow.Api.csproj), [SDK](../../global.json). |
 | Frontend | Angular `22.2.0`, TypeScript `6.0.2`, RxJS `7.8.2`, Tailwind CSS `3.4.19`; component standalone và signals. [package.json](../../frontend/package.json). |
 | Hạ tầng local | Compose khai báo PostgreSQL `18.3-alpine`, Redis 7 và MinIO-compatible; cổng PostgreSQL mặc định trong compose là `5432`, có thể đổi qua cấu hình. Profile `http` dùng API `5154`, DB `bizflow` trên `5433`; cấu hình thực tế có thể khác. Không ghi mật khẩu hoặc khóa vào tài liệu này. [Compose](../../deploy/docker-compose.yml), [launch profile](../../backend/BizFlow.Api/Properties/launchSettings.json). |
-| Quy mô | Tại commit này có 26 file controller API, 40 `DbSet` được khai báo và 37 file migration không tính designer/snapshot. Đây là số lượng thành phần mã, **không phải** số bảng thực tế trong cơ sở dữ liệu đang chạy hoặc tỷ lệ hoàn thành so với mục tiêu. [DbContext](../../backend/BizFlow.Infrastructure/Persistence/BizFlowDbContext.cs). |
+| Quy mô | Tại commit này có 26 file controller API, 41 `DbSet` được khai báo và 37 file migration không tính designer/snapshot. Đây là số lượng thành phần mã, **không phải** số bảng thực tế trong cơ sở dữ liệu đang chạy hoặc tỷ lệ hoàn thành so với mục tiêu. [DbContext](../../backend/BizFlow.Infrastructure/Persistence/BizFlowDbContext.cs). |
 | Xác thực và tenant | JWT phát hành `sub`, `sid`, `tenant_id`; backend đọc claim đã xác thực qua `ClaimsTenantContext`. Frontend interceptor gắn Bearer token cho API nội bộ và xử lý refresh, không gắn header `X-Tenant-Id`. Không dùng header do client cung cấp làm nguồn thẩm quyền tenant. [JWT](../../backend/BizFlow.Infrastructure/Authentication/JwtAccessTokenIssuer.cs), [tenant context](../../backend/BizFlow.Api/Security/ClaimsTenantContext.cs), [interceptor](../../frontend/src/app/core/auth/auth.interceptor.ts). |
 
 ## 2. Bản đồ chức năng và giới hạn
@@ -52,6 +52,8 @@
 
 ## 5. Kiểm thử và giới hạn xác minh
 
-Ngày 01/11/2026 đã chạy `dotnet test tests/BizFlow.UnitTests/BizFlow.UnitTests.csproj --no-restore --verbosity quiet`: **495 đạt, 0 lỗi, 0 bỏ qua**. Kết quả này không bao gồm integration hoặc E2E. `AiAutonomousAgentTests` dùng EF InMemory và fake tenant context; không chứng minh trigger PostgreSQL hay daemon ngoài HTTP. [Unit tests](../../tests/BizFlow.UnitTests/AI/AiAutonomousAgentTests.cs).
+Ngày 01/11/2026 đã chạy:
+- Backend: `dotnet test tests/BizFlow.UnitTests/BizFlow.UnitTests.csproj --no-restore --verbosity quiet`: **495 đạt, 0 lỗi, 0 bỏ qua (100% green)**. Kết quả này không bao gồm integration hoặc E2E. `AiAutonomousAgentTests` dùng EF InMemory và fake tenant context; không chứng minh trigger PostgreSQL hay daemon ngoài HTTP. [Unit tests](../../tests/BizFlow.UnitTests/AI/AiAutonomousAgentTests.cs).
+- Frontend: `npm test -- --watch=false` tại thư mục `frontend`: **270 đạt trên 45 test files (100% green)**. Kết quả này xác nhận các component, service, dialog và robot widget hoạt động đúng logic đơn vị và mô phỏng sự kiện UI.
 
 Integration test dùng PostgreSQL container riêng; Playwright có cấu hình mock và cấu hình real qua browser harness. Chúng chưa được chạy trong đợt cập nhật tài liệu này. [Fixture](../../tests/BizFlow.IntegrationTests/Persistence/PostgresFixture.cs), [E2E config](../../tests/BizFlow.E2ETests/playwright.real.config.ts). Kết quả cũ trong báo cáo lịch sử không phải kết quả xác minh hiện tại.

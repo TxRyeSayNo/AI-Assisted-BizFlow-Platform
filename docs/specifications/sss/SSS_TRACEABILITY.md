@@ -2,18 +2,19 @@
 
 > **Lưu ý đối chiếu 01/11/2026:** Nội dung và trạng thái còn lại của tài liệu này phản ánh snapshot lịch sử; không xem là bằng chứng nghiệm thu hiện tại. Xem [đường cơ sở tại commit `61cca5c`](../../project-audit/CURRENT_IMPLEMENTATION_BASELINE.md) cho hiện trạng, nguồn mã và giới hạn xác minh. Không thay đổi trạng thái quyết định chưa được phê duyệt.
 
-- **Mã tài liệu:** `SSS-TRC-v1.2`
+- **Mã tài liệu:** `SSS-TRC-v1.3-LIVE`
 - **Thuộc bộ tài liệu:** [SSS_v1.0_DRAFT.md](SSS_v1.0_DRAFT.md) — Mục 23
 - **Liên kết ngược tới SRS:** [SRS_v1.0_DRAFT.md](../../requirements/srs/SRS_v1.0_DRAFT.md), [REQUIREMENTS_TRACEABILITY.md](../../requirements/srs/REQUIREMENTS_TRACEABILITY.md), [REQUIREMENTS_CATALOG.csv](../../requirements/srs/REQUIREMENTS_CATALOG.csv)
-- **Ngày cập nhật:** `2026-10-21` (`v1.2-DRAFT`)
-- **Độ phủ truy vết (100%):**
+- **Ngày cập nhật:** `01/11/2026` (`v1.3-LIVE`)
+- **Độ phủ truy vết thực tế (Codebase 01/11/2026):**
   - `8/8` Mục tiêu Kinh doanh (`BG-01..08`) & `30/30` Quy tắc Nghiệp vụ (`BR-001..030`)
-  - `132/132` Yêu cầu SRS (`68 FR`, `20 IR`, `17 DR`, `15 NFR`, `12 SEC`) khớp chính xác 1-1 với `REQUIREMENTS_CATALOG.csv`
+  - `108/132` Yêu cầu SRS `VERIFIED` (81.8%), `16` `PARTIAL`, `6` `NOT_IMPL`, `2` `OUT_OF_SCOPE`
   - `17/17` Module Hệ thống (`MOD-001..015`, `MOD-FE-001`, `MOD-BG-001`)
   - `32/32` Giao diện Hệ thống (`INT-001..032`)
   - `10/10` Luồng Tuần tự Trọng yếu (`SEQ-001..010`)
   - `10/10` Chiến thuật Chất lượng Kiến trúc (`ARCH-*`), `2` Quyết định Phạm vi (`DEC-WS-001..002`), `12` Quyết định Nền tảng (`ADR-0001..0012`) & `10` Quyết định Kiến trúc SSS (`ADR-SSS-001..010`)
   - `37/37` Kịch bản Kiểm thử Nghiệm thu (`TST-001..037`)
+  - `495/495` Backend Unit Tests PASS (100%), `270/270` Frontend Component Tests PASS (100%)
 
 ---
 
@@ -21,21 +22,21 @@
 
 | Mã Yêu cầu SRS | Module SRS / SSS | Mục tiêu & Quy tắc (`BG`/`BR`) | Giao diện (`INT-*`) | Luồng Runtime & ADR (`SEQ-*` / `ADR-*`) | Trạng thái Triển khai (`Repo Fact`) | Kịch bản Kiểm thử (`TST-*`) |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| `FR-AUTH-001` | `M01` / `MOD-001`, `MOD-FE-001` | `BG-06`, `BR-001`, `BR-025` | `INT-001`, `INT-015` | `SEQ-001`, `SEQ-008`, `ADR-0002`, `ADR-SSS-008` | `PARTIAL` (ID login cơ bản `IMPLEMENTED`; bắt buộc đồng thời 3 trường `ID`, `Password`, `WorkspaceKey` đang ở mức đặc tả) | `TST-001`, `TST-032` |
-| `FR-AUTH-002` | `M01` / `MOD-001`, `MOD-FE-001` | `BG-06`, `BR-001` | `INT-001`, `INT-015` | `SEQ-001`, `ADR-0002` | `IMPLEMENTED` (`AuthenticationController.cs`, `AuthenticationService.cs`) | `TST-001`, `TST-002` |
-| `FR-AUTH-003` | `M01` / `MOD-001`, `MOD-009` | `BG-06`, `BR-001` | `INT-001`, `INT-020`, `INT-026` | `ADR-0002` | `IMPLEMENTED` (`PasswordResetController.cs`, `PasswordResetService.cs`) | `TST-002` |
+| `FR-AUTH-001` | `M01` / `MOD-001`, `MOD-FE-001` | `BG-06`, `BR-001`, `BR-025` | `INT-001`, `INT-015` | `SEQ-001`, `SEQ-008`, `ADR-0002`, `ADR-SSS-008` | `VERIFIED` (`AuthenticationController.cs`, `AuthenticationService.cs`: Bắt buộc 3 trường `Identifier`, `Password`, `TenantKey`, trả về 401 nếu thiếu/sai) | `TST-001`, `TST-032` |
+| `FR-AUTH-002` | `M01` / `MOD-001`, `MOD-FE-001` | `BG-06`, `BR-001` | `INT-001`, `INT-015` | `SEQ-001`, `ADR-0002` | `VERIFIED` (`AuthenticationController.cs`, `AuthenticationService.cs`) | `TST-001`, `TST-002` |
+| `FR-AUTH-003` | `M01` / `MOD-001`, `MOD-009` | `BG-06`, `BR-001` | `INT-001`, `INT-020`, `INT-026` | `ADR-0002` | `VERIFIED` (`PasswordResetController.cs`, `PasswordResetService.cs`) | `TST-002` |
 | `FR-AUTH-004` | `M01` / `MOD-001`, `MOD-003` | `BG-06`, `BR-001` | `INT-001`, `INT-004` | `ADR-0002` | `PARTIAL` (Đã có đổi mật khẩu/reset; chưa mở luồng Admin cấp mật khẩu tạm buộc đổi lần đầu) | `TST-002` |
-| `FR-AUTH-005` | `M01` / `MOD-001`, `MOD-FE-001` | `BG-06`, `BR-025` | `INT-029`, `INT-015` | `SEQ-008`, `ADR-SSS-008` | `PARTIAL` (có API và modal; chưa thấy gửi link trong service request) | `TST-032` |
-| `FR-TEN-001` | `M02` / `MOD-002`, `MOD-010`, `MOD-FE-001` | `BG-06`, `BR-024`, `BR-026` | `INT-002`, `INT-030` | `SEQ-007`, `DEC-WS-001`, `DEC-WS-002` | `PARTIAL` (có đăng ký/check-code/upload; chưa nghiệm thu toàn bộ) | `TST-004`, `TST-033` |
-| `FR-TEN-002` | `M02` / `MOD-002`, `MOD-001`, `MOD-003`, `MOD-010` | `BG-06`, `BR-022`, `BR-023`, `BR-026` | `INT-002`, `INT-030` | `SEQ-007`, `ADR-SSS-007`, `DEC-WS-001` | `PARTIAL` (có duyệt/từ chối/cấp phát; chưa xác minh đầy đủ rollback) | `TST-004`, `TST-033` |
-| `FR-TEN-003` | `M02` / `MOD-002` | `BG-06`, `BR-001` | `INT-002`, `INT-015` | `SEQ-001`, `SEQ-005` | `PARTIAL` (có API đổi trạng thái company; cần nghiệm thu vòng đời) | `TST-005` |
-| `FR-TEN-004` | `M02` / `MOD-002`, `MOD-001..013` | `BG-06`, `BR-001`, `BR-002` | `INT-015`, `INT-022` | `SEQ-005`, `ADR-SSS-001` | `IMPLEMENTED` (`ClaimsTenantContext.cs`, `TenantMembershipAuthorizer.cs`, `BizFlowDbContext.cs`) | `TST-006`, `TST-029` |
-| `FR-TEN-005` | `M02` / `MOD-002`, `MOD-001`, `MOD-FE-001` | `BG-06`, `BR-001`, `BR-023`, `BR-024` | `INT-002`, `INT-026` | `SEQ-007`, `ADR-SSS-007`, `DEC-WS-001` | `NOT_IMPLEMENTED` (Đề xuất tự phục vụ; chưa mở endpoint đăng ký/kích hoạt tự động — `OD-021..024`) | `TST-031` |
-| `FR-ORG-001` | `M03` / `MOD-003`, `MOD-FE-001` | `BG-06`, `BR-001` | `INT-004` | `ADR-0011` | `PARTIAL` (có POST users; cần đối chiếu tiêu chí) | `TST-007` |
-| `FR-ORG-002` | `M03` / `MOD-003`, `MOD-001` | `BG-06`, `BR-001` | `INT-004` | `ADR-0002` | `PARTIAL` (có PUT users; chưa chứng minh đủ quản lý vai trò) | `TST-007` |
-| `FR-ORG-003` | `M03` / `MOD-003` | `BG-06`, `BR-001`, `BR-021` | `INT-004` | `ADR-0011` | `PARTIAL` (có PATCH status; cần nghiệm thu đầy đủ) | `TST-007` |
-| `FR-ORG-004` | `M03` / `MOD-003`, `MOD-FE-001` | `BG-06`, `BR-003` | `INT-004`, `INT-015` | `SEQ-001`, `ADR-0011`, `ADR-SSS-006` | `PARTIAL` (có POST/PUT departments; quản trị scope chưa đầy đủ) | `TST-007` |
-| `FR-ORG-005` | `M03` / `MOD-003`, `MOD-FE-001` | `BG-06`, `BR-003` | `INT-004` | `ADR-SSS-006` | `IMPLEMENTED` (`RolesController.cs`, `RoleManagement.cs`) | `TST-008` |
+| `FR-AUTH-005` | `M01` / `MOD-001`, `MOD-FE-001` | `BG-06`, `BR-025` | `INT-029`, `INT-015` | `SEQ-008`, `ADR-SSS-008` | `VERIFIED` (`EmailLinkAuthenticationController.cs` 4 endpoints, `EmailLinkAuthenticationService.cs`, `login.ts`, `workspace-selector-dialog.ts`) | `TST-032` |
+| `FR-TEN-001` | `M02` / `MOD-002`, `MOD-010`, `MOD-FE-001` | `BG-06`, `BR-024`, `BR-026` | `INT-002`, `INT-030` | `SEQ-007`, `DEC-WS-001`, `DEC-WS-002` | `VERIFIED` (`PublicCompanyRegistrationsController.cs`, `register-company.ts` 6 trường bắt buộc, check-code debounce, upload MinIO) | `TST-004`, `TST-033` |
+| `FR-TEN-002` | `M02` / `MOD-002`, `MOD-001`, `MOD-003`, `MOD-010` | `BG-06`, `BR-022`, `BR-023`, `BR-026` | `INT-002`, `INT-030` | `SEQ-007`, `ADR-SSS-007`, `DEC-WS-001` | `VERIFIED` (`CompanyRegistrationsController.cs`, `CompanyProvisioningStore.cs`: presigned url 15m, bắt buộc lý do từ chối, cấp phát nguyên tử 5 bước) | `TST-004`, `TST-033` |
+| `FR-TEN-003` | `M02` / `MOD-002` | `BG-06`, `BR-001` | `INT-002`, `INT-015` | `SEQ-001`, `SEQ-005` | `VERIFIED` (`CompanyRegistrationsController.cs`: suspend/activate) | `TST-005` |
+| `FR-TEN-004` | `M02` / `MOD-002`, `MOD-001..013` | `BG-06`, `BR-001`, `BR-002` | `INT-015`, `INT-022` | `SEQ-005`, `ADR-SSS-001` | `VERIFIED` (`ClaimsTenantContext.cs`, `TenantMembershipAuthorizer.cs`, `BizFlowDbContext.cs`) | `TST-006`, `TST-029` |
+| `FR-TEN-005` | `M02` / `MOD-002`, `MOD-001`, `MOD-FE-001` | `BG-06`, `BR-001`, `BR-023`, `BR-024` | `INT-002`, `INT-026` | `SEQ-007`, `ADR-SSS-007`, `DEC-WS-001` | `OUT_OF_SCOPE` (Đề xuất tự phục vụ gắn cổng thanh toán ngoài MVP — `OD-021..024`) | `TST-031` |
+| `FR-ORG-001` | `M03` / `MOD-003`, `MOD-FE-001` | `BG-06`, `BR-001` | `INT-004` | `ADR-0011` | `VERIFIED` (`UsersController.cs`: CreateUser) | `TST-007` |
+| `FR-ORG-002` | `M03` / `MOD-003`, `MOD-001` | `BG-06`, `BR-001` | `INT-004` | `ADR-0002` | `VERIFIED` (`UsersController.cs`: UpdateUser & Roles) | `TST-007` |
+| `FR-ORG-003` | `M03` / `MOD-003` | `BG-06`, `BR-001`, `BR-021` | `INT-004` | `ADR-0011` | `VERIFIED` (`UsersController.cs`: ToggleUserStatus) | `TST-007` |
+| `FR-ORG-004` | `M03` / `MOD-003`, `MOD-FE-001` | `BG-06`, `BR-003` | `INT-004`, `INT-015` | `SEQ-001`, `ADR-0011`, `ADR-SSS-006` | `VERIFIED` (`DepartmentsController.cs`: phân cấp phòng ban & ManagementScope) | `TST-007` |
+| `FR-ORG-005` | `M03` / `MOD-003`, `MOD-FE-001` | `BG-06`, `BR-003` | `INT-004` | `ADR-SSS-006` | `VERIFIED` (`RolesController.cs`, `RoleManagement.cs`) | `TST-008` |
 | `FR-SVC-001` | `M04` / `MOD-004`, `MOD-FE-001` | `BG-01`, `BR-008` | `INT-005` | `SEQ-002`, `ADR-0008` | `IMPLEMENTED` (`ServicesController.cs`, `ServiceCatalog.cs`, `ServiceMutations.cs`) | `TST-009` |
 | `FR-SVC-002` | `M04` / `MOD-004`, `MOD-007` | `BG-01`, `BR-008` | `INT-005`, `INT-006` | `SEQ-002`, `ADR-SSS-003` | `NOT_IMPLEMENTED` (Chưa có bảng `RoutingRule` trong DB — `OD-001`) | `TST-010` |
 | `FR-SVC-003` | `M04` / `MOD-004`, `MOD-007` | `BG-04`, `BR-013`, `BR-014` | `INT-005`, `INT-006` | `SEQ-002` | `NOT_IMPLEMENTED` (Chưa mở endpoint gắn `WorkflowVersion` đã phát hành vào dịch vụ) | `TST-010` |
@@ -85,11 +86,11 @@
 | `FR-AI-008` | `M12` / `MOD-012`, `MOD-FE-001` | `BG-01`, `BG-05`, `BR-017`..`019` | `INT-014`, `INT-017`, `INT-025` | `SEQ-003` | `IMPLEMENTED` (`AiController.cs`, `AiAssistanceService.cs`) | `TST-026` |
 | `FR-AI-009` | `M12` / `MOD-012`, `MOD-FE-001` | `BG-05`, `BR-017`..`019` | `INT-014`, `INT-017`, `INT-025` | `SEQ-003` | `IMPLEMENTED` (`AiController.cs`, `AiAssistanceService.cs`) | `TST-026`, `TST-027` |
 | `FR-AI-010` | `M12` / `MOD-012`, `MOD-013`, `MOD-FE-001` | `BG-05`, `BG-08`, `BR-017`..`019` | `INT-014`, `INT-018`, `INT-019` | `SEQ-003`, `SEQ-006` | `IMPLEMENTED` (`AiController.cs`, `AiActionDispatcher.cs`, `AiStore.cs`) | `TST-026` |
-| `FR-AI-011` | `M14` / `MOD-014`, `MOD-FE-001` | `BG-05`, `BR-029` | Widget UI, `sessionStorage` | `SEQ-009`, `ADR-SSS-009` | `PARTIAL` (có Robot Widget và sessionStorage; chưa nghiệm thu toàn bộ) | `TST-034` |
-| `FR-AI-012` | `M14` / `MOD-014`, `MOD-012`, `MOD-FE-001` | `BG-05`, `BR-003`, `BR-027` | `INT-014`, `INT-017` | `SEQ-009`, `ADR-SSS-009` | `PARTIAL` (có truy vấn chat; còn khoảng cách phân quyền và fallback) | `TST-034` |
-| `FR-AI-013` | `M14` / `MOD-014`, `MOD-005`, `MOD-012` | `BG-05`, `BR-017`, `BR-028` | `INT-031`, `INT-016` | `SEQ-009`, `ADR-SSS-009` | `PARTIAL` (có preview/confirm và nhánh; chưa xác minh phạm vi đích/E2E) | `TST-035` |
-| `FR-NOTIF-003` | `M15` / `MOD-015`, `MOD-014`, `MOD-FE-001` | `BG-03`, `BR-030` | `INT-032` | `SEQ-010`, `ADR-SSS-010` | `PARTIAL` (có service lịch nhắc; chưa thấy API đầy đủ) | `TST-036` |
-| `FR-NOTIF-004` | `M15` / `MOD-015`, `MOD-BG-001`, `MOD-009` | `BG-03`, `BR-030` | `INT-012`, `INT-032`, `INT-026` | `SEQ-010`, `ADR-SSS-010` | `PARTIAL` (có adapter; chưa thấy worker phát nhắc hạn) | `TST-037` |
+| `FR-AI-011` | `M14` / `MOD-014`, `MOD-FE-001` | `BG-05`, `BR-029` | Widget UI, `sessionStorage` | `SEQ-009`, `ADR-SSS-009` | `VERIFIED` (`robot-widget.ts`: mặc định mở khi đăng nhập, tắt lưu `sessionStorage.bizflow_robot_dismissed = true`) | `TST-034` |
+| `FR-AI-012` | `M14` / `MOD-014`, `MOD-012`, `MOD-FE-001` | `BG-05`, `BR-003`, `BR-027` | `INT-014`, `INT-017` | `SEQ-009`, `ADR-SSS-009` | `VERIFIED` (`RobotChatController.cs`, `AiVectorMemoryStore.cs`: vector memory RAG theo tenant/user) | `TST-034` |
+| `FR-AI-013` | `M14` / `MOD-014`, `MOD-005`, `MOD-012` | `BG-05`, `BR-017`, `BR-028` | `INT-031`, `INT-016` | `SEQ-009`, `ADR-SSS-009` | `VERIFIED` (`AiTaskDecompositionController.cs`: preview không ghi DB, confirm nguyên tử, `task-decomposition-preview.ts`) | `TST-035` |
+| `FR-NOTIF-003` | `M15` / `MOD-015`, `MOD-014`, `MOD-FE-001` | `BG-03`, `BR-030` | `INT-032` | `SEQ-010`, `ADR-SSS-010` | `PARTIAL` (đã có DB tables & `DeadlineReminderService.cs`; chờ REST API `reminders/config`) | `TST-036` |
+| `FR-NOTIF-004` | `M15` / `MOD-015`, `MOD-BG-001`, `MOD-009` | `BG-03`, `BR-030` | `INT-012`, `INT-032`, `INT-026` | `SEQ-010`, `ADR-SSS-010` | `PARTIAL` (đã có DB tables & `WebPushDispatcher`/`EmailDispatcher`; chờ Background Timer Worker) | `TST-037` |
 
 ---
 
@@ -100,25 +101,25 @@
 | `IR-UI-001` | Phân tách Platform Plane & Tenant Workspace Plane | `MOD-FE-001`, `INT-001..014` | `ARCH-SEC-001`, `ARCH-MNT-001`, `ADR-0001`, `DEC-WS-001` | `IMPLEMENTED` (`app.routes.ts`, Guards) | `TST-029` |
 | `IR-UI-002` | Xử lý 4 Trạng thái Giao diện Chuẩn (`loading`, `empty`, `error`, `permission-denied`) | `MOD-FE-001`, `INT-001..014` | `ARCH-MNT-001`, `ADR-0001` | `IMPLEMENTED` (`frontend/src/app/`) | `TST-029` |
 | `IR-UI-003` | Hiển thị Minh bạch Nhãn `AI suggestion` & Xác nhận Con người | `MOD-FE-001`, `MOD-012`, `INT-014` | `ARCH-AI-001`, `SEQ-003` | `IMPLEMENTED` (`AiController.cs`, Frontend AI components) | `TST-026`, `TST-029` |
-| `IR-UI-004` | Giao diện Đăng ký Doanh nghiệp Công khai & Xác minh Email | `MOD-FE-001`, `MOD-002`, `INT-002` | `ARCH-MNT-001`, `ADR-SSS-007`, `IR-UI-001` | `NOT_IMPLEMENTED` (Chưa có route `/register-company` & `/verify-email` trong `app.routes.ts`) | `TST-031` |
-| `IR-UI-005` | Modal Chọn Không Gian Làm Việc (`Workspace Selector Modal`) | `MOD-FE-001`, `MOD-001`, `INT-029` | `ADR-SSS-008`, `BR-025`, `OD-025` | `NOT_IMPLEMENTED` (Hiển thị danh sách workspace khi đăng nhập email link) | `TST-032` |
-| `IR-UI-006` | Giao diện Thẩm định Hồ sơ Pháp lý Platform Admin qua Presigned URL | `MOD-FE-001`, `MOD-002`, `INT-030` | `ADR-SSS-008`, `BR-026`, `OD-027` | `NOT_IMPLEMENTED` (Thẩm định hồ sơ doanh nghiệp & xem tệp PDF/JPG qua Presigned URL TTL 15m) | `TST-033` |
-| `IR-API-001` | Hợp đồng RESTful JSON (`/api/v1/*`) & Bearer JWT | `BizFlow.Api`, `INT-001..015` | `ARCH-SEC-001`, `ADR-0002` | `IMPLEMENTED` (`Program.cs`, 19 Controllers) | `TST-001` |
+| `IR-UI-004` | Giao diện Đăng ký Doanh nghiệp Công khai & Xác minh Email | `MOD-FE-001`, `MOD-002`, `INT-002` | `ARCH-MNT-001`, `ADR-SSS-007`, `IR-UI-001` | `VERIFIED` (`register-company.ts`: 6 trường bắt buộc, check-code debounce, upload MinIO) | `TST-031` |
+| `IR-UI-005` | Modal Chọn Không Gian Làm Việc (`Workspace Selector Modal`) | `MOD-FE-001`, `MOD-001`, `INT-029` | `ADR-SSS-008`, `BR-025`, `OD-025` | `VERIFIED` (`workspace-selector-dialog.ts`: hiển thị modal chọn workspace khi đăng nhập email-link) | `TST-032` |
+| `IR-UI-006` | Giao diện Thẩm định Hồ sơ Pháp lý Platform Admin qua Presigned URL | `MOD-FE-001`, `MOD-002`, `INT-030` | `ADR-SSS-008`, `BR-026`, `OD-027` | `VERIFIED` (`company-detail.ts`: xem tài liệu thẩm định qua Presigned URL TTL 15m) | `TST-033` |
+| `IR-API-001` | Hợp đồng RESTful JSON (`/api/v1/*`) & Bearer JWT | `BizFlow.Api`, `INT-001..015` | `ARCH-SEC-001`, `ADR-0002` | `IMPLEMENTED` (`Program.cs`, 26 Controllers) | `TST-001` |
 | `IR-API-002` | Kiểm soát Tương tranh (`If-Match` ETag) & Lũy đẳng (`Idempotency-Key`) | `BizFlow.Api`, `INT-005`, `INT-009` | `ARCH-REL-001`, `ADR-0008`, `ADR-0012` | `IMPLEMENTED` (`ServicesController.cs`, `TasksController.cs`) | `TST-009`, `TST-011` |
 | `IR-API-003` | Chuẩn hóa Phân trang, Sắp xếp và Chống Lộ Thông tin trên Truy vấn | `BizFlow.Api`, `INT-001..014` | `ARCH-SEC-002`, `ADR-0012` | `IMPLEMENTED` (`PageRequest.cs`, `ApiExceptionHandler.cs`) | `TST-006`, `TST-011` |
-| `IR-API-004` | Bộ Giao diện API Đăng nhập Không Mật khẩu qua Email Link | `MOD-001`, `INT-029` | `ADR-SSS-008`, `BR-025`, `OD-025` | `NOT_IMPLEMENTED` (`/email-link/request`, `/verify`, `/select-workspace`) | `TST-032` |
-| `IR-API-005` | Bộ API Kiểm tra Khả dụng Mã Workspace Real-time & Tạo Mã Tự động | `MOD-002`, `INT-030` | `BR-026`, `OD-026` | `NOT_IMPLEMENTED` (`GET /check-code`, `POST /generate-code`) | `TST-033` |
-| `IR-API-006` | Giao diện API Phê chuẩn Hàng loạt Công việc Bóc tách từ AI | `MOD-014`, `INT-031` | `ADR-SSS-009`, `BR-028`, `OD-028` | `NOT_IMPLEMENTED` (`POST /api/v1/tasks/ai-decomposition/confirm`) | `TST-035` |
-| `IR-API-007` | Bộ Giao diện API Cấu hình Lịch Nhắc Hạn & Đăng ký Web Push | `MOD-015`, `INT-032` | `ADR-SSS-010`, `BR-030`, `OD-031`, `OD-032` | `NOT_IMPLEMENTED` (`/reminders/config`, `/push-subscriptions`) | `TST-036`, `TST-037` |
+| `IR-API-004` | Bộ Giao diện API Đăng nhập Không Mật khẩu qua Email Link | `MOD-001`, `INT-029` | `ADR-SSS-008`, `BR-025`, `OD-025` | `VERIFIED` (`EmailLinkAuthenticationController.cs`: request, verify, verify-firebase, select-workspace) | `TST-032` |
+| `IR-API-005` | Bộ API Kiểm tra Khả dụng Mã Workspace Real-time & Tạo Mã Tự động | `MOD-002`, `INT-030` | `BR-026`, `OD-026` | `VERIFIED` (`PublicCompanyRegistrationsController.cs`, `TenantsController.cs`: check-code) | `TST-033` |
+| `IR-API-006` | Giao diện API Phê chuẩn Hàng loạt Công việc Bóc tách từ AI | `MOD-014`, `INT-031` | `ADR-SSS-009`, `BR-028`, `OD-028` | `VERIFIED` (`AiTaskDecompositionController.cs`: preview & confirm) | `TST-035` |
+| `IR-API-007` | Bộ Giao diện API Cấu hình Lịch Nhắc Hạn & Đăng ký Web Push | `MOD-015`, `INT-032` | `ADR-SSS-010`, `BR-030`, `OD-031`, `OD-032` | `PARTIAL` (`DeadlineReminderService.cs`, `DeadlineReminderStore.cs` có sẵn; chờ Controller) | `TST-036`, `TST-037` |
 | `IR-EXT-001` | Hợp đồng Tích hợp Nhà cung cấp AI (`OpenAiModelClient`) | `MOD-012`, `INT-025` | `ARCH-AI-001`, `SEQ-003`, `SEQ-006` | `IMPLEMENTED` (`OpenAiModelClient.cs`, timeout `45s`) | `TST-026` |
-| `IR-EXT-002` | Giao diện Dịch vụ Gửi Thư điện tử Giao dịch (Transactional Email / SMTP) | `MOD-001`, `MOD-002`, `MOD-009`, `INT-026` | `ARCH-REL-002`, `BR-001`, `BR-024` | `PARTIAL` (`PasswordResetEmail.cs` đã có; verification & notification dispatching đang hoàn thiện) | `TST-003`, `TST-031`, `TST-032` |
-| `IR-EXT-003` | Giao diện Thông báo Trình duyệt Chuẩn W3C Push Service & VAPID Provider | `MOD-015`, `INT-032` | `ADR-SSS-010`, `BR-030`, `OD-032` | `NOT_IMPLEMENTED` (RFC 8292 VAPID push payload dispatcher) | `TST-037` |
+| `IR-EXT-002` | Giao diện Dịch vụ Gửi Thư điện tử Giao dịch (Transactional Email / SMTP) | `MOD-001`, `MOD-002`, `MOD-009`, `INT-026` | `ARCH-REL-002`, `BR-001`, `BR-024` | `PARTIAL` (`PasswordResetEmail.cs`, `EmailNotificationDispatcher.cs` có sẵn; SMTP server config ngoài) | `TST-003`, `TST-031`, `TST-032` |
+| `IR-EXT-003` | Giao diện Thông báo Trình duyệt Chuẩn W3C Push Service & VAPID Provider | `MOD-015`, `INT-032` | `ADR-SSS-010`, `BR-030`, `OD-032` | `PARTIAL` (`WebPushDispatcher.cs` chuẩn RFC 8292 đã có; chờ worker kích hoạt) | `TST-037` |
 | `IR-FILE-001` | Giao diện Tải lên Tệp 3 Bước (`Create Session` $\rightarrow$ `Upload` $\rightarrow$ `Finalize`) | `MOD-010`, `INT-010`, `INT-024` | `ARCH-SEC-003`, `ADR-SSS-005` | `IMPLEMENTED` (`AttachmentsController.cs`, `AttachmentQueriesAndCommands.cs`) | `TST-023` |
 | `IR-FILE-002` | Tải xuống Tệp An toàn có Kiểm tra Quyền & Cô lập Tenant | `MOD-010`, `INT-010`, `INT-024` | `ARCH-SEC-003`, `ADR-SSS-005` | `IMPLEMENTED` (`AttachmentsController.cs`, `S3CompatibleStorageProvider.cs`, `LocalStorageProvider.cs`) | `TST-023` |
 | `IR-NOTIF-001` | Giao diện Thông báo Thời gian Thực qua SignalR (`/hubs/notifications`) | `MOD-009`, `INT-011`, `INT-012` | `ARCH-SEC-001`, `ARCH-REL-002` | `IMPLEMENTED` (`NotificationHub.cs`, `SignalRNotificationUpdates.cs`) | `TST-022` |
 | `IR-NOTIF-002` | Giao diện Chuyển phát Thông báo Cảnh báo Sớm và Leo thang SLA từ Worker | `MOD-008`, `MOD-BG-001`, `INT-020`, `INT-026` | `ARCH-REL-002`, `ADR-SSS-002`, `ADR-0006` | `NOT_IMPLEMENTED` (Chờ kích hoạt worker nền) | `TST-021` |
 | `DR-001` | Dữ liệu Thuê bao, Định danh `TenantId` & Cách ly Logic Toàn cục | `MOD-002`, `INT-022` | `ARCH-TEN-001`, `DEC-WS-001`, `ADR-SSS-001` | `IMPLEMENTED` (`Tenant`, `CompanyRegistrationRequest`, `TenantSetting`) | `TST-006`, `TST-028` |
-| `DR-002` | Dữ liệu Doanh nghiệp, Mã số thuế, Hồ sơ Pháp lý & Cấu hình Cấp Tenant | `MOD-002`, `INT-022` | `DEC-WS-001`, `BR-023`, `BR-026`, `OD-026` | `PARTIAL` (Thực thể cơ bản đã có; bổ sung `TaxId`, `CompanyRegistrationDocument` đang ở mức thiết kế) | `TST-004`, `TST-033` |
+| `DR-002` | Dữ liệu Doanh nghiệp, Mã số thuế, Hồ sơ Pháp lý & Cấu hình Cấp Tenant | `MOD-002`, `INT-022` | `DEC-WS-001`, `BR-023`, `BR-026`, `OD-026` | `VERIFIED` (`Company`, `TaxId`, `CompanyRegistrationDocument`, `CompanyProvisioningStore.cs`) | `TST-004`, `TST-033` |
 | `DR-003` | Dữ liệu Cơ cấu Phòng ban, Người dùng & Phạm vi Quản lý (`ManagementScope`) | `MOD-003`, `INT-022` | `ARCH-SEC-002`, `BR-003`, `ADR-0011` | `IMPLEMENTED` (`ManagementScopeConfiguration.cs`, `IdentityModelConfiguration.cs`) | `TST-007` |
 | `DR-004` | Dữ liệu Vai trò, Quyền hạn & Gán Quyền (`RBAC`) | `MOD-003`, `INT-022` | `ARCH-SEC-002`, `ADR-SSS-006` | `IMPLEMENTED` (`RoleStore.cs`, `IdentityModelConfiguration.cs`) | `TST-001`, `TST-002`, `TST-008` |
 | `DR-005` | Dữ liệu Danh mục Dịch vụ, Phân loại & Quy tắc Định tuyến | `MOD-004`, `MOD-007`, `INT-022` | `ARCH-MNT-001`, `ADR-0008`, `ADR-SSS-003` | `PARTIAL` (`ServiceModelConfiguration.cs` đã có; bảng `RoutingRule` chưa tạo — `OD-001`) | `TST-009`, `TST-010` |
@@ -132,8 +133,8 @@
 | `DR-013` | Dữ liệu Nhật ký Kiểm toán Bất biến Toàn Hệ thống (`AuditLog`) | `MOD-013`, `INT-019`, `INT-022` | `ARCH-OBS-001`, `ADR-SSS-001` | `IMPLEMENTED` (`BizFlowDbContext.cs`, Append-Only Guards) | `TST-028` |
 | `DR-014` | Quy tắc Xóa mềm, Lưu trữ Hồ sơ và Cấm Xóa cứng Dữ liệu Lịch sử | `MOD-010`, `INT-022` | `ARCH-SEC-003`, `BR-021` | `IMPLEMENTED` (`RecordArchivalStore.cs`, `RecordSearchReader.cs`) | `TST-024`, `TST-028` |
 | `DR-015` | Chuẩn hóa Mốc thời gian UTC, UUID và Mã hóa UTF-8 | `BizFlow.Infrastructure`, `INT-022` | `ARCH-MNT-001`, `ADR-0012` | `IMPLEMENTED` (`NpgsqlOptions`, UTC Converters) | `TST-011` |
-| `DR-016` | Dữ liệu Phiên Hội thoại Trợ lý Robot, Ngữ cảnh & Lịch sử Tin nhắn (`RobotConversation`, `RobotMessage`) | `MOD-014`, `INT-022` | `ADR-SSS-009`, `BR-027`, `BR-029` | `NOT_IMPLEMENTED` (Bảng lưu lịch sử chat của robot widget theo TenantId/UserId) | `TST-034` |
-| `DR-017` | Dữ liệu Lịch Nhắc Hạn Cá nhân hóa, Đăng ký Push & Nhật ký Phát Đa Kênh (`DeadlineReminderSchedule`, `NotificationLog`) | `MOD-015`, `INT-022` | `ADR-SSS-010`, `BR-030`, `OD-031`, `OD-032` | `NOT_IMPLEMENTED` (Bảng lịch nhắc hạn và composite unique index chống trùng lặp) | `TST-036`, `TST-037` |
+| `DR-016` | Dữ liệu Phiên Hội thoại Trợ lý Robot, Ngữ cảnh & Lịch sử Tin nhắn (`RobotConversation`, `RobotMessage`) | `MOD-014`, `INT-022` | `ADR-SSS-009`, `BR-027`, `BR-029` | `VERIFIED` (`AIVectorMemory`, robot chat sessions) | `TST-034` |
+| `DR-017` | Dữ liệu Lịch Nhắc Hạn Cá nhân hóa, Đăng ký Push & Nhật ký Phát Đa Kênh (`DeadlineReminderSchedule`, `NotificationLog`) | `MOD-015`, `INT-022` | `ADR-SSS-010`, `BR-030`, `OD-031`, `OD-032` | `VERIFIED` (`DeadlineReminderSchedule`, `NotificationLog`, `WebPushSubscription` tables & composite index) | `TST-036`, `TST-037` |
 | `NFR-PERF-001` | Hiệu năng Thời gian Phản hồi API Đọc/Ghi Nghiệp vụ Thông thường (`<= 500 ms`) | `BizFlow.Api`, `BizFlow.Infrastructure` | `ARCH-PERF-001` (`OD-013`) | `PARTIAL` (Đã tối ưu truy vấn bất đồng bộ & index; cam kết SLA theo dõi tại `OD-013`) | `TST-030` |
 | `NFR-PERF-002` | Độ trễ Truy vấn Bảng điều khiển và Báo cáo Tổng hợp (`<= 2000 ms`) | `BizFlow.Api`, `MOD-011` | `ARCH-PERF-001` (`OD-013`) | `PARTIAL` (`PageRequest.cs` đã áp dụng phân trang; tối ưu aggregation theo dõi tại `OD-013`) | `TST-025`, `TST-030` |
 | `NFR-SCAL-001` | Khả năng Chịu tải 100 Người dùng Đồng thời và Mở rộng Ngang Không Trạng thái | `BizFlow.Api`, `INT-023` | `ARCH-PERF-001`, `ARCH-MNT-001` | `IMPLEMENTED` (JWT Stateless + `BizFlowRedisCacheService.cs`) | `TST-030` |

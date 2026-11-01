@@ -2,10 +2,12 @@ import { Injectable, inject } from '@angular/core';
 import { FirebaseApp, getApp, getApps, initializeApp } from 'firebase/app';
 import {
   Auth,
+  GoogleAuthProvider,
   getAuth,
   isSignInWithEmailLink,
   sendSignInLinkToEmail,
   signInWithEmailLink,
+  signInWithPopup,
 } from 'firebase/auth';
 import { FIREBASE_CLIENT_CONFIG } from './firebase-config';
 
@@ -99,6 +101,23 @@ export class FirebaseAuthService {
     return {
       idToken,
       email: credential.user.email || emailToUse,
+    };
+  }
+
+  async signInWithGooglePopup(): Promise<{ idToken: string; email: string }> {
+    if (!this.auth) {
+      this.initIfConfigured();
+    }
+    if (!this.auth) {
+      throw new Error('FIREBASE_NOT_CONFIGURED');
+    }
+    const provider = new GoogleAuthProvider();
+    provider.setCustomParameters({ prompt: 'select_account' });
+    const credential = await signInWithPopup(this.auth, provider);
+    const idToken = await credential.user.getIdToken();
+    return {
+      idToken,
+      email: credential.user.email || '',
     };
   }
 
