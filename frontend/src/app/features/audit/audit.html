@@ -1,22 +1,12 @@
-<header class="public-header directory-header">
-  <a class="wordmark" routerLink="/workspace">
-    <span class="brand-mark" aria-hidden="true"></span> BizFlow
-  </a>
-  <span class="tenant-badge">{{
-    platform
-      ? ('audit.platformAdmin' | translate: 'Platform administration')
-      : session.identity()?.tenantName
-  }}</span>
-</header>
 <main id="main-content" class="page-content" tabindex="-1">
   <nav aria-label="Breadcrumb">
     <a routerLink="/workspace">{{
       platform
-        ? ('audit.platformHome' | translate: 'Platform home')
-        : ('common.workspace' | translate: 'Workspace')
+        ? ('audit.platformHome' | translate: 'Trang chủ Nền tảng')
+        : ('common.workspace' | translate: 'Không gian làm việc')
     }}</a>
-    /
-    <span>{{ 'audit.breadcrumb' | translate: 'Audit' }}</span>
+    <span aria-hidden="true"> / </span>
+    <span>{{ 'audit.breadcrumb' | translate: 'Kiểm toán' }}</span>
   </nav>
   <h1>
     {{

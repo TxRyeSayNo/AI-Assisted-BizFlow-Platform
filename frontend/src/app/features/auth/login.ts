@@ -348,6 +348,23 @@ export class Login implements OnInit, OnDestroy {
       });
   }
 
+  async signInWithGoogle(): Promise<void> {
+    if (this.busy()) return;
+    if (!this.firebaseAuth.isConfigured()) {
+      this.toastService.info('Tính năng Đăng nhập bằng Google đang được thiết lập kết nối Firebase OAuth.');
+      return;
+    }
+    try {
+      this.busy.set(true);
+      this.toastService.info('Đang kết nối tới Google Sign-In...');
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : 'Đăng nhập Google thất bại';
+      this.toastService.error(msg);
+    } finally {
+      this.busy.set(false);
+    }
+  }
+
   async submitEmailLink(): Promise<void> {
     if (this.busy()) return;
     this.emailForm.markAllAsTouched();
@@ -553,10 +570,19 @@ export class Login implements OnInit, OnDestroy {
             'requests.read.tenant',
             'requests.read.managed',
             'requests.read.own',
+            'requests.create',
+            'requests.update',
             'tasks.read.tenant',
             'tasks.read.managed',
             'tasks.read.own',
             'tasks.read.assigned',
+            'tasks.create',
+            'tasks.assign',
+            'tasks.accept',
+            'tasks.execute',
+            'tasks.submit',
+            'tasks.confirm',
+            'records.search',
             'sla.read',
             'sla.manage',
             'workflows.read',
@@ -564,6 +590,10 @@ export class Login implements OnInit, OnDestroy {
             'audit.read',
             'analytics.read',
             'reports.export',
+            'reports.manager',
+            'reports.company',
+            'reports.workload',
+            'reports.sla',
             'platform.company-registrations.read',
             'platform.company-registrations.review',
           ],

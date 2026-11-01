@@ -31,12 +31,7 @@ import { TranslatePipe } from '../../core/i18n/translate.pipe';
 
         <div class="settings-header">
           <div class="header-content">
-            <div class="eyebrow-badge">
-              <span class="eyebrow">{{
-                'settings.eyebrow' | translate: 'Enterprise Administration'
-              }}</span>
-            </div>
-            <h1>{{ 'settings.title' | translate: 'Company Setup & Configuration' }}</h1>
+            <h1>{{ 'settings.title' | translate: 'Thiết lập & Cấu hình Doanh nghiệp' }}</h1>
             <p class="subtitle">
               {{
                 'settings.subtitle'

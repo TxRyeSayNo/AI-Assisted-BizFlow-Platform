@@ -32,20 +32,25 @@ export interface SlaBreachItem {
 
     <main id="main-content" class="page-content" tabindex="-1">
       <nav aria-label="Breadcrumb">
-        <a routerLink="/workspace">{{ 'common.workspace' | translate: 'Workspace' }}</a> <span aria-hidden="true"> / </span> <span>{{ 'slaMonitor.breadcrumb' | translate: 'SLA Monitor' }}</span>
+        <a routerLink="/workspace">{{ 'common.workspace' | translate: 'Không gian làm việc' }}</a>
+        <span aria-hidden="true"> / </span>
+        <span>{{ 'slaMonitor.breadcrumb' | translate: 'Giám sát SLA' }}</span>
       </nav>
 
       <div class="sla-header">
         <div>
-          <span class="eyebrow">{{ 'slaMonitor.eyebrow' | translate: 'Real-Time Operational Clocks' }}</span>
-          <h1>{{ 'slaMonitor.title' | translate: 'SLA Monitor & Escalation Center' }}</h1>
+          <h1>{{ 'slaMonitor.title' | translate: 'Trung tâm Giám sát SLA & Cảnh báo Leo thang' }}</h1>
           <p class="subtitle">
-            Continuous tracking of delivery deadlines, at-risk work items, and multi-tier escalation thresholds.
+            {{
+              'slaMonitor.subtitle'
+                | translate
+                  : 'Theo dõi liên tục thời hạn bàn giao, các công việc có nguy cơ vi phạm và ngưỡng leo thang đa cấp độ.'
+            }}
           </p>
         </div>
         <div class="header-actions">
           <a mat-stroked-button class="btn-secondary" routerLink="/settings/sla-profiles">
-            Manage SLA Profiles →
+            {{ 'slaMonitor.manageProfiles' | translate: 'Quản lý Hồ sơ SLA →' }}
           </a>
         </div>
       </div>
@@ -100,14 +105,14 @@ export interface SlaBreachItem {
           <table class="sla-table" aria-label="SLA monitored items">
             <thead>
               <tr>
-                <th scope="col">Status</th>
-                <th scope="col">Work Item Title</th>
-                <th scope="col">Type</th>
-                <th scope="col">Current Assignee</th>
-                <th scope="col">SLA Target</th>
-                <th scope="col">Remaining Time</th>
-                <th scope="col">Escalation Tier</th>
-                <th scope="col">Action</th>
+                <th scope="col">TRẠNG THÁI</th>
+                <th scope="col">TIÊU ĐỀ CÔNG VIỆC</th>
+                <th scope="col">LOẠI HÌNH</th>
+                <th scope="col">NGƯỜI XỬ LÝ</th>
+                <th scope="col">MỤC TIÊU SLA</th>
+                <th scope="col">THỜI GIAN CÒN LẠI</th>
+                <th scope="col">CẤP ĐỘ LEO THANG</th>
+                <th scope="col">THAO TÁC</th>
               </tr>
             </thead>
             <tbody>
@@ -115,32 +120,32 @@ export interface SlaBreachItem {
                 <td>
                   <span class="status-chip" [attr.data-status]="item.state">
                     <span *ngIf="item.state === 'OVERDUE'" class="beacon-dot"></span>
-                    {{ item.state }}
+                    {{ item.state === 'OVERDUE' ? 'QUÁ HẠN' : (item.state === 'WARNING' ? 'CẢNH BÁO' : 'TỐI ƯU') }}
                   </span>
                 </td>
                 <td>
                   <strong>{{ item.title }}</strong>
                 </td>
                 <td>
-                  <span class="type-badge">{{ item.type }}</span>
+                  <span class="type-badge">{{ item.type === 'TASK' ? 'NHIỆM VỤ' : 'YÊU CẦU' }}</span>
                 </td>
                 <td>{{ item.assignee }} ({{ item.department }})</td>
                 <td>{{ item.slaProfileName }}</td>
                 <td>
                   <span [ngClass]="item.state === 'OVERDUE' ? 'time-overdue' : 'time-warning'">
-                    {{ item.hoursRemaining < 0 ? (item.hoursRemaining * -1) + 'h overdue' : item.hoursRemaining + 'h left' }}
+                    {{ item.hoursRemaining < 0 ? 'Quá hạn ' + (item.hoursRemaining * -1) + ' giờ' : 'Còn ' + item.hoursRemaining + ' giờ' }}
                   </span>
                 </td>
                 <td class="col-escalation">
                   <span class="escalation-badge">{{ item.escalationLevel }}</span>
                 </td>
                 <td class="col-action">
-                  <a *ngIf="item.type === 'TASK'" [routerLink]="['/tasks', item.id]" class="view-link" title="Open task details">
-                    <span>{{ 'slaMonitor.openTask' | translate: 'Open Task' }}</span>
+                  <a *ngIf="item.type === 'TASK'" [routerLink]="['/tasks', item.id]" class="view-link" title="Mở chi tiết nhiệm vụ">
+                    <span>{{ 'slaMonitor.openTask' | translate: 'Xem Nhiệm vụ' }}</span>
                     <span class="arrow-icon" aria-hidden="true">→</span>
                   </a>
-                  <a *ngIf="item.type === 'REQUEST'" [routerLink]="['/requests', item.id]" class="view-link" title="Open request details">
-                    <span>{{ 'slaMonitor.openRequest' | translate: 'Open Request' }}</span>
+                  <a *ngIf="item.type === 'REQUEST'" [routerLink]="['/requests', item.id]" class="view-link" title="Mở chi tiết yêu cầu">
+                    <span>{{ 'slaMonitor.openRequest' | translate: 'Xem Yêu cầu' }}</span>
                     <span class="arrow-icon" aria-hidden="true">→</span>
                   </a>
                 </td>
@@ -253,53 +258,6 @@ export interface SlaBreachItem {
     .text-danger { color: #dc2626; }
     .text-warning { color: #d97706; }
     .text-navy { color: #0b2a4a; }
-    .live-beacon {
-      position: relative;
-      display: inline-block;
-      width: 9px;
-      height: 9px;
-      background: #059669;
-      border-radius: 50%;
-      box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.95), 0 0 4px #059669;
-
-      &::after {
-        content: '';
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        width: 9px;
-        height: 9px;
-        border-radius: 50%;
-        border: 2px solid #059669;
-        box-shadow: 0 0 8px #059669;
-        pointer-events: none;
-        animation: status-pulse-ring-expand 1.5s cubic-bezier(0.1, 0.7, 0.1, 1) infinite;
-      }
-    }
-
-    .pulse-beacon {
-      position: relative;
-      display: inline-block;
-      width: 9px;
-      height: 9px;
-      background: #dc2626;
-      border-radius: 50%;
-      box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.95), 0 0 5px #dc2626;
-
-      &::after {
-        content: '';
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        width: 9px;
-        height: 9px;
-        border-radius: 50%;
-        border: 2px solid #dc2626;
-        box-shadow: 0 0 8px #dc2626;
-        pointer-events: none;
-        animation: status-pulse-ring-expand 1.1s cubic-bezier(0.1, 0.7, 0.1, 1) infinite;
-      }
-    }
     .panel-header-row {
       display: flex;
       justify-content: space-between;
@@ -502,38 +460,38 @@ export class SlaMonitor implements OnInit {
       {
         id: 't-101',
         type: 'TASK',
-        title: 'Emergency Server Firmware Vulnerability Patch',
+        title: 'Vá lỗ hổng Firmware máy chủ khẩn cấp',
         assignee: 'Alex Morgan',
-        department: 'Infrastructure',
+        department: 'Hạ tầng kỹ thuật',
         deadline: new Date(Date.now() - 3600000 * 5).toISOString(),
-        slaProfileName: 'Critical Incident (4h)',
+        slaProfileName: 'Sự cố Khẩn cấp (4h)',
         state: 'OVERDUE',
         hoursRemaining: -5,
-        escalationLevel: 'Tier 2 · Manager Escalation'
+        escalationLevel: 'Cấp 2 · Báo cáo Quản lý'
       },
       {
         id: 'r-204',
         type: 'REQUEST',
-        title: 'New Executive Security Clearance & Badge Provisioning',
-        assignee: 'Security Office',
-        department: 'Corporate Security',
+        title: 'Cấp thẻ & quyền truy cập an ninh Ban điều hành',
+        assignee: 'Bộ phận An ninh',
+        department: 'An ninh Doanh nghiệp',
         deadline: new Date(Date.now() + 3600000 * 2.5).toISOString(),
-        slaProfileName: 'Security Access (24h)',
+        slaProfileName: 'Truy cập An ninh (24h)',
         state: 'WARNING',
         hoursRemaining: 2.5,
-        escalationLevel: 'Tier 1 · Warning'
+        escalationLevel: 'Cấp 1 · Cảnh báo'
       },
       {
         id: 't-108',
         type: 'TASK',
-        title: 'Financial Q3 Closing Ledger Entry Audit',
-        assignee: 'Nguyen Van A',
-        department: 'Finance',
+        title: 'Soát xét & Kiểm toán sổ cái đóng quý 3 Phòng Tài chính',
+        assignee: 'Nguyễn Văn A',
+        department: 'Ban Tài chính',
         deadline: new Date(Date.now() + 3600000 * 3.8).toISOString(),
-        slaProfileName: 'Financial Review (72h)',
+        slaProfileName: 'Soát xét Tài chính (72h)',
         state: 'WARNING',
         hoursRemaining: 3.8,
-        escalationLevel: 'Tier 1 · Warning'
+        escalationLevel: 'Cấp 1 · Cảnh báo'
       }
     ]);
   }

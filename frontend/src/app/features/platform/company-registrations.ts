@@ -65,10 +65,7 @@ interface RegistrationPage {
     </header>
 
     <main id="main-content" class="page-content" tabindex="-1">
-      <span class="eyebrow">{{
-        'platform.eyebrow' | translate: 'Enterprise Tenancy Operations'
-      }}</span>
-      <h1>{{ 'platform.title' | translate: 'Company Registrations & Provisioning' }}</h1>
+      <h1>{{ 'platform.title' | translate: 'Quản lý Đăng ký & Cung cấp Doanh nghiệp' }}</h1>
       <p>
         {{
           'platform.subtitle'

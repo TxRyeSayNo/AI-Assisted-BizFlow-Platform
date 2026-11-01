@@ -29,18 +29,6 @@
       </div>
 
       <div class="topbar-right">
-        <!-- AI Assistant Action Button -->
-        <button
-          type="button"
-          class="ai-trigger-btn"
-          (click)="openAiAgent()"
-          title="Mở Trợ lý AI Agent"
-          aria-label="Mở Trợ lý AI Agent"
-        >
-          <span class="sparkle" aria-hidden="true">✦</span>
-          <span>AI Agent</span>
-        </button>
-
         <!-- Notification Bell -->
         <a
           routerLink="/notifications"
@@ -65,7 +53,7 @@
             <span class="user-avatar" aria-hidden="true">{{ userInitials() }}</span>
           }
           <div class="user-meta">
-            <span class="user-name">{{ identity()?.fullName || 'Administrator' }}</span>
+            <span class="user-name">{{ welcomeName() }}</span>
             <span class="user-role">{{ currentRoleLabel() }}</span>
           </div>
         </div>
@@ -85,8 +73,19 @@
 
     <!-- Main Shell with Left Sidebar & Viewport -->
     <div class="app-body-layout">
-      <!-- Left Distinct Light-Ocean Sidebar with Icons, Visible Labels, and Luminous Active Border -->
-      <aside class="app-sidebar" aria-label="Primary navigation">
+      <!-- Left Distinct Light-Ocean Sidebar with Resizable Width and Luminous Moving Border -->
+      <aside
+        class="app-sidebar"
+        [style.width.px]="sidebarWidth()"
+        aria-label="Primary navigation"
+      >
+        <!-- Interactive Resizer Handle (Allows adjusting between 230px and 320px) -->
+        <div
+          class="sidebar-resizer"
+          (mousedown)="onStartResize($event)"
+          title="Kéo sang trái/phải để điều chỉnh độ rộng menu"
+          aria-hidden="true"
+        ></div>
         <nav class="sidebar-nav" aria-label="Main application">
           @if (identity()?.tenantId) {
             <!-- 1. Home / Dashboard -->

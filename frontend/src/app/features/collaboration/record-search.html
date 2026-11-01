@@ -1,18 +1,10 @@
-<header class="public-header directory-header">
-  <a class="wordmark" routerLink="/workspace">
-    <span class="brand-mark" aria-hidden="true"></span> BizFlow
-  </a>
-  <span class="tenant-badge">{{ session.identity()?.tenantName }}</span>
-</header>
-
 <main id="main-content" class="page-content" tabindex="-1">
   <nav aria-label="Breadcrumb">
-    <a routerLink="/workspace">{{ 'common.workspace' | translate: 'Workspace' }}</a>
+    <a routerLink="/workspace">{{ 'common.workspace' | translate: 'Không gian làm việc' }}</a>
     <span aria-hidden="true"> / </span>
-    <span>{{ 'search.breadcrumb' | translate: 'Unified Record Search' }}</span>
+    <span>{{ 'search.breadcrumb' | translate: 'Tra cứu Hồ sơ Hợp nhất' }}</span>
   </nav>
 
-  <span class="eyebrow">{{ 'search.eyebrow' | translate: 'Enterprise Intelligence' }}</span>
   <div class="search-header-row">
     <h1>{{ 'search.title' | translate: 'Search Records' }}</h1>
   </div>

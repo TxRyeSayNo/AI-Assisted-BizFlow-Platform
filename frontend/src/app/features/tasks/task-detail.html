@@ -4,10 +4,6 @@
   </a>
 </header>
 <main id="main-content" class="page-content" tabindex="-1" [attr.aria-busy]="busy()">
-  <nav aria-label="Breadcrumb">
-    <a routerLink="/tasks">{{ 'tasks.title' | translate: 'Tasks' }}</a> /
-    {{ 'taskDetail.breadcrumb' | translate: 'Task details' }}
-  </nav>
   @if (busy()) {
     <p role="status">{{ 'taskDetail.loading' | translate: 'Loading task…' }}</p>
   }
@@ -16,55 +12,70 @@
     <button mat-stroked-button (click)="load()">{{ 'common.retry' | translate: 'Retry' }}</button>
   }
   @if (data(); as detail) {
-    <span class="eyebrow">{{ 'tasks.eyebrow' | translate: 'Work management' }}</span>
-    <h1>{{ detail.task.title }}</h1>
-    @if (canStart()) {
-      <button mat-flat-button type="button" (click)="start()">
-        {{
-          detail.task.status === 'OVERDUE'
-            ? 'Resume work'
-            : ('taskDetail.startWorkBtn' | translate: 'Start work')
-        }}
-      </button>
-    }
-    @if (canSubmit()) {
-      <button mat-flat-button type="button" (click)="submit()">
-        {{ 'taskDetail.submitResultBtn' | translate: 'Submit result' }}
-      </button>
-    }
-    @if (canConfirm()) {
-      <button mat-flat-button type="button" (click)="confirm()">
-        {{ 'tasks.confirmTask' | translate: 'Review result' }}
-      </button>
-    }
-    @if (canAccept()) {
-      <button mat-flat-button type="button" (click)="accept()">
-        {{ 'taskDetail.acceptBtn' | translate: 'Accept task' }}
-      </button>
-    }
-    @if (
-      session.hasPermission('tasks.assign') &&
-      (detail.task.status === 'DRAFT' || detail.task.status === 'REJECTED')
-    ) {
-      <button mat-flat-button type="button" (click)="assign()">
-        {{ 'taskDetail.assignBtn' | translate: 'Assign task' }}
-      </button>
-    }
-    @if (canArchive()) {
-      <button
-        mat-stroked-button
-        color="warn"
-        type="button"
-        (click)="archive()"
-        [disabled]="archiving"
-      >
-        {{
-          archiving
-            ? ('taskDetail.archivingBtn' | translate: 'Archiving…')
-            : ('taskDetail.archiveBtn' | translate: 'Archive task')
-        }}
-      </button>
-    }
+    <div class="task-page-header">
+      <nav aria-label="Breadcrumb" class="compact-breadcrumb">
+        <a routerLink="/tasks">{{ 'tasks.title' | translate: 'Tasks' }}</a>
+        <span aria-hidden="true" class="sep">/</span>
+        <span class="breadcrumb-current">{{ 'taskDetail.breadcrumb' | translate: 'Task details' }}</span>
+      </nav>
+      <div class="task-header-row">
+        <div class="header-titles">
+          <h1 class="task-header-title">{{ detail.task.title }}</h1>
+        </div>
+        <div class="task-nav-container" aria-label="Task actions">
+          <a routerLink="/tasks" class="task-nav-btn" [title]="'taskCreate.backToTasks' | translate: 'Back to tasks'">
+            <span>← {{ 'taskCreate.backToTasks' | translate: 'Back to tasks' }}</span>
+          </a>
+          @if (canStart()) {
+            <button mat-flat-button color="primary" type="button" (click)="start()">
+              {{
+                detail.task.status === 'OVERDUE'
+                  ? 'Resume work'
+                  : ('taskDetail.startWorkBtn' | translate: 'Start work')
+              }}
+            </button>
+          }
+          @if (canSubmit()) {
+            <button mat-flat-button color="primary" type="button" (click)="submit()">
+              {{ 'taskDetail.submitResultBtn' | translate: 'Submit result' }}
+            </button>
+          }
+          @if (canConfirm()) {
+            <button mat-flat-button color="primary" type="button" (click)="confirm()">
+              {{ 'tasks.confirmTask' | translate: 'Review result' }}
+            </button>
+          }
+          @if (canAccept()) {
+            <button mat-flat-button color="primary" type="button" (click)="accept()">
+              {{ 'taskDetail.acceptBtn' | translate: 'Accept task' }}
+            </button>
+          }
+          @if (
+            session.hasPermission('tasks.assign') &&
+            (detail.task.status === 'DRAFT' || detail.task.status === 'REJECTED')
+          ) {
+            <button mat-flat-button color="primary" type="button" (click)="assign()">
+              {{ 'taskDetail.assignBtn' | translate: 'Assign task' }}
+            </button>
+          }
+          @if (canArchive()) {
+            <button
+              mat-stroked-button
+              color="warn"
+              type="button"
+              (click)="archive()"
+              [disabled]="archiving"
+            >
+              {{
+                archiving
+                  ? ('taskDetail.archivingBtn' | translate: 'Archiving…')
+                  : ('taskDetail.archiveBtn' | translate: 'Archive task')
+              }}
+            </button>
+          }
+        </div>
+      </div>
+    </div>
     <section class="directory-panel detail-section" aria-label="Task summary">
       <dl>
         <dt>{{ 'common.status' | translate: 'Status' }}</dt>

@@ -1,14 +1,71 @@
 /* ==========================================================================
-   BIZFLOW AUTHENTICATION — UNIFIED PREMIUM OCEAN BLUE DESIGN SYSTEM
-   Harmonized with Theme Pack 164 (GRID) & Apple/Emil Design Engineering:
-   - Deep Ocean & Primary Azure palette (#071b33, #0b2a4a, #145da0, #2563eb)
-   - Crisp translucent white card surface with layered ambient elevation
-   - Custom spring-inspired cubic-bezier(0.16, 1, 0.3, 1) curves
-   - Tactile active press feedback (scale(0.98)) and reduced-motion support
+   BIZFLOW AUTHENTICATION — REFINED WHITE & LIGHT OCEAN BLUE THEME (Requirement 3 & 4)
    ========================================================================== */
+
+@property --border-angle {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
+}
+
+@keyframes rotate-border-angle {
+  0% {
+    --border-angle: 0deg;
+  }
+  100% {
+    --border-angle: 360deg;
+  }
+}
+
+@keyframes rotate-login-border {
+  0% {
+    transform: translate(-50%, -50%) rotate(0deg);
+  }
+  100% {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
+}
 
 :host {
   display: block;
+}
+
+.animated-border-wrapper {
+  width: 100%;
+  position: relative;
+  border-radius: 22px;
+  padding: 2.5px; /* Thin, elegant 2.5px rotating border */
+  overflow: hidden;
+  box-shadow: 
+    0 20px 50px -10px rgba(23, 67, 111, 0.14),
+    0 8px 24px -4px rgba(40, 116, 216, 0.1);
+
+  /* Continuous Moving Gradient Border around the outer login container */
+  &::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 260%;
+    height: 260%;
+    transform: translate(-50%, -50%) rotate(0deg);
+    transform-origin: center center;
+    background: conic-gradient(
+      from 0deg,
+      #2874D8 0deg,
+      #65AFFF 60deg,
+      #C8E3FF 120deg,
+      #FFFFFF 180deg,
+      #C8E3FF 240deg,
+      #65AFFF 300deg,
+      #2874D8 360deg
+    );
+    animation: rotate-login-border 3.5s linear infinite !important;
+    animation-duration: 3.5s !important;
+    animation-iteration-count: infinite !important;
+    pointer-events: none;
+    z-index: 0;
+  }
 }
 
 .auth-page-clean {
@@ -158,7 +215,7 @@ form {
 /* Material Form Field Customization for Ocean Blue Theme */
 mat-form-field {
   width: 100%;
-  margin-bottom: 1rem;
+  margin-bottom: 0.25rem;
 
   --mdc-outlined-text-field-container-shape: 12px;
   --mdc-outlined-text-field-focus-outline-color: #2563eb;
@@ -169,6 +226,7 @@ mat-form-field {
   --mdc-outlined-text-field-input-text-color: #071b33;
 
   .mat-mdc-text-field-wrapper {
+    min-height: 52px !important;
     background-color: #f8fbff !important;
     border-radius: 12px !important;
     transition:
@@ -183,13 +241,18 @@ mat-form-field {
 
   input.mat-mdc-input-element {
     color: #071b33 !important;
-    font-size: 0.925rem !important;
+    font-size: 1.05rem !important;
     font-weight: 500 !important;
 
     &::placeholder {
       color: #94a3b8 !important;
+      font-size: 1rem !important;
       font-weight: 400;
     }
+  }
+
+  mat-label {
+    font-size: 1.025rem !important;
   }
 }
 

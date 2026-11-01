@@ -61,16 +61,42 @@ export class SessionService {
 
   constructor() {
     if (typeof window !== 'undefined') {
+      try {
+        const stored = sessionStorage.getItem('bizflow_session');
+        if (stored) {
+          const parsed = JSON.parse(stored) as LoginResponse;
+          if (parsed && parsed.session) {
+            this.response.set(parsed);
+          }
+        }
+      } catch {
+        // Safe guard
+      }
       (
         window as unknown as { __bizflow_set_session?: (res: LoginResponse) => void }
       ).__bizflow_set_session = (res) => {
-        this.response.set(res);
+        this.saveSession(res);
       };
     }
   }
 
-  setSessionForTesting(res: LoginResponse): void {
+  private saveSession(res: LoginResponse | null): void {
     this.response.set(res);
+    try {
+      if (typeof window !== 'undefined') {
+        if (res) {
+          sessionStorage.setItem('bizflow_session', JSON.stringify(res));
+        } else {
+          sessionStorage.removeItem('bizflow_session');
+        }
+      }
+    } catch {
+      // Safe guard
+    }
+  }
+
+  setSessionForTesting(res: LoginResponse): void {
+    this.saveSession(res);
   }
 
   // Credentials and tokens stay in memory; never persist them in web storage.
@@ -87,7 +113,7 @@ export class SessionService {
       }
       return this.http.post<LoginResponse>('/api/v1/auth/login', payload).pipe(
         tap((response) => {
-          if (generation === this.generation) this.response.set(response);
+          if (generation === this.generation) this.saveSession(response);
         }),
       );
     });
@@ -113,7 +139,7 @@ export class SessionService {
               res.authentication &&
               generation === this.generation
             ) {
-              this.response.set(res.authentication);
+              this.saveSession(res.authentication);
             }
           }),
         );
@@ -133,7 +159,7 @@ export class SessionService {
               res.authentication &&
               generation === this.generation
             ) {
-              this.response.set(res.authentication);
+              this.saveSession(res.authentication);
             }
           }),
         );
@@ -148,7 +174,7 @@ export class SessionService {
         .post<LoginResponse>('/api/v1/auth/email-link/select-workspace', { ticket, tenantKey })
         .pipe(
           tap((res) => {
-            if (generation === this.generation) this.response.set(res);
+            if (generation === this.generation) this.saveSession(res);
           }),
         );
     });
@@ -172,7 +198,7 @@ export class SessionService {
 
   clear(): void {
     this.generation++;
-    this.response.set(null);
+    this.saveSession(null);
     this.refreshRequest = null;
     try {
       sessionStorage.removeItem('bizflow_robot_dismissed');
@@ -191,7 +217,7 @@ export class SessionService {
       .pipe(
         tap((response) => {
           if (generation !== this.generation) throw new Error('The session changed.');
-          this.response.set(response);
+          this.saveSession(response);
         }),
         catchError((error: unknown) => {
           if (generation === this.generation) this.clear();

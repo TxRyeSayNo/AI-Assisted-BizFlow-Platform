@@ -21,39 +21,41 @@
 }
 
 /* ==========================================================================
-   TOP APPLICATION BAR & RESTORED ORIGINAL LOGO
+   TOP APPLICATION BAR & RESTORED ORIGINAL LOGO (Requirement 1: 76-88px Height)
    ========================================================================== */
 .app-topbar {
-  height: 56px;
+  height: 80px;
   flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 1.25rem;
+  padding: 0 2rem;
   background: rgba(255, 255, 255, 0.98);
-  backdrop-filter: blur(12px);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   border-bottom: 1px solid #dfe8f2;
   position: sticky;
   top: 0;
   z-index: 1000;
-  box-shadow: 0 1px 3px rgba(7, 27, 51, 0.03);
+  box-shadow: 0 2px 8px rgba(7, 27, 51, 0.04);
+  transition: height 0.2s ease, padding 0.2s ease;
 }
 
 .topbar-left {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 1.25rem;
 }
 
 .wordmark {
   display: inline-flex;
   align-items: center;
-  gap: 0.65rem;
+  gap: 0.85rem;
   font-weight: 800;
-  font-size: 1.2rem;
+  font-size: 1.4rem;
   color: #071b33;
   text-decoration: none;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.025em;
 
   &::before {
     content: none !important;
@@ -65,16 +67,16 @@
   }
 }
 
-/* Original BizFlow Circular Emblem Logo */
+/* Original BizFlow Circular Emblem Logo scaled comfortably */
 .brand-logo-img,
 .brand-mark {
-  width: 34px !important;
-  height: 34px !important;
+  width: 44px !important;
+  height: 44px !important;
   object-fit: contain !important;
   border-radius: 50% !important;
   flex-shrink: 0;
   vertical-align: middle;
-  filter: drop-shadow(0 2px 6px rgba(37, 99, 235, 0.25));
+  filter: drop-shadow(0 2px 8px rgba(37, 99, 235, 0.28));
   transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -92,9 +94,9 @@
   background: #eaf4ff;
   color: #145da0;
   border: 1px solid #bfdbfe;
-  padding: 0.2rem 0.65rem;
+  padding: 0.35rem 0.95rem;
   border-radius: 9999px;
-  font-size: 0.78rem;
+  font-size: 0.85rem;
   font-weight: 600;
   letter-spacing: 0.01em;
 }
@@ -103,19 +105,20 @@
 .topbar-right {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 1.15rem;
 }
 
 .ai-trigger-btn {
   display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
+  gap: 0.45rem;
   background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%);
   color: #ffffff;
   border: 1px solid rgba(255, 255, 255, 0.2);
-  padding: 0.38rem 0.85rem;
-  border-radius: 8px;
-  font-size: 0.8125rem;
+  padding: 0.5rem 1rem;
+  min-height: 44px;
+  border-radius: 10px;
+  font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;
   box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25);
@@ -123,12 +126,12 @@
 
   .sparkle {
     color: #93c5fd;
-    font-size: 0.9rem;
+    font-size: 1rem;
   }
 
   &:hover {
     background: linear-gradient(135deg, #1e40af 0%, #1d4ed8 100%);
-    box-shadow: 0 4px 10px rgba(37, 99, 235, 0.35);
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.38);
     transform: translateY(-1px);
   }
 
@@ -141,92 +144,108 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
-  border-radius: 8px;
-  border: 1px solid #dfe8f2;
+  width: 46px;
+  height: 46px;
+  border-radius: 12px;
+  border: 1.5px solid #dfe8f2;
   background: #ffffff;
   color: #475569;
   text-decoration: none;
   position: relative;
-  font-size: 1rem;
-  transition: all 0.15s ease;
+  font-size: 1.25rem;
+  transition: all 0.16s ease;
+  box-shadow: 0 1px 3px rgba(7, 27, 51, 0.04);
 
   &:hover {
     background: #f1f5f9;
     border-color: #cbd5e1;
     color: #0f172a;
     text-decoration: none;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(7, 27, 51, 0.08);
+  }
+
+  &:active {
+    transform: scale(0.96);
   }
 
   .unread-dot {
     position: absolute;
-    top: 6px;
-    right: 6px;
-    width: 7px;
-    height: 7px;
+    top: 8px;
+    right: 8px;
+    width: 9px;
+    height: 9px;
     background: #2563eb;
     border-radius: 50%;
-    border: 1.5px solid #ffffff;
+    border: 2px solid #ffffff;
   }
 }
 
 .user-chip {
   display: flex;
   align-items: center;
-  gap: 0.6rem;
-  background: #f8fafd;
-  border: 1px solid #dfe8f2;
-  padding: 0.25rem 0.75rem 0.25rem 0.35rem;
+  gap: 0.75rem;
+  background: #ffffff;
+  border: 1.5px solid #dfe8f2;
+  padding: 0.35rem 1rem 0.35rem 0.45rem;
   border-radius: 9999px;
   cursor: default;
+  box-shadow: 0 1px 4px rgba(7, 27, 51, 0.04);
+  transition: border-color 0.16s ease, box-shadow 0.16s ease;
+
+  &:hover {
+    border-color: #bfdbfe;
+    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.08);
+  }
 }
 
 .user-avatar-img {
-  width: 32px;
-  height: 32px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   object-fit: cover;
-  border: 1.5px solid #bfdbfe;
+  border: 2px solid #bfdbfe;
   background: #eaf4ff;
   display: block;
   flex-shrink: 0;
 }
 
 .user-avatar {
-  width: 32px;
-  height: 32px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
-  background: #0b2a4a;
+  background: linear-gradient(135deg, #0b2a4a 0%, #164dbb 100%);
   color: #ffffff;
   display: grid;
   place-items: center;
-  font-size: 0.75rem;
+  font-size: 0.95rem;
   font-weight: 700;
   letter-spacing: 0.02em;
   flex-shrink: 0;
+  box-shadow: 0 2px 6px rgba(11, 42, 74, 0.2);
 }
 
 .user-meta {
   display: flex;
   flex-direction: column;
-  line-height: 1.2;
+  line-height: 1.25;
 }
 
 .user-name {
-  font-size: 0.8125rem;
-  font-weight: 600;
+  font-size: 0.9375rem;
+  font-weight: 700;
   color: #071b33;
-  max-width: 9rem;
+  max-width: 12rem;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .user-role {
-  font-size: 0.7rem;
+  font-size: 0.78rem;
+  font-weight: 500;
   color: #63758b;
-  max-width: 9rem;
+  max-width: 12rem;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -234,19 +253,30 @@
 
 .btn-signout {
   background: #ffffff;
-  border: 1px solid #dfe8f2;
+  border: 1.5px solid #dfe8f2;
   color: #63758b;
-  font-size: 0.8125rem;
+  font-size: 0.925rem;
   font-weight: 600;
-  padding: 0.38rem 0.75rem;
-  border-radius: 8px;
+  padding: 0.55rem 1.15rem;
+  min-height: 44px;
+  border-radius: 11px;
   cursor: pointer;
-  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.16s ease;
+  box-shadow: 0 1px 3px rgba(7, 27, 51, 0.04);
 
   &:hover {
     background: #fee2e2;
     color: #b91c1c;
     border-color: #fca5a5;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(185, 28, 28, 0.12);
+  }
+
+  &:active {
+    transform: scale(0.97);
   }
 }
 
@@ -256,12 +286,14 @@
 .app-body-layout {
   display: flex;
   flex: 1;
-  min-height: calc(100vh - 56px);
+  min-height: calc(100vh - 80px);
   position: relative;
 }
 
 .app-sidebar {
-  width: 230px;
+  width: 260px;
+  min-width: 230px;
+  max-width: 320px;
   flex-shrink: 0;
   /* Pristine light white-ocean background matching the login screen */
   background: 
@@ -273,8 +305,8 @@
   flex-direction: column;
   padding: 1rem 0;
   position: sticky;
-  top: 56px;
-  height: calc(100vh - 56px);
+  top: 80px;
+  height: calc(100vh - 80px);
   overflow-y: auto;
   overflow-x: hidden;
   z-index: 100;
@@ -295,6 +327,30 @@
   }
 }
 
+.sidebar-resizer {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 6px;
+  height: 100%;
+  cursor: col-resize;
+  z-index: 110;
+  user-select: none;
+  transition: background-color 150ms ease;
+  &:hover, &:active {
+    background-color: #2563eb;
+  }
+}
+
+@keyframes rotate-luminous-beam {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
 .sidebar-nav {
   display: flex;
   flex-direction: column;
@@ -306,27 +362,29 @@
   position: relative;
   display: flex;
   align-items: center;
-  gap: 0.85rem;
-  padding: 0.65rem 0.95rem;
-  margin: 0.15rem 0.75rem;
-  border-radius: 10px;
+  gap: 1rem;
+  padding: 0.75rem 1.15rem;
+  min-height: 48px;
+  margin: 0.22rem 0.75rem;
+  border-radius: 12px;
   color: #1e3a5f;
   text-decoration: none;
-  font-size: 0.875rem;
-  font-weight: 550;
-  letter-spacing: 0.01em;
+  font-size: 1.05rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
   background: transparent;
-  border: 1px solid transparent;
+  border: 1.5px solid transparent;
   box-sizing: border-box;
   overflow: hidden;
+  z-index: 0;
   transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
 
   .nav-icon {
-    width: 20px;
-    height: 20px;
+    width: 23px !important;
+    height: 23px !important;
     flex-shrink: 0;
     stroke: #2563eb;
-    stroke-width: 1.9;
+    stroke-width: 2.1;
     position: relative;
     z-index: 3;
     transition: transform 0.2s ease, stroke 0.2s ease;
@@ -337,26 +395,28 @@
     overflow: hidden;
     text-overflow: ellipsis;
     color: #1e3a5f;
+    font-size: 1.05rem;
+    font-weight: 600;
     position: relative;
     z-index: 3;
     transition: color 0.18s ease;
   }
 
   &:hover:not(.active) {
-    background: rgba(255, 255, 255, 0.88);
-    border-color: rgba(191, 219, 254, 0.85);
     color: #0d47a1;
-    box-shadow: 0 3px 10px rgba(37, 99, 235, 0.09);
-    transform: translateX(2px);
+    border-color: #bfdbfe;
+    background: #ffffff;
+    box-shadow: 0 4px 14px rgba(37, 99, 235, 0.16);
+    transform: translateX(3px);
 
     .nav-icon {
       stroke: #1d4ed8;
-      transform: scale(1.06);
+      transform: scale(1.08);
     }
 
     .nav-label {
       color: #0d47a1;
-      font-weight: 600;
+      font-weight: 700;
     }
   }
 
@@ -364,72 +424,66 @@
     transform: scale(0.98);
   }
 
-  /* Active Navigation State: Rich Blue Fill with Continuous Rotating Conic Gradient Luminous Border */
+  /* Active Navigation State: Continuous Auto-Running Luminous Border */
   &.active {
-    background: transparent;
     color: #ffffff;
-    font-weight: 600;
-    border-color: transparent;
+    font-weight: 700;
+    border: 1.5px solid transparent;
     box-shadow: 
-      0 6px 20px -3px rgba(36, 120, 242, 0.45),
-      0 2px 8px -2px rgba(18, 60, 118, 0.22),
-      0 0 16px rgba(0, 212, 255, 0.32);
+      0 4px 18px rgba(36, 120, 242, 0.45),
+      0 2px 8px rgba(18, 60, 118, 0.22);
 
-    /* Continuous Rotating Conic Gradient Border matching the Login card/button */
     &::before {
       content: '';
       position: absolute;
       top: 50%;
       left: 50%;
-      width: 280px;
-      height: 280px;
+      width: 520px;
+      height: 520px;
+      margin: -260px 0 0 -260px;
       background: conic-gradient(
         from 0deg,
         transparent 0deg,
-        #124cc4 40deg,
-        #2478f2 90deg,
-        #00d4ff 135deg,
-        #ffffff 165deg,
-        #00d4ff 195deg,
-        #2478f2 240deg,
-        #124cc4 290deg,
-        transparent 340deg,
-        transparent 360deg
+        transparent 200deg,
+        rgba(37, 99, 235, 0.25) 240deg,
+        rgba(56, 189, 248, 0.8) 290deg,
+        rgba(255, 255, 255, 1) 345deg,
+        #ffffff 360deg
       );
-      animation: rotate-sidebar-luminous-border 3.6s linear infinite;
+      animation: rotate-luminous-beam 2.8s linear infinite !important;
+      animation-duration: 2.8s !important;
+      animation-iteration-count: infinite !important;
+      z-index: -2;
       pointer-events: none;
-      z-index: 1;
     }
 
-    /* Solid Rich Blue Inner Background revealing precisely 2px of rotating border */
     &::after {
       content: '';
       position: absolute;
-      inset: 2px;
+      inset: 1.5px;
       background: linear-gradient(135deg, #0e44b8 0%, #1e6beb 52%, #2478f2 100%);
-      border-radius: 8px;
-      z-index: 2;
+      border-radius: 10.5px;
+      z-index: -1;
       pointer-events: none;
     }
 
     .nav-icon {
       stroke: #ffffff;
-      stroke-width: 2.2;
+      stroke-width: 2.3;
       filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.25));
     }
 
     .nav-label {
       color: #ffffff;
-      font-weight: 650;
+      font-weight: 700;
       text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
     }
 
     &:hover {
       transform: translateY(-1px) scale(1.01);
       box-shadow: 
-        0 8px 24px -2px rgba(36, 120, 242, 0.55),
-        0 2px 10px rgba(18, 60, 118, 0.3),
-        0 0 22px rgba(0, 212, 255, 0.45);
+        0 6px 22px rgba(36, 120, 242, 0.55),
+        0 2px 8px rgba(18, 60, 118, 0.28);
     }
   }
 
@@ -441,10 +495,10 @@
 
 @keyframes rotate-sidebar-luminous-border {
   0% {
-    transform: translate(-50%, -50%) rotate(0deg);
+    transform: rotate(0deg);
   }
   100% {
-    transform: translate(-50%, -50%) rotate(360deg);
+    transform: rotate(360deg);
   }
 }
 
@@ -461,7 +515,37 @@
    ========================================================================== */
 @media (max-width: 768px) {
   .app-topbar {
-    padding: 0 0.75rem;
+    height: 68px;
+    padding: 0 1rem;
+  }
+
+  .wordmark {
+    font-size: 1.25rem;
+    gap: 0.65rem;
+  }
+
+  .brand-logo-img,
+  .brand-mark {
+    width: 38px !important;
+    height: 38px !important;
+  }
+
+  .notify-btn {
+    width: 40px;
+    height: 40px;
+    font-size: 1.1rem;
+  }
+
+  .user-avatar-img,
+  .user-avatar {
+    width: 36px;
+    height: 36px;
+  }
+
+  .btn-signout {
+    min-height: 38px;
+    padding: 0.4rem 0.85rem;
+    font-size: 0.85rem;
   }
 
   .user-meta {

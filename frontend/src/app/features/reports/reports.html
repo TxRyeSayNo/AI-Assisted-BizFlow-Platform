@@ -1,16 +1,9 @@
-<header class="public-header directory-header">
-  <a class="wordmark" routerLink="/workspace">
-    <span class="brand-mark" aria-hidden="true"></span> BizFlow
-  </a>
-  <span class="tenant-badge">{{ session.identity()?.tenantName }}</span>
-</header>
 <main id="main-content" class="page-content reports-container" tabindex="-1">
   <nav aria-label="Breadcrumb">
-    <a routerLink="/workspace">{{ 'common.workspace' | translate: 'Workspace' }}</a
-    ><span aria-hidden="true"> / </span
-    ><span>{{ 'reports.breadcrumb' | translate: 'Reports' }}</span>
+    <a routerLink="/workspace">{{ 'common.workspace' | translate: 'Không gian làm việc' }}</a>
+    <span aria-hidden="true"> / </span>
+    <span>{{ 'reports.breadcrumb' | translate: 'Báo cáo & Phân tích' }}</span>
   </nav>
-  <span class="eyebrow">{{ 'reports.eyebrow' | translate: 'Executive Intelligence' }}</span>
   <div class="page-header">
     <div class="header-titles">
       <h2>{{ 'reports.title' | translate: 'Dashboard & Reports' }}</h2>
