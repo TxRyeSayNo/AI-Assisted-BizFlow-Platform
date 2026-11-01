@@ -117,6 +117,17 @@
 
         <!-- TAB 1: CONVERSATION CHAT VIEW -->
         @if (activeTab() === 'chat') {
+          @if (branches().length > 0) {
+            <div class="active-branches-banner" (click)="openBranchModal()" role="button" tabindex="0">
+              <div class="branches-banner-left">
+                <span class="leaf-icon">🌿</span>
+                <span class="banner-text">Đang có <strong>{{ branches().length }} nhánh công việc</strong> đề xuất</span>
+              </div>
+              <button type="button" class="btn-open-modal-chip">
+                Mở phân nhánh →
+              </button>
+            </div>
+          }
           <!-- Single Coherent Conversation Thread -->
           <div class="chat-body" #chatBody>
             @for (msg of messages(); track msg.id) {
@@ -186,7 +197,9 @@
           </div>
         }
 
-        <!-- TAB 2: CHAT HISTORY SCREEN (Lưu và quản lý các phiên trò chuyện) -->
+
+
+        <!-- TAB 3: CHAT HISTORY SCREEN (Lưu và quản lý các phiên trò chuyện) -->
         @if (activeTab() === 'history') {
           <div class="history-screen-body">
             <div class="history-header">
@@ -265,4 +278,348 @@
       </div>
     }
   </aside>
+
+  <!-- ========================================================================
+       DEDICATED BRANCHING WORKSPACE MODAL (CENTER SCREEN NEXT TO CHAT)
+       ======================================================================== -->
+  @if (isBranchModalOpen()) {
+    <div class="branch-modal-overlay" (click)="closeBranchModal()">
+      <div
+        class="branch-modal-dialog"
+        (click)="$event.stopPropagation()"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="branch-modal-title"
+      >
+        <!-- MODAL HEADER -->
+        <div class="branch-modal-header">
+          <div class="modal-header-left">
+            <div class="modal-icon-badge" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="header-svg">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/>
+              </svg>
+            </div>
+            <div>
+              <h3 id="branch-modal-title" class="modal-title">Không gian Phân rã Nhiệm vụ AI</h3>
+              <p class="modal-subtitle">Bóc tách kế hoạch thành các nhánh công việc độc lập theo từng phòng ban</p>
+            </div>
+          </div>
+
+          <div class="modal-header-right">
+            <span class="branches-count-chip">
+              <span class="chip-spark" aria-hidden="true">✦</span> {{ branches().length }} nhánh nhiệm vụ
+            </span>
+            <button
+              type="button"
+              class="btn-close-modal"
+              (click)="closeBranchModal()"
+              title="Đóng không gian phân nhánh"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+
+        <!-- MODAL BODY -->
+        <div class="branch-modal-body">
+          <!-- SCREEN 2A: BRANCH OVERVIEW SCREEN -->
+          @if (!selectedBranch()) {
+            <div class="branch-overview-screen">
+              <div class="branch-overview-header">
+                <div class="overview-title-group">
+                  <h4 class="overview-title">
+                    Danh sách các nhánh nhiệm vụ
+                    <span class="overview-count">({{ branches().length }} nhánh)</span>
+                  </h4>
+                  <p class="overview-subtitle">
+                    Kiểm tra các nhánh nhiệm vụ được AI phân rã. Bấm vào từng nhánh để xem chi tiết hoặc bấm <strong>"Gửi tất cả nhiệm vụ"</strong> để tạo trực tiếp vào hệ thống.
+                  </p>
+                </div>
+              </div>
+
+              @if (branches().length === 0) {
+                <div class="branch-empty-state">
+                  <div class="empty-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="empty-svg">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+                    </svg>
+                  </div>
+                  <h5 class="empty-title">Chưa có nhánh nhiệm vụ nào</h5>
+                  <p class="empty-desc">
+                    Bạn có thể bấm nút bên dưới để AI tự động phân rã một kế hoạch mẫu liên phòng ban, hoặc gõ yêu cầu trong Chatbox.
+                  </p>
+                  <button type="button" class="btn-start-decompose" (click)="agent.initDefaultBranches()">
+                    ✦ Bóc tách kế hoạch mẫu ngay
+                  </button>
+                </div>
+              } @else {
+                <div class="branch-cards-list">
+                  @for (b of branches(); track b.id; let idx = $index) {
+                    <div
+                      class="branch-summary-card"
+                      [class.created]="b.status === 'created'"
+                      (click)="selectBranch(b)"
+                      role="button"
+                      tabindex="0"
+                    >
+                      <div class="branch-card-left">
+                        <span class="branch-index-badge">Nhánh #{{ idx + 1 }}</span>
+                        <div class="branch-main-info">
+                          <h5 class="branch-item-title">{{ b.title }}</h5>
+                          <div class="branch-item-meta">
+                            <span class="dept-badge">
+                              <svg class="meta-svg" width="14" height="14" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a1 1 0 110 2h-3a1 1 0 01-1-1v-2a1 1 0 00-1-1H9a1 1 0 00-1 1v2a1 1 0 01-1 1H4a1 1 0 110-2V4zm3 1h2v2H7V5zm2 4H7v2h2V9zm2-4h2v2h-2V5zm2 4h-2v2h2V9z" clip-rule="evenodd"/>
+                              </svg>
+                              {{ b.departmentName }}
+                            </span>
+                            <span class="prio-tag" [class]="'prio-' + b.priority.toLowerCase()">
+                              <span class="prio-dot" aria-hidden="true"></span>
+                              {{ b.priority === 'HIGH' ? 'Cao' : (b.priority === 'LOW' ? 'Thấp' : 'Trung bình') }}
+                            </span>
+                            @if (b.checklistItems?.length) {
+                              <span class="checklist-count-tag">
+                                <svg class="meta-svg" width="13" height="13" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                  <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/>
+                                  <path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd"/>
+                                </svg>
+                                {{ b.checklistItems.length }} bước
+                              </span>
+                            }
+                            <span class="duration-tag">
+                              <svg class="meta-svg" width="13" height="13" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/>
+                              </svg>
+                              {{ b.suggestedDurationDays }} ngày
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div class="branch-card-right">
+                        @if (b.status === 'created') {
+                          <span class="status-badge-created">
+                            <svg class="meta-svg-check" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                            </svg>
+                            Đã tạo thành công
+                          </span>
+                        } @else if (b.status === 'submitting') {
+                          <span class="status-badge-submitting">
+                            <span class="submitting-spinner" aria-hidden="true"></span>
+                            Đang gửi...
+                          </span>
+                        } @else {
+                          <span class="status-badge-pending">Chờ gửi</span>
+                          <button
+                            type="button"
+                            class="btn-card-quick-submit"
+                            (click)="$event.stopPropagation(); agent.submitSingleBranch(b)"
+                            title="Tạo nhanh nhánh này thành nhiệm vụ"
+                          >
+                            <svg class="btn-mini-svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                              <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/>
+                            </svg>
+                            Tạo task
+                          </button>
+                        }
+                        <span class="view-detail-hint">Chi tiết <span class="arrow-glyph" aria-hidden="true">→</span></span>
+                      </div>
+                    </div>
+                  }
+                </div>
+
+                <!-- Branch Overview Actions Footer -->
+                <div class="branch-overview-footer">
+                  <div class="overview-footer-left">
+                    <button
+                      type="button"
+                      class="btn-submit-all"
+                      (click)="agent.submitAllBranches()"
+                      [disabled]="busy() || branches().length === 0"
+                      title="Gửi tất cả các nhánh nhiệm vụ để tạo vào hệ thống"
+                    >
+                      <svg class="btn-svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                        <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z"/>
+                      </svg>
+                      <span>Gửi tất cả nhiệm vụ vào hệ thống</span>
+                    </button>
+                    <button
+                      type="button"
+                      class="btn-add-branch"
+                      (click)="agent.addCustomBranch()"
+                      title="Thêm một nhánh công việc mới"
+                    >
+                      <svg class="btn-mini-svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                        <path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd"/>
+                      </svg>
+                      Thêm nhánh mới
+                    </button>
+                  </div>
+
+                  <div class="overview-footer-right">
+                    <button
+                      type="button"
+                      class="btn-danger-ghost"
+                      (click)="agent.branches.set([])"
+                      title="Xóa toàn bộ các nhánh"
+                    >
+                      Xóa tất cả
+                    </button>
+                    <button type="button" class="btn-close-secondary" (click)="closeBranchModal()">
+                      Đóng
+                    </button>
+                  </div>
+                </div>
+              }
+            </div>
+          }
+
+          <!-- SCREEN 2B: BRANCH DETAIL SCREEN -->
+          @if (selectedBranch(); as branch) {
+            <div class="branch-detail-screen">
+              <div class="detail-nav-bar">
+                <button
+                  type="button"
+                  class="btn-back-to-overview"
+                  (click)="selectBranch(null)"
+                  title="Quay về danh sách các nhánh"
+                >
+                  ← Quay về danh sách các nhánh
+                </button>
+                <span class="detail-badge-num">Nhánh #{{ branch.branchIndex }} / {{ branches().length }}</span>
+              </div>
+
+              <div class="detail-content-card">
+                <div class="detail-header-block">
+                  <h4 class="detail-task-title">{{ branch.title }}</h4>
+                  <div class="detail-meta-grid">
+                    <div class="meta-item">
+                      <span class="meta-label">Phòng ban nhận việc:</span>
+                      <span class="meta-value dept-highlight">
+                        <svg class="meta-svg" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                          <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a1 1 0 110 2h-3a1 1 0 01-1-1v-2a1 1 0 00-1-1H9a1 1 0 00-1 1v2a1 1 0 01-1 1H4a1 1 0 110-2V4zm3 1h2v2H7V5zm2 4H7v2h2V9zm2-4h2v2h-2V5zm2 4h-2v2h2V9z" clip-rule="evenodd"/>
+                        </svg>
+                        <span>{{ branch.departmentName }}</span>
+                      </span>
+                    </div>
+                    <div class="meta-item">
+                      <span class="meta-label">Loại hình xử lý:</span>
+                      <span class="meta-value">{{ branch.type === 'SupportRequest' ? 'Yêu cầu hỗ trợ' : 'Giao việc trực tiếp' }}</span>
+                    </div>
+                    <div class="meta-item">
+                      <span class="meta-label">Mức ưu tiên:</span>
+                      <span class="meta-value priority-badge" [class]="'prio-' + branch.priority.toLowerCase()">
+                        <span class="prio-dot" aria-hidden="true"></span>
+                        {{ branch.priority }}
+                      </span>
+                    </div>
+                    <div class="meta-item">
+                      <span class="meta-label">Thời gian dự kiến:</span>
+                      <span class="meta-value duration-highlight">
+                        <svg class="meta-svg" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/>
+                        </svg>
+                        <span>{{ branch.suggestedDurationDays }} ngày</span>
+                      </span>
+                    </div>
+                    <div class="meta-item">
+                      <span class="meta-label">Trạng thái:</span>
+                      <span class="meta-value">
+                        @if (branch.status === 'created') {
+                          <span class="status-badge-created">
+                            <svg class="meta-svg-check" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                            </svg>
+                            Đã tạo thành công
+                          </span>
+                        } @else if (branch.status === 'submitting') {
+                          <span class="status-badge-submitting">
+                            <span class="submitting-spinner" aria-hidden="true"></span>
+                            Đang gửi...
+                          </span>
+                        } @else {
+                          <span class="status-badge-pending">Chờ gửi</span>
+                        }
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Description -->
+                <div class="detail-section">
+                  <h5 class="section-title">Mô tả công việc</h5>
+                  <p class="section-desc-text">{{ branch.description }}</p>
+                </div>
+
+                <!-- Checklist -->
+                @if (branch.checklistItems && branch.checklistItems.length > 0) {
+                  <div class="detail-section">
+                    <h5 class="section-title">Danh mục kiểm tra & Các bước thực hiện (Checklist)</h5>
+                    <ol class="checklist-items-list">
+                      @for (step of branch.checklistItems; track step) {
+                        <li class="checklist-item">{{ step }}</li>
+                      }
+                    </ol>
+                  </div>
+                }
+
+                <!-- AI Reasoning -->
+                @if (branch.reasoning) {
+                  <div class="detail-section reasoning-section">
+                    <h5 class="section-title">
+                      <span class="sparkle-icon" aria-hidden="true">✦</span> Căn cứ đề xuất từ AI Agent
+                    </h5>
+                    <p class="reasoning-text">{{ branch.reasoning }}</p>
+                  </div>
+                }
+              </div>
+
+              <!-- Detail Action Buttons -->
+              <div class="detail-actions-footer">
+                <div class="detail-actions-left">
+                  <button
+                    type="button"
+                    class="btn-submit-single"
+                    (click)="agent.submitSingleBranch(branch)"
+                    [disabled]="branch.status === 'created' || branch.status === 'submitting'"
+                    title="Gửi tạo nhiệm vụ nhánh này vào hệ thống"
+                  >
+                    @if (branch.status === 'created') {
+                      <span>Đã tạo thành công</span>
+                    } @else if (branch.status === 'submitting') {
+                      <span>Đang gửi tạo việc...</span>
+                    } @else {
+                      <svg class="btn-svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                        <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z"/>
+                      </svg>
+                      <span>Gửi / Tạo nhiệm vụ này ngay</span>
+                    }
+                  </button>
+                  <button
+                    type="button"
+                    class="btn-delete-single"
+                    (click)="agent.deleteBranch(branch.branchIndex - 1); selectBranch(null)"
+                    title="Xóa nhánh nhiệm vụ này"
+                  >
+                    Xóa nhánh này
+                  </button>
+                </div>
+
+                <div class="detail-actions-right">
+                  <button
+                    type="button"
+                    class="btn-back-overview-secondary"
+                    (click)="selectBranch(null)"
+                  >
+                    Quay lại danh sách
+                  </button>
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  }
 }

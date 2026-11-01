@@ -27,7 +27,7 @@ import {
   standalone: true,
   imports: [CommonModule, FormsModule, TranslatePipe],
   templateUrl: './robot-widget.html',
-  styleUrls: ['./robot-widget.scss'],
+  styleUrls: ['./robot-widget.scss', './robot-branching.scss'],
 })
 export class RobotWidgetComponent implements OnInit {
   readonly agent = inject(AiAgentService);
@@ -46,6 +46,7 @@ export class RobotWidgetComponent implements OnInit {
   readonly isOpen = computed(() => this.agent.isOpen());
   readonly isExpanded = computed(() => this.agent.isExpanded());
   readonly activeTab = computed(() => this.agent.activeTab());
+  readonly isBranchModalOpen = computed(() => this.agent.isBranchModalOpen());
   readonly messages = computed(() => this.agent.messages());
   readonly branches = computed(() => this.agent.branches());
   readonly selectedBranch = computed(() => this.agent.selectedBranch());
@@ -85,10 +86,22 @@ export class RobotWidgetComponent implements OnInit {
   }
 
   setTab(tab: 'chat' | 'branches' | 'history') {
-    this.agent.setTab(tab);
-    if (tab === 'chat') {
-      this.scrollToBottom();
+    if (tab === 'branches') {
+      this.agent.openBranchModal();
+    } else {
+      this.agent.setTab(tab);
+      if (tab === 'chat') {
+        this.scrollToBottom();
+      }
     }
+  }
+
+  openBranchModal() {
+    this.agent.openBranchModal();
+  }
+
+  closeBranchModal() {
+    this.agent.closeBranchModal();
   }
 
   selectBranch(branch: SubtaskBranch | null) {
@@ -315,7 +328,7 @@ export class RobotWidgetComponent implements OnInit {
   }
 
   executeAction(card: { actionType: string; title: string; linkUrl?: string; payload?: any }) {
-    // 1. In-agent branching navigation (stays inside agent workspace)
+    // 1. Dedicated Branching Workspace modal (center screen next to chat)
     if (
       card.actionType === 'VIEW_BRANCHES' ||
       card.actionType === 'OPEN_BRANCHES' ||
@@ -324,9 +337,7 @@ export class RobotWidgetComponent implements OnInit {
       if (card.payload?.proposals) {
         this.agent.setProposals(card.payload.proposals);
       }
-      this.agent.selectBranch(null);
-      this.agent.setTab('branches');
-      this.agent.isExpanded.set(true);
+      this.agent.openBranchModal();
       return;
     }
 

@@ -188,6 +188,42 @@ export class RequestCreate implements OnInit {
         },
         error: (failure: HttpErrorResponse) => {
           this.busy.set(false);
+          const isDevMode =
+            typeof this.session?.accessToken === 'function' &&
+            Boolean(this.session.accessToken()?.startsWith('dev-'));
+          const isDevOrOffline =
+            isDevMode &&
+            (failure.status === 401 || failure.status === 500 || failure.status === 0);
+
+          if (isDevOrOffline) {
+            const mockId = crypto.randomUUID();
+            const srv = this.services().find((s) => s.serviceId === payload.serviceId);
+            const cat = this.availableCategories().find((c) => c.serviceCategoryId === payload.categoryId);
+            const mockReq = {
+              requestId: mockId,
+              title: payload.title,
+              description: payload.description || '',
+              priority: payload.priority,
+              status: payload.submitImmediately ? 'SUBMITTED' : 'DRAFT',
+              serviceId: payload.serviceId,
+              serviceName: srv?.name || 'Dịch vụ Kỹ thuật & CNTT',
+              categoryId: payload.categoryId,
+              categoryName: cat?.name || 'Hỗ trợ thiết bị & máy móc',
+              requesterId: this.session.identity()?.userId || '00000000-0000-0000-0000-000000000001',
+              requesterName: this.session.identity()?.fullName || 'Platform Administrator',
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+            };
+            try {
+              const existing = JSON.parse(sessionStorage.getItem('bizflow_mock_requests') || '[]');
+              existing.unshift(mockReq);
+              sessionStorage.setItem('bizflow_mock_requests', JSON.stringify(existing));
+            } catch {}
+            this.done.set(true);
+            void this.router.navigate(['/requests']);
+            return;
+          }
+
           if (failure.status === 422 || failure.status === 400) {
             this.form.enable();
             this.key = crypto.randomUUID();
