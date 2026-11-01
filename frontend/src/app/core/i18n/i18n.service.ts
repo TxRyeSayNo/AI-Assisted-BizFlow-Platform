@@ -63,9 +63,10 @@ export class I18nService {
     if (typeof window !== 'undefined' && window.localStorage) {
       try {
         const stored = localStorage.getItem(STORAGE_KEY) as LanguageCode | null;
-        if (stored === 'en' || stored === 'vi' || stored === 'ja') {
+        if (stored === 'vi' || stored === 'ja') {
           return stored;
         }
+        localStorage.setItem(STORAGE_KEY, 'vi');
       } catch {
         // Fallback
       }

@@ -119,15 +119,15 @@ public sealed class BizFlowDbContext(DbContextOptions<BizFlowDbContext> options,
 
         foreach (var entry in entries)
         {
-            if (entry.State == EntityState.Deleted && entry.Entity is not UserRole and not RolePermission)
-                throw new ApplicationFault(FaultKind.Conflict, "PERSISTENCE.HARD_DELETE_DENIED", "Historical records cannot be deleted.");
+            if (entry.State == EntityState.Deleted && entry.Entity is not UserRole and not RolePermission and not WorkflowStep and not WorkflowTransition and not WorkflowVersion and not WorkflowDefinition)
+                throw new ApplicationFault(FaultKind.Conflict, "PERSISTENCE.HARD_DELETE_DENIED", "Không thể xóa các bản ghi lịch sử trong hệ thống.");
 
             if (entry.State == EntityState.Modified)
             {
                 foreach (var property in new[] { "TenantId", "UserId", "FamilyId", "TokenHash", "CreatedAt", "IsPlatformAdministrator", "IsSystem", "WorkflowId", "WorkflowVersionId", "VersionNo", "BusinessType", "ObjectType", "ObjectId", "AuthorId", "UploadedBy", "ObjectKey" })
                 {
                     if (entry.Metadata.FindProperty(property) is not null && entry.Property(property).IsModified)
-                        throw new ApplicationFault(FaultKind.Conflict, "PERSISTENCE.IMMUTABLE_FIELD", "Record ownership and identity cannot be changed.");
+                        throw new ApplicationFault(FaultKind.Conflict, "PERSISTENCE.IMMUTABLE_FIELD", "Không được phép thay đổi thông tin định danh và sở hữu bản ghi.");
                 }
             }
 
@@ -415,7 +415,7 @@ public sealed class BizFlowDbContext(DbContextOptions<BizFlowDbContext> options,
                     { if (service.ActiveWorkflowVersionId is not null || service.ActiveSlaVersionId is not null) throw Denied(); }
                     else if (entry.State != EntityState.Modified ||
                         entry.Properties.Any(p => p.IsModified && p.Metadata.Name is not (nameof(InternalService.Code) or nameof(InternalService.Name) or
-                            nameof(InternalService.Description) or nameof(InternalService.Status) or nameof(InternalService.UpdatedAt))) ||
+                            nameof(InternalService.Description) or nameof(InternalService.Status) or nameof(InternalService.UpdatedAt) or nameof(InternalService.ActiveWorkflowVersionId))) ||
                         !await Services.AsNoTracking().AnyAsync(s => s.Id == service.Id && s.TenantId == service.TenantId, cancellationToken)) throw Denied();
                     break;
                 case ServiceCategory category:
@@ -436,12 +436,15 @@ public sealed class BizFlowDbContext(DbContextOptions<BizFlowDbContext> options,
                     break;
                 case WorkflowDefinition workflow:
                     AssertTenant(workflow.TenantId);
+                    if (entry.State == EntityState.Deleted && await WorkflowVersions.AsNoTracking().AnyAsync(v => v.WorkflowId == workflow.Id && v.Status == WorkflowVersionStatus.Published, cancellationToken))
+                        throw WorkflowImmutable();
                     break;
                 case WorkflowVersion version:
                     await ValidateWorkflowOwnerAsync(version.WorkflowId, cancellationToken);
-                    if (version.Status != WorkflowVersionStatus.Draft || version.PublishedAt is not null ||
-                        (entry.State != EntityState.Added && !await WorkflowVersions.AsNoTracking().AnyAsync(v => v.Id == version.Id && v.Status == WorkflowVersionStatus.Draft, cancellationToken)))
-                        throw WorkflowImmutable();
+                    var storedVersion = entry.State == EntityState.Added ? null : await WorkflowVersions.AsNoTracking().FirstOrDefaultAsync(v => v.Id == version.Id, cancellationToken);
+                    if (entry.State == EntityState.Added) { if (version.Status != WorkflowVersionStatus.Draft || version.PublishedAt is not null) throw WorkflowImmutable(); }
+                    else if (entry.State == EntityState.Deleted) { if (storedVersion is null || storedVersion.Status != WorkflowVersionStatus.Draft) throw WorkflowImmutable(); }
+                    else { if (storedVersion is null || storedVersion.Status != WorkflowVersionStatus.Draft) throw WorkflowImmutable(); if (version.Status == WorkflowVersionStatus.Published && version.PublishedAt is null) throw WorkflowImmutable(); if (version.Status != WorkflowVersionStatus.Draft && version.Status != WorkflowVersionStatus.Published) throw WorkflowImmutable(); }
                     break;
                 case WorkflowStep step:
                     await ValidateDraftWorkflowVersionAsync(step.WorkflowVersionId, cancellationToken);
@@ -576,7 +579,7 @@ public sealed class BizFlowDbContext(DbContextOptions<BizFlowDbContext> options,
         if (version.Status != WorkflowVersionStatus.Draft || version.PublishedAt is not null) throw WorkflowImmutable();
     }
 
-    private static ApplicationFault WorkflowImmutable() => new(FaultKind.Conflict, "WORKFLOW.VERSION_IMMUTABLE", "Only draft workflow configuration can be changed; published versions require a new version.");
+    private static ApplicationFault WorkflowImmutable() => new(FaultKind.Conflict, "WORKFLOW.VERSION_IMMUTABLE", "Chỉ phiên bản nháp mới có thể chỉnh sửa cấu hình hoặc xóa; phiên bản đã xuất bản là bất biến.");
 
     private async Task ValidateUserRoleAsync(UserRole link, CancellationToken cancellationToken)
     {

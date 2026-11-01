@@ -70,7 +70,7 @@
 
 .records-table {
   width: 100%;
-  min-width: 920px;
+  min-width: 960px;
   table-layout: auto !important;
   border-collapse: separate;
   border-spacing: 0;
@@ -91,7 +91,7 @@
     color: var(--tp-mute, #64748b);
     background: #f8fafd;
     border-bottom: 1px solid var(--bf-border, #dfe8f2);
-    white-space: nowrap;
+    white-space: nowrap !important;
   }
 
   tbody tr:last-child td {
@@ -103,8 +103,8 @@
   }
 
   .col-type {
-    width: 90px;
-    white-space: nowrap;
+    width: 100px;
+    white-space: nowrap !important;
   }
 
   .col-title {
@@ -112,29 +112,29 @@
   }
 
   .col-status {
-    width: 130px;
-    white-space: nowrap;
+    width: 140px;
+    white-space: nowrap !important;
   }
 
   .col-priority {
-    width: 110px;
-    white-space: nowrap;
+    width: 120px;
+    white-space: nowrap !important;
   }
 
   .col-owner {
-    min-width: 190px;
-    white-space: nowrap;
+    min-width: 260px !important;
+    white-space: nowrap !important;
   }
 
   .col-created {
-    width: 150px;
-    white-space: nowrap;
+    min-width: 160px !important;
+    white-space: nowrap !important;
   }
 
   .col-actions {
-    width: 100px;
+    width: 110px;
     text-align: right;
-    white-space: nowrap;
+    white-space: nowrap !important;
   }
 }
 

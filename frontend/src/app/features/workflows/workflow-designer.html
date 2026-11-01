@@ -1,0 +1,625 @@
+<div class="designer-container">
+  <!-- 1. TOP DESIGNER TOOLBAR -->
+  <header class="designer-header">
+    <div class="toolbar-left">
+      <span class="badge-status" [class.draft]="versionStatus === 'DRAFT'" [class.published]="versionStatus !== 'DRAFT'">
+        {{ versionStatus === 'DRAFT' ? 'Bản nháp' : 'Đã xuất bản' }} v{{ versionNo }}
+      </span>
+      <span class="divider"></span>
+      <button
+        type="button"
+        class="tool-btn"
+        (click)="autoLayout()"
+        [disabled]="readonly || nodes().length === 0"
+        title="Tự động căn chỉnh các bước theo luồng xử lý"
+      >
+        <span class="tool-icon">⚡</span> Tự động sắp xếp
+      </button>
+      <button
+        type="button"
+        class="tool-btn"
+        (click)="undo()"
+        [disabled]="readonly"
+        title="Hoàn tác thao tác trước"
+      >
+        <span class="tool-icon">↩</span> Hoàn tác
+      </button>
+      <button
+        type="button"
+        class="tool-btn"
+        (click)="redo()"
+        [disabled]="readonly"
+        title="Làm lại thao tác vừa hoàn tác"
+      >
+        <span class="tool-icon">↪</span> Làm lại
+      </button>
+    </div>
+
+    <div class="toolbar-right">
+      <div class="zoom-controls">
+        <button type="button" class="zoom-btn" (click)="zoomOut()" title="Thu nhỏ (-)">−</button>
+        <button type="button" class="zoom-label" (click)="resetZoom()" title="Đặt lại tỷ lệ 100%">{{ zoomPercentage() }}%</button>
+        <button type="button" class="zoom-btn" (click)="zoomIn()" title="Phóng to (+)">+</button>
+      </div>
+      <button
+        type="button"
+        class="tool-btn"
+        (click)="validateWorkflow.emit()"
+        title="Kiểm tra tính hợp lệ của toàn bộ sơ đồ"
+      >
+        <span class="tool-icon">🔍</span> Kiểm tra sơ đồ
+      </button>
+    </div>
+  </header>
+
+  <!-- 2. MAIN 3-PANEL WORKSPACE -->
+  <div class="designer-body">
+    <!-- LEFT COMPONENT PALETTE -->
+    @if (!readonly) {
+      <aside class="designer-palette" aria-label="Thành phần quy trình">
+        <div class="palette-header">
+          <h3>Thành phần quy trình</h3>
+          <p>Kéo hoặc bấm để thêm vào sơ đồ</p>
+        </div>
+
+        <div class="palette-scroll">
+          <!-- GROUP 1: EVENTS -->
+          <div class="palette-group">
+            <h4>Sự kiện (Events)</h4>
+            <div class="palette-items">
+              <div
+                class="palette-item"
+                draggable="true"
+                (dragstart)="onPaletteDragStart($event, 'START')"
+                (click)="addNode('START')"
+                role="button"
+                tabindex="0"
+              >
+                <div class="item-icon-box start">▶</div>
+                <div class="item-info">
+                  <span class="item-name">Sự kiện bắt đầu</span>
+                  <span class="item-desc">Khởi tạo yêu cầu/nhiệm vụ</span>
+                </div>
+              </div>
+
+              <div
+                class="palette-item"
+                draggable="true"
+                (dragstart)="onPaletteDragStart($event, 'END')"
+                (click)="addNode('END')"
+                role="button"
+                tabindex="0"
+              >
+                <div class="item-icon-box end">⏹</div>
+                <div class="item-info">
+                  <span class="item-name">Sự kiện kết thúc</span>
+                  <span class="item-desc">Hoàn thành quy trình</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- GROUP 2: DEPARTMENT WORK -->
+          <div class="palette-group">
+            <h4>Xử lý nghiệp vụ</h4>
+            <div class="palette-items">
+              <div
+                class="palette-item"
+                draggable="true"
+                (dragstart)="onPaletteDragStart($event, 'DEPARTMENT')"
+                (click)="addNode('DEPARTMENT')"
+                role="button"
+                tabindex="0"
+              >
+                <div class="item-icon-box dept">🏢</div>
+                <div class="item-info">
+                  <span class="item-name">Bước xử lý phòng ban</span>
+                  <span class="item-desc">Chuyển giao phòng ban xử lý</span>
+                </div>
+              </div>
+
+              <div
+                class="palette-item"
+                draggable="true"
+                (dragstart)="onPaletteDragStart($event, 'APPROVAL')"
+                (click)="addNode('APPROVAL')"
+                role="button"
+                tabindex="0"
+              >
+                <div class="item-icon-box approval">🛡️</div>
+                <div class="item-info">
+                  <span class="item-name">Bước phê duyệt</span>
+                  <span class="item-desc">Duyệt hồ sơ / định mức</span>
+                </div>
+              </div>
+
+              <div
+                class="palette-item"
+                draggable="true"
+                (dragstart)="onPaletteDragStart($event, 'CONFIRMATION')"
+                (click)="addNode('CONFIRMATION')"
+                role="button"
+                tabindex="0"
+              >
+                <div class="item-icon-box confirm">✓</div>
+                <div class="item-info">
+                  <span class="item-name">Bước xác nhận</span>
+                  <span class="item-desc">Xác nhận mốc bàn giao</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- GROUP 3: LOGIC -->
+          <div class="palette-group">
+            <h4>Điều hướng & Logic</h4>
+            <div class="palette-items">
+              <div
+                class="palette-item"
+                draggable="true"
+                (dragstart)="onPaletteDragStart($event, 'DECISION')"
+                (click)="addNode('DECISION')"
+                role="button"
+                tabindex="0"
+              >
+                <div class="item-icon-box decision">🔀</div>
+                <div class="item-info">
+                  <span class="item-name">Cổng rẽ nhánh điều kiện</span>
+                  <span class="item-desc">Phân luồng theo quy tắc</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </aside>
+    }
+
+    <!-- CENTER INTERACTIVE WORKFLOW CANVAS -->
+    <main
+      #canvasContainer
+      class="designer-canvas-wrap"
+      [class.connecting]="connectingFrom() !== null"
+      (mousedown)="startPan($event)"
+      (click)="onCanvasClick()"
+      (dragover)="onCanvasDragOver($event)"
+      (drop)="onCanvasDrop($event)"
+    >
+      <!-- Background Dot Grid -->
+      <svg class="canvas-svg-bg" aria-hidden="true">
+        <defs>
+          <pattern id="canvas-grid" width="24" height="24" patternUnits="userSpaceOnUse">
+            <circle cx="2" cy="2" r="1.2" fill="#cbd5e1" />
+          </pattern>
+        </defs>
+        <rect width="100%" height="100%" fill="url(#canvas-grid)" />
+      </svg>
+
+      <!-- Zoomable & Pannable Viewport -->
+      <div
+        class="canvas-viewport"
+        [style.transform]="'translate(' + panX() + 'px, ' + panY() + 'px) scale(' + zoom() + ')'"
+      >
+        <!-- SVG Connections Layer -->
+        <svg class="connections-svg" aria-label="Các đường chuyển tiếp trạng thái">
+          <defs>
+            <marker
+              id="arrow"
+              viewBox="0 0 10 10"
+              refX="8"
+              refY="5"
+              markerWidth="6"
+              markerHeight="6"
+              orient="auto"
+            >
+              <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#64748b" />
+            </marker>
+            <marker
+              id="arrow-selected"
+              viewBox="0 0 10 10"
+              refX="8"
+              refY="5"
+              markerWidth="6"
+              markerHeight="6"
+              orient="auto"
+            >
+              <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#2563eb" />
+            </marker>
+          </defs>
+
+          <!-- Existing Edges -->
+          @for (edge of edges(); track edge.id) {
+            <path
+              [attr.d]="getEdgePath(edge)"
+              class="edge-path"
+              [class.selected]="selectedEdge()?.id === edge.id"
+              [attr.marker-end]="selectedEdge()?.id === edge.id ? 'url(#arrow-selected)' : 'url(#arrow)'"
+              (click)="selectEdge(edge, $event)"
+            />
+          }
+
+          <!-- In-progress connecting line preview -->
+          @if (connectingFrom() && previewMousePos()) {
+            <path [attr.d]="getPreviewEdgePath()" class="draft-edge" />
+          }
+        </svg>
+
+        <!-- Edge Labels Layer (Pills at Midpoint) -->
+        @for (edge of edges(); track edge.id) {
+          @if (edge.label) {
+            <div
+              class="edge-label-pill"
+              [class.selected]="selectedEdge()?.id === edge.id"
+              [style.left.px]="getEdgeMidpoint(edge).x"
+              [style.top.px]="getEdgeMidpoint(edge).y"
+              (click)="selectEdge(edge, $event)"
+            >
+              {{ edge.label }}
+            </div>
+          }
+        }
+
+        <!-- Interactive HTML Node Cards -->
+        @for (node of nodes(); track node.id) {
+          <div
+            class="canvas-node type-{{ node.type | lowercase }}"
+            [class.selected]="selectedNode()?.id === node.id"
+            [style.left.px]="node.x"
+            [style.top.px]="node.y"
+            (mousedown)="startNodeDrag(node, $event)"
+            (click)="selectNode(node, $event)"
+            tabindex="0"
+            role="button"
+            [attr.aria-label]="'Bước ' + node.name"
+          >
+            <!-- Input Connector Port (Left) -->
+            @if (node.type !== 'START') {
+              <div
+                class="port port-in"
+                title="Cổng liên kết vào"
+                (mouseup)="completeConnection(node, $event)"
+              ></div>
+            }
+
+            <!-- Node Header Bar with Icon & Color -->
+            <div class="node-header-bar {{ node.type | lowercase }}">
+              <div class="header-title-wrap">
+                @switch (node.type) {
+                  @case ('START') { <span>▶</span> }
+                  @case ('DEPARTMENT') { <span>🏢</span> }
+                  @case ('APPROVAL') { <span>🛡️</span> }
+                  @case ('DECISION') { <span>🔀</span> }
+                  @case ('CONFIRMATION') { <span>✓</span> }
+                  @case ('END') { <span>⏹</span> }
+                }
+                <span class="node-type-label">
+                  @switch (node.type) {
+                    @case ('START') { Bắt đầu }
+                    @case ('DEPARTMENT') { Phòng ban }
+                    @case ('APPROVAL') { Phê duyệt }
+                    @case ('DECISION') { Rẽ nhánh }
+                    @case ('CONFIRMATION') { Xác nhận }
+                    @case ('END') { Kết thúc }
+                  }
+                </span>
+              </div>
+            </div>
+
+            <!-- Node Card Body with Details -->
+            <div class="node-body">
+              <h4 class="node-title">{{ node.name }}</h4>
+
+              <div class="node-badge-row">
+                @if (node.departmentName) {
+                  <span class="meta-chip dept-chip">🏢 {{ node.departmentName }}</span>
+                }
+                @if (node.roleName) {
+                  <span class="meta-chip role-chip">👤 {{ node.roleName }}</span>
+                }
+                @if (node.slaHours) {
+                  <span class="meta-chip sla-chip">⏱ {{ node.slaHours }}h</span>
+                }
+                @if (node.milestone) {
+                  <span class="meta-chip role-chip">Mốc: {{ node.milestone }}</span>
+                }
+                @if (node.type === 'DECISION' && node.conditions) {
+                  <span class="meta-chip branch-chip">{{ node.conditions.length }} nhánh rẽ</span>
+                }
+              </div>
+            </div>
+
+            <!-- Output Connector Port (Right) -->
+            @if (node.type !== 'END') {
+              <div
+                class="port port-out"
+                title="Kéo sang bước khác để tạo liên kết"
+                (mousedown)="startConnecting(node, $event)"
+              ></div>
+            }
+          </div>
+        }
+      </div>
+
+      <!-- Floating Zoom Controls -->
+      <div class="canvas-floating-toolbar" role="toolbar" aria-label="Điều khiển thu phóng">
+        <button type="button" class="zoom-btn" (click)="zoomOut()" title="Thu nhỏ">−</button>
+        <span class="zoom-label">{{ (zoom() * 100) | number: '1.0-0' }}%</span>
+        <button type="button" class="zoom-btn" (click)="zoomIn()" title="Phóng to">+</button>
+        <button type="button" class="zoom-btn" (click)="resetZoom()" title="Tỉ lệ 100%">1:1</button>
+        <button type="button" class="zoom-btn" (click)="fitView()" title="Vừa khung nhìn">⛶</button>
+      </div>
+    </main>
+
+    <!-- RIGHT PROPERTIES INSPECTOR -->
+    <aside class="designer-inspector" aria-label="Thuộc tính cấu hình">
+      <!-- A. Selected Node Properties -->
+      @if (selectedNode(); as node) {
+        <div class="inspector-header">
+          <h3>
+            @switch (node.type) {
+              @case ('START') { <span>▶</span> Sự kiện Bắt đầu }
+              @case ('DEPARTMENT') { <span>🏢</span> Bước Phòng ban }
+              @case ('APPROVAL') { <span>🛡️</span> Bước Phê duyệt }
+              @case ('DECISION') { <span>🔀</span> Cổng Rẽ nhánh }
+              @case ('CONFIRMATION') { <span>✓</span> Bước Xác nhận }
+              @case ('END') { <span>⏹</span> Sự kiện Kết thúc }
+            }
+          </h3>
+          <button type="button" class="btn-close" (click)="selectedNode.set(null)">✕</button>
+        </div>
+
+        <div class="inspector-body">
+          <div class="form-group">
+            <label for="prop-node-name">Tên hiển thị bước:</label>
+            <input
+              id="prop-node-name"
+              type="text"
+              class="form-input"
+              [ngModel]="node.name"
+              (ngModelChange)="updateSelectedNodeProps({ name: $event })"
+              [readonly]="readonly"
+              maxlength="150"
+            />
+          </div>
+
+          <!-- DEPARTMENT NODE PROPERTIES -->
+          @if (node.type === 'DEPARTMENT') {
+            <div class="form-group">
+              <label for="prop-dept-select">Phòng ban phụ trách *:</label>
+              <select
+                id="prop-dept-select"
+                class="form-select"
+                [ngModel]="node.departmentId"
+                (ngModelChange)="onDepartmentSelect($event)"
+                [disabled]="readonly"
+              >
+                <option value="">-- Chọn phòng ban trong công ty --</option>
+                @for (d of departments; track d.id) {
+                  <option [value]="d.id">{{ d.name }}</option>
+                }
+              </select>
+              <p class="hint-text">Chỉ các phòng ban đang hoạt động của công ty mới được phân công.</p>
+            </div>
+
+            <div class="form-group">
+              <label for="prop-role-select">Vai trò thực hiện (tùy chọn):</label>
+              <select
+                id="prop-role-select"
+                class="form-select"
+                [ngModel]="node.roleId"
+                (ngModelChange)="onRoleSelect($event)"
+                [disabled]="readonly"
+              >
+                <option value="">-- Mọi nhân sự trong phòng ban --</option>
+                @for (r of roles; track r.id) {
+                  <option [value]="r.id">{{ r.name }}</option>
+                }
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="prop-sla-hours">Thời hạn SLA bước (giờ):</label>
+              <input
+                id="prop-sla-hours"
+                type="number"
+                class="form-input"
+                [ngModel]="node.slaHours"
+                (ngModelChange)="updateSelectedNodeProps({ slaHours: $event })"
+                [readonly]="readonly"
+                min="1"
+                max="720"
+              />
+            </div>
+          }
+
+          <!-- APPROVAL NODE PROPERTIES -->
+          @if (node.type === 'APPROVAL') {
+            <div class="form-group">
+              <label for="prop-appr-type">Hình thức phê duyệt:</label>
+              <select
+                id="prop-appr-type"
+                class="form-select"
+                [ngModel]="node.approverType || 'ROLE'"
+                (ngModelChange)="updateSelectedNodeProps({ approverType: $event })"
+                [disabled]="readonly"
+              >
+                <option value="ROLE">Theo chức vụ / Vai trò</option>
+                <option value="DEPARTMENT_LEAD">Trưởng bộ phận phụ trách</option>
+                <option value="SPECIFIC_USER">Người dùng được chỉ định</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="prop-appr-role">Vai trò người duyệt:</label>
+              <select
+                id="prop-appr-role"
+                class="form-select"
+                [ngModel]="node.roleId"
+                (ngModelChange)="onRoleSelect($event)"
+                [disabled]="readonly"
+              >
+                <option value="">-- Chọn vai trò duyệt --</option>
+                @for (r of roles; track r.id) {
+                  <option [value]="r.id">{{ r.name }}</option>
+                }
+              </select>
+            </div>
+          }
+
+          <!-- CONFIRMATION NODE PROPERTIES -->
+          @if (node.type === 'CONFIRMATION') {
+            <div class="form-group">
+              <label for="prop-milestone">Cột mốc xác nhận:</label>
+              <select
+                id="prop-milestone"
+                class="form-select"
+                [ngModel]="node.milestone || 'RESULT'"
+                (ngModelChange)="updateSelectedNodeProps({ milestone: $event })"
+                [disabled]="readonly"
+              >
+                <option value="RECEIVE">Tiếp nhận hồ sơ (RECEIVE)</option>
+                <option value="RESULT">Xác nhận kết quả xử lý (RESULT)</option>
+                <option value="RESOLUTION">Giải quyết dứt điểm (RESOLUTION)</option>
+              </select>
+            </div>
+          }
+
+          <!-- DESCRIPTION FOR ALL OPERATIONAL NODES -->
+          @if (node.type !== 'START' && node.type !== 'END') {
+            <div class="form-group">
+              <label for="prop-node-desc">Mô tả & Hướng dẫn thực hiện:</label>
+              <textarea
+                id="prop-node-desc"
+                class="form-textarea"
+                [ngModel]="node.description"
+                (ngModelChange)="updateSelectedNodeProps({ description: $event })"
+                [readonly]="readonly"
+                rows="3"
+                placeholder="Ghi chú hướng dẫn cho nhân sự xử lý bước này…"
+              ></textarea>
+            </div>
+          }
+        </div>
+
+        @if (!readonly) {
+          <div class="inspector-footer">
+            <button type="button" class="btn-danger" (click)="deleteSelectedNode()">
+              🗑 Xóa bước này
+            </button>
+          </div>
+        }
+      }
+
+      <!-- B. Selected Edge Properties -->
+      @else if (selectedEdge(); as edge) {
+        <div class="inspector-header">
+          <h3><span>🔗</span> Liên kết chuyển tiếp</h3>
+          <button type="button" class="btn-close" (click)="selectedEdge.set(null)">✕</button>
+        </div>
+
+        <div class="inspector-body">
+          <div class="form-group">
+            <label for="prop-edge-label">Nhãn nhánh chuyển tiếp:</label>
+            <input
+              id="prop-edge-label"
+              type="text"
+              class="form-input"
+              [ngModel]="edge.label"
+              (ngModelChange)="updateSelectedEdgeLabel($event)"
+              [readonly]="readonly"
+              placeholder="VD: Đã duyệt, Từ chối, Chi phí > 10tr…"
+            />
+            <p class="hint-text">Nhãn này sẽ hiển thị trực tiếp trên đường nối sơ đồ.</p>
+          </div>
+        </div>
+
+        @if (!readonly) {
+          <div class="inspector-footer">
+            <button type="button" class="btn-danger" (click)="deleteSelectedEdge()">
+              🗑 Xóa liên kết
+            </button>
+          </div>
+        }
+      }
+
+      <!-- C. No Selection (General Info) -->
+      @else {
+        <div class="empty-inspector">
+          <div class="empty-icon">🗺️</div>
+          <h4>Sơ đồ quy trình</h4>
+          <p>Bấm vào một nút hoặc đường nối để xem và chỉnh sửa thông tin chi tiết.</p>
+
+          <div style="margin-top: 20px; width: 100%; text-align: left;">
+            <p style="font-size: 11.5px; color: #475569; margin: 4px 0;">
+              <strong>Số bước xử lý:</strong> {{ nodes().length }}
+            </p>
+            <p style="font-size: 11.5px; color: #475569; margin: 4px 0;">
+              <strong>Số đường liên kết:</strong> {{ edges().length }}
+            </p>
+            <p style="font-size: 11.5px; color: #475569; margin: 4px 0;">
+              <strong>Loại quy trình:</strong> {{ businessType === 'REQUEST' ? 'Yêu cầu' : 'Nhiệm vụ' }}
+            </p>
+          </div>
+        </div>
+      }
+    </aside>
+  </div>
+
+  <!-- 3. BOTTOM VALIDATION & ERROR GUIDANCE DRAWER (COMPACT & CONCISE) -->
+  @if (showValidation()) {
+    <div class="validation-bottom-drawer" role="region" aria-label="Kết quả kiểm tra quy trình">
+      <div class="drawer-header">
+        <div class="drawer-header-left">
+          <div class="status-indicator-badge" [class.valid]="validationIssues().length === 0" [class.invalid]="validationIssues().length > 0">
+            {{ validationIssues().length === 0 ? '✓' : '⚠' }}
+          </div>
+          <span class="drawer-title">
+            @if (validationIssues().length === 0) {
+              Sơ đồ quy trình hoàn toàn hợp lệ, sẵn sàng xuất bản!
+            } @else {
+              Phát hiện {{ validationIssues().length }} vấn đề cấu hình cần khắc phục:
+            }
+          </span>
+        </div>
+
+        <div class="drawer-header-actions">
+          <button type="button" class="btn-drawer-recheck" (click)="validateWorkflow.emit()" title="Kiểm tra lại sơ đồ">
+            🔄 Kiểm tra lại
+          </button>
+          <button type="button" class="btn-drawer-close" (click)="showValidation.set(false)" title="Đóng bảng">
+            ✕
+          </button>
+        </div>
+      </div>
+
+      <div class="drawer-content-body">
+        @if (validationIssues().length === 0) {
+          <div class="success-banner">
+            <span class="success-icon">🎉</span>
+            <span>Quy trình có đủ điểm bắt đầu, điểm kết thúc và các bước được liên kết hợp lệ.</span>
+          </div>
+        } @else {
+          <div class="issues-compact-list">
+            @for (issue of validationIssues(); track issue.id) {
+              <div class="issue-row" [class.row-error]="issue.type === 'error'" [class.row-warning]="issue.type === 'warning'">
+                <span class="badge-issue-type">
+                  {{ issue.type === 'error' ? 'Lỗi' : 'Cảnh báo' }}
+                </span>
+                @if (issue.nodeName) {
+                  <span class="badge-node-name">Bước: {{ issue.nodeName }}</span>
+                }
+                <span class="issue-title-text">{{ issue.title }}</span>
+                <span class="issue-suggestion-text">💡 {{ issue.suggestion }}</span>
+                @if (issue.nodeId) {
+                  <button type="button" class="btn-focus-node" (click)="focusIssueNode(issue.nodeId)" title="Đến bước này trên sơ đồ">
+                    🎯 Xem
+                  </button>
+                }
+              </div>
+            }
+          </div>
+        }
+      </div>
+    </div>
+  }
+</div>
+

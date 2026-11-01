@@ -157,25 +157,25 @@ export interface SlaBreachItem {
 
       <!-- Escalation Policy Matrix Reference -->
       <section class="directory-panel policy-box">
-        <h3>{{ 'slaMonitor.matrixTitle' | translate: 'Tiered Escalation Matrix' }}</h3>
+        <h3>{{ 'slaMonitor.matrixTitle' | translate: 'Ma trận Leo thang Phân cấp' }}</h3>
         <p class="policy-desc">
-          When an operational work item reaches critical SLA thresholds, the system automatically triggers designated notifications and updates escalation authority:
+          {{ 'slaMonitor.policyDesc' | translate: 'Khi một hạng mục công việc đạt đến các ngưỡng SLA tới hạn, hệ thống sẽ tự động kích hoạt thông báo tương ứng và cập nhật quyền hạn xử lý leo thang:' }}
         </p>
         <div class="matrix-grid">
           <div class="matrix-card">
-            <span class="tier-tag">{{ 'slaMonitor.tier1Tag' | translate: 'Tier 1 · 80% Elapsed' }}</span>
-            <h4>{{ 'slaMonitor.tier1Title' | translate: 'Direct Warning' }}</h4>
-            <p>{{ 'slaMonitor.tier1Desc' | translate: 'Immediate in-app notification delivered to assigned user and line manager.' }}</p>
+            <span class="tier-tag">{{ 'slaMonitor.tier1Tag' | translate: 'Cấp độ 1 · Đã dùng 80% thời gian' }}</span>
+            <h4>{{ 'slaMonitor.tier1Title' | translate: 'Cảnh báo trực tiếp' }}</h4>
+            <p>{{ 'slaMonitor.tier1Desc' | translate: 'Gửi thông báo tức thì trong hệ thống tới nhân viên phụ trách và quản lý trực tiếp.' }}</p>
           </div>
           <div class="matrix-card">
-            <span class="tier-tag tier-2">{{ 'slaMonitor.tier2Tag' | translate: 'Tier 2 · 100% Breached' }}</span>
-            <h4>{{ 'slaMonitor.tier2Title' | translate: 'Manager Escalation' }}</h4>
-            <p>{{ 'slaMonitor.tier2Desc' | translate: 'State flagged as OVERDUE. Reassignment authority granted to Department Lead.' }}</p>
+            <span class="tier-tag tier-2">{{ 'slaMonitor.tier2Tag' | translate: 'Cấp độ 2 · Quá hạn 100%' }}</span>
+            <h4>{{ 'slaMonitor.tier2Title' | translate: 'Leo thang cấp Quản lý' }}</h4>
+            <p>{{ 'slaMonitor.tier2Desc' | translate: 'Công việc được gắn cờ QUÁ HẠN. Cấp quyền phân công lại công việc cho Trưởng bộ phận.' }}</p>
           </div>
           <div class="matrix-card">
-            <span class="tier-tag tier-3">{{ 'slaMonitor.tier3Tag' | translate: 'Tier 3 · > 24h Overdue' }}</span>
-            <h4>{{ 'slaMonitor.tier3Title' | translate: 'Executive Alert' }}</h4>
-            <p>{{ 'slaMonitor.tier3Desc' | translate: 'Executive report highlight; included in Daily Operational Workload Digest.' }}</p>
+            <span class="tier-tag tier-3">{{ 'slaMonitor.tier3Tag' | translate: 'Cấp độ 3 · Quá hạn > 24 giờ' }}</span>
+            <h4>{{ 'slaMonitor.tier3Title' | translate: 'Cảnh báo khẩn cấp Ban Giám Đốc' }}</h4>
+            <p>{{ 'slaMonitor.tier3Desc' | translate: 'Nổi bật trên báo cáo điều hành; đưa vào báo cáo tổng hợp tiến độ hàng ngày.' }}</p>
           </div>
         </div>
       </section>

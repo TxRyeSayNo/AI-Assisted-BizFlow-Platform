@@ -77,6 +77,16 @@ public sealed class WorkflowNextVersionTests
         public Task<WorkflowPage> ListAsync(Guid tenantId, WorkflowFilter filter, CancellationToken cancellationToken) => throw new NotSupportedException();
         public Task<WorkflowVersionView?> ReadVersionAsync(Guid tenantId, Guid versionId, CancellationToken cancellationToken) => throw new NotSupportedException();
         public Task<WorkflowRow> CreateAsync(WorkflowDefinition workflow, WorkflowVersion version, AuditLog audit, CancellationToken cancellationToken) => throw new NotSupportedException();
+        public Task<WorkflowVersionView?> SaveDraftAsync(Guid tenantId, Guid versionId, string definitionJson, IReadOnlyList<WorkflowStepDraftInput>? steps, IReadOnlyList<WorkflowTransitionDraftInput>? transitions, string? name, AuditLog audit, CancellationToken cancellationToken) => throw new NotSupportedException();
+        public Task<WorkflowRow?> UpdateNameAsync(Guid tenantId, Guid workflowId, string name, AuditLog audit, CancellationToken cancellationToken) => throw new NotSupportedException();
+        public Task<WorkflowVersionView?> PublishVersionAsync(Guid tenantId, Guid versionId, Guid? associateServiceId, AuditLog audit, CancellationToken cancellationToken) => throw new NotSupportedException();
+        public Task<bool> DeleteWorkflowAsync(Guid tenantId, Guid workflowId, AuditLog audit, CancellationToken cancellationToken) => throw new NotSupportedException();
+        public Task<WorkflowRow?> UpdateStatusAsync(Guid tenantId, Guid workflowId, WorkflowStatus status, AuditLog audit, CancellationToken cancellationToken) => throw new NotSupportedException();
+        public Task<IReadOnlyList<WorkflowLookupItem>> GetActiveDepartmentsAsync(Guid tenantId, CancellationToken cancellationToken) => throw new NotSupportedException();
+        public Task<IReadOnlyList<WorkflowLookupItem>> GetActiveRolesAsync(Guid tenantId, CancellationToken cancellationToken) => throw new NotSupportedException();
+        public Task<IReadOnlyList<WorkflowServiceLookupItem>> GetServicesAsync(Guid tenantId, CancellationToken cancellationToken) => throw new NotSupportedException();
+        public Task<IReadOnlyList<WorkflowVersionSummary>> GetWorkflowVersionsAsync(Guid tenantId, Guid workflowId, CancellationToken cancellationToken) => throw new NotSupportedException();
+        public Task<WorkflowDefinition?> GetWorkflowByIdAsync(Guid tenantId, Guid workflowId, CancellationToken cancellationToken) => throw new NotSupportedException();
     }
     private sealed class Transaction : IWorkflowVersionTransaction
     {

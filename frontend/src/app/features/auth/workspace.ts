@@ -81,7 +81,7 @@ import { TranslatePipe } from '../../core/i18n/translate.pipe';
 
       <!-- Right Utility Bar -->
       <div class="nav-utilities">
-        <a routerLink="/notifications" class="notify-btn" title="Notifications">
+        <a routerLink="/notifications" class="notify-btn" title="Thông báo">
           🔔
           <span class="unread-dot"></span>
         </a>
@@ -95,8 +95,8 @@ import { TranslatePipe } from '../../core/i18n/translate.pipe';
           <span class="user-name">{{ identity()?.fullName }}</span>
         </div>
 
-        <button type="button" class="btn-signout" (click)="signOut()" title="Sign out">
-          {{ 'nav.signOut' | translate: 'Sign out' }}
+        <button type="button" class="btn-signout" (click)="signOut()" title="Đăng xuất">
+          {{ 'nav.signOut' | translate: 'Đăng xuất' }}
         </button>
       </div>
     </header>
@@ -117,16 +117,16 @@ import { TranslatePipe } from '../../core/i18n/translate.pipe';
           <div class="hero-actions">
             @if (session.hasPermission('tasks.create')) {
               <a routerLink="/tasks/new" class="btn-hero-primary">{{
-                'workspace.newTask' | translate: '+ New Task'
+                'workspace.newTask' | translate: '+ Tạo nhiệm vụ mới'
               }}</a>
             }
             @if (session.hasPermission('requests.create')) {
               <a routerLink="/requests/new" class="btn-hero-secondary">{{
-                'workspace.newRequest' | translate: '+ New Request'
+                'workspace.newRequest' | translate: '+ Tạo yêu cầu mới'
               }}</a>
             }
             <a routerLink="/approvals" class="btn-hero-ghost">
-              {{ 'approvals.title' | translate: 'Review Approvals' }} →
+              {{ 'approvals.title' | translate: 'Xét duyệt hồ sơ' }} →
             </a>
           </div>
         </div>
@@ -137,27 +137,27 @@ import { TranslatePipe } from '../../core/i18n/translate.pipe';
         <div class="kpi-box azure-accent">
           <div class="kpi-top">
             <span class="kpi-title">{{
-              'workspace.kpiActiveTasks' | translate: 'Active Work Items'
+              'workspace.kpiActiveTasks' | translate: 'Nhiệm vụ đang xử lý'
             }}</span>
-            <span class="kpi-badge">Live Scope</span>
+            <span class="kpi-badge">Đang hoạt động</span>
           </div>
           <div class="kpi-metric">26</div>
           <p class="kpi-foot">
-            <a routerLink="/tasks">{{ 'workspace.viewTasks' | translate: 'View tasks' }}</a>
+            <a routerLink="/tasks">{{ 'workspace.viewTasks' | translate: 'Xem danh sách nhiệm vụ' }}</a>
           </p>
         </div>
 
         <div class="kpi-box ocean-accent">
           <div class="kpi-top">
             <span class="kpi-title">{{
-              'workspace.kpiPendingRequests' | translate: 'Internal Requests'
+              'workspace.kpiPendingRequests' | translate: 'Yêu cầu nội bộ'
             }}</span>
-            <span class="kpi-badge">Queued</span>
+            <span class="kpi-badge">Đang chờ</span>
           </div>
           <div class="kpi-metric">14</div>
           <p class="kpi-foot">
             <a routerLink="/requests">{{
-              'workspace.viewRequests' | translate: 'View requests'
+              'workspace.viewRequests' | translate: 'Xem danh sách yêu cầu'
             }}</a>
           </p>
         </div>
@@ -165,14 +165,14 @@ import { TranslatePipe } from '../../core/i18n/translate.pipe';
         <div class="kpi-box green-accent">
           <div class="kpi-top">
             <span class="kpi-title">{{
-              'workspace.kpiSlaCompliance' | translate: 'SLA Compliance'
+              'workspace.kpiSlaCompliance' | translate: 'Tỷ lệ tuân thủ SLA'
             }}</span>
             <span class="kpi-badge green">98.6%</span>
           </div>
-          <div class="kpi-metric">Optimal</div>
+          <div class="kpi-metric">Tối ưu</div>
           <p class="kpi-foot">
             <a routerLink="/reports">{{
-              'workspace.dashboardReports' | translate: 'Dashboard & Reports'
+              'workspace.dashboardReports' | translate: 'Báo cáo & Thống kê'
             }}</a>
           </p>
         </div>
@@ -180,14 +180,14 @@ import { TranslatePipe } from '../../core/i18n/translate.pipe';
         <div class="kpi-box navy-accent">
           <div class="kpi-top">
             <span class="kpi-title">{{
-              'workspace.cardNotificationsTitle' | translate: 'Inbox Updates'
+              'workspace.cardNotificationsTitle' | translate: 'Thông báo mới'
             }}</span>
-            <span class="kpi-badge">{{ 'notifications.unread' | translate: 'Unread' }}</span>
+            <span class="kpi-badge">{{ 'notifications.unread' | translate: 'Chưa đọc' }}</span>
           </div>
           <div class="kpi-metric">3</div>
           <p class="kpi-foot">
             <a routerLink="/notifications">{{
-              'workspace.notifications' | translate: 'Notifications'
+              'workspace.notifications' | translate: 'Xem thông báo'
             }}</a>
           </p>
         </div>

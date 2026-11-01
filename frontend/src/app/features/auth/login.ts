@@ -222,42 +222,42 @@ export class Login implements OnInit, OnDestroy {
       if (idCtrl.invalid) {
         if (idCtrl.errors?.['required']) {
           this.showToast(
-            this.mode() === 'email' ? 'Missing company email' : 'Missing employee code',
+            this.mode() === 'email' ? 'Thiếu email công ty' : 'Thiếu mã nhân viên',
             this.mode() === 'email'
-              ? 'Please enter your company email address.'
-              : 'Please enter your employee code.',
+              ? 'Vui lòng nhập địa chỉ email công ty của bạn.'
+              : 'Vui lòng nhập mã nhân viên của bạn.',
           );
         } else if (idCtrl.errors?.['email']) {
           this.showToast(
-            'Invalid email format',
-            'Company email address is not in a valid format (e.g. name@company.com).',
+            'Định dạng email không hợp lệ',
+            'Địa chỉ email công ty không đúng định dạng (ví dụ: ten@congty.com).',
           );
         } else {
-          this.showToast('Invalid employee code', 'Employee code must be 50 characters or fewer.');
+          this.showToast('Mã nhân viên không hợp lệ', 'Mã nhân viên không được vượt quá 50 ký tự.');
         }
         return;
       }
 
       if (passCtrl.invalid) {
-        this.showToast('Missing password', 'Please enter your password.');
+        this.showToast('Thiếu mật khẩu', 'Vui lòng nhập mật khẩu của bạn.');
         return;
       }
 
       if (tenantCtrl.invalid) {
         if (tenantCtrl.errors?.['required']) {
-          this.showToast('Missing workspace key', 'Please enter your company workspace key.');
+          this.showToast('Thiếu mã không gian làm việc', 'Vui lòng nhập mã không gian làm việc của công ty.');
         } else if (tenantCtrl.errors?.['pattern']) {
           this.showToast(
-            'Invalid workspace key',
-            'Workspace key may only contain lowercase letters, numbers, and hyphens (e.g. bizflow-corp).',
+            'Mã không gian làm việc không hợp lệ',
+            'Mã không gian làm việc chỉ bao gồm chữ thường, chữ số và dấu gạch ngang (ví dụ: bizflow-corp).',
           );
         } else {
-          this.showToast('Invalid workspace key', 'Workspace key must be 80 characters or fewer.');
+          this.showToast('Mã không gian làm việc không hợp lệ', 'Mã không gian làm việc không được vượt quá 80 ký tự.');
         }
         return;
       }
 
-      this.showToast('Invalid input', 'Please review the required fields and try again.');
+      this.showToast('Dữ liệu không hợp lệ', 'Vui lòng kiểm tra lại các trường bắt buộc và thử lại.');
       return;
     }
 
@@ -312,35 +312,35 @@ export class Login implements OnInit, OnDestroy {
 
           if (failure.error?.code === 'AUTH.TENANT_CONTEXT_REQUIRED') {
             const msg =
-              'Enter your company workspace key to continue. Your company administrator can provide it.';
+              'Vui lòng nhập mã không gian làm việc để tiếp tục. Quản trị viên công ty của bạn có thể cung cấp mã này.';
             this.error.set(msg);
             this.form.controls.tenantKey.addValidators(Validators.required);
             this.form.controls.tenantKey.updateValueAndValidity();
             this.showToast(
-              'Workspace key required',
-              'Enter your company workspace key to continue.',
+              'Yêu cầu mã không gian làm việc',
+              'Vui lòng nhập mã không gian làm việc công ty để tiếp tục.',
             );
           } else if (failure.status === 401 || failure.status === 403) {
             const msg =
-              'We could not sign you in. Check your credentials and workspace, or contact your administrator.';
+              'Không thể đăng nhập. Vui lòng kiểm tra lại thông tin tài khoản và mã không gian làm việc, hoặc liên hệ Quản trị viên công ty.';
             this.error.set(msg);
             this.showToast(
-              'Sign-in failed',
-              'We could not sign you in. Check your credentials and workspace key, or contact your administrator.',
+              'Đăng nhập thất bại',
+              'Không thể đăng nhập. Vui lòng kiểm tra lại thông tin tài khoản và mã không gian làm việc, hoặc liên hệ Quản trị viên công ty.',
             );
           } else if (failure.status === 429) {
-            const msg = 'Too many sign-in attempts. Please wait before trying again.';
+            const msg = 'Đã thử đăng nhập sai quá nhiều lần. Vui lòng chờ ít phút trước khi thử lại.';
             this.error.set(msg);
             this.showToast(
-              'Too many attempts',
-              'Too many sign-in attempts. Please wait before trying again.',
+              'Quá nhiều lần thử',
+              'Đã thử đăng nhập sai quá nhiều lần. Vui lòng chờ ít phút trước khi thử lại.',
             );
           } else {
-            const msg = 'Sign-in is temporarily unavailable. Please try again shortly.';
+            const msg = 'Dịch vụ đăng nhập tạm thời gián đoạn. Vui lòng thử lại sau ít phút.';
             this.error.set(msg);
             this.showToast(
-              'Service unavailable',
-              'Sign-in is temporarily unavailable. Please try again shortly.',
+              'Dịch vụ tạm thời gián đoạn',
+              'Dịch vụ đăng nhập tạm thời gián đoạn. Vui lòng thử lại sau ít phút.',
             );
           }
           this.form.controls.password.reset();

@@ -132,13 +132,13 @@ export const routes: Routes = [
   {
     path: 'settings/workflows',
     canActivate: [tenantGuard, permissionGuard],
-    data: { permission: 'workflows.read' },
+    data: { permission: 'workflows.configure' },
     loadComponent: () => import('./features/workflows/workflows').then((m) => m.Workflows),
   },
   {
     path: 'settings/workflows/:id/versions/:v',
     canActivate: [tenantGuard, permissionGuard],
-    data: { permission: 'workflows.read' },
+    data: { permission: 'workflows.configure' },
     loadComponent: () =>
       import('./features/workflows/workflow-version').then((m) => m.WorkflowVersion),
   },

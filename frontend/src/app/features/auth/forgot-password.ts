@@ -103,17 +103,17 @@ export interface ToastAlert {
                 </div>
                 <div class="eyebrow-badge">
                   <span class="eyebrow">{{
-                    'forgot.eyebrow' | translate: 'Account recovery'
+                    'forgot.eyebrow' | translate: 'Khôi phục Tài khoản'
                   }}</span>
                 </div>
                 <h1 id="reset-title">
-                  {{ 'forgot.title' | translate: 'Forgot your password?' }}
+                  {{ 'forgot.title' | translate: 'Quên mật khẩu?' }}
                 </h1>
                 <p class="supporting-copy">
                   {{
                     'forgot.subtitle'
                       | translate
-                        : "We'll send a reset link to your company email. If you do not have access to that email, contact your company administrator."
+                        : "Chúng tôi sẽ gửi liên kết đặt lại mật khẩu tới email công ty của bạn. Nếu bạn không có quyền truy cập email đó, vui lòng liên hệ quản trị viên công ty."
                   }}
                 </p>
               </div>
@@ -139,7 +139,7 @@ export interface ToastAlert {
                     {{
                       'forgot.successMessage'
                         | translate
-                          : 'If a matching account can receive email, reset instructions will be sent. Include your workspace key if your identifier is shared across companies.'
+                          : 'Nếu tài khoản khớp và có thể nhận thư, hướng dẫn đặt lại sẽ được gửi tới bạn. Vui lòng kèm theo mã không gian làm việc nếu tài khoản của bạn thuộc nhiều công ty.'
                     }}
                   </p>
                 </div>
@@ -147,27 +147,27 @@ export interface ToastAlert {
                 <form [formGroup]="form" (ngSubmit)="submit()" [attr.aria-busy]="busy()">
                   <mat-form-field appearance="outline" subscriptSizing="dynamic">
                     <mat-label>{{
-                      'forgot.identifier' | translate: 'Employee code or company email'
+                      'forgot.identifier' | translate: 'Mã nhân viên hoặc email công ty'
                     }}</mat-label>
                     <input
                       matInput
                       formControlName="identifier"
                       autocomplete="username"
                       [readonly]="busy()"
-                      placeholder="e.g. EMP001 or name@company.com"
+                      placeholder="Ví dụ: EMP001 hoặc ten@congty.com"
                     />
                   </mat-form-field>
 
                   <mat-form-field appearance="outline" subscriptSizing="dynamic">
                     <mat-label>{{
-                      'forgot.workspaceKey' | translate: 'Workspace key'
+                      'forgot.workspaceKey' | translate: 'Mã không gian làm việc'
                     }}</mat-label>
                     <input
                       matInput
                       formControlName="tenantKey"
                       autocomplete="organization"
                       [readonly]="busy()"
-                      placeholder="e.g. bizflow-corp"
+                      placeholder="Ví dụ: bizflow-corp"
                     />
                   </mat-form-field>
 
@@ -186,9 +186,9 @@ export interface ToastAlert {
                       [disabled]="busy()"
                     >
                       @if (busy()) {
-                        <span>{{ 'forgot.submitting' | translate: 'Sending…' }}</span>
+                        <span>{{ 'forgot.submitting' | translate: 'Đang gửi…' }}</span>
                       } @else {
-                        <span>{{ 'forgot.submit' | translate: 'Send reset link' }}</span>
+                        <span>{{ 'forgot.submit' | translate: 'Gửi liên kết đặt lại' }}</span>
                       }
                     </button>
                   </div>
@@ -198,7 +198,7 @@ export interface ToastAlert {
               <div class="auth-card-footer">
                 <p class="auth-help">
                   <a routerLink="/login">{{
-                    'auth.backToSignIn' | translate: 'Back to sign in'
+                    'auth.backToSignIn' | translate: '← Quay lại đăng nhập'
                   }}</a>
                 </p>
               </div>
@@ -206,7 +206,7 @@ export interface ToastAlert {
           </div>
 
           <div class="auth-platform-tag">
-            BizFlow Platform <span class="tag-sep">•</span> Internal work orchestration & accountability.
+            BizFlow Platform <span class="tag-sep">•</span> Điều phối quy trình & nâng cao trách nhiệm giải trình.
           </div>
         </div>
       </main>
@@ -285,13 +285,13 @@ export class ForgotPassword implements OnDestroy {
       if (idCtrl.invalid) {
         if (idCtrl.errors?.['required']) {
           this.showToast(
-            'Missing account identifier',
-            'Please enter your employee code or company email.',
+            'Thiếu thông tin tài khoản',
+            'Vui lòng nhập mã nhân viên hoặc email công ty của bạn.',
           );
         } else {
           this.showToast(
-            'Invalid account identifier',
-            'Employee code or company email must be 320 characters or fewer.',
+            'Thông tin tài khoản không hợp lệ',
+            'Mã nhân viên hoặc email công ty không được vượt quá 320 ký tự.',
           );
         }
         return;
@@ -299,13 +299,13 @@ export class ForgotPassword implements OnDestroy {
 
       if (tenantCtrl.invalid) {
         this.showToast(
-          'Invalid workspace key',
-          'Workspace key may only contain lowercase letters, numbers, and hyphens (e.g. bizflow-corp).',
+          'Mã không gian làm việc không hợp lệ',
+          'Mã không gian làm việc chỉ bao gồm chữ thường, chữ số và dấu gạch ngang (ví dụ: bizflow-corp).',
         );
         return;
       }
 
-      this.showToast('Invalid input', 'Please review the required fields and try again.');
+      this.showToast('Dữ liệu không hợp lệ', 'Vui lòng kiểm tra lại các trường bắt buộc và thử lại.');
       return;
     }
 
@@ -332,16 +332,16 @@ export class ForgotPassword implements OnDestroy {
           this.dismissToast();
         },
         error: (failure: HttpErrorResponse) => {
-          const title = failure.status === 429 ? 'Too many requests' : 'Service unavailable';
+          const title = failure.status === 429 ? 'Quá nhiều yêu cầu' : 'Dịch vụ tạm thời gián đoạn';
           const msg =
             failure.status === 429
               ? this.i18n.t(
                   'forgot.errTooMany',
-                  'Too many requests. Please wait before trying again.',
+                  'Quá nhiều yêu cầu đặt lại mật khẩu. Vui lòng chờ ít phút trước khi thử lại.',
                 )
               : this.i18n.t(
                   'forgot.errUnavailable',
-                  'Password reset is temporarily unavailable. Please try again or contact your administrator.',
+                  'Tính năng đặt lại mật khẩu tạm thời chưa khả dụng. Vui lòng thử lại sau hoặc liên hệ quản trị viên công ty.',
                 );
           this.error.set(msg);
           this.showToast(title, msg);
