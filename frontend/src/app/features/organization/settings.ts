@@ -47,13 +47,13 @@ import { TranslatePipe } from '../../core/i18n/translate.pipe';
           <div class="progress-info">
             <h3>
               {{
-                'settings.onboardingTitle' | translate: 'Tenant Onboarding & Operational Readiness'
+                'settings.onboardingTitle' | translate: 'Khởi tạo Doanh nghiệp & Sẵn sàng Vận hành'
               }}
             </h3>
             <p>
               {{
                 'settings.onboardingDesc'
-                  | translate: '4 of 5 core business modules configured for active tenancy.'
+                  | translate: '4/5 mô-đun vận hành cốt lõi đã được cấu hình cho doanh nghiệp.'
               }}
             </p>
           </div>
@@ -62,7 +62,7 @@ import { TranslatePipe } from '../../core/i18n/translate.pipe';
               <div class="progress-fill" style="width: 80%;"></div>
             </div>
             <div class="progress-percent-badge">
-              {{ 'settings.readyBadge' | translate: '80% Ready' }}
+              {{ 'settings.readyBadge' | translate: '80% Sẵn sàng' }}
             </div>
           </div>
         </section>

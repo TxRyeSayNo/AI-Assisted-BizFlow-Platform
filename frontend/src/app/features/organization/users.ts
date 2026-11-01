@@ -53,7 +53,7 @@ export class Users {
   readonly denied = signal(false);
   readonly error = signal(false);
   readonly page = signal(1);
-  readonly labels = { ACTIVE: 'Active', INACTIVE: 'Inactive', LOCKED: 'Locked' };
+  readonly labels = { ACTIVE: 'Hoạt động', INACTIVE: 'Ngừng hoạt động', LOCKED: 'Tạm khóa' };
 
   constructor() {
     this.load(1);

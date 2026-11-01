@@ -23,21 +23,11 @@ describe('LanguageSwitchComponent', () => {
     localStorage.clear();
   });
 
-  it('renders 3 language buttons: VI, EN, JA', () => {
+  it('renders active Vietnamese language item', () => {
     const fixture = TestBed.createComponent(LanguageSwitchComponent);
     fixture.detectChanges();
     const buttons = fixture.nativeElement.querySelectorAll('.lang-pill');
-    expect(buttons.length).toBe(3);
-  });
-
-  it('changes active language when button is clicked', () => {
-    component.selectLanguage('ja');
-    expect(service.currentLanguage()).toBe('ja');
-
-    component.selectLanguage('en');
-    expect(service.currentLanguage()).toBe('en');
-
-    component.selectLanguage('vi');
+    expect(buttons.length).toBe(1);
     expect(service.currentLanguage()).toBe('vi');
   });
 
@@ -45,7 +35,7 @@ describe('LanguageSwitchComponent', () => {
     expect(component.isOpen()).toBe(false);
     component.toggleDropdown();
     expect(component.isOpen()).toBe(true);
-    component.selectLanguage('ja');
+    component.selectLanguage('vi');
     expect(component.isOpen()).toBe(false);
   });
 

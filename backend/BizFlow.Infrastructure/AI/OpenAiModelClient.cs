@@ -37,7 +37,7 @@ public sealed class OpenAiModelClient : IAiModelClient
 
         _model = configuration["OpenAI:Model"]
             ?? configuration["OPENAI_MODEL"]
-            ?? "gpt-4o-mini";
+            ?? "gpt-4o";
 
         var rawBaseUrl = configuration["OpenAI:BaseUrl"]
             ?? configuration["OPENAI_BASE_URL"]

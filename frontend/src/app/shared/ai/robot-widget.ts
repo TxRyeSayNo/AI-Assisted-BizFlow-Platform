@@ -20,6 +20,7 @@ import {
   AiAgentService,
   ChatMessage,
   SubtaskBranch,
+  AgentAnswer,
 } from '../../core/ai/ai-agent.service';
 
 @Component({
@@ -59,25 +60,34 @@ export class RobotWidgetComponent implements OnInit {
 
   checkSessionDisplayState() {
     try {
-      const dismissed = sessionStorage.getItem('bizflow_robot_dismissed');
-      // Default open unless explicitly closed in current session (BR-029)
-      if (dismissed !== 'true') {
+      // AI Agent Widget defaults to minimized (closed as a floating circular FAB 🤖 at bottom-right)
+      // so it no longer obstructs the right 1/3 of the screen across workspace screens.
+      const userOpened = sessionStorage.getItem('bizflow_robot_open');
+      if (userOpened === 'true') {
         this.agent.isOpen.set(true);
       } else {
         this.agent.isOpen.set(false);
       }
     } catch {
-      this.agent.isOpen.set(true);
+      this.agent.isOpen.set(false);
     }
   }
 
   openWidget() {
     this.agent.open('chat');
+    try {
+      sessionStorage.setItem('bizflow_robot_open', 'true');
+      sessionStorage.removeItem('bizflow_robot_dismissed');
+    } catch {}
     this.scrollToBottom();
   }
 
   closeWidget() {
     this.agent.close();
+    try {
+      sessionStorage.removeItem('bizflow_robot_open');
+      sessionStorage.setItem('bizflow_robot_dismissed', 'true');
+    } catch {}
   }
 
   toggleExpand() {
@@ -161,11 +171,27 @@ export class RobotWidgetComponent implements OnInit {
 
     this.agent.busy.set(true);
 
+    // Prior conversation history for multi-turn context (excluding initial welcome placeholder)
+    const priorHistory = this.agent
+      .messages()
+      .slice(0, -1)
+      .filter((m) => m.id !== 'welcome')
+      .slice(-8)
+      .map((m) => ({ sender: m.sender, text: m.text }));
+
+    const payload: { message: string; locale: string; history?: Array<{ sender: string; text: string }> } = {
+      message: text,
+      locale: this.i18n.currentLanguage(),
+    };
+    if (priorHistory.length > 0) {
+      payload.history = priorHistory;
+    }
+
     // 2. Dispatch to backend AI Chat
     this.http
-      .post<{ response: string; recognizedCommand?: string; actionCards?: any[] }>(
+      .post<{ response: string; recognizedCommand?: string; actionCards?: any[]; questionnaire?: any; agentThought?: string }>(
         '/api/v1/ai/chat',
-        { message: text, locale: this.i18n.currentLanguage() },
+        payload,
       )
       .pipe(takeUntilDestroyed(this.destroy))
       .subscribe({
@@ -175,7 +201,7 @@ export class RobotWidgetComponent implements OnInit {
           // Check if response contains decomposition proposals
           let actionCards = res.actionCards;
           const decompCard = res.actionCards?.find(
-            (c) => c.actionType === 'OPEN_DECOMPOSITION' || c.actionType === 'OPEN_BRANCHES',
+            (c) => c.actionType === 'OPEN_DECOMPOSITION' || c.actionType === 'OPEN_BRANCHES' || c.actionType === 'VIEW_BRANCHES',
           );
 
           if (decompCard?.payload?.proposals) {
@@ -194,6 +220,9 @@ export class RobotWidgetComponent implements OnInit {
             text: res.response,
             time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
             actionCards,
+            questionnaire: res.questionnaire,
+            agentThought: res.agentThought,
+            isThoughtExpanded: !!res.agentThought,
           };
 
           this.agent.messages.update((list) => [...list, robotMsg]);
@@ -315,14 +344,23 @@ export class RobotWidgetComponent implements OnInit {
   }
 
   executeAction(card: { actionType: string; title: string; linkUrl?: string; payload?: any }) {
+    // 0. Quick fill template for meeting clarification or prompts
+    if (card.actionType === 'QUICK_FILL_MEETING' || card.actionType === 'PREFILL_PROMPT') {
+      if (card.payload?.template) {
+        this.inputMessage.set(card.payload.template);
+      }
+      return;
+    }
+
     // 1. In-agent branching navigation (stays inside agent workspace)
     if (
       card.actionType === 'VIEW_BRANCHES' ||
       card.actionType === 'OPEN_BRANCHES' ||
-      (card.actionType === 'OPEN_DECOMPOSITION' && !card.linkUrl)
+      card.actionType === 'OPEN_DECOMPOSITION'
     ) {
-      if (card.payload?.proposals) {
-        this.agent.setProposals(card.payload.proposals);
+      const proposals = card.payload?.proposals || card.payload?.Proposals;
+      if (proposals) {
+        this.agent.setProposals(proposals);
       }
       this.agent.selectBranch(null);
       this.agent.setTab('branches');
@@ -377,6 +415,117 @@ export class RobotWidgetComponent implements OnInit {
         queryParams: card.payload ? card.payload : undefined,
       });
     }
+  }
+
+  // Questionnaire selections state: messageId -> questionId -> { selectedOptions: string[], customText: string }
+  readonly formSelections = signal<Record<string, Record<string, { selectedOptions: string[]; customText: string }>>>({});
+
+  getSelection(msgId: string, qId: string, defaultOptIds: string[] = []): { selectedOptions: string[]; customText: string } {
+    const currentMsgMap = this.formSelections()[msgId] || {};
+    if (!currentMsgMap[qId]) {
+      return { selectedOptions: defaultOptIds, customText: '' };
+    }
+    return currentMsgMap[qId];
+  }
+
+  isOptionSelected(msgId: string, qId: string, optId: string, isDefault?: boolean): boolean {
+    const currentMsgMap = this.formSelections()[msgId];
+    if (!currentMsgMap || !currentMsgMap[qId]) {
+      return !!isDefault;
+    }
+    return currentMsgMap[qId].selectedOptions.includes(optId);
+  }
+
+  toggleSingleChoice(msgId: string, qId: string, optId: string) {
+    this.formSelections.update((all) => {
+      const msgMap = { ...(all[msgId] || {}) };
+      const current = msgMap[qId] || { selectedOptions: [], customText: '' };
+      msgMap[qId] = { ...current, selectedOptions: [optId] };
+      return { ...all, [msgId]: msgMap };
+    });
+  }
+
+  toggleMultipleChoice(msgId: string, qId: string, optId: string) {
+    this.formSelections.update((all) => {
+      const msgMap = { ...(all[msgId] || {}) };
+      const current = msgMap[qId] || { selectedOptions: [], customText: '' };
+      const exists = current.selectedOptions.includes(optId);
+      const nextOpts = exists
+        ? current.selectedOptions.filter((id) => id !== optId)
+        : [...current.selectedOptions, optId];
+      msgMap[qId] = { ...current, selectedOptions: nextOpts };
+      return { ...all, [msgId]: msgMap };
+    });
+  }
+
+  getCustomText(msgId: string, qId: string): string {
+    return this.formSelections()[msgId]?.[qId]?.customText || '';
+  }
+
+  onCustomTextInput(msgId: string, qId: string, event: Event) {
+    const input = event.target as HTMLInputElement;
+    const text = input.value;
+    this.formSelections.update((all) => {
+      const msgMap = { ...(all[msgId] || {}) };
+      const current = msgMap[qId] || { selectedOptions: [], customText: '' };
+      msgMap[qId] = { ...current, customText: text };
+      return { ...all, [msgId]: msgMap };
+    });
+  }
+
+  toggleThought(msg: ChatMessage) {
+    this.agent.messages.update((list) =>
+      list.map((m) => (m.id === msg.id ? { ...m, isThoughtExpanded: !m.isThoughtExpanded } : m)),
+    );
+  }
+
+  submitQuestionnaire(msg: ChatMessage) {
+    if (!msg.questionnaire || this.agent.busy()) return;
+
+    const answers: AgentAnswer[] = [];
+    const lines: string[] = ['Tôi đã xác nhận các thông tin sau:'];
+
+    for (const q of msg.questionnaire.questions) {
+      const defaultOptIds = (q.options || []).filter((o) => o.isDefault).map((o) => o.id);
+      const sel = this.getSelection(msg.id, q.id, defaultOptIds);
+
+      answers.push({
+        questionId: q.id,
+        selectedOptionIds: sel.selectedOptions,
+        customText: sel.customText ? sel.customText.trim() : undefined,
+      });
+
+      const selectedLabels = (q.options || [])
+        .filter((o) => sel.selectedOptions.includes(o.id))
+        .map((o) => o.label);
+
+      let lineVal = selectedLabels.join(', ');
+      if (sel.customText?.trim()) {
+        lineVal = lineVal ? `${lineVal} (${sel.customText.trim()})` : sel.customText.trim();
+      }
+
+      if (lineVal) {
+        lines.push(`• ${q.title}: ${lineVal}`);
+      }
+    }
+
+    const summaryText = lines.join('\n');
+    this.agent.sendFormAnswers(msg.questionnaire.formId, answers, summaryText, msg.id);
+    this.scrollToBottom();
+  }
+
+  skipQuestionnaire(msg: ChatMessage) {
+    if (!msg.questionnaire || this.agent.busy()) return;
+
+    const defaultAnswers: AgentAnswer[] = msg.questionnaire.questions.map((q) => ({
+      questionId: q.id,
+      selectedOptionIds: (q.options || []).filter((o) => o.isDefault).map((o) => o.id),
+      customText: undefined,
+    }));
+
+    const summary = 'Bỏ qua khảo sát, sử dụng các tham số đề xuất mặc định của hệ thống.';
+    this.agent.sendFormAnswers(msg.questionnaire.formId, defaultAnswers, summary, msg.id);
+    this.scrollToBottom();
   }
 
   private scrollToBottom() {

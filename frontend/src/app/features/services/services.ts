@@ -75,7 +75,7 @@ export class Services {
   readonly mutationError = signal('');
   readonly uncertain = signal(false);
   readonly page = signal(1);
-  readonly labels = { DRAFT: 'Draft', ACTIVE: 'Active', INACTIVE: 'Inactive' };
+  readonly labels = { DRAFT: 'Bản nháp', ACTIVE: 'Hoạt động', INACTIVE: 'Ngừng hoạt động' };
   readonly existingCategoryForm = this.categoryForm();
   readonly selectedService = signal<ServiceRow | null>(null);
   readonly categorySaving = signal(false);

@@ -45,9 +45,15 @@ import { TranslatePipe } from '../../core/i18n/translate.pipe';
               'nav.requests' | translate: 'Requests'
             }}</a>
           }
-          <a routerLink="/approvals" class="nav-link">{{
-            'nav.approvals' | translate: 'Approvals'
-          }}</a>
+          @if (
+            session.hasPermission('tasks.confirm') ||
+            session.hasPermission('tasks.read.managed') ||
+            session.hasPermission('roles.configure')
+          ) {
+            <a routerLink="/approvals" class="nav-link">{{
+              'nav.approvals' | translate: 'Approvals'
+            }}</a>
+          }
           @if (
             session.hasPermission('reports.manager') ||
             session.hasPermission('reports.company') ||
@@ -58,17 +64,30 @@ import { TranslatePipe } from '../../core/i18n/translate.pipe';
               'reports.breadcrumb' | translate: 'Reports'
             }}</a>
           }
-          <a routerLink="/sla-monitor" class="nav-link">{{
-            'nav.slaMonitor' | translate: 'SLA Monitor'
-          }}</a>
+          @if (
+            session.hasPermission('sla.read') ||
+            session.hasPermission('reports.sla') ||
+            session.hasPermission('tasks.read.managed') ||
+            session.hasPermission('roles.configure')
+          ) {
+            <a routerLink="/sla-monitor" class="nav-link">{{
+              'nav.slaMonitor' | translate: 'SLA Monitor'
+            }}</a>
+          }
           @if (session.hasPermission('records.search')) {
             <a routerLink="/records/search" class="nav-link">{{
               'common.search' | translate: 'Search'
             }}</a>
           }
-          <a routerLink="/settings" class="nav-link">{{
-            'nav.settings' | translate: 'Settings'
-          }}</a>
+          @if (
+            session.hasPermission('roles.configure') ||
+            session.hasPermission('sla.configure') ||
+            session.hasPermission('service.create')
+          ) {
+            <a routerLink="/settings" class="nav-link">{{
+              'nav.settings' | translate: 'Settings'
+            }}</a>
+          }
         } @else {
           <a routerLink="/platform/companies" class="nav-link">{{
             'nav.companyRegistrations' | translate: 'Companies'
@@ -125,72 +144,68 @@ import { TranslatePipe } from '../../core/i18n/translate.pipe';
                 'workspace.newRequest' | translate: '+ New Request'
               }}</a>
             }
-            <a routerLink="/approvals" class="btn-hero-ghost">
-              {{ 'approvals.title' | translate: 'Review Approvals' }} →
-            </a>
+            @if (
+              session.hasPermission('tasks.confirm') ||
+              session.hasPermission('tasks.read.managed') ||
+
+
+              session.hasPermission('roles.configure')
+            ) {
+              <a routerLink="/approvals" class="btn-hero-ghost">
+                {{ 'approvals.title' | translate: 'Trung tâm Phê duyệt' }} →
+              </a>
+            }
           </div>
         </div>
       </section>
 
-      <!-- KPI Executive Metrics Row -->
+      <!-- KPI Executive Metrics Row (Personalized by Role) -->
       <section class="kpi-metric-row">
-        <div class="kpi-box azure-accent">
-          <div class="kpi-top">
-            <span class="kpi-title">{{
-              'workspace.kpiActiveTasks' | translate: 'Active Work Items'
-            }}</span>
-            <span class="kpi-badge">Live Scope</span>
+        @if (kpiData(); as kpi) {
+          <div class="kpi-box azure-accent">
+            <div class="kpi-top">
+              <span class="kpi-title">{{ kpi.box1.title }}</span>
+              <span class="kpi-badge">{{ kpi.box1.badge }}</span>
+            </div>
+            <div class="kpi-metric">{{ kpi.box1.metric }}</div>
+            <p class="kpi-foot">
+              <a [routerLink]="kpi.box1.link">{{ kpi.box1.label }}</a>
+            </p>
           </div>
-          <div class="kpi-metric">26</div>
-          <p class="kpi-foot">
-            <a routerLink="/tasks">{{ 'workspace.viewTasks' | translate: 'View tasks' }}</a>
-          </p>
-        </div>
 
-        <div class="kpi-box ocean-accent">
-          <div class="kpi-top">
-            <span class="kpi-title">{{
-              'workspace.kpiPendingRequests' | translate: 'Internal Requests'
-            }}</span>
-            <span class="kpi-badge">Queued</span>
+          <div class="kpi-box ocean-accent">
+            <div class="kpi-top">
+              <span class="kpi-title">{{ kpi.box2.title }}</span>
+              <span class="kpi-badge">{{ kpi.box2.badge }}</span>
+            </div>
+            <div class="kpi-metric">{{ kpi.box2.metric }}</div>
+            <p class="kpi-foot">
+              <a [routerLink]="kpi.box2.link">{{ kpi.box2.label }}</a>
+            </p>
           </div>
-          <div class="kpi-metric">14</div>
-          <p class="kpi-foot">
-            <a routerLink="/requests">{{
-              'workspace.viewRequests' | translate: 'View requests'
-            }}</a>
-          </p>
-        </div>
 
-        <div class="kpi-box green-accent">
-          <div class="kpi-top">
-            <span class="kpi-title">{{
-              'workspace.kpiSlaCompliance' | translate: 'SLA Compliance'
-            }}</span>
-            <span class="kpi-badge green">98.6%</span>
+          <div class="kpi-box green-accent">
+            <div class="kpi-top">
+              <span class="kpi-title">{{ kpi.box3.title }}</span>
+              <span class="kpi-badge green">{{ kpi.box3.badge }}</span>
+            </div>
+            <div class="kpi-metric">{{ kpi.box3.metric }}</div>
+            <p class="kpi-foot">
+              <a [routerLink]="kpi.box3.link">{{ kpi.box3.label }}</a>
+            </p>
           </div>
-          <div class="kpi-metric">Optimal</div>
-          <p class="kpi-foot">
-            <a routerLink="/reports">{{
-              'workspace.dashboardReports' | translate: 'Dashboard & Reports'
-            }}</a>
-          </p>
-        </div>
 
-        <div class="kpi-box navy-accent">
-          <div class="kpi-top">
-            <span class="kpi-title">{{
-              'workspace.cardNotificationsTitle' | translate: 'Inbox Updates'
-            }}</span>
-            <span class="kpi-badge">{{ 'notifications.unread' | translate: 'Unread' }}</span>
+          <div class="kpi-box navy-accent">
+            <div class="kpi-top">
+              <span class="kpi-title">{{ kpi.box4.title }}</span>
+              <span class="kpi-badge">{{ kpi.box4.badge }}</span>
+            </div>
+            <div class="kpi-metric">{{ kpi.box4.metric }}</div>
+            <p class="kpi-foot">
+              <a [routerLink]="kpi.box4.link">{{ kpi.box4.label }}</a>
+            </p>
           </div>
-          <div class="kpi-metric">3</div>
-          <p class="kpi-foot">
-            <a routerLink="/notifications">{{
-              'workspace.notifications' | translate: 'Notifications'
-            }}</a>
-          </p>
-        </div>
+        }
       </section>
 
       <!-- Organized Workspace Modules Grid with Clear Role Separation (Requirement 1 & User Request) -->
@@ -371,11 +386,8 @@ import { TranslatePipe } from '../../core/i18n/translate.pipe';
           <!-- 8. Thiết lập Doanh nghiệp & Quy trình -->
           @if (
             session.hasPermission('roles.configure') ||
-            session.hasPermission('workflows.read') ||
-            session.hasPermission('sla.read') ||
-            session.hasPermission('service.create') ||
-            session.hasPermission('service.update') ||
-            !identity()?.tenantId
+            session.hasPermission('sla.configure') ||
+            session.hasPermission('service.create')
           ) {
             <article class="module-card">
               <div class="module-icon">🛠</div>
@@ -936,31 +948,70 @@ export class Workspace {
   }
 
   welcomeName(): string {
-    const isEn = this.i18n.currentLanguage() === 'en';
     const raw = this.identity()?.fullName?.trim();
-    if (!raw) return isEn ? 'Platform Administrator' : 'Quản trị viên Hệ thống';
+    if (!raw) return 'Quản trị viên Hệ thống';
     if (raw === 'Platform Administrator' || raw === 'superadmin' || raw.toLowerCase().includes('platform admin')) {
-      return isEn ? 'Platform Administrator' : 'Quản trị viên Hệ thống';
+      return 'Quản trị viên Hệ thống';
     }
     if (raw === 'Company Administrator') {
-      return isEn ? 'Company Administrator' : 'Quản trị viên Doanh nghiệp';
+      return 'Quản trị viên Doanh nghiệp';
     }
     if (raw === 'Operation Manager' || raw === 'Operational Manager') {
-      return isEn ? 'Operational Manager' : 'Quản lý Vận hành';
+      return 'Quản lý Vận hành';
     }
     if (raw === 'Regular Employee') {
-      return isEn ? 'Regular Employee' : 'Nhân viên Doanh nghiệp';
+      return 'Nhân viên Doanh nghiệp';
     }
     return raw;
   }
 
+  readonly userRole = computed(() => {
+    const id = this.identity();
+    if (!id?.tenantId) return 'SUPERADMIN';
+    if (id.permissions.includes('roles.configure')) return 'COMPANY_ADMIN';
+    if (id.permissions.includes('tasks.assign')) return 'MANAGER';
+    return 'EMPLOYEE';
+  });
+
+  readonly kpiData = computed(() => {
+    switch (this.userRole()) {
+      case 'SUPERADMIN':
+        return {
+          box1: { title: 'Hồ sơ Đăng ký', badge: 'Chờ duyệt', metric: '2', link: '/platform/companies', label: 'Duyệt đăng ký doanh nghiệp' },
+          box2: { title: 'Kiểm toán Hệ thống', badge: '24 giờ qua', metric: '23', link: '/platform/audit', label: 'Xem nhật ký kiểm toán' },
+          box3: { title: 'Trạng thái Nền tảng', badge: '100% Hoạt động', metric: 'Ổn định', link: '/platform/companies', label: 'Giám sát vận hành' },
+          box4: { title: 'Thông báo Hệ thống', badge: 'Chưa đọc', metric: '1', link: '/notifications', label: 'Xem thông báo' },
+        };
+      case 'COMPANY_ADMIN':
+        return {
+          box1: { title: 'Nhiệm vụ Toàn công ty', badge: 'Đang chạy', metric: '7', link: '/tasks', label: 'Xem danh sách công việc' },
+          box2: { title: 'Yêu cầu Toàn công ty', badge: 'Đang xử lý', metric: '5', link: '/requests', label: 'Xem danh sách yêu cầu' },
+          box3: { title: 'Tuân thủ SLA Doanh nghiệp', badge: '98.6%', metric: 'Tối ưu', link: '/reports', label: 'Báo cáo & Dashboard' },
+          box4: { title: 'Hộp thư Cập nhật', badge: 'Chưa đọc', metric: '3', link: '/notifications', label: 'Xem thông báo' },
+        };
+      case 'MANAGER':
+        return {
+          box1: { title: 'Nhiệm vụ Phòng ban', badge: 'Phụ trách', metric: '4', link: '/tasks', label: 'Xem danh sách công việc' },
+          box2: { title: 'Yêu cầu Phòng ban', badge: 'Cần duyệt', metric: '2', link: '/requests', label: 'Xem danh sách yêu cầu' },
+          box3: { title: 'Tuân thủ SLA Phòng ban', badge: '97.2%', metric: 'Tốt', link: '/sla-monitor', label: 'Giám sát SLA' },
+          box4: { title: 'Hộp thư Cập nhật', badge: 'Chưa đọc', metric: '2', link: '/notifications', label: 'Xem thông báo' },
+        };
+      default: // EMPLOYEE
+        return {
+          box1: { title: 'Nhiệm vụ của tôi', badge: 'Được giao', metric: '1', link: '/tasks', label: 'Xem nhiệm vụ cá nhân' },
+          box2: { title: 'Yêu cầu của tôi', badge: 'Đã gửi', metric: '1', link: '/requests', label: 'Xem yêu cầu của tôi' },
+          box3: { title: 'Tiến độ Đúng hạn', badge: '100%', metric: 'Đạt chuẩn', link: '/tasks', label: 'Chi tiết tiến độ' },
+          box4: { title: 'Hộp thư Cập nhật', badge: 'Chưa đọc', metric: '1', link: '/notifications', label: 'Xem thông báo' },
+        };
+    }
+  });
+
   currentRoleLabel(): string {
     const id = this.identity();
-    const isEn = this.i18n.currentLanguage() === 'en';
-    if (!id?.tenantId) return isEn ? 'Platform Administrator' : 'Quản trị viên Hệ thống';
-    if (id.permissions.includes('roles.configure')) return isEn ? 'Company Administrator' : 'Quản trị viên Doanh nghiệp';
-    if (id.permissions.includes('tasks.assign')) return isEn ? 'Operational Manager' : 'Quản lý Vận hành';
-    return isEn ? 'Authorized Member' : 'Thành viên';
+    if (!id?.tenantId) return 'Quản trị viên Hệ thống';
+    if (id.permissions.includes('roles.configure')) return 'Quản trị viên Doanh nghiệp';
+    if (id.permissions.includes('tasks.assign')) return 'Quản lý Vận hành';
+    return 'Thành viên';
   }
 
   signOut(): void {

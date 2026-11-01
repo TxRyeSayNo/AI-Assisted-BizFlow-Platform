@@ -197,7 +197,7 @@ interface RegistrationPage {
                               rel="noopener"
                               style="font-size: 0.8rem; color: #2563eb; font-weight: 600; text-decoration: underline;"
                             >
-                              📄 {{ item.evidenceDocumentFileName || 'Legal Document' }}
+                              📄 {{ item.evidenceDocumentFileName || ('platform.viewLicense' | translate: 'Xem giấy phép kinh doanh') }}
                             </a>
                           </div>
                         }
@@ -289,36 +289,36 @@ interface RegistrationPage {
       @if (approvingItem(); as item) {
         <div class="modal-backdrop">
           <div class="modal-card">
-            <h2>Approve & Provision Workspace</h2>
+            <h2>{{ 'platform.approveModalTitle' | translate: 'Phê duyệt & Cấp Workspace' }}</h2>
             <p class="modal-desc">
-              Approving <strong>{{ item.name }}</strong> will atomically create their primary tenant
-              workspace and seed their initial Company Administrator account.
+              {{ 'platform.approveModalDescBefore' | translate: 'Phê duyệt doanh nghiệp' }} <strong>{{ item.name }}</strong> {{ 'platform.approveModalDescAfter' | translate: 'sẽ tự động khởi tạo không gian làm việc (tenant) và tài khoản Quản trị viên Doanh nghiệp.' }}
+
             </p>
 
             <form [formGroup]="approveForm" (ngSubmit)="confirmApprove(item)" class="modal-form">
               <mat-form-field appearance="outline">
-                <mat-label>Workspace Slug (Tenant Key)</mat-label>
-                <input matInput formControlName="tenantKey" placeholder="e.g. acme-corp" />
-                <mat-hint>Lowercase letters, numbers, and hyphens (BR-023)</mat-hint>
+                <mat-label>{{ 'platform.tenantKeyLabel' | translate: 'Mã Không gian làm việc (Tenant Key)' }}</mat-label>
+                <input matInput formControlName="tenantKey" placeholder="vd: acme-corp" />
+                <mat-hint>{{ 'platform.tenantKeyHint' | translate: 'Chữ thường không dấu, số và dấu gạch nối (BR-023)' }}</mat-hint>
               </mat-form-field>
 
               <mat-form-field appearance="outline">
-                <mat-label>Admin Full Name</mat-label>
+                <mat-label>{{ 'platform.adminFullNameLabel' | translate: 'Họ và tên Quản trị viên' }}</mat-label>
                 <input matInput formControlName="adminFullName" />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
-                <mat-label>Admin Corporate Email</mat-label>
+                <mat-label>{{ 'platform.adminEmailLabel' | translate: 'Email Quản trị viên Doanh nghiệp' }}</mat-label>
                 <input matInput type="email" formControlName="adminEmail" />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
-                <mat-label>Admin Employee Code</mat-label>
+                <mat-label>{{ 'platform.adminCodeLabel' | translate: 'Mã Nhân viên Quản trị' }}</mat-label>
                 <input matInput formControlName="adminEmployeeCode" />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
-                <mat-label>Initial Admin Password</mat-label>
+                <mat-label>{{ 'platform.adminPasswordLabel' | translate: 'Mật khẩu Khởi tạo Ban đầu' }}</mat-label>
                 <input matInput formControlName="adminPassword" type="password" />
               </mat-form-field>
 
@@ -329,7 +329,7 @@ interface RegistrationPage {
                   (click)="approvingItem.set(null)"
                   [disabled]="actionBusy()"
                 >
-                  Cancel
+                  {{ 'common.cancel' | translate: 'Hủy' }}
                 </button>
                 <button
                   mat-flat-button
@@ -338,9 +338,9 @@ interface RegistrationPage {
                   [disabled]="actionBusy() || approveForm.invalid"
                 >
                   @if (actionBusy()) {
-                    Provisioning…
+                    {{ 'platform.provisioning' | translate: 'Đang khởi tạo…' }}
                   } @else {
-                    Confirm & Provision
+                    {{ 'platform.confirmProvision' | translate: 'Xác nhận & Cấp Workspace' }}
                   }
                 </button>
               </div>
@@ -353,26 +353,26 @@ interface RegistrationPage {
       @if (rejectingItem(); as item) {
         <div class="modal-backdrop">
           <div class="modal-card">
-            <h2>Reject Company Registration</h2>
+            <h2>{{ 'platform.rejectModalTitle' | translate: 'Từ chối Hồ sơ Doanh nghiệp' }}</h2>
             <p class="modal-desc">
-              Please provide a clear business reason for rejecting registration of
-              <strong>{{ item.name }}</strong> (mandatory per BR-022).
+              {{ 'platform.rejectModalDescBefore' | translate: 'Vui lòng cung cấp lý do từ chối hồ sơ đăng ký của' }}
+              <strong>{{ item.name }}</strong> {{ 'platform.rejectModalDescAfter' | translate: '(bắt buộc theo quy định BR-022).' }}
             </p>
 
             <form [formGroup]="rejectForm" (ngSubmit)="confirmReject(item)" class="modal-form">
               <mat-form-field appearance="outline">
-                <mat-label>Rejection Reason</mat-label>
+                <mat-label>{{ 'platform.rejectReasonLabel' | translate: 'Lý do từ chối' }}</mat-label>
                 <textarea
                   matInput
                   formControlName="reason"
                   rows="4"
-                  placeholder="Specify why this registration was rejected (min 5 chars)…"
+                  placeholder="Nêu rõ lý do từ chối hồ sơ này (tối thiểu 5 ký tự)…"
                 ></textarea>
                 @if (
                   rejectForm.controls.reason.hasError('required') ||
                   rejectForm.controls.reason.hasError('minlength')
                 ) {
-                  <mat-error>A reason of at least 5 characters is required.</mat-error>
+                  <mat-error>{{ 'platform.rejectReasonMin' | translate: 'Cần nhập lý do từ chối tối thiểu 5 ký tự.' }}</mat-error>
                 }
               </mat-form-field>
 
@@ -383,7 +383,7 @@ interface RegistrationPage {
                   (click)="rejectingItem.set(null)"
                   [disabled]="actionBusy()"
                 >
-                  Cancel
+                  {{ 'common.cancel' | translate: 'Hủy' }}
                 </button>
                 <button
                   mat-flat-button
@@ -392,9 +392,9 @@ interface RegistrationPage {
                   [disabled]="actionBusy() || rejectForm.invalid"
                 >
                   @if (actionBusy()) {
-                    Processing…
+                    {{ 'platform.processing' | translate: 'Đang xử lý…' }}
                   } @else {
-                    Reject Registration
+                    {{ 'platform.confirmReject' | translate: 'Từ chối Hồ sơ' }}
                   }
                 </button>
               </div>
@@ -439,10 +439,10 @@ export class CompanyRegistrations {
   });
 
   readonly labels = {
-    PENDING: 'Pending',
-    ACTIVE: 'Active',
-    SUSPENDED: 'Suspended',
-    INACTIVE: 'Inactive',
+    PENDING: 'Chờ duyệt',
+    ACTIVE: 'Hoạt động',
+    SUSPENDED: 'Tạm khóa',
+    INACTIVE: 'Ngừng hoạt động',
   };
 
   constructor() {

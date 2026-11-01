@@ -1,7 +1,40 @@
 import { HttpClient } from '@angular/common/http';
-import { Injectable, inject, signal } from '@angular/core';
+import { Injectable, inject, signal, effect } from '@angular/core';
 import { SessionService } from '../auth/session';
 import { I18nService } from '../i18n/i18n.service';
+
+export interface AgentQuestionOption {
+  id: string;
+  label: string;
+  isDefault?: boolean;
+}
+
+export interface AgentQuestion {
+  id: string;
+  title: string;
+  type: 'single_choice' | 'multiple_choice' | 'text';
+  options?: AgentQuestionOption[];
+  required?: boolean;
+  placeholder?: string;
+  helpText?: string;
+  allowCustomInput?: boolean;
+}
+
+export interface AgentClarificationForm {
+  formId: string;
+  topic: string;
+  contextExplanation: string;
+  riskAnalysis?: string;
+  questions: AgentQuestion[];
+  submitButtonText?: string;
+  skipButtonText?: string;
+}
+
+export interface AgentAnswer {
+  questionId: string;
+  selectedOptionIds?: string[];
+  customText?: string;
+}
 
 export interface ChatMessage {
   id: string;
@@ -14,6 +47,11 @@ export interface ChatMessage {
     linkUrl?: string;
     payload?: any;
   }>;
+  questionnaire?: AgentClarificationForm;
+  questionnaireAnswered?: boolean;
+  userAnswersSummary?: string;
+  agentThought?: string;
+  isThoughtExpanded?: boolean;
 }
 
 export interface SubtaskBranch {
@@ -75,7 +113,36 @@ export class AiAgentService {
   // Toast feedback
   readonly toastMessage = signal<{ text: string; type: 'success' | 'error' | 'info' } | null>(null);
 
+  private currentUserId: string | null = null;
+
   constructor() {
+    this.restoreForCurrentUser();
+
+    // Watch session identity changes (login, logout, switch account)
+    try {
+      effect(() => {
+        const identity = typeof this.session?.identity === 'function' ? this.session.identity() : null;
+        const newUserId = identity?.userId || null;
+        if (newUserId !== this.currentUserId) {
+          if (this.currentUserId) {
+            this.persistCurrentSession();
+          }
+          this.currentUserId = newUserId;
+          this.restoreForCurrentUser();
+        }
+      });
+    } catch {
+      // In case effect is outside reactive context in certain test fixtures
+    }
+  }
+
+  private getStorageKey(baseKey: string): string {
+    const identity = typeof this.session?.identity === 'function' ? this.session.identity() : null;
+    const userId = identity?.userId;
+    return userId ? `${baseKey}_${userId}` : baseKey;
+  }
+
+  private restoreForCurrentUser(): void {
     this.restoreHistoryFromStorage();
     this.restoreCurrentSessionFromStorage();
   }
@@ -101,6 +168,7 @@ export class AiAgentService {
       this.isExpanded.set(expand);
     }
     try {
+      sessionStorage.setItem('bizflow_robot_open', 'true');
       sessionStorage.removeItem('bizflow_robot_dismissed');
     } catch {}
   }
@@ -108,6 +176,7 @@ export class AiAgentService {
   close(): void {
     this.isOpen.set(false);
     try {
+      sessionStorage.removeItem('bizflow_robot_open');
       sessionStorage.setItem('bizflow_robot_dismissed', 'true');
     } catch {}
   }
@@ -137,25 +206,32 @@ export class AiAgentService {
 
   private restoreHistoryFromStorage(): void {
     try {
-      const raw = localStorage.getItem(this.HISTORY_STORAGE_KEY);
+      const key = this.getStorageKey(this.HISTORY_STORAGE_KEY);
+      const raw = localStorage.getItem(key);
       if (raw) {
         const parsed = JSON.parse(raw);
         if (Array.isArray(parsed)) {
           this.chatSessions.set(parsed);
+          return;
         }
       }
-    } catch {}
+      this.chatSessions.set([]);
+    } catch {
+      this.chatSessions.set([]);
+    }
   }
 
   private persistHistoryToStorage(): void {
     try {
-      localStorage.setItem(this.HISTORY_STORAGE_KEY, JSON.stringify(this.chatSessions()));
+      const key = this.getStorageKey(this.HISTORY_STORAGE_KEY);
+      localStorage.setItem(key, JSON.stringify(this.chatSessions()));
     } catch {}
   }
 
   private restoreCurrentSessionFromStorage(): void {
     try {
-      const raw = localStorage.getItem(this.CURRENT_STORAGE_KEY);
+      const key = this.getStorageKey(this.CURRENT_STORAGE_KEY);
+      const raw = localStorage.getItem(key);
       if (raw) {
         const parsed = JSON.parse(raw);
         if (parsed?.messages?.length) {
@@ -174,11 +250,14 @@ export class AiAgentService {
   }
 
   private initWelcomeMessage(): void {
+    const identity = typeof this.session?.identity === 'function' ? this.session.identity() : null;
+    const userName = identity?.fullName;
+    const greeting = userName ? `Xin chào ${userName}! ` : 'Xin chào! ';
     this.messages.set([
       {
         id: 'welcome',
         sender: 'robot',
-        text: 'Xin chào! Tôi là Trợ lý AI Agent BizFlow 🤖.\nTôi có thể hỗ trợ bạn mọi tác vụ: kiểm tra deadline, phân rã kế hoạch công việc thành các nhánh nhiệm vụ, tra cứu quy định và trực tiếp tạo task vào hệ thống.',
+        text: `${greeting}Tôi là Trợ lý AI Agent BizFlow 🤖.\nTôi có thể hỗ trợ bạn mọi tác vụ: kiểm tra deadline, phân rã kế hoạch công việc thành các nhánh nhiệm vụ, tra cứu quy định và trực tiếp tạo task vào hệ thống.`,
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       },
     ]);
@@ -201,7 +280,8 @@ export class AiAgentService {
         branches: this.branches(),
       };
 
-      localStorage.setItem(this.CURRENT_STORAGE_KEY, JSON.stringify(sessionData));
+      const key = this.getStorageKey(this.CURRENT_STORAGE_KEY);
+      localStorage.setItem(key, JSON.stringify(sessionData));
 
       // Also update or add in history list if user interacted
       if (firstUserMsg) {
@@ -228,7 +308,8 @@ export class AiAgentService {
     this.initWelcomeMessage();
     this.activeTab.set('chat');
     try {
-      localStorage.removeItem(this.CURRENT_STORAGE_KEY);
+      const key = this.getStorageKey(this.CURRENT_STORAGE_KEY);
+      localStorage.removeItem(key);
     } catch {}
     this.showToast('Đã bắt đầu cuộc trò chuyện mới', 'info');
   }
@@ -584,5 +665,82 @@ export class AiAgentService {
         this.showToast(`❌ Lỗi tạo hàng loạt: ${errMsg}`, 'error');
       },
     });
+  }
+
+  sendFormAnswers(formId: string, answers: AgentAnswer[], summaryText: string, messageId: string): void {
+    // 1. Mark questionnaire in the original robot message as answered
+    this.messages.update((msgs) =>
+      msgs.map((m) => (m.id === messageId ? { ...m, questionnaireAnswered: true, userAnswersSummary: summaryText } : m)),
+    );
+
+    // 2. Append user message showing the selected answers
+    const userMsg: ChatMessage = {
+      id: crypto.randomUUID(),
+      sender: 'user',
+      text: summaryText,
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    };
+    this.messages.update((list) => [...list, userMsg]);
+    this.busy.set(true);
+
+    // Prior conversation history for multi-turn context
+    const priorHistory = this.messages()
+      .slice(0, -1)
+      .filter((m) => m.id !== 'welcome')
+      .slice(-8)
+      .map((m) => ({ sender: m.sender, text: m.text }));
+
+    const payload = {
+      message: summaryText,
+      locale: this.i18n.currentLanguage(),
+      history: priorHistory,
+      formId,
+      formAnswers: answers,
+    };
+
+    this.http
+      .post<{ response: string; recognizedCommand?: string; actionCards?: any[]; questionnaire?: any; agentThought?: string }>(
+        '/api/v1/ai/chat',
+        payload,
+      )
+      .subscribe({
+        next: (res) => {
+          this.busy.set(false);
+
+          let actionCards = res.actionCards;
+          const decompCard = res.actionCards?.find(
+            (c) => c.actionType === 'OPEN_DECOMPOSITION' || c.actionType === 'OPEN_BRANCHES' || c.actionType === 'VIEW_BRANCHES',
+          );
+
+          if (decompCard?.payload?.proposals) {
+            this.setProposals(decompCard.payload.proposals);
+            actionCards = [
+              {
+                actionType: 'VIEW_BRANCHES',
+                title: `🌿 Xem các nhánh phân rã (${decompCard.payload.proposals.length} nhánh)`,
+              },
+            ];
+          }
+
+          const robotMsg: ChatMessage = {
+            id: crypto.randomUUID(),
+            sender: 'robot',
+            text: res.response,
+            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            actionCards,
+            questionnaire: res.questionnaire,
+            agentThought: res.agentThought,
+            isThoughtExpanded: !!res.agentThought,
+          };
+
+          this.messages.update((list) => [...list, robotMsg]);
+          this.persistCurrentSession();
+        },
+        error: (err) => {
+          this.busy.set(false);
+          const errMsg = err?.error?.message || err?.message || 'Không thể gửi phản hồi. Vui lòng thử lại.';
+          this.showToast(`❌ Lỗi kết nối: ${errMsg}`, 'error');
+        },
+      });
   }
 }

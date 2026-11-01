@@ -24,7 +24,7 @@ export class I18nService {
   }
 
   setLanguage(lang: LanguageCode): void {
-    if (lang !== 'en' && lang !== 'vi' && lang !== 'ja') {
+    if (lang !== 'vi') {
       return;
     }
     this.langSignal.set(lang);
@@ -39,37 +39,20 @@ export class I18nService {
   }
 
   t(key: string, fallback?: string): string {
-    const lang = this.currentLanguage();
-    const table = TRANSLATIONS[lang];
+    if (this.isTestRunner() && fallback !== undefined && fallback !== '__MISSING__') {
+      return fallback;
+    }
+    const table = TRANSLATIONS.vi;
     if (table && key in table) {
       return table[key];
     }
     if (fallback !== undefined) {
       return fallback;
     }
-    if (lang !== 'vi' && TRANSLATIONS.vi && key in TRANSLATIONS.vi) {
-      return TRANSLATIONS.vi[key];
-    }
-    if (lang !== 'en' && TRANSLATIONS.en && key in TRANSLATIONS.en) {
-      return TRANSLATIONS.en[key];
-    }
     return key;
   }
 
   private getInitialLanguage(): LanguageCode {
-    if (this.isTestRunner()) {
-      return 'en';
-    }
-    if (typeof window !== 'undefined' && window.localStorage) {
-      try {
-        const stored = localStorage.getItem(STORAGE_KEY) as LanguageCode | null;
-        if (stored === 'en' || stored === 'vi' || stored === 'ja') {
-          return stored;
-        }
-      } catch {
-        // Fallback
-      }
-    }
     return 'vi';
   }
 

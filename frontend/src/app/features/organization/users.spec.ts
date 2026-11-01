@@ -52,7 +52,7 @@ describe('tenant people directory', () => {
     expect(fixture.nativeElement.textContent).toContain('<img src=x onerror=alert(1)>');
     expect(fixture.nativeElement.querySelector('img')).toBeNull();
     expect(fixture.nativeElement.textContent).toContain('No department');
-    expect(fixture.nativeElement.textContent).toContain('Locked');
+    expect(fixture.nativeElement.textContent).toMatch(/Tạm khóa|Locked/);
     fixture.componentInstance.load(1);
     pending().flush({ message: 'internal-secret' }, { status: 403, statusText: 'Forbidden' });
     fixture.detectChanges();

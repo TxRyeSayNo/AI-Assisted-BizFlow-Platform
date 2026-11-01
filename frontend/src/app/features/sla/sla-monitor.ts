@@ -159,7 +159,7 @@ export interface SlaBreachItem {
       <section class="directory-panel policy-box">
         <h3>{{ 'slaMonitor.matrixTitle' | translate: 'Tiered Escalation Matrix' }}</h3>
         <p class="policy-desc">
-          When an operational work item reaches critical SLA thresholds, the system automatically triggers designated notifications and updates escalation authority:
+          {{ 'slaMonitor.matrixDesc' | translate: 'Khi một hạng mục công việc chạm ngưỡng SLA quan trọng, hệ thống sẽ tự động kích hoạt thông báo tương ứng và chuyển cấp xử lý:' }}
         </p>
         <div class="matrix-grid">
           <div class="matrix-card">
@@ -439,7 +439,7 @@ export class SlaMonitor implements OnInit {
           slaProfileName: 'Standard Resolution (48h)',
           state: 'OVERDUE',
           hoursRemaining: -6,
-          escalationLevel: 'Tier 2 · Department Head'
+          escalationLevel: 'Cấp 2 · Trưởng bộ phận'
         }));
 
         if (liveItems.length > 0) {

@@ -97,31 +97,29 @@ export class App {
   }
 
   welcomeName(): string {
-    const isEn = this.i18n.currentLanguage() === 'en';
     const raw = this.identity()?.fullName?.trim();
-    if (!raw) return isEn ? 'Platform Administrator' : 'Quản trị viên Hệ thống';
+    if (!raw) return 'Quản trị viên Hệ thống';
     if (raw === 'Platform Administrator' || raw === 'superadmin' || raw.toLowerCase().includes('platform admin')) {
-      return isEn ? 'Platform Administrator' : 'Quản trị viên Hệ thống';
+      return 'Quản trị viên Hệ thống';
     }
     if (raw === 'Company Administrator') {
-      return isEn ? 'Company Administrator' : 'Quản trị viên Doanh nghiệp';
+      return 'Quản trị viên Doanh nghiệp';
     }
     if (raw === 'Operation Manager' || raw === 'Operational Manager') {
-      return isEn ? 'Operational Manager' : 'Quản lý Vận hành';
+      return 'Quản lý Vận hành';
     }
     if (raw === 'Regular Employee') {
-      return isEn ? 'Regular Employee' : 'Nhân viên Doanh nghiệp';
+      return 'Nhân viên Doanh nghiệp';
     }
     return raw;
   }
 
   currentRoleLabel(): string {
     const id = this.identity();
-    const isEn = this.i18n.currentLanguage() === 'en';
-    if (!id?.tenantId) return isEn ? 'Platform Administrator' : 'Quản trị viên Hệ thống';
-    if (id.permissions?.includes('roles.configure')) return isEn ? 'Company Administrator' : 'Quản trị viên Doanh nghiệp';
-    if (id.permissions?.includes('tasks.assign')) return isEn ? 'Operational Manager' : 'Quản lý Vận hành';
-    return isEn ? 'Authorized Member' : 'Thành viên';
+    if (!id?.tenantId) return 'Quản trị viên Hệ thống';
+    if (id.permissions?.includes('roles.configure')) return 'Quản trị viên Doanh nghiệp';
+    if (id.permissions?.includes('tasks.assign')) return 'Quản lý Vận hành';
+    return 'Thành viên';
   }
 
   hasPermission(perm: string): boolean {

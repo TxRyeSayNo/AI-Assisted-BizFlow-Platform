@@ -14,6 +14,7 @@ describe('RobotWidgetComponent', () => {
   const mockSession = {
     signedIn: () => true,
     hasPermission: () => true,
+    identity: () => ({ userId: 'test-user', fullName: 'Tester' }),
   };
 
   beforeEach(() => {
@@ -42,25 +43,26 @@ describe('RobotWidgetComponent', () => {
     localStorage.clear();
   });
 
-  it('opens by default on initial session (BR-029)', () => {
+  it('defaults to minimized floating circular FAB on initial session', () => {
     fixture.detectChanges();
-    expect(component.isOpen()).toBe(true);
-    expect(sessionStorage.getItem('bizflow_robot_dismissed')).toBeNull();
-  });
-
-  it('respects dismissal flag in current session and stays minimized (BR-029)', () => {
-    sessionStorage.setItem('bizflow_robot_dismissed', 'true');
-    component.ngOnInit();
     expect(component.isOpen()).toBe(false);
   });
 
-  it('closes for current session when closeWidget is called and sets dismissal flag (BR-029)', () => {
+  it('restores open state if bizflow_robot_open was set in current session', () => {
+    sessionStorage.setItem('bizflow_robot_open', 'true');
+    component.ngOnInit();
+    expect(component.isOpen()).toBe(true);
+  });
+
+  it('closes when closeWidget is called and saves dismissal flag', () => {
     fixture.detectChanges();
+    component.openWidget();
     expect(component.isOpen()).toBe(true);
 
     component.closeWidget();
     expect(component.isOpen()).toBe(false);
     expect(sessionStorage.getItem('bizflow_robot_dismissed')).toBe('true');
+    expect(sessionStorage.getItem('bizflow_robot_open')).toBeNull();
   });
 
   it('reopens widget when openWidget is called and clears dismissal flag', () => {
@@ -70,11 +72,13 @@ describe('RobotWidgetComponent', () => {
 
     component.openWidget();
     expect(component.isOpen()).toBe(true);
+    expect(sessionStorage.getItem('bizflow_robot_open')).toBe('true');
     expect(sessionStorage.getItem('bizflow_robot_dismissed')).toBeNull();
   });
 
   it('sends message to /api/v1/ai/chat and displays response', () => {
     fixture.detectChanges();
+    component.openWidget();
     component.inputMessage.set('Hôm nay tôi có deadline nào không?');
 
     component.sendMessage();
@@ -173,5 +177,69 @@ describe('RobotWidgetComponent', () => {
     const req = http.expectOne('/api/v1/ai/chat');
     expect(req.request.body.message).toBe('Hôm nay tôi có deadline nào không?');
     req.flush({ response: 'Không có deadline.' });
+  });
+
+  it('renders interactive questionnaire and agent thought when returned', () => {
+    fixture.detectChanges();
+    component.openWidget();
+
+    const mockQuestionnaire = {
+      formId: 'form_meeting',
+      topic: 'Chuẩn bị cuộc họp',
+      contextExplanation: 'Vui lòng làm rõ các thông tin:',
+      questions: [
+        {
+          id: 'q_time',
+          title: 'Thời gian',
+          type: 'single_choice' as const,
+          options: [
+            { id: 't1', label: '9h00 sáng mai', isDefault: true },
+            { id: 't2', label: '14h00 chiều mai' },
+          ],
+          required: true,
+        },
+      ],
+      submitButtonText: 'Xác nhận & Gửi',
+    };
+
+    component.inputMessage.set('Chuẩn bị cuộc họp ngày mai');
+    component.sendMessage();
+
+    const req = http.expectOne('/api/v1/ai/chat');
+    req.flush({
+      response: 'Cần làm rõ thông tin cuộc họp.',
+      recognizedCommand: 'AGENT_CLARIFICATION_REQUIRED',
+      questionnaire: mockQuestionnaire,
+      agentThought: 'Suy nghĩ của Agent: Cần khảo sát người dùng.',
+    });
+
+    fixture.detectChanges();
+
+    const lastMsg = component.messages()[component.messages().length - 1];
+    expect(lastMsg.questionnaire).toBeDefined();
+    expect(lastMsg.agentThought).toContain('Suy nghĩ của Agent');
+    expect(component.isOptionSelected(lastMsg.id, 'q_time', 't1', true)).toBe(true);
+
+    // Toggle choice to t2
+    component.toggleSingleChoice(lastMsg.id, 'q_time', 't2');
+    expect(component.isOptionSelected(lastMsg.id, 'q_time', 't2')).toBe(true);
+    expect(component.isOptionSelected(lastMsg.id, 'q_time', 't1')).toBe(false);
+
+    // Submit questionnaire
+    component.submitQuestionnaire(lastMsg);
+
+    const submitReq = http.expectOne('/api/v1/ai/chat');
+    expect(submitReq.request.body.formId).toBe('form_meeting');
+    expect(submitReq.request.body.formAnswers).toEqual([
+      { questionId: 'q_time', selectedOptionIds: ['t2'], customText: undefined },
+    ]);
+
+    submitReq.flush({
+      response: 'Đã hoàn tất phân rã cuộc họp!',
+      recognizedCommand: '/task',
+    });
+
+    const finalMsg = component.messages()[component.messages().length - 1];
+    expect(finalMsg.text).toContain('Đã hoàn tất phân rã');
   });
 });

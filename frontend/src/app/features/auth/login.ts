@@ -398,7 +398,7 @@ export class Login implements OnInit, OnDestroy {
     await this.openGoogleAccountChooser();
   }
 
-  async submitEmailLink(): Promise<void> {
+  submitEmailLink(): void {
     if (this.busy()) return;
     this.emailForm.markAllAsTouched();
     if (this.emailForm.invalid) return;
@@ -409,20 +409,7 @@ export class Login implements OnInit, OnDestroy {
     this.showRegisterLink.set(false);
 
     const email = this.emailForm.controls.email.value.trim();
-
-    if (this.firebaseAuth.isConfigured()) {
-      try {
-        await this.firebaseAuth.sendSignInLink(email);
-        this.busy.set(false);
-        this.emailSentMessage.set(
-          `Đã gửi liên kết đăng nhập tới ${email} qua Firebase. Vui lòng mở liên kết trong email để tiếp tục.`,
-        );
-      } catch {
-        this.requestBackendEmailLink(email);
-      }
-    } else {
-      this.requestBackendEmailLink(email);
-    }
+    this.requestBackendEmailLink(email);
   }
 
   private requestBackendEmailLink(email: string): void {
