@@ -97,6 +97,7 @@ export class RobotWidgetComponent implements OnInit {
 
   setTab(tab: 'chat' | 'branches' | 'history') {
     if (tab === 'branches') {
+      this.agent.loadDepartments();
       this.agent.openBranchModal();
     } else {
       this.agent.setTab(tab);
@@ -107,6 +108,7 @@ export class RobotWidgetComponent implements OnInit {
   }
 
   openBranchModal() {
+    this.agent.loadDepartments();
     this.agent.openBranchModal();
   }
 

@@ -151,7 +151,7 @@ export class AiAgentService {
   }
 
   loadDepartments(): void {
-    // fetch departments
+    if (this.departments().length > 0) return;
     this.http.get<any>('/api/v1/departments?pageSize=100').subscribe({
       next: (res) => {
         const list = Array.isArray(res) ? res : res?.items || [];
@@ -216,7 +216,6 @@ export class AiAgentService {
   }
 
   openBranchModal(): void {
-    this.loadDepartments();
     if (this.branches().length === 0) {
       this.initDefaultBranches();
     }
@@ -282,7 +281,6 @@ export class AiAgentService {
   }
 
   selectBranch(branch: SubtaskBranch | null): void {
-    this.loadDepartments();
     this.selectedBranch.set(branch);
   }
 
