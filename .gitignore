@@ -17,3 +17,6 @@
 *.pem
 *.key
 test-results-real/
+
+__pycache__/
+*.py
