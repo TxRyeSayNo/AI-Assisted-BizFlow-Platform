@@ -36,12 +36,12 @@ describe('password recovery', () => {
     component.form.setValue({ identifier: '', tenantKey: '' });
     component.submit();
     TestBed.inject(HttpTestingController).expectNone('/api/v1/auth/forgot-password');
-    expect(component.toast()?.title).toBe('Missing account identifier');
+    expect(component.toast()?.title).toBe('Thiếu thông tin tài khoản');
 
     component.form.setValue({ identifier: 'EMP1', tenantKey: 'INVALID_UPPERCASE!' });
     component.submit();
     TestBed.inject(HttpTestingController).expectNone('/api/v1/auth/forgot-password');
-    expect(component.toast()?.title).toBe('Invalid workspace key');
+    expect(component.toast()?.title).toBe('Mã không gian làm việc không hợp lệ');
   });
 
   it('shows top-right toast when forgot-password server fails', () => {
@@ -50,8 +50,8 @@ describe('password recovery', () => {
     component.submit();
     const request = TestBed.inject(HttpTestingController).expectOne('/api/v1/auth/forgot-password');
     request.flush({ message: 'server error' }, { status: 500, statusText: 'Internal Server Error' });
-    expect(component.error()).toContain('temporarily unavailable');
-    expect(component.toast()?.title).toBe('Service unavailable');
+    expect(component.error()).toContain('Tính năng đặt lại mật khẩu tạm thời chưa khả dụng');
+    expect(component.toast()?.title).toBe('Dịch vụ tạm thời gián đoạn');
   });
 
   it('removes the token from history and prevents mismatched passwords from being sent', () => {

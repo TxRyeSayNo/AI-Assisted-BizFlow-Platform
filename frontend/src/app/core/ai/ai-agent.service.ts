@@ -793,6 +793,83 @@ export class AiAgentService {
     });
   }
 
+  sendFormAnswers(formId: string, answers: AgentAnswer[], summaryText: string, messageId: string): void {
+    // 1. Mark questionnaire in the original robot message as answered
+    this.messages.update((msgs) =>
+      msgs.map((m) => (m.id === messageId ? { ...m, questionnaireAnswered: true, userAnswersSummary: summaryText } : m)),
+    );
+
+    // 2. Append user message showing the selected answers
+    const userMsg: ChatMessage = {
+      id: crypto.randomUUID(),
+      sender: 'user',
+      text: summaryText,
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    };
+    this.messages.update((list) => [...list, userMsg]);
+    this.busy.set(true);
+
+    // Prior conversation history for multi-turn context
+    const priorHistory = this.messages()
+      .slice(0, -1)
+      .filter((m) => m.id !== 'welcome')
+      .slice(-8)
+      .map((m) => ({ sender: m.sender, text: m.text }));
+
+    const payload = {
+      message: summaryText,
+      locale: this.i18n.currentLanguage(),
+      history: priorHistory,
+      formId,
+      formAnswers: answers,
+    };
+
+    this.http
+      .post<{ response: string; recognizedCommand?: string; actionCards?: any[]; questionnaire?: any; agentThought?: string }>(
+        '/api/v1/ai/chat',
+        payload,
+      )
+      .subscribe({
+        next: (res) => {
+          this.busy.set(false);
+
+          let actionCards = res.actionCards;
+          const decompCard = res.actionCards?.find(
+            (c) => c.actionType === 'OPEN_DECOMPOSITION' || c.actionType === 'OPEN_BRANCHES' || c.actionType === 'VIEW_BRANCHES',
+          );
+
+          if (decompCard?.payload?.proposals) {
+            this.setProposals(decompCard.payload.proposals);
+            actionCards = [
+              {
+                actionType: 'VIEW_BRANCHES',
+                title: `🌿 Xem các nhánh phân rã (${decompCard.payload.proposals.length} nhánh)`,
+              },
+            ];
+          }
+
+          const robotMsg: ChatMessage = {
+            id: crypto.randomUUID(),
+            sender: 'robot',
+            text: res.response,
+            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            actionCards,
+            questionnaire: res.questionnaire,
+            agentThought: res.agentThought,
+            isThoughtExpanded: !!res.agentThought,
+          };
+
+          this.messages.update((list) => [...list, robotMsg]);
+          this.persistCurrentSession();
+        },
+        error: (err) => {
+          this.busy.set(false);
+          const errMsg = err?.error?.message || err?.message || 'Không thể gửi phản hồi. Vui lòng thử lại.';
+          this.showToast(`❌ Lỗi kết nối: ${errMsg}`, 'error');
+        },
+      });
+  }
+
   private saveMockTask(item: any): void {
     if (typeof window === 'undefined') return;
     const mockId = crypto.randomUUID();
