@@ -285,3 +285,146 @@
     .prio-dot { background: #22c55e; }
   }
 }
+
+/* Dedicated Delete Button on Each Card */
+.btn-card-delete {
+  background: #fff;
+  border: 1px solid #fee2e2;
+  color: #ef4444;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 5px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 160ms ease;
+  .btn-mini-svg { width: 13px; height: 13px; color: #ef4444; }
+  &:hover {
+    background: #fef2f2;
+    border-color: #fca5a5;
+    color: #dc2626;
+    transform: translateY(-1px);
+  }
+}
+
+/* Editable Controls in Branch Detail Screen */
+.title-edit-container {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 16px;
+  .edit-field-label {
+    font-size: 0.74rem;
+    font-weight: 700;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+  .detail-title-input {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #0b223d;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 8px 14px;
+    background: #fff;
+    transition: all 160ms ease;
+    width: 100%;
+    box-sizing: border-box;
+    &:focus {
+      outline: none;
+      border-color: #2563eb;
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+      background: #f8faff;
+    }
+  }
+}
+
+.meta-item.edit-field {
+  .meta-input-wrap {
+    margin-top: 4px;
+    position: relative;
+  }
+  .meta-select-input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 7px 11px;
+    font-size: 0.84rem;
+    font-weight: 600;
+    color: #1e293b;
+    background: #fff;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 150ms ease;
+    &:focus {
+      outline: none;
+      border-color: #2563eb;
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+    }
+    &.select-prio-high {
+      color: #be123c;
+      border-color: #fecdd3;
+      background: #fff1f2;
+    }
+    &.select-prio-medium {
+      color: #b45309;
+      border-color: #fde68a;
+      background: #fffbeb;
+    }
+    &.select-prio-low {
+      color: #15803d;
+      border-color: #bbf7d0;
+      background: #f0fdf4;
+    }
+  }
+  .duration-input-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    .meta-number-input {
+      width: 72px;
+      padding: 6px 10px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: #0f172a;
+      border: 1.5px solid #cbd5e1;
+      border-radius: 8px;
+      background: #fff;
+      text-align: center;
+      &:focus {
+        outline: none;
+        border-color: #2563eb;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+      }
+    }
+    .input-unit-label {
+      font-size: 0.84rem;
+      font-weight: 600;
+      color: #64748b;
+    }
+  }
+}
+
+.detail-desc-textarea {
+  width: 100%;
+  box-sizing: border-box;
+  font-size: 0.88rem;
+  line-height: 1.55;
+  color: #334155;
+  background: #fff;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-family: inherit;
+  resize: vertical;
+  transition: all 150ms ease;
+  &:focus {
+    outline: none;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+    background: #f8faff;
+  }
+}

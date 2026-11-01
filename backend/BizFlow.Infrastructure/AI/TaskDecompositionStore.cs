@@ -40,6 +40,18 @@ public sealed class TaskDecompositionStore(
             {
                 var isSupportRequest = string.Equals(item.Type, "SupportRequest", StringComparison.OrdinalIgnoreCase);
 
+                // Resolve target department ID by ID or by DepartmentName
+                Guid? resolvedDeptId = item.DepartmentId;
+                if (!resolvedDeptId.HasValue && !string.IsNullOrWhiteSpace(item.DepartmentName))
+                {
+                    var cleanName = item.DepartmentName.Trim().ToLowerInvariant();
+                    resolvedDeptId = await dbContext.Departments
+                        .Where(d => d.TenantId == tenantId && d.Status == RecordStatus.Active)
+                        .Where(d => d.Name.ToLower().Contains(cleanName) || cleanName.Contains(d.Name.ToLower()))
+                        .Select(d => (Guid?)d.Id)
+                        .FirstOrDefaultAsync(cancellationToken);
+                }
+
                 if (isSupportRequest)
                 {
                     var service = await dbContext.Services
@@ -49,92 +61,91 @@ public sealed class TaskDecompositionStore(
                             .FirstOrDefaultAsync(c => c.ServiceId == service.Id && c.Status == ServiceCategoryStatus.Active, cancellationToken)
                         : null;
 
-                    if (service == null || category == null)
+                    if (service != null && category != null)
                     {
-                        throw new ApplicationFault(
-                            FaultKind.Validation,
-                            "AI.NO_SERVICE_AVAILABLE",
-                            "Không tìm thấy dịch vụ hoặc danh mục hợp lệ trong hệ thống để tạo Yêu cầu hỗ trợ.");
+                        var reqPriority = Enum.TryParse<RequestPriority>(item.Priority, true, out var rp)
+                            ? rp
+                            : RequestPriority.Medium;
+
+                        var description = string.IsNullOrWhiteSpace(item.Description) ? item.Title : item.Description;
+                        var request = WorkRequest.CreateDraft(
+                            tenantId,
+                            actorId,
+                            service.Id,
+                            category.Id,
+                            item.Title,
+                            description,
+                            now,
+                            reqPriority);
+
+                        dbContext.Requests.Add(request);
+
+                        var audit = AuditLog.RequestCreated(request, now);
+                        dbContext.AuditLogs.Add(audit);
+
+                        created.Add(new CreatedDecompositionItemDto(
+                            request.Id,
+                            "SupportRequest",
+                            request.Title,
+                            request.Status.ToString(),
+                            resolvedDeptId));
+                        continue;
                     }
-
-                    var reqPriority = Enum.TryParse<RequestPriority>(item.Priority, true, out var rp)
-                        ? rp
-                        : RequestPriority.Medium;
-
-                    var description = string.IsNullOrWhiteSpace(item.Description) ? item.Title : item.Description;
-                    var request = WorkRequest.CreateDraft(
-                        tenantId,
-                        actorId,
-                        service.Id,
-                        category.Id,
-                        item.Title,
-                        description,
-                        now,
-                        reqPriority);
-
-                    dbContext.Requests.Add(request);
-
-                    var audit = AuditLog.RequestCreated(request, now);
-                    dbContext.AuditLogs.Add(audit);
-
-                    created.Add(new CreatedDecompositionItemDto(
-                        request.Id,
-                        "SupportRequest",
-                        request.Title,
-                        request.Status.ToString(),
-                        item.DepartmentId));
+                    // If no service/category available in tenant, gracefully fall through to create as an Assignment task
                 }
-                else
+
+                var taskPriority = Enum.TryParse<TaskPriority>(item.Priority, true, out var tp)
+                    ? tp
+                    : TaskPriority.Medium;
+
+                var deadline = item.SuggestedDurationDays is > 0
+                    ? now.AddDays(item.SuggestedDurationDays.Value)
+                    : (DateTimeOffset?)null;
+
+                var task = WorkTask.CreateDraft(
+                    tenantId,
+                    actorId,
+                    item.Title,
+                    now,
+                    item.Description,
+                    taskPriority,
+                    deadline,
+                    null);
+
+                dbContext.WorkTasks.Add(task);
+
+                var checklist = new List<TaskChecklistItem>();
+                if (item.ChecklistItems is { Count: > 0 })
                 {
-                    var taskPriority = Enum.TryParse<TaskPriority>(item.Priority, true, out var tp)
-                        ? tp
-                        : TaskPriority.Medium;
-
-                    var task = WorkTask.CreateDraft(
-                        tenantId,
-                        actorId,
-                        item.Title,
-                        now,
-                        item.Description,
-                        taskPriority,
-                        null,
-                        null);
-
-                    dbContext.WorkTasks.Add(task);
-
-                    var checklist = new List<TaskChecklistItem>();
-                    if (item.ChecklistItems is { Count: > 0 })
+                    for (var i = 0; i < item.ChecklistItems.Count; i++)
                     {
-                        for (var i = 0; i < item.ChecklistItems.Count; i++)
-                        {
-                            var cl = TaskChecklistItem.Create(task.Id, item.ChecklistItems[i], i + 1);
-                            checklist.Add(cl);
-                            dbContext.TaskChecklistItems.Add(cl);
-                        }
+                        var cl = TaskChecklistItem.Create(task.Id, item.ChecklistItems[i], i + 1);
+                        checklist.Add(cl);
+                        dbContext.TaskChecklistItems.Add(cl);
                     }
-
-                    var audit = AuditLog.TaskCreated(task, checklist, now);
-                    dbContext.AuditLogs.Add(audit);
-
-                    if (item.DepartmentId.HasValue)
-                    {
-                        var deptExists = await dbContext.Departments
-                            .AnyAsync(d => d.TenantId == tenantId && d.Id == item.DepartmentId.Value && d.Status == RecordStatus.Active, cancellationToken);
-
-                        if (deptExists)
-                        {
-                            var assignment = TaskAssignment.Create(task.Id, actorId, item.DepartmentId.Value, null, now);
-                            dbContext.TaskAssignments.Add(assignment);
-                        }
-                    }
-
-                    created.Add(new CreatedDecompositionItemDto(
-                        task.Id,
-                        "Assignment",
-                        task.Title,
-                        task.Status.ToString(),
-                        item.DepartmentId));
                 }
+
+                var taskAudit = AuditLog.TaskCreated(task, checklist, now);
+                dbContext.AuditLogs.Add(taskAudit);
+
+                if (resolvedDeptId.HasValue)
+                {
+                    var deptExists = await dbContext.Departments
+                        .AnyAsync(d => d.TenantId == tenantId && d.Id == resolvedDeptId.Value && d.Status == RecordStatus.Active, cancellationToken);
+
+                    if (deptExists)
+                    {
+                        var assignment = TaskAssignment.Create(task.Id, actorId, resolvedDeptId.Value, null, now);
+                        dbContext.TaskAssignments.Add(assignment);
+                    }
+                }
+
+                created.Add(new CreatedDecompositionItemDto(
+                    task.Id,
+                    "Assignment",
+                    task.Title,
+                    task.Status.ToString(),
+                    resolvedDeptId));
             }
 
             await dbContext.SaveChangesAsync(cancellationToken);

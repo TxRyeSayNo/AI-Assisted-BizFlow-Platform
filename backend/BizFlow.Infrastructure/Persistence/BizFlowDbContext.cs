@@ -218,9 +218,11 @@ public sealed class BizFlowDbContext(DbContextOptions<BizFlowDbContext> options,
                 case TaskAssignment assignment:
                     // Initial records only until the authorized assignment/receipt/end use cases exist.
                     // Persisted ownership and active targets cannot be replaced by tracked forgeries.
+                    var isTaskActive = WorkTasks.Local.Any(t => t.Id == assignment.TaskId && t.Status != TaskState.Completed && t.Status != TaskState.Cancelled) ||
+                        await WorkTasks.AnyAsync(t => t.Id == assignment.TaskId && t.Status != TaskState.Completed && t.Status != TaskState.Cancelled, cancellationToken);
                     if (entry.State != EntityState.Added || assignment.AcceptedAt is not null || assignment.RejectedAt is not null ||
                         assignment.RejectionReason is not null || assignment.EndedAt is not null ||
-                        !await WorkTasks.AnyAsync(t => t.Id == assignment.TaskId && t.Status != TaskState.Completed && t.Status != TaskState.Cancelled, cancellationToken) ||
+                        !isTaskActive ||
                         !await Users.AnyAsync(u => u.Id == assignment.AssignedBy, cancellationToken) ||
                         (assignment.UserId is { } targetUser && !await Users.AnyAsync(u => u.Id == targetUser && u.Status == UserStatus.Active, cancellationToken)) ||
                         (assignment.DepartmentId is { } targetDepartment && !await Departments.AnyAsync(d => d.Id == targetDepartment && d.Status == RecordStatus.Active, cancellationToken))) throw Denied();

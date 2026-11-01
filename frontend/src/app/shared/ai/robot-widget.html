@@ -102,9 +102,125 @@
         <span class="msg-avatar" aria-hidden="true">🤖</span>
         }
         <div class="message-bubble">
+          @if (msg.agentThought) {
+          <div class="agent-thought-container" [class.collapsed]="!msg.isThoughtExpanded">
+            <button type="button" class="thought-toggle-btn" (click)="toggleThought(msg)"
+              [title]="msg.isThoughtExpanded ? 'Thu gọn suy nghĩ' : 'Xem suy nghĩ của Agent'">
+              <span class="thought-icon">🧠</span>
+              <span class="thought-title">Quá trình Suy nghĩ & Đánh giá của Agent</span>
+              <span class="thought-arrow">{{ msg.isThoughtExpanded ? '▲' : '▼' }}</span>
+            </button>
+            @if (msg.isThoughtExpanded) {
+            <div class="thought-content">
+              <div class="thought-text" style="white-space: pre-wrap">{{ msg.agentThought }}</div>
+            </div>
+            }
+          </div>
+          }
+
           <div class="message-text" style="white-space: pre-wrap">
             {{ msg.text }}
           </div>
+
+          <!-- Interactive Clarification Questionnaire Card (ChatGPT Agent style) -->
+          @if (msg.questionnaire && !msg.questionnaireAnswered) {
+          <div class="agent-questionnaire-card">
+            <div class="card-badge">
+              <span class="badge-icon">📋</span>
+              <span class="badge-label">Khảo sát làm rõ tương tác (AI Agent Form)</span>
+            </div>
+
+            @if (msg.questionnaire.contextExplanation) {
+            <div class="form-context-desc">
+              {{ msg.questionnaire.contextExplanation }}
+            </div>
+            }
+
+            @if (msg.questionnaire.riskAnalysis) {
+            <div class="form-risk-alert">
+              <span class="alert-icon">⚠️</span>
+              <span class="alert-text">{{ msg.questionnaire.riskAnalysis }}</span>
+            </div>
+            }
+
+            <div class="questions-list">
+              @for (q of msg.questionnaire.questions; track q.id; let qIdx = $index) {
+              <div class="question-item">
+                <div class="question-header">
+                  <span class="q-number">{{ qIdx + 1 }}.</span>
+                  <span class="q-title">{{ q.title }}</span>
+                  @if (q.required) {
+                  <span class="required-star" title="Bắt buộc">*</span>
+                  }
+                </div>
+
+                <!-- Single choice (Radio buttons) -->
+                @if (q.type === 'single_choice' && q.options) {
+                <div class="options-group radio-group" role="radiogroup">
+                  @for (opt of q.options; track opt.id) {
+                  <label class="option-row" [class.selected]="isOptionSelected(msg.id, q.id, opt.id, opt.isDefault)"
+                    (click)="toggleSingleChoice(msg.id, q.id, opt.id)">
+                    <span class="choice-indicator radio-indicator">
+                      @if (isOptionSelected(msg.id, q.id, opt.id, opt.isDefault)) {
+                      <span class="dot-inner"></span>
+                      }
+                    </span>
+                    <span class="option-label">{{ opt.label }}</span>
+                  </label>
+                  }
+                </div>
+                }
+
+                <!-- Multiple choice (Checkboxes) -->
+                @if (q.type === 'multiple_choice' && q.options) {
+                <div class="options-group checkbox-group">
+                  @for (opt of q.options; track opt.id) {
+                  <label class="option-row" [class.selected]="isOptionSelected(msg.id, q.id, opt.id, opt.isDefault)"
+                    (click)="toggleMultipleChoice(msg.id, q.id, opt.id)">
+                    <span class="choice-indicator checkbox-indicator">
+                      @if (isOptionSelected(msg.id, q.id, opt.id, opt.isDefault)) {
+                      ✓
+                      }
+                    </span>
+                    <span class="option-label">{{ opt.label }}</span>
+                  </label>
+                  }
+                </div>
+                }
+
+                <!-- Optional custom text input -->
+                @if (q.allowCustomInput || q.type === 'text') {
+                <div class="custom-input-row">
+                  <input type="text" class="custom-q-input"
+                    [placeholder]="q.placeholder || 'Nhập chi tiết khác (tùy chọn)...'"
+                    [value]="getCustomText(msg.id, q.id)"
+                    (input)="onCustomTextInput(msg.id, q.id, $event)" />
+                </div>
+                }
+              </div>
+              }
+            </div>
+
+            <div class="form-actions-row">
+              <button type="button" class="btn-submit-questionnaire" (click)="submitQuestionnaire(msg)"
+                [disabled]="agent.busy()">
+                <span>✓</span>
+                <span>{{ msg.questionnaire.submitButtonText || 'Xác nhận & Gửi câu trả lời' }}</span>
+              </button>
+              <button type="button" class="btn-skip-questionnaire" (click)="skipQuestionnaire(msg)"
+                [disabled]="agent.busy()">
+                {{ msg.questionnaire.skipButtonText || 'Bỏ qua & Sử dụng mặc định' }}
+              </button>
+            </div>
+          </div>
+          }
+
+          @if (msg.questionnaire && msg.questionnaireAnswered) {
+          <div class="answered-summary-pill">
+            <span class="pill-check">✓</span>
+            <span class="pill-text">Đã cung cấp thông tin làm rõ cho AI Agent</span>
+          </div>
+          }
 
           @if (msg.actionCards && msg.actionCards.length > 0) {
           <div class="action-cards-container">
@@ -364,6 +480,20 @@
                 Tạo task
               </button>
               }
+
+              <!-- Requirement 2: Dedicated Delete Button on Every Branch in the List -->
+              <button type="button" class="btn-card-delete"
+                (click)="$event.stopPropagation(); agent.deleteBranch(idx)"
+                title="Xóa nhánh này khỏi danh sách đề xuất"
+                aria-label="Xóa nhánh này">
+                <svg class="btn-mini-svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                  <path fill-rule="evenodd"
+                    d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
+                    clip-rule="evenodd" />
+                </svg>
+                <span>Xóa</span>
+              </button>
+
               <span class="view-detail-hint">Chi tiết <span class="arrow-glyph" aria-hidden="true">→</span></span>
             </div>
           </div>
@@ -418,46 +548,73 @@
         </div>
 
         <div class="detail-content-card">
+          <!-- Title with direct edit capability -->
           <div class="detail-header-block">
-            <h4 class="detail-task-title">{{ branch.title }}</h4>
+            <div class="title-edit-container">
+              <label class="edit-field-label">Tiêu đề nhiệm vụ:</label>
+              <input type="text" class="detail-title-input"
+                [ngModel]="branch.title"
+                (ngModelChange)="onBranchTitleChange(branch.id, $event)"
+                placeholder="Nhập tiêu đề nhiệm vụ..." />
+            </div>
+
+            <!-- Requirement 3: Editable Grid for Department, Type, Priority, Time/Duration -->
             <div class="detail-meta-grid">
-              <div class="meta-item">
-                <span class="meta-label">Phòng ban nhận việc:</span>
-                <span class="meta-value dept-highlight">
-                  <svg class="meta-svg" width="15" height="15" viewBox="0 0 20 20" fill="currentColor"
-                    aria-hidden="true">
-                    <path fill-rule="evenodd"
-                      d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a1 1 0 110 2h-3a1 1 0 01-1-1v-2a1 1 0 00-1-1H9a1 1 0 00-1 1v2a1 1 0 01-1 1H4a1 1 0 110-2V4zm3 1h2v2H7V5zm2 4H7v2h2V9zm2-4h2v2h-2V5zm2 4h-2v2h2V9z"
-                      clip-rule="evenodd" />
-                  </svg>
-                  <span>{{ branch.departmentName }}</span>
-                </span>
+              <!-- Item 1: Editable Department Select -->
+              <div class="meta-item edit-field">
+                <label class="meta-label">Phòng ban nhận việc:</label>
+                <div class="meta-input-wrap">
+                  <select class="meta-select-input"
+                    [ngModel]="branch.departmentId"
+                    (ngModelChange)="onBranchDepartmentChange(branch.id, $event)">
+                    @for (dept of agent.departments(); track dept.id) {
+                    <option [value]="dept.id">{{ dept.name }}</option>
+                    }
+                  </select>
+                </div>
               </div>
-              <div class="meta-item">
-                <span class="meta-label">Loại hình xử lý:</span>
-                <span class="meta-value">{{ branch.type === 'SupportRequest' ? 'Yêu cầu hỗ trợ' : 'Giao việc trực tiếp'
-                  }}</span>
+
+              <!-- Item 2: Editable Processing Type -->
+              <div class="meta-item edit-field">
+                <label class="meta-label">Loại hình xử lý:</label>
+                <div class="meta-input-wrap">
+                  <select class="meta-select-input"
+                    [ngModel]="branch.type"
+                    (ngModelChange)="onBranchTypeChange(branch.id, $event)">
+                    <option value="Assignment">Giao việc trực tiếp</option>
+                    <option value="SupportRequest">Yêu cầu hỗ trợ</option>
+                  </select>
+                </div>
               </div>
-              <div class="meta-item">
-                <span class="meta-label">Mức ưu tiên:</span>
-                <span class="meta-value priority-badge" [class]="'prio-' + branch.priority.toLowerCase()">
-                  <span class="prio-dot" aria-hidden="true"></span>
-                  {{ branch.priority }}
-                </span>
+
+              <!-- Item 3: Editable Priority Select -->
+              <div class="meta-item edit-field">
+                <label class="meta-label">Mức ưu tiên:</label>
+                <div class="meta-input-wrap">
+                  <select class="meta-select-input prio-select"
+                    [ngModel]="branch.priority"
+                    [class]="'select-prio-' + branch.priority.toLowerCase()"
+                    (ngModelChange)="onBranchPriorityChange(branch.id, $event)">
+                    <option value="HIGH">Cao (HIGH)</option>
+                    <option value="MEDIUM">Trung bình (MEDIUM)</option>
+                    <option value="LOW">Thấp (LOW)</option>
+                  </select>
+                </div>
               </div>
-              <div class="meta-item">
-                <span class="meta-label">Thời gian dự kiến:</span>
-                <span class="meta-value duration-highlight">
-                  <svg class="meta-svg" width="15" height="15" viewBox="0 0 20 20" fill="currentColor"
-                    aria-hidden="true">
-                    <path fill-rule="evenodd"
-                      d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z"
-                      clip-rule="evenodd" />
-                  </svg>
-                  <span>{{ branch.suggestedDurationDays }} ngày</span>
-                </span>
+
+              <!-- Item 4: Editable Time / Duration in Days -->
+              <div class="meta-item edit-field">
+                <label class="meta-label">Thời gian dự kiến:</label>
+                <div class="meta-input-wrap duration-input-wrap">
+                  <input type="number" min="1" max="90" class="meta-number-input"
+                    [ngModel]="branch.suggestedDurationDays"
+                    (ngModelChange)="onBranchDurationChange(branch.id, $event)" />
+                  <span class="input-unit-label">ngày</span>
+                </div>
               </div>
-              <div class="meta-item">
+
+              <!-- Status Display -->
+              <div class="meta-item status-field">
                 <span class="meta-label">Trạng thái:</span>
                 <span class="meta-value">
                   @if (branch.status === 'created') {
@@ -482,10 +639,13 @@
             </div>
           </div>
 
-          <!-- Description -->
+          <!-- Description with direct edit capability -->
           <div class="detail-section">
             <h5 class="section-title">Mô tả công việc</h5>
-            <p class="section-desc-text">{{ branch.description }}</p>
+            <textarea class="detail-desc-textarea" rows="3"
+              [ngModel]="branch.description"
+              (ngModelChange)="onBranchDescriptionChange(branch.id, $event)"
+              placeholder="Nhập mô tả công việc chi tiết..."></textarea>
           </div>
 
           <!-- Checklist -->

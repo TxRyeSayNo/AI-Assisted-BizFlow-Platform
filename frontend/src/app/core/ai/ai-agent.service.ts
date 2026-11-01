@@ -151,11 +151,30 @@ export class AiAgentService {
   }
 
   loadDepartments(): void {
-    if (this.departments().length > 0) return;
+    // fetch departments
     this.http.get<any>('/api/v1/departments?pageSize=100').subscribe({
       next: (res) => {
         const list = Array.isArray(res) ? res : res?.items || [];
-        this.departments.set(list.map((d: any) => ({ id: d.id, name: d.name })));
+        this.departments.set(list.map((d: any) => ({ id: d.departmentId || d.id, name: d.name })));
+
+        // Re-match existing branches if departmentId was missing
+        const currentBranches = this.branches();
+        if (currentBranches.length > 0 && list.length > 0) {
+          const updated = currentBranches.map((b) => {
+            if (!b.departmentId && b.departmentName) {
+              const match = this.departments().find(
+                (d) =>
+                  d.name.toLowerCase().includes(b.departmentName.toLowerCase()) ||
+                  b.departmentName.toLowerCase().includes(d.name.toLowerCase()),
+              );
+              if (match) {
+                return { ...b, departmentId: match.id, departmentName: match.name };
+              }
+            }
+            return b;
+          });
+          this.branches.set(updated);
+        }
       },
       error: () => { },
     });
@@ -197,6 +216,7 @@ export class AiAgentService {
   }
 
   openBranchModal(): void {
+    this.loadDepartments();
     if (this.branches().length === 0) {
       this.initDefaultBranches();
     }
@@ -262,6 +282,7 @@ export class AiAgentService {
   }
 
   selectBranch(branch: SubtaskBranch | null): void {
+    this.loadDepartments();
     this.selectedBranch.set(branch);
   }
 
@@ -594,29 +615,80 @@ export class AiAgentService {
     if (!Array.isArray(proposals) || proposals.length === 0) return;
     const canCreateTasks = this.session.hasPermission('tasks.create');
 
-    const mapped: SubtaskBranch[] = proposals.map((p, idx) => ({
-      id: crypto.randomUUID(),
-      branchIndex: idx + 1,
-      title: p.title || `Nhiệm vụ #${idx + 1}`,
-      description: p.description || p.title || '',
-      // If user lacks tasks.create permission, default to SupportRequest so server confirms smoothly
-      type: (!canCreateTasks ? 'SupportRequest' : (p.type === 'SupportRequest' ? 'SupportRequest' : 'Assignment')),
-      departmentId: p.departmentId || null,
-      departmentName: p.departmentName || 'Phòng ban chuyên trách',
-      priority: (p.priority === 'HIGH' || p.priority === 'LOW' ? p.priority : 'MEDIUM'),
-      suggestedDurationDays: p.suggestedDurationDays || 3,
-      checklistItems: Array.isArray(p.checklistItems) && p.checklistItems.length ? p.checklistItems : [
+    const mapped: SubtaskBranch[] = proposals.map((p, idx) => {
+      const title = p.title || p.Title || `Nhiệm vụ #${idx + 1}`;
+      const description = p.description || p.Description || title;
+      const rawType = p.type || p.Type;
+      const type = (!canCreateTasks ? 'SupportRequest' : (rawType === 'SupportRequest' ? 'SupportRequest' : 'Assignment'));
+      const deptName = p.departmentName || p.DepartmentName || 'Phòng ban chuyên trách';
+      let deptId = p.departmentId || p.DepartmentId || null;
+      if (!deptId && deptName) {
+        const match = this.departments().find(
+          (d) =>
+            d.name.toLowerCase().includes(deptName.toLowerCase()) ||
+            deptName.toLowerCase().includes(d.name.toLowerCase()),
+        );
+        if (match) deptId = match.id;
+      }
+      const rawPriority = p.priority || p.Priority;
+      const priority = (rawPriority === 'HIGH' || rawPriority === 'LOW' ? rawPriority : 'MEDIUM');
+      const suggestedDurationDays = p.suggestedDurationDays || p.SuggestedDurationDays || 3;
+      const rawChecklist = p.checklistItems || p.ChecklistItems;
+      const checklistItems = Array.isArray(rawChecklist) && rawChecklist.length ? rawChecklist : [
         `Bước 1: Chuẩn bị nội dung và kế hoạch`,
         `Bước 2: Thực hiện công việc`,
         `Bước 3: Hoàn tất và báo cáo`,
-      ],
-      reasoning: p.reasoning || 'Được bóc tách tự động bởi AI Agent dựa trên mục tiêu tổng thể.',
-      status: 'pending',
-    }));
+      ];
+      const reasoning = p.reasoning || p.Reasoning || 'Được bóc tách tự động bởi AI Agent dựa trên mục tiêu tổng thể.';
+
+      return {
+        id: crypto.randomUUID(),
+        branchIndex: idx + 1,
+        title,
+        description,
+        type,
+        departmentId: deptId,
+        departmentName: deptName,
+        priority,
+        suggestedDurationDays,
+        checklistItems,
+        reasoning,
+        status: 'pending',
+      };
+    });
 
     this.branches.set(mapped);
     this.selectedBranch.set(null);
     this.persistCurrentSession();
+  }
+
+  updateBranch(branchId: string, updates: Partial<SubtaskBranch>): void {
+    const list = [...this.branches()];
+    const idx = list.findIndex((b) => b.id === branchId);
+    if (idx >= 0) {
+      const updated: SubtaskBranch = { ...list[idx], ...updates };
+      if (updates.departmentId !== undefined) {
+        const found = this.departments().find((d) => d.id === updates.departmentId);
+        if (found) {
+          updated.departmentName = found.name;
+        }
+      } else if (updates.departmentName !== undefined && !updates.departmentId) {
+        const match = this.departments().find(
+          (d) =>
+            d.name.toLowerCase().includes(updates.departmentName!.toLowerCase()) ||
+            updates.departmentName!.toLowerCase().includes(d.name.toLowerCase()),
+        );
+        if (match) {
+          updated.departmentId = match.id;
+        }
+      }
+      list[idx] = updated;
+      this.branches.set(list);
+      if (this.selectedBranch()?.id === branchId) {
+        this.selectedBranch.set(updated);
+      }
+      this.persistCurrentSession();
+    }
   }
 
   deleteBranch(branchIndex: number): void {
@@ -629,7 +701,7 @@ export class AiAgentService {
         this.selectedBranch.set(null);
       }
       this.persistCurrentSession();
-      this.showToast(`Đã xóa nhánh: "${removed.title}"`, 'info');
+      this.showToast(`Đã xóa nhánh #${branchIndex + 1}: "${removed.title}"`, 'info');
     }
   }
 
@@ -655,6 +727,8 @@ export class AiAgentService {
           description: branch.description?.trim() || branch.title.trim(),
           type: branch.type,
           departmentId: branch.departmentId || null,
+          departmentName: branch.departmentName || null,
+          suggestedDurationDays: branch.suggestedDurationDays || null,
           priority: branch.priority,
           checklistItems: branch.checklistItems?.length ? branch.checklistItems : null,
         },
@@ -731,6 +805,8 @@ export class AiAgentService {
         description: b.description?.trim() || b.title.trim(),
         type: b.type,
         departmentId: b.departmentId || null,
+        departmentName: b.departmentName || null,
+        suggestedDurationDays: b.suggestedDurationDays || null,
         priority: b.priority,
         checklistItems: b.checklistItems?.length ? b.checklistItems : null,
       })),

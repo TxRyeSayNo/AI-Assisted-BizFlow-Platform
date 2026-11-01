@@ -118,6 +118,37 @@ export class RobotWidgetComponent implements OnInit {
     this.agent.selectBranch(branch);
   }
 
+  onBranchDepartmentChange(id: string, deptId: string) {
+    const dept = this.agent.departments().find((d) => d.id === deptId);
+    this.agent.updateBranch(id, {
+      departmentId: deptId,
+      departmentName: dept ? dept.name : undefined,
+    });
+  }
+
+  onBranchDurationChange(id: string, days: any) {
+    const val = parseInt(days, 10);
+    if (!isNaN(val) && val > 0) {
+      this.agent.updateBranch(id, { suggestedDurationDays: val });
+    }
+  }
+
+  onBranchPriorityChange(id: string, priority: 'LOW' | 'MEDIUM' | 'HIGH') {
+    this.agent.updateBranch(id, { priority });
+  }
+
+  onBranchTypeChange(id: string, type: 'Assignment' | 'SupportRequest') {
+    this.agent.updateBranch(id, { type });
+  }
+
+  onBranchTitleChange(id: string, title: string) {
+    this.agent.updateBranch(id, { title });
+  }
+
+  onBranchDescriptionChange(id: string, description: string) {
+    this.agent.updateBranch(id, { description });
+  }
+
   onQuickPrompt(type: 'today' | 'overdue' | 'pending' | 'task' | 'notifications') {
     const prompts: Record<string, Record<string, string>> = {
       today: {
@@ -368,6 +399,13 @@ export class RobotWidgetComponent implements OnInit {
         this.agent.setProposals(proposals);
       }
       this.agent.openBranchModal();
+      return;
+    }
+
+    // Quick fill / Quick reply
+    if (card.actionType && (card.actionType.startsWith('QUICK_FILL_') || card.actionType === 'QUICK_REPLY')) {
+      const sample = card.payload?.template || card.payload?.text || card.title.replace(/^Mẫu:\s*/i, '');
+      this.sendQuickPrompt(sample);
       return;
     }
 
