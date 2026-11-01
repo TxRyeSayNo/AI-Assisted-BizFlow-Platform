@@ -26,6 +26,22 @@ public sealed class WorkflowDefinition
             Name = EntityRules.Text(name, 200, nameof(name)), BusinessType = businessType, Status = WorkflowStatus.Draft,
             CreatedAt = now.ToUniversalTime(), UpdatedAt = now.ToUniversalTime() };
     }
+
+    public void UpdateName(string name, DateTimeOffset now)
+    {
+        Name = EntityRules.Text(name, 200, nameof(name));
+        UpdatedAt = now.ToUniversalTime();
+    }
+
+    public void UpdateStatus(WorkflowStatus status, DateTimeOffset now)
+    {
+        if (!Enum.IsDefined(status)) throw new ArgumentOutOfRangeException(nameof(status));
+        Status = status;
+        UpdatedAt = now.ToUniversalTime();
+    }
+
+    public void Activate(DateTimeOffset now) => UpdateStatus(WorkflowStatus.Active, now);
+    public void Deactivate(DateTimeOffset now) => UpdateStatus(WorkflowStatus.Inactive, now);
 }
 
 public sealed class WorkflowVersion
@@ -43,6 +59,28 @@ public sealed class WorkflowVersion
         if (versionNo < 1) throw new ArgumentOutOfRangeException(nameof(versionNo));
         return new() { Id = Guid.CreateVersion7(), WorkflowId = EntityRules.Id(workflowId, nameof(workflowId)),
             VersionNo = versionNo, Status = WorkflowVersionStatus.Draft };
+    }
+
+    public void UpdateDefinition(string definitionJson)
+    {
+        if (Status != WorkflowVersionStatus.Draft)
+            throw new InvalidOperationException("Only draft versions can have their definition updated.");
+        DefinitionJson = WorkflowJson.Object(definitionJson);
+    }
+
+    public void Publish(DateTimeOffset now)
+    {
+        if (Status != WorkflowVersionStatus.Draft)
+            throw new InvalidOperationException("Only draft versions can be published.");
+        Status = WorkflowVersionStatus.Published;
+        PublishedAt = now.ToUniversalTime();
+    }
+
+    public void Retire()
+    {
+        if (Status != WorkflowVersionStatus.Published)
+            throw new InvalidOperationException("Only published versions can be retired.");
+        Status = WorkflowVersionStatus.Retired;
     }
 }
 
@@ -79,8 +117,6 @@ public sealed class WorkflowTransition
     public string? GuardJson { get; private set; }
     private WorkflowTransition() { }
 
-    // Drafts may be incomplete. Business-type state/edge and guard-schema validation is
-    // a publish gate; this constructor does not claim an executable workflow is valid.
     public static WorkflowTransition CreateDraft(Guid versionId, string fromState, string toState, string? guardJson = null) => new()
     {
         Id = Guid.CreateVersion7(), WorkflowVersionId = EntityRules.Id(versionId, nameof(versionId)),
@@ -91,7 +127,6 @@ public sealed class WorkflowTransition
 
 internal static class WorkflowJson
 {
-    // Structural storage validation only, not the still-required typed authoring schema.
     internal static string Object(string json)
     {
         using var parsed = JsonDocument.Parse(json);

@@ -4,206 +4,421 @@
   </a>
   <span class="tenant-badge">{{ session.identity()?.tenantName }}</span>
 </header>
-<main id="main-content" class="page-content" tabindex="-1">
-  <nav aria-label="Breadcrumb">
-    <a routerLink="/workspace">{{ 'common.workspace' | translate: 'Workspace' }}</a> /
-    <a routerLink="/settings">{{ 'nav.settings' | translate: 'Settings' }}</a> /
-    <span>{{ 'workflows.title' | translate: 'Workflows' }}</span>
+
+<main id="main-content" class="page-content workflow-version-page" tabindex="-1">
+  <!-- BREADCRUMB -->
+  <nav class="wf-breadcrumb" aria-label="Breadcrumb">
+    <a routerLink="/workspace">Không gian làm việc</a> /
+    <a routerLink="/settings">Cài đặt hệ thống</a> /
+    <span>Cấu hình Quy trình</span>
   </nav>
-  <h1>{{ 'workflows.title' | translate: 'Workflows' }}</h1>
-  <p>
-    {{
-      'workflows.subtitle'
-        | translate
-          : 'Browse versioned workflows for tasks and requests. Drafts are not active or executable.'
-    }}
-  </p>
-  @if (created(); as row) {
-    <p class="inline-alert" role="status">
-      Draft created with an empty first version.
-      <a [routerLink]="['/settings/workflows', row.workflowId, 'versions', row.latestVersionId]">{{
-        'workflows.openCreatedDraft' | translate: 'Open created draft'
-      }}</a>
-    </p>
-  }
-  @if (mutationError()) {
-    <p class="inline-alert" role="alert">{{ mutationError() }}</p>
-  }
-  @if (uncertain()) {
-    <button mat-stroked-button type="button" (click)="load(1)">
-      {{ 'workflows.reloadLibrary' | translate: 'Reload library' }}
-    </button>
-  }
-  <section
-    class="directory-panel"
-    aria-label="Workflow library"
-    [attr.aria-busy]="busy() || saving()"
-  >
-    <form class="filters" [formGroup]="filters" (ngSubmit)="apply()">
-      <mat-form-field appearance="outline" subscriptSizing="dynamic"
-        ><mat-label>{{ 'workflows.searchLabel' | translate: 'Workflow name' }}</mat-label
-        ><input matInput formControlName="search" maxlength="200" [readonly]="busy() || saving()"
-      /></mat-form-field>
-      <mat-form-field appearance="outline" subscriptSizing="dynamic"
-        ><mat-label>{{ 'workflows.businessType' | translate: 'Business type' }}</mat-label
-        ><mat-select formControlName="businessType"
-          ><mat-option value="">{{ 'workflows.allTypes' | translate: 'All types' }}</mat-option
-          ><mat-option value="TASK">{{ 'workflows.task' | translate: 'Task' }}</mat-option
-          ><mat-option value="REQUEST">{{
-            'workflows.request' | translate: 'Request'
-          }}</mat-option></mat-select
-        ></mat-form-field
-      >
-      <mat-form-field appearance="outline" subscriptSizing="dynamic"
-        ><mat-label>{{ 'workflows.statusLabel' | translate: 'Workflow status' }}</mat-label
-        ><mat-select formControlName="status"
-          ><mat-option value="">{{
-            'departments.allStatuses' | translate: 'All statuses'
-          }}</mat-option
-          ><mat-option value="DRAFT">{{ 'reqStatus.DRAFT' | translate: 'Draft' }}</mat-option
-          ><mat-option value="ACTIVE">{{ 'departments.active' | translate: 'Active' }}</mat-option
-          ><mat-option value="INACTIVE">{{
-            'departments.inactive' | translate: 'Inactive'
-          }}</mat-option></mat-select
-        ></mat-form-field
-      >
-      <button mat-flat-button type="submit" [disabled]="busy() || saving()">
-        {{ 'departments.applyFilters' | translate: 'Apply filters' }}
+
+  <!-- TITLE & ACTIONS -->
+  <div class="wf-library-header">
+    <div>
+      <h1>Thư viện Quy trình Nghiệp vụ</h1>
+      <p>Cấu hình luồng thực thi liên phòng ban, các bước phê duyệt và quản lý phiên bản áp dụng cho Yêu cầu & Nhiệm vụ.</p>
+    </div>
+
+    @if (session.hasPermission('workflows.configure')) {
+      <button type="button" class="btn-primary" (click)="openCreateModal()">
+        <span>+ Tạo quy trình mới</span>
       </button>
-    </form>
-    @if (busy()) {
-      <p role="status" class="directory-feedback">
-        {{ 'workflows.loading' | translate: 'Loading workflows…' }}
-      </p>
-    } @else if (denied()) {
-      <p role="alert" class="directory-feedback">
-        {{ 'workflows.denied' | translate: 'You no longer have access to this workflow library.' }}
-      </p>
-    } @else if (error()) {
-      <div class="directory-feedback">
-        <p role="alert">
-          {{ 'workflows.error' | translate: 'Workflows could not be loaded. Please try again.' }}
-        </p>
-        <button mat-stroked-button type="button" (click)="load(page())">
-          {{ 'common.retry' | translate: 'Retry' }}
-        </button>
+    }
+  </div>
+
+  <!-- FLOATING TOAST -->
+  @if (toast(); as t) {
+    <div class="wf-toast-popup" [class.success]="t.type === 'success'" [class.error]="t.type === 'error'">
+      <div class="toast-indicator"></div>
+      <div class="toast-body">
+        <span class="toast-icon">{{ t.type === 'success' ? '✓' : '⚠' }}</span>
+        <span class="toast-text">{{ t.message }}</span>
       </div>
-    } @else if (result(); as data) {
-      @if (data.items.length === 0) {
-        <p role="status" class="directory-feedback">
-          {{ 'workflows.empty' | translate: 'No workflows match these filters.' }}
-        </p>
-      } @else {
-        <table>
-          <caption>
-            Workspace workflow library
-          </caption>
-          <thead>
+    </div>
+  }
+
+  <!-- BỘ LỌC TÌM KIẾM QUY TRÌNH (CHUẨN DOANH NGHIỆP) -->
+  <section class="wf-search-section" aria-label="Bộ lọc tìm kiếm quy trình">
+    <form class="wf-search-form" [formGroup]="filters" (ngSubmit)="apply()">
+      <div class="wf-form-group search-input-group">
+        <label for="wf-search-input" class="wf-field-label">Tìm kiếm quy trình</label>
+        <div class="wf-input-wrapper">
+          <svg class="wf-input-icon" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+            <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"/>
+          </svg>
+          <input
+            id="wf-search-input"
+            class="wf-text-input"
+            formControlName="search"
+            placeholder="Tìm theo tên quy trình nghiệp vụ…"
+            maxlength="200"
+          />
+        </div>
+      </div>
+
+      <div class="wf-form-group select-group">
+        <label for="wf-type-select" class="wf-field-label">Loại nghiệp vụ</label>
+        <div class="wf-select-wrapper">
+          <select id="wf-type-select" class="wf-select-input" formControlName="businessType">
+            <option value="">Tất cả loại nghiệp vụ</option>
+            <option value="REQUEST">Yêu cầu nội bộ (Request)</option>
+            <option value="TASK">Nhiệm vụ công việc (Task)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="wf-form-group select-group">
+        <label for="wf-status-select" class="wf-field-label">Trạng thái áp dụng</label>
+        <div class="wf-select-wrapper">
+          <select id="wf-status-select" class="wf-select-input" formControlName="status">
+            <option value="">Tất cả trạng thái</option>
+            <option value="DRAFT">Bản nháp (Chưa xuất bản)</option>
+            <option value="ACTIVE">Đang hoạt động (Áp dụng)</option>
+            <option value="INACTIVE">Tạm dừng áp dụng</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="wf-form-actions">
+        <button type="submit" class="btn-primary" [disabled]="busy() || saving()">
+          <svg class="btn-svg-icon" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"/>
+          </svg>
+          <span>Tìm kiếm</span>
+        </button>
+
+        @if (filters.value.search || filters.value.businessType || filters.value.status) {
+          <button type="button" class="btn-outline" (click)="resetFilters()" title="Xóa toàn bộ bộ lọc và tải lại danh sách">
+            <span>Đặt lại</span>
+          </button>
+        }
+      </div>
+    </form>
+  </section>
+
+  <!-- TABLE CONTENT -->
+  @if (busy()) {
+    <p class="directory-feedback" role="status">Đang tải danh sách quy trình…</p>
+  } @else if (denied()) {
+    <p class="directory-feedback" role="alert" style="color: #dc2626;">Bạn không có quyền truy cập cấu hình quy trình. Chức năng này chỉ dành cho Quản trị viên Doanh nghiệp.</p>
+  } @else if (error()) {
+    <div class="directory-feedback">
+      <p role="alert" style="color: #dc2626;">Không thể tải danh sách quy trình. Vui lòng kiểm tra lại kết nối.</p>
+      <button type="button" class="btn-outline" (click)="load(page())">Thử lại</button>
+    </div>
+  } @else if (result(); as data) {
+    @if (data.items.length === 0) {
+      <div style="text-align: center; padding: 48px 16px; background: #ffffff; border-radius: 10px; border: 1px dashed #cbd5e1;">
+        <p style="font-size: 15px; font-weight: 600; color: #334155; margin-bottom: 6px;">Không tìm thấy quy trình nào</p>
+        <p style="font-size: 13px; color: #64748b; margin-bottom: 16px;">Chưa có quy trình phù hợp với bộ lọc hoặc doanh nghiệp chưa tạo quy trình.</p>
+        @if (session.hasPermission('workflows.configure')) {
+          <button type="button" class="btn-primary" (click)="openCreateModal()">
+            <span>+ Tạo quy trình đầu tiên</span>
+          </button>
+        }
+      </div>
+    } @else {
+      <table class="wf-table">
+        <thead>
+          <tr>
+            <th scope="col" class="th-name" style="min-width: 220px;">Tên quy trình</th>
+            <th scope="col" class="th-type" style="width: 160px; min-width: 160px; white-space: nowrap;">Loại nghiệp vụ</th>
+            <th scope="col" class="th-status" style="width: 200px; min-width: 200px; white-space: nowrap;">Trạng thái</th>
+            <th scope="col" class="th-version" style="width: 260px; min-width: 260px; white-space: nowrap;">Phiên bản mới nhất</th>
+            <th scope="col" class="th-actions" style="min-width: 320px; text-align: right; white-space: nowrap;">Thao tác</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of data.items; track row.workflowId) {
             <tr>
-              <th scope="col">{{ 'workflows.col.workflow' | translate: 'Workflow' }}</th>
-              <th scope="col">{{ 'workflows.col.latestVersion' | translate: 'Latest version' }}</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (row of data.items; track row.workflowId) {
-              <tr>
-                <th scope="row">
-                  {{ row.name
-                  }}<span class="workflow-meta"
-                    >{{ labels[row.businessType] }} · {{ labels[row.status] }}</span
-                  >
-                </th>
-                <td>
+              <td class="td-name">
+                <div class="wf-name-cell">
+                  <span class="wf-name-text">{{ row.name }}</span>
+                </div>
+              </td>
+              <td class="td-type">
+                <span class="badge-type" [class.request]="row.businessType === 'REQUEST'" [class.task]="row.businessType === 'TASK'">
+                  {{ labels[row.businessType] }}
+                </span>
+              </td>
+              <td class="td-status">
+                <span
+                  class="badge-status"
+                  [class.draft]="row.status === 'DRAFT'"
+                  [class.active]="row.status === 'ACTIVE'"
+                  [class.inactive]="row.status === 'INACTIVE'"
+                >
+                  {{ labels[row.status] }}
+                </span>
+              </td>
+              <td class="td-version">
+                @if (row.latestVersionId) {
+                  <div class="wf-version-cell">
+                    <a
+                      class="version-link"
+                      [routerLink]="['/settings/workflows', row.workflowId, 'versions', row.latestVersionId]"
+                      title="Mở phiên bản {{ row.latestVersionNo }} trong trình thiết kế"
+                    >
+                      Phiên bản {{ row.latestVersionNo }}
+                    </a>
+                    <span
+                      class="badge-status"
+                      [class.draft]="row.latestVersionStatus === 'Draft' || row.latestVersionStatus === 'DRAFT'"
+                      [class.published]="row.latestVersionStatus === 'Published' || row.latestVersionStatus === 'PUBLISHED'"
+                    >
+                      {{ labels[row.latestVersionStatus ?? ''] || 'Bản nháp' }}
+                    </span>
+                  </div>
+                } @else {
+                  <span style="color: #94a3b8; font-style: italic;">Chưa có phiên bản</span>
+                }
+              </td>
+              <td class="td-actions" style="text-align: right;">
+                <div class="action-btn-group" style="justify-content: flex-end;">
                   @if (row.latestVersionId) {
                     <a
-                      [routerLink]="[
-                        '/settings/workflows',
-                        row.workflowId,
-                        'versions',
-                        row.latestVersionId,
-                      ]"
-                      [attr.aria-label]="'View version ' + row.latestVersionNo + ' of ' + row.name"
-                      >{{ 'workflows.version' | translate: 'Version' }} {{ row.latestVersionNo }}</a
-                    ><span class="workflow-meta">{{ labels[row.latestVersionStatus ?? ''] }}</span>
-                  } @else {
-                    <span>{{ 'workflows.noVersions' | translate: 'No versions' }}</span>
+                      class="tbl-btn primary"
+                      [routerLink]="['/settings/workflows', row.workflowId, 'versions', row.latestVersionId]"
+                      title="Mở trình thiết kế trực quan kéo thả"
+                    >
+                      ✏️ Thiết kế
+                    </a>
                   }
-                </td>
-              </tr>
-            }
-          </tbody>
-        </table>
-      }
-      <nav class="pagination" aria-label="Workflow pages">
-        <span role="status"
-          >{{ data.total }}
-          {{
-            data.total === 1
-              ? ('workflows.workflow' | translate: 'workflow')
-              : ('workflows.workflows' | translate: 'workflows')
-          }}
-          · {{ 'common.page' | translate: 'Page' }} {{ data.page }}</span
-        ><button
-          mat-stroked-button
-          type="button"
-          [disabled]="saving() || data.page <= 1"
-          (click)="load(data.page - 1)"
-        >
-          {{ 'common.previous' | translate: 'Previous' }}</button
-        ><button
-          mat-stroked-button
-          type="button"
-          [disabled]="saving() || data.page * data.pageSize >= data.total"
-          (click)="load(data.page + 1)"
-        >
-          {{ 'common.next' | translate: 'Next' }}
-        </button>
+
+                  <button
+                    type="button"
+                    class="tbl-btn"
+                    (click)="openHistory(row)"
+                    title="Xem các phiên bản quy trình"
+                  >
+                    🕒 Lịch sử
+                  </button>
+
+                  @if (session.hasPermission('workflows.configure') && row.status !== 'DRAFT') {
+                    <button
+                      type="button"
+                      class="tbl-btn"
+                      (click)="toggleStatus(row)"
+                      [title]="row.status === 'ACTIVE' ? 'Tạm dừng áp dụng quy trình' : 'Kích hoạt áp dụng quy trình'"
+                    >
+                      {{ row.status === 'ACTIVE' ? '⏸ Tạm dừng' : '▶ Kích hoạt' }}
+                    </button>
+                  }
+
+                  @if (session.hasPermission('workflows.configure') && row.status === 'DRAFT') {
+                    <button
+                      type="button"
+                      class="tbl-btn danger"
+                      (click)="confirmDelete(row)"
+                      title="Xóa quy trình bản thảo"
+                    >
+                      🗑 Xóa
+                    </button>
+                  }
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+
+      <!-- PAGINATION -->
+      <nav class="pagination" aria-label="Phân trang" style="margin-top: 16px; display: flex; justify-content: space-between; align-items: center;">
+        <span role="status" style="font-size: 13px; color: #64748b;">
+          Tổng cộng {{ data.total }} quy trình · Trang {{ data.page }}
+        </span>
+        <div style="display: flex; gap: 8px;">
+          <button
+            type="button"
+            class="btn-outline"
+            [disabled]="saving() || data.page <= 1"
+            (click)="load(data.page - 1)"
+          >
+            ← Trang trước
+          </button>
+          <button
+            type="button"
+            class="btn-outline"
+            [disabled]="saving() || data.page * data.pageSize >= data.total"
+            (click)="load(data.page + 1)"
+          >
+            Trang sau →
+          </button>
+        </div>
       </nav>
-      @if (session.hasPermission('workflows.configure')) {
-        <section class="draft-form" aria-labelledby="create-draft-title">
-          <h2 id="create-draft-title">
-            {{ 'workflows.createDraft' | translate: 'Create workflow draft' }}
-          </h2>
-          <p>
-            {{
-              'workflows.createDraftDesc'
-                | translate
-                  : 'This saves the name, business type and empty version 1. Step editing, validation and publishing are not available yet.'
-            }}
-          </p>
-          <form [formGroup]="createForm" (ngSubmit)="create()">
-            <mat-form-field appearance="outline" subscriptSizing="dynamic"
-              ><mat-label>{{ 'workflows.newName' | translate: 'New workflow name' }}</mat-label
-              ><input
-                matInput
-                formControlName="name"
-                maxlength="200"
-                [readonly]="saving()"
-              /><mat-error>Vui lòng nhập tên tối đa 200 ký tự.</mat-error></mat-form-field
-            >
-            <mat-form-field appearance="outline" subscriptSizing="dynamic"
-              ><mat-label>{{
-                'workflows.newType' | translate: 'New workflow business type'
-              }}</mat-label
-              ><mat-select formControlName="businessType"
-                ><mat-option value="REQUEST">{{
-                  'workflows.request' | translate: 'Request'
-                }}</mat-option
-                ><mat-option value="TASK">{{
-                  'workflows.task' | translate: 'Task'
-                }}</mat-option></mat-select
-              ></mat-form-field
-            >
-            <button mat-flat-button type="submit" [disabled]="saving() || uncertain()">
-              {{
-                saving()
-                  ? ('services.creating' | translate: 'Creating…')
-                  : ('workflows.createDraftBtn' | translate: 'Create draft')
-              }}
-            </button>
-          </form>
-        </section>
-      }
     }
-  </section>
+  }
+
+  <!-- MODAL: CREATE WORKFLOW -->
+  @if (showCreateModal()) {
+    <div class="modal-backdrop" (click)="closeCreateModal()">
+      <div class="modal-card" (click)="$event.stopPropagation()">
+        <div class="modal-head">
+          <h3>Tạo Quy trình Nghiệp vụ Mới</h3>
+          <button type="button" class="btn-close" (click)="closeCreateModal()">✕</button>
+        </div>
+
+        <form [formGroup]="createForm" (ngSubmit)="createAndDesign()">
+          <div class="modal-body" style="display: flex; flex-direction: column; gap: 14px;">
+            <p class="modal-alert-info">
+              💡 Sau khi khởi tạo, hệ thống sẽ tự động tạo Phiên bản 1 (Bản nháp) và đưa bạn vào <strong>Trình Thiết kế Quy trình Trực quan</strong> để kéo thả các bước xử lý, phòng ban và điều kiện rẽ nhánh.
+            </p>
+
+            <div>
+              <label style="display: block; font-size: 13px; font-weight: 600; color: #1e293b; margin-bottom: 6px;">
+                Tên quy trình *
+              </label>
+              <input
+                type="text"
+                formControlName="name"
+                class="form-input"
+                style="width: 100%; padding: 8px 12px; border-radius: 6px; border: 1px solid #cbd5e1; font-size: 13px; box-sizing: border-box;"
+                placeholder="Ví dụ: Quy trình Phê duyệt Mua sắm Thiết bị IT"
+                maxlength="200"
+              />
+              @if (createForm.get('name')?.touched && createForm.get('name')?.invalid) {
+                <span style="color: #dc2626; font-size: 11.5px; margin-top: 4px; display: block;">
+                  Vui lòng nhập tên quy trình (tối đa 200 ký tự).
+                </span>
+              }
+            </div>
+
+            <div>
+              <label style="display: block; font-size: 13px; font-weight: 600; color: #1e293b; margin-bottom: 6px;">
+                Loại nghiệp vụ *
+              </label>
+              <select
+                formControlName="businessType"
+                class="form-select"
+                style="width: 100%; padding: 8px 12px; border-radius: 6px; border: 1px solid #cbd5e1; font-size: 13px; box-sizing: border-box;"
+              >
+                <option value="REQUEST">Yêu cầu (Request) — Xử lý phiếu dịch vụ nội bộ từ nhân viên</option>
+                <option value="TASK">Nhiệm vụ (Task) — Phân công và phối hợp công việc giữa các phòng ban</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="modal-foot">
+            <button type="button" class="btn-cancel" (click)="closeCreateModal()">Hủy bỏ</button>
+            <button type="submit" class="btn-primary" [disabled]="saving() || createForm.invalid">
+              <span>{{ saving() ? 'Đang khởi tạo…' : 'Khởi tạo & Thiết kế trực quan →' }}</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+
+  <!-- MODAL: VERSION HISTORY -->
+  @if (showHistoryModal()) {
+    <div class="modal-backdrop" (click)="closeHistory()">
+      <div class="modal-card modal-lg" (click)="$event.stopPropagation()">
+        <div class="modal-head">
+          <h3>Lịch sử phiên bản: {{ selectedWorkflowForHistory()?.name }}</h3>
+          <button type="button" class="btn-close" (click)="closeHistory()">✕</button>
+        </div>
+
+        <div class="modal-body">
+          @if (loadingHistory()) {
+            <p style="text-align: center; color: #64748b; padding: 24px;">Đang tải danh sách phiên bản…</p>
+          } @else if (versionHistory().length === 0) {
+            <p style="text-align: center; color: #64748b; padding: 24px;">Chưa có dữ liệu phiên bản.</p>
+          } @else {
+            <table class="history-table">
+              <thead>
+                <tr>
+                  <th scope="col" style="width: 120px; white-space: nowrap;">Phiên bản</th>
+                  <th scope="col" style="width: 130px; white-space: nowrap;">Trạng thái</th>
+                  <th scope="col" style="min-width: 170px; white-space: nowrap;">Thời điểm ban hành</th>
+                  <th scope="col" style="min-width: 150px; white-space: nowrap;">Ngày tạo</th>
+                  <th scope="col" style="width: 120px; text-align: right; white-space: nowrap;">Thao tác</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (v of versionHistory(); track v.versionId) {
+                  <tr>
+                    <td>
+                      <strong>Phiên bản {{ v.versionNo }}</strong>
+                    </td>
+                    <td>
+                      <span
+                        class="badge-status"
+                        [class.draft]="v.status === 'Draft'"
+                        [class.published]="v.status === 'Published'"
+                        [class.retired]="v.status === 'Retired'"
+                      >
+                        {{ labels[v.status] }}
+                      </span>
+                    </td>
+                    <td>
+                      {{ v.publishedAt ? (v.publishedAt | date: 'dd/MM/yyyy HH:mm') : '—' }}
+                    </td>
+                    <td>
+                      {{ v.createdAt | date: 'dd/MM/yyyy HH:mm' }}
+                    </td>
+                    <td style="text-align: right;">
+                      <a
+                        class="tbl-btn primary"
+                        [routerLink]="['/settings/workflows', selectedWorkflowForHistory()?.workflowId, 'versions', v.versionId]"
+                        (click)="closeHistory()"
+                      >
+                        {{ v.status === 'Draft' ? '✏️ Thiết kế' : '👁 Xem sơ đồ' }}
+                      </a>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          }
+        </div>
+
+        <div class="modal-foot">
+          <button type="button" class="btn-cancel" (click)="closeHistory()">Đóng</button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- MODAL: DELETE CONFIRMATION (ENTERPRISE REDESIGN) -->
+  @if (deleteCandidate(); as candidate) {
+    <div class="modal-backdrop" (click)="cancelDelete()">
+      <div class="modal-card delete-confirm-modal" (click)="$event.stopPropagation()">
+        <div class="delete-confirm-body">
+          <div class="delete-icon-bubble">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="trash-svg">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+          </div>
+          <h3 class="delete-title">Xác nhận xóa quy trình bản thảo</h3>
+          <p class="delete-desc">
+            Bạn có chắc chắn muốn xóa vĩnh viễn quy trình này không? Toàn bộ các bước cấu hình trong bản thảo sẽ bị xóa và không thể khôi phục.
+          </p>
+
+          <div class="delete-item-preview">
+            <div class="item-name">{{ candidate.name }}</div>
+            <div class="item-tags">
+              <span class="badge-type" [class.request]="candidate.businessType === 'REQUEST'" [class.task]="candidate.businessType === 'TASK'">
+                {{ labels[candidate.businessType] }}
+              </span>
+              <span class="badge-status draft">Bản nháp</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="delete-confirm-foot">
+          <button type="button" class="btn-cancel" (click)="cancelDelete()" [disabled]="deleting()">
+            Hủy bỏ
+          </button>
+          <button type="button" class="btn-danger-confirm" (click)="executeDelete()" [disabled]="deleting()">
+            @if (deleting()) {
+              <span>Đang xóa…</span>
+            } @else {
+              <span>🗑 Xác nhận xóa</span>
+            }
+          </button>
+        </div>
+      </div>
+    </div>
+  }
 </main>

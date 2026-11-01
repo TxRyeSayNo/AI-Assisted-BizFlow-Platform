@@ -32,6 +32,12 @@ public sealed class InternalService
         Status = active ? ServiceStatus.Active : ServiceStatus.Inactive; UpdatedAt = now.ToUniversalTime();
     }
 
+    public void SetActiveWorkflowVersion(Guid? versionId, DateTimeOffset now)
+    {
+        ActiveWorkflowVersionId = versionId;
+        UpdatedAt = now.ToUniversalTime();
+    }
+
     public void RecordCategoryAdded(ServiceCategory category, DateTimeOffset now)
     {
         ArgumentNullException.ThrowIfNull(category);

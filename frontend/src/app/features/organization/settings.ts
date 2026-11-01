@@ -173,7 +173,7 @@ import { TranslatePipe } from '../../core/i18n/translate.pipe';
           </article>
 
           <!-- Module 3: Workflow Configuration -->
-          @if (session.hasPermission('workflows.read')) {
+          @if (session.hasPermission('workflows.configure')) {
             <article class="setting-card">
               <div class="card-header-row">
                 <div class="card-icon icon-workflow" aria-hidden="true">

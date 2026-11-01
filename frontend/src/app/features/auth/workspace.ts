@@ -100,7 +100,7 @@ import { TranslatePipe } from '../../core/i18n/translate.pipe';
 
       <!-- Right Utility Bar -->
       <div class="nav-utilities">
-        <a routerLink="/notifications" class="notify-btn" title="Notifications">
+        <a routerLink="/notifications" class="notify-btn" title="Thông báo">
           🔔
           <span class="unread-dot"></span>
         </a>
@@ -114,8 +114,8 @@ import { TranslatePipe } from '../../core/i18n/translate.pipe';
           <span class="user-name">{{ identity()?.fullName }}</span>
         </div>
 
-        <button type="button" class="btn-signout" (click)="signOut()" title="Sign out">
-          {{ 'nav.signOut' | translate: 'Sign out' }}
+        <button type="button" class="btn-signout" (click)="signOut()" title="Đăng xuất">
+          {{ 'nav.signOut' | translate: 'Đăng xuất' }}
         </button>
       </div>
     </header>
@@ -136,12 +136,12 @@ import { TranslatePipe } from '../../core/i18n/translate.pipe';
           <div class="hero-actions">
             @if (session.hasPermission('tasks.create')) {
               <a routerLink="/tasks/new" class="btn-hero-primary">{{
-                'workspace.newTask' | translate: '+ New Task'
+                'workspace.newTask' | translate: '+ Tạo nhiệm vụ mới'
               }}</a>
             }
             @if (session.hasPermission('requests.create')) {
               <a routerLink="/requests/new" class="btn-hero-secondary">{{
-                'workspace.newRequest' | translate: '+ New Request'
+                'workspace.newRequest' | translate: '+ Tạo yêu cầu mới'
               }}</a>
             }
             @if (

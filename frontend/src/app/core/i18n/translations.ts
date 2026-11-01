@@ -1297,9 +1297,9 @@ export const TRANSLATIONS: Record<LanguageCode, Record<string, string>> = {
     'slaMonitor.openTask': 'Xem Nhiệm vụ',
     'slaMonitor.openRequest': 'Xem Yêu cầu',
     'slaMonitor.matrixTitle': 'Ma trận Leo thang Phân cấp',
-    'slaMonitor.matrixDesc':
-      'Khi một hạng mục công việc chạm ngưỡng SLA quan trọng, hệ thống sẽ tự động kích hoạt thông báo tương ứng và chuyển cấp xử lý:',
-    'slaMonitor.tier1Tag': 'Cấp 1 · Đã qua 80% thời gian',
+    'slaMonitor.policyDesc':
+      'Khi một hạng mục công việc đạt đến các ngưỡng SLA tới hạn, hệ thống sẽ tự động kích hoạt thông báo tương ứng và cập nhật quyền hạn xử lý leo thang:',
+    'slaMonitor.tier1Tag': 'Cấp độ 1 · Đã dùng 80% thời gian',
     'slaMonitor.tier1Title': 'Cảnh báo Trực tiếp',
     'slaMonitor.tier1Desc': 'Thông báo trong ứng dụng được gửi ngay tới người thực hiện và quản lý trực tiếp.',
     'slaMonitor.tier2Tag': 'Cấp 2 · Vi phạm 100% thời gian',

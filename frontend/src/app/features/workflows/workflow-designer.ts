@@ -1,432 +1,765 @@
-import { Component, Input, signal } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  EventEmitter,
+  HostListener,
+  Input,
+  OnInit,
+  Output,
+  ViewChild,
+  computed,
+  signal,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 
-export interface WorkflowStepNode {
+export type NodeType = 'START' | 'DEPARTMENT' | 'APPROVAL' | 'DECISION' | 'CONFIRMATION' | 'END';
+
+export interface DesignerNode {
   id: string;
-  order: number;
+  type: NodeType;
   name: string;
-  state: string;
-  roleRequired: string;
-  slaHours: number;
-  description: string;
-  transitionsTo: string[];
+  x: number;
+  y: number;
+  departmentId?: string;
+  departmentName?: string;
+  roleId?: string;
+  roleName?: string;
+  description?: string;
+  slaHours?: number;
+  approverType?: 'ROLE' | 'DEPARTMENT_LEAD' | 'SPECIFIC_USER';
+  milestone?: 'RECEIVE' | 'RESULT' | 'RESOLUTION';
+  trigger?: string;
+  completionState?: string;
+  conditions?: {
+    id: string;
+    field: string;
+    operator: string;
+    value: string;
+    label: string;
+    targetNodeId: string;
+  }[];
+}
+
+export interface DesignerEdge {
+  id: string;
+  source: string;
+  target: string;
+  label?: string;
+  guard?: Record<string, unknown>;
+}
+
+export interface ValidationIssueItem {
+  id: string;
+  type: 'error' | 'warning';
+  title: string;
+  cause: string;
+  suggestion: string;
+  nodeId?: string;
+  nodeName?: string;
+}
+
+export interface LookupItem {
+  id: string;
+  name: string;
+  code?: string;
+}
+
+interface HistorySnapshot {
+  nodes: DesignerNode[];
+  edges: DesignerEdge[];
 }
 
 @Component({
   selector: 'bf-workflow-designer',
   standalone: true,
-  imports: [CommonModule],
-  template: `
-    <div class="designer-wrap">
-      <div class="designer-toolbar">
-        <div>
-          <h3 class="designer-title">Visual Workflow Flowchart</h3>
-          <p class="designer-sub">
-            Step sequence, role requirements, and state transition pathways
-          </p>
-        </div>
-        <div class="view-toggles">
-          <button
-            type="button"
-            class="toggle-btn"
-            [class.active]="viewMode() === 'visual'"
-            (click)="viewMode.set('visual')"
-          >
-            Visual Graph
-          </button>
-          <button
-            type="button"
-            class="toggle-btn"
-            [class.active]="viewMode() === 'table'"
-            (click)="viewMode.set('table')"
-          >
-            Transition Table
-          </button>
-        </div>
-      </div>
-
-      <!-- VISUAL GRAPH VIEW -->
-      <div *ngIf="viewMode() === 'visual'" class="canvas-container">
-        <div class="nodes-flow">
-          <div *ngFor="let step of steps(); let idx = index; let last = last" class="step-wrapper">
-            <!-- Step Node Card -->
-            <div
-              class="node-card"
-              [class.selected]="selectedStep()?.id === step.id"
-              (click)="selectStep(step)"
-              tabindex="0"
-              role="button"
-              [attr.aria-label]="'Inspect step ' + step.name"
-            >
-              <div class="node-badge">Step {{ step.order }}</div>
-              <h4 class="node-name">{{ step.name }}</h4>
-              <div class="node-meta">
-                <span class="role-pill">{{ step.roleRequired }}</span>
-                <span class="sla-pill">⏱ {{ step.slaHours }}h</span>
-              </div>
-            </div>
-
-            <!-- Transition Arrow connector -->
-            <div *ngIf="!last" class="flow-connector" aria-hidden="true">
-              <svg width="40" height="24" viewBox="0 0 40 24" fill="none">
-                <path d="M0 12H34" stroke="#8EC5FF" stroke-width="2" stroke-dasharray="4 2" />
-                <path
-                  d="M28 6L36 12L28 18"
-                  stroke="#2563EB"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                />
-              </svg>
-            </div>
-          </div>
-        </div>
-
-        <!-- Step Inspector Drawer -->
-        <div *ngIf="selectedStep()" class="inspector-drawer">
-          <div class="inspector-head">
-            <h4>Step Details: {{ selectedStep()!.name }}</h4>
-            <button type="button" class="btn-close" (click)="selectedStep.set(null)">✕</button>
-          </div>
-          <div class="inspector-body">
-            <dl class="meta-dl">
-              <dt>Assigned State</dt>
-              <dd>
-                <code>{{ selectedStep()!.state }}</code>
-              </dd>
-              <dt>Required Authority</dt>
-              <dd>{{ selectedStep()!.roleRequired }}</dd>
-              <dt>SLA Budget</dt>
-              <dd>{{ selectedStep()!.slaHours }} business hours</dd>
-              <dt>Valid Transitions</dt>
-              <dd>
-                <span *ngFor="let t of selectedStep()!.transitionsTo" class="next-chip">
-                  → {{ t }}
-                </span>
-              </dd>
-            </dl>
-            <p class="step-desc">{{ selectedStep()!.description }}</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- TABLE VIEW -->
-      <div *ngIf="viewMode() === 'table'" class="table-view">
-        <table class="designer-table">
-          <thead>
-            <tr>
-              <th scope="col">Step #</th>
-              <th scope="col">Step Name</th>
-              <th scope="col">Target State</th>
-              <th scope="col">Role Required</th>
-              <th scope="col">SLA Budget</th>
-              <th scope="col">Permitted Transitions</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let s of steps()">
-              <td>
-                <strong>{{ s.order }}</strong>
-              </td>
-              <td>{{ s.name }}</td>
-              <td>
-                <code>{{ s.state }}</code>
-              </td>
-              <td>
-                <span class="role-pill">{{ s.roleRequired }}</span>
-              </td>
-              <td>{{ s.slaHours }}h</td>
-              <td>
-                <span *ngFor="let t of s.transitionsTo" class="next-chip"> → {{ t }} </span>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-  `,
-  styles: [
-    `
-      .designer-wrap {
-        background: #ffffff;
-        border: 1px solid #dfe8f2;
-        border-radius: 12px;
-        overflow: hidden;
-        margin-top: 1.25rem;
-      }
-      .designer-toolbar {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 1rem 1.25rem;
-        border-bottom: 1px solid #dfe8f2;
-        background: #f8fafd;
-        flex-wrap: wrap;
-        gap: 1rem;
-      }
-      .designer-title {
-        margin: 0;
-        font-size: 1.05rem;
-        color: #071b33;
-      }
-      .designer-sub {
-        margin: 0.15rem 0 0;
-        font-size: 0.78rem;
-        color: #63758b;
-      }
-      .view-toggles {
-        display: flex;
-        gap: 0.25rem;
-        background: #eaf4ff;
-        padding: 0.2rem;
-        border-radius: 8px;
-      }
-      .toggle-btn {
-        background: none;
-        border: none;
-        padding: 0.35rem 0.75rem;
-        border-radius: 6px;
-        font-size: 0.78rem;
-        font-weight: 600;
-        color: #145da0;
-        cursor: pointer;
-        &.active {
-          background: #ffffff;
-          color: #0b2a4a;
-          box-shadow: 0 1px 3px rgba(11, 42, 74, 0.1);
-        }
-      }
-      .canvas-container {
-        padding: 2rem 1.25rem;
-        background: radial-gradient(circle, rgba(142, 197, 255, 0.15) 1px, transparent 1px);
-        background-size: 20px 20px;
-        overflow-x: auto;
-        min-height: 220px;
-        position: relative;
-      }
-      .nodes-flow {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        min-width: max-content;
-        padding-bottom: 1rem;
-      }
-      .step-wrapper {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-      }
-      .node-card {
-        background: #ffffff;
-        border: 1px solid #dfe8f2;
-        border-radius: 10px;
-        padding: 1rem 1.15rem;
-        width: 13rem;
-        box-shadow: 0 4px 12px rgba(11, 42, 74, 0.05);
-        cursor: pointer;
-        transition: all 180ms ease;
-        position: relative;
-        overflow: hidden;
-        &:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 8px 20px rgba(37, 99, 235, 0.15);
-          border-color: #2563eb;
-        }
-        &.selected {
-          border-color: #2563eb;
-          box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
-          background: #fcfdff;
-        }
-      }
-      .node-badge {
-        font-size: 0.7rem;
-        font-weight: 700;
-        color: #2563eb;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        margin-bottom: 0.25rem;
-      }
-      .node-name {
-        margin: 0 0 0.5rem;
-        font-size: 0.95rem;
-        color: #071b33;
-      }
-      .node-meta {
-        display: flex;
-        gap: 0.35rem;
-        flex-wrap: wrap;
-      }
-      .role-pill {
-        background: #eaf4ff;
-        color: #1e40af;
-        padding: 0.15rem 0.45rem;
-        border-radius: 4px;
-        font-size: 0.7rem;
-        font-weight: 600;
-      }
-      .sla-pill {
-        background: #f1f5f9;
-        color: #475569;
-        padding: 0.15rem 0.45rem;
-        border-radius: 4px;
-        font-size: 0.7rem;
-      }
-      .flow-connector {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
-      .inspector-drawer {
-        margin-top: 1.5rem;
-        background: #f8fafd;
-        border: 1px solid #dfe8f2;
-        border-radius: 8px;
-        padding: 1rem;
-        animation: card-entrance 200ms ease;
-      }
-      .inspector-head {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 0.5rem;
-        h4 {
-          margin: 0;
-          font-size: 0.95rem;
-          color: #0b2a4a;
-        }
-      }
-      .btn-close {
-        background: none;
-        border: none;
-        font-size: 1rem;
-        cursor: pointer;
-        color: #63758b;
-      }
-      .meta-dl {
-        display: grid;
-        grid-template-columns: max-content 1fr;
-        gap: 0.35rem 1rem;
-        font-size: 0.8125rem;
-        margin: 0 0 0.5rem;
-        dt {
-          font-weight: 600;
-          color: #63758b;
-        }
-        dd {
-          margin: 0;
-          color: #10243a;
-        }
-      }
-      .next-chip {
-        display: inline-block;
-        margin-right: 0.35rem;
-        background: #ecfdf5;
-        color: #047857;
-        padding: 0.15rem 0.45rem;
-        border-radius: 4px;
-        font-size: 0.75rem;
-        font-weight: 600;
-      }
-      .step-desc {
-        font-size: 0.8125rem;
-        color: #475569;
-        margin: 0.5rem 0 0;
-        border-top: 1px solid #dfe8f2;
-        padding-top: 0.5rem;
-      }
-      .table-view {
-        padding: 1rem;
-      }
-      .designer-table {
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 0.875rem;
-        th {
-          background: #f8fafd;
-          text-align: left;
-          padding: 0.65rem 0.85rem;
-          border-bottom: 1px solid #dfe8f2;
-          color: #63758b;
-          font-size: 0.75rem;
-          text-transform: uppercase;
-        }
-        td {
-          padding: 0.75rem 0.85rem;
-          border-bottom: 1px solid #f1f5f9;
-        }
-      }
-    `,
-  ],
+  imports: [CommonModule, FormsModule],
+  templateUrl: './workflow-designer.html',
+  styleUrls: ['./workflow-designer.scss'],
 })
-export class WorkflowDesigner {
-  @Input() businessType: 'TASK' | 'REQUEST' = 'TASK';
+export class WorkflowDesigner implements OnInit {
+  @ViewChild('canvasContainer') canvasContainer!: ElementRef<HTMLDivElement>;
 
-  readonly viewMode = signal<'visual' | 'table'>('visual');
-  readonly selectedStep = signal<WorkflowStepNode | null>(null);
+  @Input() workflowId = '';
+  @Input() workflowName = '';
+  @Input() businessType: 'TASK' | 'REQUEST' = 'REQUEST';
+  @Input() versionNo = 1;
+  @Input() versionStatus = 'DRAFT';
+  @Input() readonly = false;
+  @Input() departments: LookupItem[] = [];
+  @Input() roles: LookupItem[] = [];
 
-  readonly steps = signal<WorkflowStepNode[]>([
-    {
-      id: 'step-1',
-      order: 1,
-      name: 'Intake & Assignment',
-      state: 'DRAFT',
-      roleRequired: 'Manager / Author',
-      slaHours: 4,
-      description:
-        'Initial work description authoring, priority definition, and performer assignment.',
-      transitionsTo: ['ASSIGNED', 'CANCELLED'],
-    },
-    {
-      id: 'step-2',
-      order: 2,
-      name: 'Claim & Acceptance',
-      state: 'ASSIGNED',
-      roleRequired: 'Performer / Department',
-      slaHours: 8,
-      description:
-        'Designated performer acknowledges task ownership or department member claims queue item.',
-      transitionsTo: ['ACCEPTED', 'REJECTED'],
-    },
-    {
-      id: 'step-3',
-      order: 3,
-      name: 'Execution & Evidence',
-      state: 'IN_PROGRESS',
-      roleRequired: 'Accepted Performer',
-      slaHours: 36,
-      description:
-        'Performer completes work checklist deliverables and uploads evidence attachments.',
-      transitionsTo: ['SUBMITTED', 'OVERDUE'],
-    },
-    {
-      id: 'step-4',
-      order: 4,
-      name: 'Milestone Review',
-      state: 'SUBMITTED',
-      roleRequired: 'Manager / Approver',
-      slaHours: 12,
-      description:
-        'Manager reviews result deliverables against requirements and issues formal confirmation.',
-      transitionsTo: ['CONFIRMED', 'IN_PROGRESS'],
-    },
-    {
-      id: 'step-5',
-      order: 5,
-      name: 'Final Completion',
-      state: 'COMPLETED',
-      roleRequired: 'System',
-      slaHours: 0,
-      description:
-        'All milestones confirmed; append-only audit record preserved and work item archived.',
-      transitionsTo: ['ARCHIVED'],
-    },
-  ]);
+  @Input() set initialDefinition(def: Record<string, unknown> | null) {
+    if (def && typeof def === 'object') {
+      this.loadFromDefinition(def);
+    }
+  }
 
-  selectStep(step: WorkflowStepNode): void {
-    if (this.selectedStep()?.id === step.id) {
-      this.selectedStep.set(null);
+  @Output() definitionChange = new EventEmitter<string>();
+  @Output() saveDraft = new EventEmitter<void>();
+  @Output() validateWorkflow = new EventEmitter<void>();
+  @Output() publishWorkflow = new EventEmitter<void>();
+
+  // Reactive state
+  readonly nodes = signal<DesignerNode[]>([]);
+  readonly edges = signal<DesignerEdge[]>([]);
+  readonly selectedNode = signal<DesignerNode | null>(null);
+  readonly selectedEdge = signal<DesignerEdge | null>(null);
+
+  readonly zoom = signal(1.0);
+  readonly zoomPercentage = computed(() => Math.round(this.zoom() * 100));
+  readonly panX = signal(60);
+  readonly panY = signal(60);
+
+  readonly isPanning = signal(false);
+  private panStart = { x: 0, y: 0 };
+  private panStartOffset = { x: 0, y: 0 };
+
+  // Dragging existing node
+  readonly draggingNodeId = signal<string | null>(null);
+  private dragNodeOffset = { x: 0, y: 0 };
+
+  // Connecting line in progress
+  readonly connectingFrom = signal<{ nodeId: string } | null>(null);
+  readonly previewMousePos = signal<{ x: number; y: number } | null>(null);
+
+  // History stack for undo/redo
+  private undoStack: HistorySnapshot[] = [];
+  private redoStack: HistorySnapshot[] = [];
+
+  // Validation Drawer
+  readonly showValidation = signal(false);
+  readonly validationIssues = signal<ValidationIssueItem[]>([]);
+
+  ngOnInit() {
+    if (this.nodes().length === 0) {
+      this.initDefaultGraph();
+    }
+  }
+
+  private initDefaultGraph() {
+    const startNode: DesignerNode = {
+      id: 'node-start',
+      type: 'START',
+      name: this.businessType === 'REQUEST' ? 'Nộp yêu cầu' : 'Tạo nhiệm vụ',
+      x: 80,
+      y: 180,
+      trigger: this.businessType === 'REQUEST' ? 'REQUEST_SUBMITTED' : 'TASK_CREATED',
+    };
+
+    const initialDeptNode: DesignerNode = {
+      id: 'node-step-1',
+      type: 'DEPARTMENT',
+      name: 'Tiếp nhận & Xử lý ban đầu',
+      x: 320,
+      y: 160,
+      departmentId: this.departments[0]?.id || '',
+      departmentName: this.departments[0]?.name || 'Phòng ban chuyên trách',
+      slaHours: 24,
+      description: 'Tiếp nhận hồ sơ và kiểm tra thông tin ban đầu',
+    };
+
+    const endNode: DesignerNode = {
+      id: 'node-end',
+      type: 'END',
+      name: 'Hoàn tất quy trình',
+      x: 620,
+      y: 180,
+      completionState: 'COMPLETED',
+    };
+
+    const initialEdges: DesignerEdge[] = [
+      { id: 'e-1', source: 'node-start', target: 'node-step-1', label: '' },
+      { id: 'e-2', source: 'node-step-1', target: 'node-end', label: '' },
+    ];
+
+    this.nodes.set([startNode, initialDeptNode, endNode]);
+    this.edges.set(initialEdges);
+    this.recordHistory();
+    this.emitChange();
+  }
+
+  private loadFromDefinition(def: Record<string, unknown>) {
+    try {
+      const rawNodes = Array.isArray(def['nodes']) ? (def['nodes'] as DesignerNode[]) : [];
+      const rawEdges = Array.isArray(def['edges']) ? (def['edges'] as DesignerEdge[]) : [];
+
+      if (rawNodes.length > 0) {
+        this.nodes.set(rawNodes);
+        this.edges.set(rawEdges);
+        this.undoStack = [];
+        this.redoStack = [];
+        this.recordHistory();
+        return;
+      }
+    } catch {
+      // fallback to initial
+    }
+    this.initDefaultGraph();
+  }
+
+  getDefinitionJson(): string {
+    return JSON.stringify({
+      nodes: this.nodes(),
+      edges: this.edges(),
+      updatedAt: new Date().toISOString(),
+    });
+  }
+
+  private emitChange() {
+    this.definitionChange.emit(this.getDefinitionJson());
+  }
+
+  private recordHistory() {
+    this.undoStack.push({
+      nodes: JSON.parse(JSON.stringify(this.nodes())),
+      edges: JSON.parse(JSON.stringify(this.edges())),
+    });
+    if (this.undoStack.length > 30) this.undoStack.shift();
+    this.redoStack = [];
+  }
+
+  undo() {
+    if (this.readonly || this.undoStack.length <= 1) return;
+    const current = this.undoStack.pop()!;
+    this.redoStack.push(current);
+    const prev = this.undoStack[this.undoStack.length - 1];
+    this.nodes.set(JSON.parse(JSON.stringify(prev.nodes)));
+    this.edges.set(JSON.parse(JSON.stringify(prev.edges)));
+    this.selectedNode.set(null);
+    this.selectedEdge.set(null);
+    this.emitChange();
+  }
+
+  redo() {
+    if (this.readonly || this.redoStack.length === 0) return;
+    const next = this.redoStack.pop()!;
+    this.undoStack.push(next);
+    this.nodes.set(JSON.parse(JSON.stringify(next.nodes)));
+    this.edges.set(JSON.parse(JSON.stringify(next.edges)));
+    this.selectedNode.set(null);
+    this.selectedEdge.set(null);
+    this.emitChange();
+  }
+
+  // --- PALETTE DRAG & ADD ---
+  onPaletteDragStart(event: DragEvent, type: NodeType) {
+    if (this.readonly) return;
+    event.dataTransfer?.setData('application/bizflow-node-type', type);
+  }
+
+  onCanvasDragOver(event: DragEvent) {
+    if (this.readonly) return;
+    event.preventDefault();
+  }
+
+  onCanvasDrop(event: DragEvent) {
+    if (this.readonly) return;
+    event.preventDefault();
+    const type = event.dataTransfer?.getData('application/bizflow-node-type') as NodeType;
+    if (!type) return;
+
+    const rect = this.canvasContainer.nativeElement.getBoundingClientRect();
+    const clientX = event.clientX - rect.left;
+    const clientY = event.clientY - rect.top;
+
+    const canvasX = Math.round((clientX - this.panX()) / this.zoom());
+    const canvasY = Math.round((clientY - this.panY()) / this.zoom());
+
+    this.addNode(type, canvasX - 100, canvasY - 35);
+  }
+
+  addNode(type: NodeType, x?: number, y?: number) {
+    if (this.readonly) return;
+
+    const defaultNames: Record<NodeType, string> = {
+      START: 'Sự kiện bắt đầu',
+      DEPARTMENT: 'Xử lý phòng ban',
+      APPROVAL: 'Phê duyệt cấp quản lý',
+      DECISION: 'Phân loại điều kiện',
+      CONFIRMATION: 'Xác nhận kết quả',
+      END: 'Kết thúc quy trình',
+    };
+
+    const posX = x ?? Math.round((300 - this.panX()) / this.zoom());
+    const posY = y ?? Math.round((200 - this.panY()) / this.zoom());
+
+    const newNode: DesignerNode = {
+      id: `node-${Date.now().toString(36)}`,
+      type,
+      name: defaultNames[type],
+      x: posX,
+      y: posY,
+    };
+
+    if (type === 'DEPARTMENT') {
+      newNode.departmentId = this.departments[0]?.id || '';
+      newNode.departmentName = this.departments[0]?.name || 'Chọn phòng ban';
+      newNode.slaHours = 24;
+    } else if (type === 'APPROVAL') {
+      newNode.approverType = 'ROLE';
+      newNode.roleId = this.roles[0]?.id || '';
+      newNode.roleName = this.roles[0]?.name || 'Người duyệt';
+    } else if (type === 'CONFIRMATION') {
+      newNode.milestone = 'RESULT';
+    } else if (type === 'DECISION') {
+      newNode.conditions = [
+        { id: 'c1', field: 'priority', operator: '=', value: 'HIGH', label: 'Ưu tiên cao', targetNodeId: '' },
+        { id: 'c2', field: 'default', operator: 'default', value: '', label: 'Mặc định', targetNodeId: '' },
+      ];
+    }
+
+    this.nodes.update((list) => [...list, newNode]);
+    this.selectNode(newNode);
+    this.recordHistory();
+    this.emitChange();
+  }
+
+  // --- SELECTION ---
+  selectNode(node: DesignerNode | null, event?: MouseEvent) {
+    event?.stopPropagation();
+    this.selectedNode.set(node);
+    this.selectedEdge.set(null);
+  }
+
+  selectEdge(edge: DesignerEdge | null, event?: MouseEvent) {
+    event?.stopPropagation();
+    this.selectedEdge.set(edge);
+    this.selectedNode.set(null);
+  }
+
+  onCanvasClick() {
+    this.selectedNode.set(null);
+    this.selectedEdge.set(null);
+    this.cancelConnecting();
+  }
+
+  // --- NODE DRAGGING ON CANVAS ---
+  startNodeDrag(node: DesignerNode, event: MouseEvent) {
+    if (this.readonly || event.button !== 0) return;
+    event.stopPropagation();
+    this.selectNode(node);
+    this.draggingNodeId.set(node.id);
+
+    this.dragNodeOffset = {
+      x: event.clientX - node.x * this.zoom(),
+      y: event.clientY - node.y * this.zoom(),
+    };
+  }
+
+  // --- PANNING CANVAS ---
+  startPan(event: MouseEvent) {
+    // Only pan if left click on canvas or middle click
+    if (event.button === 0 || event.button === 1) {
+      this.isPanning.set(true);
+      this.panStart = { x: event.clientX, y: event.clientY };
+      this.panStartOffset = { x: this.panX(), y: this.panY() };
+    }
+  }
+
+  @HostListener('window:mousemove', ['$event'])
+  onWindowMouseMove(event: MouseEvent) {
+    if (this.isPanning()) {
+      const dx = event.clientX - this.panStart.x;
+      const dy = event.clientY - this.panStart.y;
+      this.panX.set(this.panStartOffset.x + dx);
+      this.panY.set(this.panStartOffset.y + dy);
+      return;
+    }
+
+    const draggingId = this.draggingNodeId();
+    if (draggingId) {
+      const newX = Math.round((event.clientX - this.dragNodeOffset.x) / this.zoom());
+      const newY = Math.round((event.clientY - this.dragNodeOffset.y) / this.zoom());
+
+      this.nodes.update((list) =>
+        list.map((n) => (n.id === draggingId ? { ...n, x: Math.max(10, newX), y: Math.max(10, newY) } : n))
+      );
+
+      // sync selectedNode coordinates
+      const currentSelected = this.selectedNode();
+      if (currentSelected && currentSelected.id === draggingId) {
+        this.selectedNode.set({ ...currentSelected, x: newX, y: newY });
+      }
+      return;
+    }
+
+    if (this.connectingFrom()) {
+      const rect = this.canvasContainer?.nativeElement.getBoundingClientRect();
+      if (rect) {
+        const clientX = event.clientX - rect.left;
+        const clientY = event.clientY - rect.top;
+        this.previewMousePos.set({
+          x: (clientX - this.panX()) / this.zoom(),
+          y: (clientY - this.panY()) / this.zoom(),
+        });
+      }
+    }
+  }
+
+  @HostListener('window:mouseup')
+  onWindowMouseUp() {
+    if (this.isPanning()) {
+      this.isPanning.set(false);
+    }
+    if (this.draggingNodeId()) {
+      this.draggingNodeId.set(null);
+      this.recordHistory();
+      this.emitChange();
+    }
+  }
+
+  // --- CONNECTING PORTS ---
+  startConnecting(node: DesignerNode, event: MouseEvent) {
+    if (this.readonly) return;
+    event.stopPropagation();
+    if (node.type === 'END') return; // END has no outgoing port
+
+    this.connectingFrom.set({ nodeId: node.id });
+    const rect = this.canvasContainer.nativeElement.getBoundingClientRect();
+    this.previewMousePos.set({
+      x: (event.clientX - rect.left - this.panX()) / this.zoom(),
+      y: (event.clientY - rect.top - this.panY()) / this.zoom(),
+    });
+  }
+
+  completeConnection(targetNode: DesignerNode, event: MouseEvent) {
+    if (this.readonly) return;
+    event.stopPropagation();
+    const source = this.connectingFrom();
+    if (!source) return;
+
+    if (source.nodeId === targetNode.id) {
+      this.cancelConnecting();
+      return;
+    }
+
+    if (targetNode.type === 'START') {
+      this.cancelConnecting();
+      return;
+    }
+
+    // Check duplicate
+    const exists = this.edges().some((e) => e.source === source.nodeId && e.target === targetNode.id);
+    if (!exists) {
+      const newEdge: DesignerEdge = {
+        id: `e-${Date.now().toString(36)}`,
+        source: source.nodeId,
+        target: targetNode.id,
+        label: '',
+      };
+      this.edges.update((list) => [...list, newEdge]);
+      this.recordHistory();
+      this.emitChange();
+    }
+
+    this.cancelConnecting();
+  }
+
+  cancelConnecting() {
+    this.connectingFrom.set(null);
+    this.previewMousePos.set(null);
+  }
+
+  // --- DELETION ---
+  deleteSelectedNode() {
+    if (this.readonly) return;
+    const node = this.selectedNode();
+    if (!node) return;
+
+    const connectedEdges = this.edges().filter((e) => e.source === node.id || e.target === node.id);
+    if (connectedEdges.length > 0) {
+      if (!confirm(`Xóa bước "${node.name}" sẽ đồng thời xóa ${connectedEdges.length} liên kết kết nối tới bước này. Bạn có chắc chắn?`)) {
+        return;
+      }
+    }
+
+    this.nodes.update((list) => list.filter((n) => n.id !== node.id));
+    this.edges.update((list) => list.filter((e) => e.source !== node.id && e.target !== node.id));
+    this.selectedNode.set(null);
+    this.recordHistory();
+    this.emitChange();
+  }
+
+  deleteSelectedEdge() {
+    if (this.readonly) return;
+    const edge = this.selectedEdge();
+    if (!edge) return;
+
+    this.edges.update((list) => list.filter((e) => e.id !== edge.id));
+    this.selectedEdge.set(null);
+    this.recordHistory();
+    this.emitChange();
+  }
+
+  // --- AUTO LAYOUT (TỰ ĐỘNG SẮP XẾP) ---
+  autoLayout() {
+    if (this.readonly) return;
+    const allNodes = [...this.nodes()];
+    const allEdges = [...this.edges()];
+    if (allNodes.length === 0) return;
+
+    const startNode = allNodes.find((n) => n.type === 'START') || allNodes[0];
+
+    // Compute topological layers using BFS
+    const layers = new Map<string, number>();
+    layers.set(startNode.id, 0);
+
+    const queue: string[] = [startNode.id];
+    while (queue.length > 0) {
+      const curr = queue.shift()!;
+      const currLayer = layers.get(curr)!;
+      const outgoing = allEdges.filter((e) => e.source === curr).map((e) => e.target);
+      for (const next of outgoing) {
+        if (!layers.has(next) || layers.get(next)! < currLayer + 1) {
+          layers.set(next, currLayer + 1);
+          queue.push(next);
+        }
+      }
+    }
+
+    // Assign any unvisited nodes to max layer
+    let maxLayer = 0;
+    layers.forEach((l) => (maxLayer = Math.max(maxLayer, l)));
+    allNodes.forEach((n) => {
+      if (!layers.has(n.id)) {
+        layers.set(n.id, ++maxLayer);
+      }
+    });
+
+    // Group nodes by layer
+    const layerBuckets = new Map<number, DesignerNode[]>();
+    allNodes.forEach((n) => {
+      const l = layers.get(n.id) || 0;
+      if (!layerBuckets.has(l)) layerBuckets.set(l, []);
+      layerBuckets.get(l)!.push(n);
+    });
+
+    const newNodes = allNodes.map((n) => {
+      const l = layers.get(n.id) || 0;
+      const bucket = layerBuckets.get(l) || [n];
+      const indexInBucket = bucket.findIndex((item) => item.id === n.id);
+
+      const x = 80 + l * 290;
+      const y = 140 + indexInBucket * 160;
+
+      return { ...n, x, y };
+    });
+
+    this.nodes.set(newNodes);
+    this.fitView();
+    this.recordHistory();
+    this.emitChange();
+  }
+
+  // --- ZOOM & FIT CONTROLS ---
+  zoomIn() {
+    this.zoom.update((z) => Math.min(2.0, Math.round((z + 0.1) * 10) / 10));
+  }
+
+  zoomOut() {
+    this.zoom.update((z) => Math.max(0.5, Math.round((z - 0.1) * 10) / 10));
+  }
+
+  resetZoom() {
+    this.zoom.set(1.0);
+    this.panX.set(60);
+    this.panY.set(60);
+  }
+
+  fitView() {
+    const list = this.nodes();
+    if (list.length === 0) return;
+
+    let minX = Infinity,
+      minY = Infinity,
+      maxX = -Infinity,
+      maxY = -Infinity;
+    list.forEach((n) => {
+      minX = Math.min(minX, n.x);
+      minY = Math.min(minY, n.y);
+      maxX = Math.max(maxX, n.x + 230);
+      maxY = Math.max(maxY, n.y + 120);
+    });
+
+    const rect = this.canvasContainer?.nativeElement.getBoundingClientRect();
+    if (!rect) return;
+
+    const width = maxX - minX + 160;
+    const height = maxY - minY + 160;
+
+    const scaleX = rect.width / width;
+    const scaleY = rect.height / height;
+    const newZoom = Math.min(1.2, Math.max(0.6, Math.min(scaleX, scaleY)));
+
+    this.zoom.set(newZoom);
+    this.panX.set(Math.round((rect.width - (maxX + minX) * newZoom) / 2));
+    this.panY.set(Math.round((rect.height - (maxY + minY) * newZoom) / 2));
+  }
+
+  // --- CURVE SVG PATH COMPUTATION ---
+  getNodePortPos(nodeId: string, portType: 'in' | 'out'): { x: number; y: number } {
+    const node = this.nodes().find((n) => n.id === nodeId);
+    if (!node) return { x: 0, y: 0 };
+
+    const nodeWidth = node.type === 'START' || node.type === 'END' ? 170 : 230;
+    const nodeHeight = 85;
+
+    if (portType === 'in') {
+      return { x: node.x, y: node.y + nodeHeight / 2 };
     } else {
-      this.selectedStep.set(step);
+      return { x: node.x + nodeWidth, y: node.y + nodeHeight / 2 };
+    }
+  }
+
+  getEdgePath(edge: DesignerEdge): string {
+    const start = this.getNodePortPos(edge.source, 'out');
+    const end = this.getNodePortPos(edge.target, 'in');
+
+    const dx = Math.max(40, Math.abs(end.x - start.x) * 0.5);
+    return `M ${start.x} ${start.y} C ${start.x + dx} ${start.y}, ${end.x - dx} ${end.y}, ${end.x} ${end.y}`;
+  }
+
+  getEdgeMidpoint(edge: DesignerEdge): { x: number; y: number } {
+    const start = this.getNodePortPos(edge.source, 'out');
+    const end = this.getNodePortPos(edge.target, 'in');
+    return {
+      x: (start.x + end.x) / 2,
+      y: (start.y + end.y) / 2,
+    };
+  }
+
+  getPreviewEdgePath(): string {
+    const source = this.connectingFrom();
+    const mouse = this.previewMousePos();
+    if (!source || !mouse) return '';
+
+    const start = this.getNodePortPos(source.nodeId, 'out');
+    const dx = Math.max(40, Math.abs(mouse.x - start.x) * 0.5);
+    return `M ${start.x} ${start.y} C ${start.x + dx} ${start.y}, ${mouse.x - dx} ${mouse.y}, ${mouse.x} ${mouse.y}`;
+  }
+
+  // --- INSPECTOR PROPERTY UPDATES ---
+  onDepartmentSelect(deptId: string) {
+    const node = this.selectedNode();
+    if (!node) return;
+    const found = this.departments.find((d) => d.id === deptId);
+    this.updateSelectedNodeProps({
+      departmentId: deptId,
+      departmentName: found?.name || '',
+    });
+  }
+
+  onRoleSelect(roleId: string) {
+    const node = this.selectedNode();
+    if (!node) return;
+    const found = this.roles.find((r) => r.id === roleId);
+    this.updateSelectedNodeProps({
+      roleId: roleId,
+      roleName: found?.name || '',
+    });
+  }
+
+  updateSelectedNodeProps(partial: Partial<DesignerNode>) {
+    const current = this.selectedNode();
+    if (!current) return;
+
+    const updated: DesignerNode = { ...current, ...partial };
+    this.selectedNode.set(updated);
+    this.nodes.update((list) => list.map((n) => (n.id === updated.id ? updated : n)));
+    this.emitChange();
+  }
+
+  updateSelectedEdgeLabel(label: string) {
+    const current = this.selectedEdge();
+    if (!current) return;
+
+    const updated: DesignerEdge = { ...current, label };
+    this.selectedEdge.set(updated);
+    this.edges.update((list) => list.map((e) => (e.id === updated.id ? updated : e)));
+    this.emitChange();
+  }
+
+  // --- VALIDATION INTEGRATION ---
+  setValidationResult(issues: { type: 'error' | 'warning'; message: string; nodeId?: string }[]) {
+    const currentNodes = this.nodes();
+    const parsed: ValidationIssueItem[] = issues.map((raw, idx) => {
+      const msg = raw.message || '';
+      let title = 'Lỗi cấu hình quy trình';
+      let cause = msg;
+      let suggestion = 'Vui lòng kiểm tra lại cấu hình bước và đường liên kết trên sơ đồ.';
+      let matchedNodeId = raw.nodeId;
+      let nodeName: string | undefined;
+
+      // Extract node name in quotes if present: Bước '...'
+      const matchQuote = msg.match(/['"“](.*?)['"”]/);
+      if (matchQuote && matchQuote[1]) {
+        const found = currentNodes.find(
+          (n) => n.name.toLowerCase() === matchQuote[1].toLowerCase() || n.id === matchQuote[1]
+        );
+        if (found) {
+          matchedNodeId = found.id;
+          nodeName = found.name;
+        }
+      }
+
+      const lower = msg.toLowerCase();
+      if (lower.includes('bắt đầu') || lower.includes('start')) {
+        title = 'Thiếu sự kiện Bắt đầu (START)';
+        cause = 'Quy trình chưa xác định điểm kích hoạt đầu tiên để tiếp nhận xử lý.';
+        suggestion = 'Kéo thả nút "Bắt đầu" (màu xanh lá) từ bảng công cụ bên trái vào vùng vẽ và nối tới bước xử lý đầu tiên.';
+      } else if (lower.includes('kết thúc') || lower.includes('end')) {
+        title = 'Thiếu sự kiện Kết thúc (END)';
+        cause = 'Quy trình chưa có điểm dừng cuối cùng để hoàn tất hoặc đóng luồng công việc.';
+        suggestion = 'Kéo thả ít nhất 1 nút "Kết thúc" (màu đỏ) từ bảng công cụ bên trái vào vùng vẽ và nối từ bước cuối cùng đến nút này.';
+      } else if (lower.includes('phòng ban') || lower.includes('department')) {
+        title = `Chưa gán phòng ban xử lý${nodeName ? ': ' + nodeName : ''}`;
+        cause = `Bước xử lý "${nodeName || 'này'}" chưa được chọn phòng ban chịu trách nhiệm thực thi.`;
+        suggestion = 'Bấm vào bước này trên sơ đồ, sau đó mở bảng Thuộc tính bên phải và chọn một Phòng ban hợp lệ trong doanh nghiệp.';
+      } else if (lower.includes('không thể tiếp cận') || lower.includes('kết nối từ sự kiện bắt đầu') || lower.includes('unreachable')) {
+        title = `Bước bị cô lập${nodeName ? ': ' + nodeName : ''}`;
+        cause = `Không có đường liên kết nào từ sự kiện Bắt đầu dẫn tới bước "${nodeName || 'này'}".`;
+        suggestion = 'Kéo một đường nối từ cổng ra của bước liền trước (hoặc từ điểm Bắt đầu) đến cổng vào của bước này.';
+      } else if (lower.includes('đường dẫn đến sự kiện kết thúc') || lower.includes('dead end') || lower.includes('không có lối ra')) {
+        title = `Đường cụt - Không thể hoàn tất${nodeName ? ': ' + nodeName : ''}`;
+        cause = `Luồng công việc đi vào bước "${nodeName || 'này'}" nhưng không có lối thoát để đi tiếp đến điểm Kết thúc.`;
+        suggestion = 'Kéo một đường nối từ cổng ra của bước này đến bước kế tiếp hoặc trực tiếp đến điểm Kết thúc.';
+      } else if (lower.includes('chu trình') || lower.includes('vòng lặp') || lower.includes('cycle')) {
+        title = 'Phát hiện vòng lặp vô tận (Cycle)';
+        cause = 'Các bước nối vòng quay lại nhau mà không có nhánh rẽ để thoát ra sự kiện Kết thúc.';
+        suggestion = 'Thêm một Cổng rẽ nhánh điều kiện hoặc điều chỉnh lại các đường nối để đảm bảo có nhánh dẫn đến sự kiện Kết thúc.';
+      } else if (lower.includes('cổng rẽ nhánh') || lower.includes('gateway') || lower.includes('nhánh rẽ')) {
+        title = 'Cổng điều kiện chưa đủ nhánh rẽ';
+        cause = 'Cổng rẽ nhánh yêu cầu ít nhất 2 đường rẽ để phân luồng xử lý theo điều kiện.';
+        suggestion = 'Kéo thêm đường nối từ cổng này tới các bước xử lý tương ứng và đặt nhãn/điều kiện cho từng nhánh.';
+      }
+
+      return {
+        id: `issue_${idx}_${Date.now()}`,
+        type: raw.type,
+        title,
+        cause,
+        suggestion,
+        nodeId: matchedNodeId,
+        nodeName: nodeName || (matchedNodeId ? currentNodes.find((n) => n.id === matchedNodeId)?.name : undefined),
+      };
+    });
+
+    this.validationIssues.set(parsed);
+    this.showValidation.set(true);
+  }
+
+  focusIssueNode(nodeId?: string) {
+    if (!nodeId) return;
+    const target = this.nodes().find((n) => n.id === nodeId);
+    if (target) {
+      this.selectNode(target);
+      // center canvas smoothly on this node
+      const rect = this.canvasContainer?.nativeElement.getBoundingClientRect();
+      if (rect) {
+        this.panX.set(Math.round(rect.width / 2 - target.x * this.zoom()));
+        this.panY.set(Math.round(rect.height / 2 - target.y * this.zoom()));
+      }
     }
   }
 }

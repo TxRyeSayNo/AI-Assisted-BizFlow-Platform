@@ -538,6 +538,58 @@ public sealed class AuditLog
         CreatedAt = now.ToUniversalTime()
     };
 
+    public static AuditLog WorkflowDraftSaved(Guid tenantId, Guid actorId, Guid workflowId,
+        Guid versionId, int versionNo, DateTimeOffset now) => new()
+    {
+        Id = Guid.CreateVersion7(), TenantId = EntityRules.Id(tenantId, nameof(tenantId)),
+        ActorType = AuditActorType.User, ActorId = EntityRules.Id(actorId, nameof(actorId)),
+        ObjectType = "WorkflowVersion", ObjectId = EntityRules.Id(versionId, nameof(versionId)),
+        Action = "WORKFLOW.DRAFT_SAVED",
+        AfterJson = JsonSerializer.Serialize(new { workflowId, versionId, versionNo, status = "DRAFT" }),
+        CreatedAt = now.ToUniversalTime()
+    };
+
+    public static AuditLog WorkflowVersionPublished(Guid tenantId, Guid actorId, Guid workflowId,
+        Guid versionId, int versionNo, Guid? serviceId, DateTimeOffset now) => new()
+    {
+        Id = Guid.CreateVersion7(), TenantId = EntityRules.Id(tenantId, nameof(tenantId)),
+        ActorType = AuditActorType.User, ActorId = EntityRules.Id(actorId, nameof(actorId)),
+        ObjectType = "WorkflowVersion", ObjectId = EntityRules.Id(versionId, nameof(versionId)),
+        Action = "WORKFLOW.VERSION_PUBLISHED",
+        AfterJson = JsonSerializer.Serialize(new { workflowId, versionId, versionNo, serviceId, status = "PUBLISHED" }),
+        CreatedAt = now.ToUniversalTime()
+    };
+
+    public static AuditLog WorkflowDraftDeleted(Guid tenantId, Guid actorId, Guid workflowId, string name, DateTimeOffset now) => new()
+    {
+        Id = Guid.CreateVersion7(), TenantId = EntityRules.Id(tenantId, nameof(tenantId)),
+        ActorType = AuditActorType.User, ActorId = EntityRules.Id(actorId, nameof(actorId)),
+        ObjectType = "Workflow", ObjectId = EntityRules.Id(workflowId, nameof(workflowId)),
+        Action = "WORKFLOW.DRAFT_DELETED",
+        AfterJson = JsonSerializer.Serialize(new { name, status = "DELETED" }),
+        CreatedAt = now.ToUniversalTime()
+    };
+
+    public static AuditLog WorkflowNameUpdated(Guid tenantId, Guid actorId, Guid workflowId, string name, DateTimeOffset now) => new()
+    {
+        Id = Guid.CreateVersion7(), TenantId = EntityRules.Id(tenantId, nameof(tenantId)),
+        ActorType = AuditActorType.User, ActorId = EntityRules.Id(actorId, nameof(actorId)),
+        ObjectType = "Workflow", ObjectId = EntityRules.Id(workflowId, nameof(workflowId)),
+        Action = "WORKFLOW.NAME_UPDATED",
+        AfterJson = JsonSerializer.Serialize(new { name }),
+        CreatedAt = now.ToUniversalTime()
+    };
+
+    public static AuditLog WorkflowStatusUpdated(Guid tenantId, Guid actorId, Guid workflowId, string status, DateTimeOffset now) => new()
+    {
+        Id = Guid.CreateVersion7(), TenantId = EntityRules.Id(tenantId, nameof(tenantId)),
+        ActorType = AuditActorType.User, ActorId = EntityRules.Id(actorId, nameof(actorId)),
+        ObjectType = "Workflow", ObjectId = EntityRules.Id(workflowId, nameof(workflowId)),
+        Action = "WORKFLOW.STATUS_UPDATED",
+        AfterJson = JsonSerializer.Serialize(new { status }),
+        CreatedAt = now.ToUniversalTime()
+    };
+
     public static AuditLog NotificationRead(Guid tenantId, Guid recipientId, Guid notificationId, DateTimeOffset readAt) => new()
     {
         Id = Guid.CreateVersion7(), TenantId = EntityRules.Id(tenantId, nameof(tenantId)),

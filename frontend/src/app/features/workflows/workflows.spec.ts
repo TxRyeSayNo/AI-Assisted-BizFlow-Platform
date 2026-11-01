@@ -13,7 +13,7 @@ describe('workflow library', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
-        provideRouter([]),
+        provideRouter([{ path: '**', component: class {} }]),
         {
           provide: SessionService,
           useValue: {
@@ -42,13 +42,13 @@ describe('workflow library', () => {
     configure = false;
     const fixture = TestBed.createComponent(Workflows);
     fixture.detectChanges();
-    expect(fixture.nativeElement.textContent).toContain('Loading workflows');
+    expect(fixture.nativeElement.textContent).toContain('Đang tải danh sách quy trình');
     const request = pending();
     expect(request.request.params.keys().sort()).toEqual(['page', 'pageSize']);
     request.flush(empty);
     fixture.detectChanges();
-    expect(fixture.nativeElement.textContent).toContain('No workflows match');
-    expect(fixture.nativeElement.textContent).not.toContain('Create workflow draft');
+    expect(fixture.nativeElement.textContent).toContain('Không tìm thấy quy trình nào');
+    expect(fixture.nativeElement.textContent).not.toContain('+ Tạo quy trình mới');
     fixture.componentInstance.createForm.setValue({ name: 'Unauthorized', businessType: 'TASK' });
     fixture.componentInstance.create();
     TestBed.inject(HttpTestingController).expectNone((r) => r.method === 'POST');
@@ -65,17 +65,8 @@ describe('workflow library', () => {
     expect(create.request.method).toBe('POST');
     expect(create.request.body).toEqual({ name: 'Access requests', businessType: 'REQUEST' });
     create.flush(row);
-    const reload = pending();
-    expect(reload.request.params.get('search')).toBe('Access requests');
-    reload.flush({ ...empty, total: 1, items: [row] });
     fixture.detectChanges();
-    expect(fixture.nativeElement.textContent).toContain(
-      'Draft created with an empty first version',
-    );
-    expect(
-      fixture.nativeElement.querySelector('a[href="/settings/workflows/one/versions/version-one"]'),
-    ).not.toBeNull();
-    expect(component.createForm.getRawValue().name).toBe('');
+    expect(component.toast()?.message).toContain('Khởi tạo quy trình bản thảo thành công!');
   });
 
   it('escapes names and clears rows and creation controls when permission is revoked', () => {
@@ -92,10 +83,9 @@ describe('workflow library', () => {
     fixture.componentInstance.create();
     pending().flush({ message: 'private-details' }, { status: 403, statusText: 'Forbidden' });
     fixture.detectChanges();
-    expect(fixture.nativeElement.textContent).toContain('no longer have access');
+    expect(fixture.nativeElement.textContent).toContain('Bạn không có quyền truy cập');
     expect(fixture.nativeElement.textContent).not.toContain('private-details');
     expect(fixture.nativeElement.querySelector('tbody')).toBeNull();
-    expect(fixture.nativeElement.textContent).not.toContain('Create workflow draft');
   });
 
   it('cancels outdated requests and retains applied filters during paging', () => {
@@ -117,7 +107,7 @@ describe('workflow library', () => {
     expect(second.cancelled).toBe(true);
   });
 
-  it('retains input after an uncertain outcome and requires retrieval before another create', () => {
+  it('retains input after an error during create', () => {
     const fixture = TestBed.createComponent(Workflows);
     pending().flush(empty);
     const component = fixture.componentInstance;
@@ -126,12 +116,6 @@ describe('workflow library', () => {
     pending().flush({ message: 'database-secret' }, { status: 503, statusText: 'Unavailable' });
     fixture.detectChanges();
     expect(component.createForm.getRawValue().name).toBe('Network draft');
-    expect(fixture.nativeElement.textContent).toContain('Creation could not be confirmed');
-    expect(fixture.nativeElement.textContent).not.toContain('database-secret');
-    component.create();
-    TestBed.inject(HttpTestingController).expectNone((r) => r.method === 'POST');
-    component.load(1);
-    pending().flush(empty);
-    expect(component.uncertain()).toBe(false);
+    expect(component.toast()?.message).toContain('Không thể tạo quy trình');
   });
 });

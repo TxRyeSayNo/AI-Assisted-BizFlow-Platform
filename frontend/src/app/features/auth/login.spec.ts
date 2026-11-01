@@ -87,7 +87,7 @@ describe('Login', () => {
       .expectOne('/api/v1/auth/login')
       .flush({ code: 'AUTH.TENANT_CONTEXT_REQUIRED' }, { status: 409, statusText: 'Conflict' });
 
-    expect(component.error()).toContain('workspace key');
+    expect(component.error()).toContain('không gian làm việc');
   });
 
   it('does not render arbitrary backend error messages', () => {
@@ -97,7 +97,7 @@ describe('Login', () => {
     TestBed.inject(HttpTestingController)
       .expectOne('/api/v1/auth/login')
       .flush({ message: 'sensitive-internal-error' }, { status: 500, statusText: 'Error' });
-    expect(component.error()).toContain('temporarily unavailable');
+    expect(component.error()).toContain('tạm thời gián đoạn');
     expect(component.error()).not.toContain('sensitive-internal-error');
   });
 
@@ -127,7 +127,7 @@ describe('Login', () => {
     const component = TestBed.createComponent(Login).componentInstance;
     component.submit();
     expect(component.toast()).not.toBeNull();
-    expect(component.toast()?.title).toBe('Missing employee code');
+    expect(component.toast()?.title).toBe('Thiếu mã nhân viên');
   });
 
   it('triggers top-right toast alert on 401 unauthorized', () => {
@@ -141,7 +141,7 @@ describe('Login', () => {
     const req = TestBed.inject(HttpTestingController).expectOne('/api/v1/auth/login');
     req.flush({}, { status: 401, statusText: 'Unauthorized' });
     expect(component.toast()).not.toBeNull();
-    expect(component.toast()?.title).toBe('Sign-in failed');
+    expect(component.toast()?.title).toBe('Đăng nhập thất bại');
   });
 
   it('triggers top-right toast alert on missing or invalid workspace key', () => {
@@ -150,11 +150,11 @@ describe('Login', () => {
     component.form.controls.password.setValue('password');
     component.form.controls.tenantKey.setValue('');
     component.submit();
-    expect(component.toast()?.title).toBe('Missing workspace key');
+    expect(component.toast()?.title).toBe('Thiếu mã không gian làm việc');
 
     component.form.controls.tenantKey.setValue('INVALID KEY!');
     component.submit();
-    expect(component.toast()?.title).toBe('Invalid workspace key');
+    expect(component.toast()?.title).toBe('Mã không gian làm việc không hợp lệ');
   });
 
   it('submits email-link request and displays confirmation message', () => {
