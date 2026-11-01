@@ -3,6 +3,7 @@ import { Router, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { SessionService } from '../../core/auth/session';
 import { AiAgentService } from '../../core/ai/ai-agent.service';
+import { I18nService } from '../../core/i18n/i18n.service';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
 
 @Component({
@@ -80,16 +81,6 @@ import { TranslatePipe } from '../../core/i18n/translate.pipe';
 
       <!-- Right Utility Bar -->
       <div class="nav-utilities">
-        <button
-          type="button"
-          class="ai-trigger-btn"
-          (click)="openAiAgent()"
-          title="Open AI Assistant"
-        >
-          <span class="sparkle">✦</span>
-          <span>{{ 'nav.aiAssistant' | translate: 'AI Assistant' }}</span>
-        </button>
-
         <a routerLink="/notifications" class="notify-btn" title="Notifications">
           🔔
           <span class="unread-dot"></span>
@@ -117,15 +108,10 @@ import { TranslatePipe } from '../../core/i18n/translate.pipe';
         <div class="hero-bg-mesh" aria-hidden="true"></div>
         <div class="hero-content">
           <div class="hero-badges">
-            <span class="eyebrow">{{ 'workspace.title' | translate: 'Your workspace' }}</span>
             <span class="role-chip">{{ currentRoleLabel() }}</span>
           </div>
 
-          <h1>{{ 'common.welcome' | translate: 'Welcome' }}, {{ identity()?.fullName }}</h1>
-          <p class="hero-subtext">
-            {{ 'workspace.signedInAs' | translate: 'You are signed in to' }}
-            {{ identity()?.tenantName ?? 'the platform console' }}.
-          </p>
+          <h1>{{ 'common.welcome' | translate: 'Xin chào' }} {{ welcomeName() }}</h1>
 
           <!-- Quick Action Buttons -->
           <div class="hero-actions">
@@ -139,9 +125,6 @@ import { TranslatePipe } from '../../core/i18n/translate.pipe';
                 'workspace.newRequest' | translate: '+ New Request'
               }}</a>
             }
-            <button type="button" class="btn-hero-ai" (click)="openAiAgent()">
-              {{ 'workspace.aiCopilot' | translate: '✦ Ask AI Assistant' }}
-            </button>
             <a routerLink="/approvals" class="btn-hero-ghost">
               {{ 'approvals.title' | translate: 'Review Approvals' }} →
             </a>
@@ -210,247 +193,261 @@ import { TranslatePipe } from '../../core/i18n/translate.pipe';
         </div>
       </section>
 
-      <!-- Organized Workspace Modules Grid (Preserves all exact links & texts for tests) -->
+      <!-- Organized Workspace Modules Grid with Clear Role Separation (Requirement 1 & User Request) -->
       <section class="modules-section">
         <h2 class="section-title">
-          {{ 'workspace.sectionExecution' | translate: 'Operational Workspace Modules' }}
+          {{ 'workspace.sectionExecution' | translate: 'Phân hệ Chức năng Doanh nghiệp' }}
         </h2>
         <div class="modules-grid">
-          <!-- Work & Tasks -->
+          <!-- 1. Quản lý Nhiệm vụ -->
+          @if (
+            session.hasPermission('tasks.read.tenant') ||
+            session.hasPermission('tasks.read.managed') ||
+            session.hasPermission('tasks.read.own') ||
+            session.hasPermission('tasks.read.assigned') ||
+            !identity()?.tenantId
+          ) {
+            <article class="module-card">
+              <div class="module-icon">📋</div>
+              <h3>{{ 'workspace.cardTasksTitle' | translate: 'Quản lý Nhiệm vụ' }}</h3>
+              <p>
+                {{
+                  'workspace.cardTasksDesc'
+                    | translate
+                      : 'Khởi tạo, phân công, theo dõi danh mục kiểm tra, nộp bằng chứng và phê duyệt kết quả công việc.'
+                }}
+              </p>
+              <div class="module-link-wrap">
+                <p>
+                  <a routerLink="/tasks">{{ 'workspace.viewTasks' | translate: 'Xem danh sách công việc' }}</a>
+                </p>
+              </div>
+            </article>
+          }
+
+          <!-- 2. Yêu cầu Dịch vụ -->
+          @if (
+            session.hasPermission('requests.read.tenant') ||
+            session.hasPermission('requests.read.managed') ||
+            session.hasPermission('requests.read.own') ||
+            !identity()?.tenantId
+          ) {
+            <article class="module-card">
+              <div class="module-icon">📨</div>
+              <h3>{{ 'workspace.cardRequestsTitle' | translate: 'Yêu cầu Dịch vụ' }}</h3>
+              <p>
+                {{
+                  'workspace.cardRequestsDesc'
+                    | translate
+                      : 'Gửi yêu cầu dịch vụ nội bộ, điều phối về phòng ban chuyên trách và xác nhận kết quả xử lý.'
+                }}
+              </p>
+              <div class="module-link-wrap">
+                <p>
+                  <a routerLink="/requests">{{
+                    'workspace.viewRequests' | translate: 'Xem danh sách yêu cầu'
+                  }}</a>
+                </p>
+              </div>
+            </article>
+          }
+
+          <!-- 3. Danh mục Dịch vụ -->
           @if (identity()?.tenantId) {
-            @if (
-              session.hasPermission('tasks.read.tenant') ||
-              session.hasPermission('tasks.read.managed') ||
-              session.hasPermission('tasks.read.own') ||
-              session.hasPermission('tasks.read.assigned')
-            ) {
-              <article class="module-card">
-                <div class="module-icon">📋</div>
-                <h3>{{ 'workspace.cardTasksTitle' | translate: 'Task Management' }}</h3>
-                <p>
-                  {{
-                    'workspace.cardTasksDesc'
-                      | translate
-                        : 'Track work, current responsibility, and deadlines across your access scope.'
-                  }}
-                </p>
-                <div class="module-link-wrap">
-                  <p>
-                    <a routerLink="/tasks">{{ 'workspace.viewTasks' | translate: 'View tasks' }}</a>
-                  </p>
-                </div>
-              </article>
-            }
-
-            @if (
-              session.hasPermission('requests.read.tenant') ||
-              session.hasPermission('requests.read.managed') ||
-              session.hasPermission('requests.read.own')
-            ) {
-              <article class="module-card">
-                <div class="module-icon">📨</div>
-                <h3>{{ 'workspace.cardRequestsTitle' | translate: 'Service Requests' }}</h3>
-                <p>
-                  {{
-                    'workspace.cardRequestsDesc'
-                      | translate
-                        : 'Submit and coordinate multi-category internal service requests with SLA clocks.'
-                  }}
-                </p>
-                <div class="module-link-wrap">
-                  <p>
-                    <a routerLink="/requests">{{
-                      'workspace.viewRequests' | translate: 'View requests'
-                    }}</a>
-                  </p>
-                </div>
-              </article>
-            }
-
-            @if (session.hasPermission('records.search')) {
-              <article class="module-card">
-                <div class="module-icon">🔍</div>
-                <h3>{{ 'workspace.cardSearchTitle' | translate: 'Audit-Grade Search' }}</h3>
-                <p>
-                  {{
-                    'workspace.cardSearchDesc'
-                      | translate
-                        : 'Full-text search across scoped tasks, requests, comments, and attachments.'
-                  }}
-                </p>
-                <div class="module-link-wrap">
-                  <p>
-                    <a routerLink="/records/search">{{
-                      'workspace.searchRecords' | translate: 'Search records'
-                    }}</a>
-                  </p>
-                </div>
-              </article>
-            }
-
-            @if (
-              session.hasPermission('reports.manager') ||
-              session.hasPermission('reports.company') ||
-              session.hasPermission('reports.workload') ||
-              session.hasPermission('reports.sla')
-            ) {
-              <article class="module-card">
-                <div class="module-icon">📊</div>
-                <h3>{{ 'workspace.cardReportsTitle' | translate: 'Intelligence & Analytics' }}</h3>
-                <p>
-                  {{
-                    'workspace.cardReportsDesc'
-                      | translate
-                        : 'Executive dashboards, workload allocation, and SLA performance charts.'
-                  }}
-                </p>
-                <div class="module-link-wrap">
-                  <p>
-                    <a routerLink="/reports">{{
-                      'workspace.dashboardReports' | translate: 'Dashboard & Reports'
-                    }}</a>
-                  </p>
-                </div>
-              </article>
-            }
-
             <article class="module-card">
               <div class="module-icon">⚙</div>
-              <h3>{{ 'workspace.cardServicesTitle' | translate: 'Service Catalog' }}</h3>
+              <h3>{{ 'workspace.cardServicesTitle' | translate: 'Danh mục Dịch vụ' }}</h3>
               <p>
                 {{
                   'workspace.cardServicesDesc'
                     | translate
-                      : 'Explore authorized company services, required forms, and routing definitions.'
+                      : 'Quản lý các dịch vụ nội bộ, phân loại yêu cầu và quy tắc định tuyến SLA.'
                 }}
               </p>
               <div class="module-link-wrap">
                 <p>
                   <a routerLink="/settings/services">{{
-                    'workspace.browseServices' | translate: 'Browse service catalog'
+                    'workspace.browseServices' | translate: 'Xem danh mục dịch vụ nội bộ'
                   }}</a>
                 </p>
               </div>
             </article>
+          }
 
+          <!-- 4. Phòng ban & Bộ phận -->
+          @if (identity()?.tenantId) {
             <article class="module-card">
               <div class="module-icon">🏢</div>
-              <h3>{{ 'workspace.cardDeptsTitle' | translate: 'Department Directory' }}</h3>
+              <h3>{{ 'workspace.cardDeptsTitle' | translate: 'Phòng ban & Bộ phận' }}</h3>
               <p>
                 {{
                   'workspace.cardDeptsDesc'
                     | translate
-                      : 'Explore organizational hierarchy and queue boundaries across the company.'
+                      : 'Cơ cấu tổ chức, mã phòng ban, trưởng bộ phận và hàng đợi công việc.'
                 }}
               </p>
               <div class="module-link-wrap">
-                <a routerLink="/settings/organization/departments">{{
-                  'workspace.browseDepartments' | translate: 'Browse department directory'
-                }}</a>
+                <p>
+                  <a routerLink="/settings/organization/departments">{{
+                    'workspace.browseDepartments' | translate: 'Xem cơ cấu tổ chức & phòng ban'
+                  }}</a>
+                </p>
               </div>
             </article>
-
-            @if (session.hasPermission('users.read')) {
-              <article class="module-card">
-                <div class="module-icon">👥</div>
-                <h3>{{ 'workspace.cardUsersTitle' | translate: 'People Directory' }}</h3>
-                <p>
-                  {{
-                    'workspace.cardUsersDesc'
-                      | translate
-                        : 'Browse team members, employee codes, roles, and department assignments.'
-                  }}
-                </p>
-                <div class="module-link-wrap">
-                  <p>
-                    <a routerLink="/settings/organization/users">{{
-                      'workspace.browseUsers' | translate: 'Browse people directory'
-                    }}</a>
-                  </p>
-                </div>
-              </article>
-            }
-
-            @if (
-              session.hasPermission('roles.configure') ||
-              session.hasPermission('workflows.read') ||
-              session.hasPermission('sla.read') ||
-              session.hasPermission('service.create') ||
-              session.hasPermission('service.update')
-            ) {
-              <article class="module-card">
-                <div class="module-icon">🛠</div>
-                <h3>{{ 'workspace.cardSettingsTitle' | translate: 'Company Setup' }}</h3>
-                <p>
-                  {{
-                    'workspace.cardSettingsDesc'
-                      | translate
-                        : 'Configure custom roles, workflows, SLAs, and tenant-level configurations.'
-                  }}
-                </p>
-                <div class="module-link-wrap">
-                  <p>
-                    <a routerLink="/settings">{{ 'workspace.settings' | translate: 'Settings' }}</a>
-                  </p>
-                </div>
-              </article>
-            }
-
-            @if (session.hasPermission('audit.read')) {
-              <article class="module-card">
-                <div class="module-icon">🛡</div>
-                <h3>{{ 'workspace.cardAuditTitle' | translate: 'Audit Trail' }}</h3>
-                <p>
-                  {{
-                    'workspace.cardAuditDesc'
-                      | translate
-                        : 'Immutable append-only replay of all transactions, state changes, and reviews.'
-                  }}
-                </p>
-                <div class="module-link-wrap">
-                  <p>
-                    <a routerLink="/audit">{{ 'workspace.audit' | translate: 'Audit history' }}</a>
-                  </p>
-                </div>
-              </article>
-            }
           }
 
-          <!-- Platform Administrator Modules -->
+          <!-- 5. Báo cáo & Phân tích thông minh -->
           @if (
-            identity()?.tenantId === null &&
-            session.hasPermission('platform.company-registrations.read')
+            session.hasPermission('reports.manager') ||
+            session.hasPermission('reports.company') ||
+            session.hasPermission('reports.workload') ||
+            session.hasPermission('reports.sla') ||
+            !identity()?.tenantId
           ) {
+            <article class="module-card">
+              <div class="module-icon">📊</div>
+              <h3>{{ 'workspace.cardReportsTitle' | translate: 'Báo cáo & Phân tích thông minh' }}</h3>
+              <p>
+                {{
+                  'workspace.cardReportsDesc'
+                    | translate
+                      : 'Bảng điều hành quản trị, phân bổ tải công việc và biểu đồ tuân thủ SLA theo thời gian thực.'
+                }}
+              </p>
+              <div class="module-link-wrap">
+                <p>
+                  <a routerLink="/reports">{{
+                    'workspace.dashboardReports' | translate: 'Xem Báo cáo & Chỉ số'
+                  }}</a>
+                </p>
+              </div>
+            </article>
+          }
+
+          <!-- 6. Tra cứu Hồ sơ Hợp nhất -->
+          @if (session.hasPermission('records.search') || !identity()?.tenantId) {
+            <article class="module-card">
+              <div class="module-icon">🔍</div>
+              <h3>{{ 'workspace.cardSearchTitle' | translate: 'Tra cứu Hồ sơ Hợp nhất' }}</h3>
+              <p>
+                {{
+                  'workspace.cardSearchDesc'
+                    | translate
+                      : 'Tìm kiếm toàn văn nâng cao trên toàn bộ nhiệm vụ, yêu cầu, thảo luận và tệp đính kèm.'
+                }}
+              </p>
+              <div class="module-link-wrap">
+                <p>
+                  <a routerLink="/records/search">{{
+                    'workspace.searchRecords' | translate: 'Tra cứu hồ sơ kiểm toán'
+                  }}</a>
+                </p>
+              </div>
+            </article>
+          }
+
+          <!-- 7. Danh bạ Nhân sự -->
+          @if (session.hasPermission('users.read') || !identity()?.tenantId) {
+            <article class="module-card">
+              <div class="module-icon">👥</div>
+              <h3>{{ 'workspace.cardUsersTitle' | translate: 'Danh bạ Nhân sự & Tài khoản' }}</h3>
+              <p>
+                {{
+                  'workspace.cardUsersDesc'
+                    | translate
+                      : 'Quản lý thành viên, mã nhân viên, gán vai trò quyền hạn và phân bổ phòng ban.'
+                }}
+              </p>
+              <div class="module-link-wrap">
+                <p>
+                  <a routerLink="/settings/organization/users">{{
+                    'workspace.browseUsers' | translate: 'Quản lý danh bạ nhân sự'
+                  }}</a>
+                </p>
+              </div>
+            </article>
+          }
+
+          <!-- 8. Thiết lập Doanh nghiệp & Quy trình -->
+          @if (
+            session.hasPermission('roles.configure') ||
+            session.hasPermission('workflows.read') ||
+            session.hasPermission('sla.read') ||
+            session.hasPermission('service.create') ||
+            session.hasPermission('service.update') ||
+            !identity()?.tenantId
+          ) {
+            <article class="module-card">
+              <div class="module-icon">🛠</div>
+              <h3>{{ 'workspace.cardSettingsTitle' | translate: 'Thiết lập Doanh nghiệp' }}</h3>
+              <p>
+                {{
+                  'workspace.cardSettingsDesc'
+                    | translate
+                      : 'Cấu hình vai trò tùy chỉnh, máy trạng thái quy trình, hồ sơ SLA và tham số doanh nghiệp.'
+                }}
+              </p>
+              <div class="module-link-wrap">
+                <p>
+                  <a routerLink="/settings">{{ 'workspace.settings' | translate: 'Cài đặt hệ thống' }}</a>
+                </p>
+              </div>
+            </article>
+          }
+
+          <!-- 9. Nhật ký Kiểm toán -->
+          @if (session.hasPermission('audit.read') || !identity()?.tenantId) {
+            <article class="module-card">
+              <div class="module-icon">🛡</div>
+              <h3>{{ 'workspace.cardAuditTitle' | translate: 'Nhật ký Kiểm toán' }}</h3>
+              <p>
+                {{
+                  'workspace.cardAuditDesc'
+                    | translate
+                      : 'Bản ghi bất biến ghi lại toàn bộ giao dịch, thay đổi trạng thái và quyết định phê duyệt.'
+                }}
+              </p>
+              <div class="module-link-wrap">
+                <p>
+                  <a routerLink="/audit">{{ 'workspace.audit' | translate: 'Xem nhật ký kiểm toán' }}</a>
+                </p>
+              </div>
+            </article>
+          }
+
+          <!-- 10. Quản lý Công ty Nền tảng -->
+          @if (!identity()?.tenantId && session.hasPermission('platform.company-registrations.read')) {
             <article class="module-card platform-card">
               <div class="module-icon">🌐</div>
               <h3>
-                {{ 'workspace.cardPlatformCompaniesTitle' | translate: 'Platform Companies' }}
+                {{ 'workspace.cardPlatformCompaniesTitle' | translate: 'Công ty & Thuê bao Nền tảng' }}
               </h3>
               <p>
                 {{
                   'workspace.cardPlatformCompaniesDesc'
-                    | translate: 'Review new company registrations and tenant onboarding requests.'
+                    | translate: 'Duyệt hồ sơ đăng ký doanh nghiệp mới và quản trị vòng đời các đơn vị khách thuê.'
                 }}
               </p>
               <div class="module-link-wrap">
-                <a routerLink="/platform/companies">Review company registrations</a>
+                <a routerLink="/platform/companies">Duyệt đăng ký doanh nghiệp</a>
               </div>
             </article>
           }
 
-          @if (identity()?.tenantId === null && session.hasPermission('platform.audit.read')) {
+          <!-- 11. Kiểm toán Nền tảng Toàn cầu -->
+          @if (!identity()?.tenantId && session.hasPermission('platform.audit.read')) {
             <article class="module-card platform-card">
               <div class="module-icon">🏛</div>
-              <h3>{{ 'workspace.cardPlatformAuditTitle' | translate: 'Platform Audit' }}</h3>
+              <h3>{{ 'workspace.cardPlatformAuditTitle' | translate: 'Kiểm toán Nền tảng Toàn cầu' }}</h3>
               <p>
                 {{
                   'workspace.cardPlatformAuditDesc'
                     | translate
-                      : 'Inspect system-wide tenant lifecycles, configuration revisions, and security events.'
+                      : 'Giám sát cấu hình hệ thống, sự kiện an ninh và các biến động tài khoản trên toàn nền tảng.'
                 }}
               </p>
               <div class="module-link-wrap">
-                <p><a routerLink="/platform/audit">Platform audit</a></p>
+                <p><a routerLink="/platform/audit">Kiểm toán nền tảng</a></p>
               </div>
             </article>
           }
@@ -604,25 +601,38 @@ import { TranslatePipe } from '../../core/i18n/translate.pipe';
       }
       .hero-command-card {
         position: relative;
-        background: linear-gradient(135deg, #071b33 0%, #0b2a4a 50%, #145da0 100%);
+        background: 
+          radial-gradient(circle at 85% 15%, rgba(56, 189, 248, 0.16) 0%, transparent 45%),
+          radial-gradient(circle at 12% 85%, rgba(99, 102, 241, 0.14) 0%, transparent 48%),
+          radial-gradient(ellipse at 50% 50%, rgba(14, 165, 233, 0.08) 0%, transparent 60%),
+          linear-gradient(135deg, #090e1a 0%, #0d1527 30%, #111e38 65%, #0a1122 100%);
         color: #ffffff;
-        border-radius: 16px;
-        padding: 2.25rem 2.5rem;
-        margin-bottom: 1.75rem;
+        border-radius: 18px;
+        padding: 2.35rem 2.65rem;
+        margin-bottom: 1.85rem;
         overflow: hidden;
-        box-shadow: 0 12px 36px -4px rgba(7, 27, 51, 0.16);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 
+          0 20px 45px -15px rgba(2, 6, 23, 0.45),
+          0 0 0 1px rgba(255, 255, 255, 0.05),
+          inset 0 1px 0 rgba(255, 255, 255, 0.14);
         h1 {
           color: #ffffff;
-          font-size: clamp(1.85rem, 2.7vw, 2.5rem);
-          margin: 0.35rem 0 0.5rem;
+          font-size: clamp(2.05rem, 3.2vw, 2.9rem);
+          font-weight: 800;
+          letter-spacing: -0.03em;
+          line-height: 1.3;
+          margin: 0 0 1.75rem 0;
+          text-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
         }
       }
       .hero-bg-mesh {
         position: absolute;
         inset: 0;
         background:
-          radial-gradient(circle at 85% 20%, rgba(142, 197, 255, 0.22) 0%, transparent 45%),
-          radial-gradient(circle at 20% 80%, rgba(37, 99, 235, 0.2) 0%, transparent 50%);
+          radial-gradient(circle at 85% 18%, rgba(56, 189, 248, 0.22) 0%, transparent 45%),
+          radial-gradient(circle at 15% 82%, rgba(99, 102, 241, 0.18) 0%, transparent 50%),
+          radial-gradient(circle at 50% 50%, rgba(37, 99, 235, 0.12) 0%, transparent 60%);
         pointer-events: none;
         animation: ocean-pulse-glow 8s infinite alternate;
       }
@@ -633,85 +643,104 @@ import { TranslatePipe } from '../../core/i18n/translate.pipe';
       .hero-badges {
         display: flex;
         align-items: center;
-        gap: 0.75rem;
-        margin-bottom: 0.5rem;
-        .eyebrow {
-          color: #8ec5ff;
-        }
+        gap: 0.85rem;
+        margin-bottom: 1.25rem;
       }
       .role-chip {
-        background: rgba(255, 255, 255, 0.15);
-        color: #ffffff;
-        padding: 0.15rem 0.55rem;
+        background: rgba(255, 255, 255, 0.08);
+        color: #93c5fd;
+        padding: 0.3rem 0.85rem;
         border-radius: 9999px;
-        font-size: 0.72rem;
+        font-size: 0.75rem;
         font-weight: 700;
         text-transform: uppercase;
-        letter-spacing: 0.05em;
-      }
-      .hero-subtext {
-        color: #eaf4ff;
-        font-size: 1.05rem;
-        margin: 0 0 1.5rem;
-        max-width: 42rem;
+        letter-spacing: 0.08em;
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
       }
       .hero-actions {
         display: flex;
-        gap: 0.75rem;
+        gap: 1.1rem;
         flex-wrap: wrap;
+        align-items: center;
       }
       .btn-hero-primary {
-        background: #2563eb;
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.75rem 1.6rem;
+        border-radius: 12px;
+        font-weight: 700;
+        font-size: 0.9375rem;
         color: #ffffff;
-        padding: 0.6rem 1.25rem;
-        border-radius: 8px;
-        font-weight: 700;
-        font-size: 0.875rem;
-        text-decoration: none;
-        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
-        &:hover {
-          background: #1d4ed8;
-          text-decoration: none;
-          transform: translateY(-1px);
-        }
-      }
-      .btn-hero-secondary {
-        background: rgba(255, 255, 255, 0.18);
-        color: #ffffff;
-        padding: 0.6rem 1.25rem;
-        border-radius: 8px;
-        font-weight: 700;
-        font-size: 0.875rem;
-        text-decoration: none;
-        border: 1px solid rgba(255, 255, 255, 0.25);
-        &:hover {
-          background: rgba(255, 255, 255, 0.28);
-          text-decoration: none;
-        }
-      }
-      .btn-hero-ai {
-        background: linear-gradient(135deg, #0b2a4a 0%, #1e40af 100%);
-        color: #8ec5ff;
-        border: 1px solid #8ec5ff;
-        padding: 0.6rem 1.15rem;
-        border-radius: 8px;
-        font-weight: 700;
-        font-size: 0.875rem;
+        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+        border: 1px solid rgba(255, 255, 255, 0.28);
+        box-shadow: 
+          0 4px 16px rgba(37, 99, 235, 0.38),
+          inset 0 1px 0 rgba(255, 255, 255, 0.32);
+        text-decoration: none !important;
         cursor: pointer;
+        transition: transform 160ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 180ms ease, border-color 180ms ease;
+
         &:hover {
-          background: #1e40af;
+          transform: translateY(-2px);
+          border-color: #ffffff;
+          background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+          box-shadow: 0 8px 26px rgba(37, 99, 235, 0.55);
+          text-decoration: none !important;
+        }
+
+        &:active {
+          transform: scale(0.98);
+        }
+      }
+
+      .btn-hero-secondary {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.75rem 1.6rem;
+        border-radius: 12px;
+        font-weight: 700;
+        font-size: 0.9375rem;
+        color: #f8fafc;
+        background: rgba(255, 255, 255, 0.08);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+        text-decoration: none !important;
+        cursor: pointer;
+        transition: transform 160ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 180ms ease, background 180ms ease, border-color 180ms ease;
+
+        &:hover {
+          background: rgba(255, 255, 255, 0.16);
+          border-color: rgba(255, 255, 255, 0.38);
           color: #ffffff;
+          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+          transform: translateY(-2px);
+          text-decoration: none !important;
+        }
+
+        &:active {
+          transform: scale(0.98);
         }
       }
       .btn-hero-ghost {
-        color: #eaf4ff;
-        padding: 0.6rem 1rem;
+        color: #cbd5e1;
+        padding: 0.65rem 1.15rem;
         font-weight: 600;
-        font-size: 0.875rem;
+        font-size: 0.9375rem;
         text-decoration: none;
+        transition: all 160ms ease;
         &:hover {
-          text-decoration: underline;
+          text-decoration: none;
           color: #ffffff;
+          transform: translateX(3px);
         }
       }
       .kpi-metric-row {
@@ -789,9 +818,11 @@ import { TranslatePipe } from '../../core/i18n/translate.pipe';
       .kpi-foot {
         margin: 0;
         font-size: 0.8125rem;
+        text-decoration: none !important;
         a {
           font-weight: 600;
           color: #2563eb;
+          text-decoration: none;
           &:hover {
             text-decoration: underline;
           }
@@ -849,12 +880,16 @@ import { TranslatePipe } from '../../core/i18n/translate.pipe';
       .module-link-wrap {
         border-top: 1px solid #f1f5f9;
         padding-top: 0.75rem;
-        p,
+        p {
+          margin: 0;
+          text-decoration: none !important;
+        }
         a {
           margin: 0;
           font-size: 0.875rem;
           font-weight: 600;
           color: #2563eb;
+          text-decoration: none;
           &:hover {
             text-decoration: underline;
           }
@@ -870,6 +905,7 @@ import { TranslatePipe } from '../../core/i18n/translate.pipe';
 })
 export class Workspace {
   readonly session = inject(SessionService);
+  readonly i18n = inject(I18nService);
   private readonly router = inject(Router);
   readonly aiAgent = inject(AiAgentService);
   readonly identity = this.session.identity;
@@ -899,12 +935,32 @@ export class Workspace {
     return name.slice(0, 2).toUpperCase();
   }
 
+  welcomeName(): string {
+    const isEn = this.i18n.currentLanguage() === 'en';
+    const raw = this.identity()?.fullName?.trim();
+    if (!raw) return isEn ? 'Platform Administrator' : 'Quản trị viên Hệ thống';
+    if (raw === 'Platform Administrator' || raw === 'superadmin' || raw.toLowerCase().includes('platform admin')) {
+      return isEn ? 'Platform Administrator' : 'Quản trị viên Hệ thống';
+    }
+    if (raw === 'Company Administrator') {
+      return isEn ? 'Company Administrator' : 'Quản trị viên Doanh nghiệp';
+    }
+    if (raw === 'Operation Manager' || raw === 'Operational Manager') {
+      return isEn ? 'Operational Manager' : 'Quản lý Vận hành';
+    }
+    if (raw === 'Regular Employee') {
+      return isEn ? 'Regular Employee' : 'Nhân viên Doanh nghiệp';
+    }
+    return raw;
+  }
+
   currentRoleLabel(): string {
     const id = this.identity();
-    if (!id?.tenantId) return 'Platform Administrator';
-    if (id.permissions.includes('roles.configure')) return 'Company Administrator';
-    if (id.permissions.includes('tasks.assign')) return 'Operational Manager';
-    return 'Authorized Member';
+    const isEn = this.i18n.currentLanguage() === 'en';
+    if (!id?.tenantId) return isEn ? 'Platform Administrator' : 'Quản trị viên Hệ thống';
+    if (id.permissions.includes('roles.configure')) return isEn ? 'Company Administrator' : 'Quản trị viên Doanh nghiệp';
+    if (id.permissions.includes('tasks.assign')) return isEn ? 'Operational Manager' : 'Quản lý Vận hành';
+    return isEn ? 'Authorized Member' : 'Thành viên';
   }
 
   signOut(): void {

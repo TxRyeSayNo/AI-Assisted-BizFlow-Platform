@@ -394,6 +394,10 @@ export class Login implements OnInit, OnDestroy {
       });
   }
 
+  async signInWithGoogle(): Promise<void> {
+    await this.openGoogleAccountChooser();
+  }
+
   async submitEmailLink(): Promise<void> {
     if (this.busy()) return;
     this.emailForm.markAllAsTouched();
@@ -599,10 +603,19 @@ export class Login implements OnInit, OnDestroy {
             'requests.read.tenant',
             'requests.read.managed',
             'requests.read.own',
+            'requests.create',
+            'requests.update',
             'tasks.read.tenant',
             'tasks.read.managed',
             'tasks.read.own',
             'tasks.read.assigned',
+            'tasks.create',
+            'tasks.assign',
+            'tasks.accept',
+            'tasks.execute',
+            'tasks.submit',
+            'tasks.confirm',
+            'records.search',
             'sla.read',
             'sla.manage',
             'workflows.read',
@@ -610,6 +623,10 @@ export class Login implements OnInit, OnDestroy {
             'audit.read',
             'analytics.read',
             'reports.export',
+            'reports.manager',
+            'reports.company',
+            'reports.workload',
+            'reports.sla',
             'platform.company-registrations.read',
             'platform.company-registrations.review',
           ],

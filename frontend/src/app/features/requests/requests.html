@@ -1,15 +1,9 @@
-<header class="public-header directory-header">
-  <a class="wordmark" routerLink="/workspace">
-    <span class="brand-mark" aria-hidden="true"></span> BizFlow
-  </a>
-  <span class="tenant-badge">{{ identity()?.tenantName }}</span>
-</header>
 <main id="main-content" class="page-content" tabindex="-1">
   <nav aria-label="Breadcrumb">
-    <a routerLink="/workspace">{{ 'common.workspace' | translate: 'Workspace' }}</a
-    ><span aria-hidden="true"> / </span><span>{{ 'requests.title' | translate: 'Requests' }}</span>
+    <a routerLink="/workspace">{{ 'common.workspace' | translate: 'Không gian làm việc' }}</a>
+    <span aria-hidden="true"> / </span>
+    <span>{{ 'requests.title' | translate: 'Yêu cầu' }}</span>
   </nav>
-  <span class="eyebrow">{{ 'requests.eyebrow' | translate: 'Service Requests' }}</span>
   <div
     style="
       display: flex;
@@ -17,9 +11,10 @@
       align-items: baseline;
       flex-wrap: wrap;
       gap: 1rem;
+      margin-bottom: 1rem;
     "
   >
-    <h1>{{ 'requests.title' | translate: 'Requests' }}</h1>
+    <h1>{{ 'requests.title' | translate: 'Yêu cầu' }}</h1>
     <div style="display: flex; gap: 0.5rem">
       @if (session.hasPermission('requests.create')) {
         <a mat-flat-button routerLink="/requests/new">{{

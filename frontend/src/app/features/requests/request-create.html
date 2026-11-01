@@ -1,38 +1,37 @@
-<header class="public-header">
-  <a class="wordmark" routerLink="/workspace">
-    <span class="brand-mark" aria-hidden="true"></span> BizFlow
-  </a>
-</header>
-<main id="main-content" class="page-content" tabindex="-1">
-  <nav aria-label="Breadcrumb">
-    <a routerLink="/requests">{{ 'requests.title' | translate: 'Requests' }}</a
-    ><span aria-hidden="true"> / </span
-    ><span>{{ 'requestCreate.breadcrumb' | translate: 'New request' }}</span>
-  </nav>
-  <span class="eyebrow">{{ 'requests.eyebrow' | translate: 'Service Requests' }}</span>
-  <h1>{{ 'requestCreate.title' | translate: 'Create service request' }}</h1>
-  <p>
-    {{
-      'requestCreate.subtitle'
-        | translate
-          : 'Submit a business request or draft it for review. Requests are routed and governed according to the active service catalog SLA.'
-    }}
-  </p>
+<main id="main-content" class="page-content task-editor-page" tabindex="-1">
+  <!-- Task-Style Header with Standardized Breadcrumb System -->
+  <header class="task-page-header">
+    <nav aria-label="Breadcrumb" class="compact-breadcrumb">
+      <a routerLink="/workspace">{{ 'common.workspace' | translate: 'Không gian làm việc' }}</a>
+      <span aria-hidden="true" class="breadcrumb-separator">/</span>
+      <a routerLink="/requests">{{ 'requests.title' | translate: 'Yêu cầu' }}</a>
+      <span aria-hidden="true" class="breadcrumb-separator">/</span>
+      <span class="breadcrumb-current">{{ 'requestCreate.breadcrumb' | translate: 'Tạo yêu cầu mới' }}</span>
+    </nav>
+    <div class="task-header-row">
+      <div class="header-titles">
+        <h1 class="task-header-title">{{ 'requestCreate.title' | translate: 'Tạo yêu cầu dịch vụ' }}</h1>
+        <p class="task-header-desc">
+          {{
+            'requestCreate.subtitle'
+              | translate
+                : 'Gửi yêu cầu dịch vụ kinh doanh hoặc lưu bản nháp để xem xét. Yêu cầu được điều phối và tuân thủ SLA theo danh mục dịch vụ.'
+          }}
+        </p>
+      </div>
+      <div class="task-nav-container">
+        <a routerLink="/requests" class="task-nav-btn">
+          <span class="nav-btn-icon">←</span>
+          <span>{{ 'requestCreate.backToRequests' | translate: 'Quay lại danh sách' }}</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
   @if (loadingServices()) {
     <p role="status">
       {{ 'requestCreate.loadingCatalog' | translate: 'Loading service catalog…' }}
     </p>
-  } @else if (services().length === 0) {
-    <p role="alert">
-      {{
-        'requestCreate.noServices'
-          | translate
-            : 'No active services are available. Please contact your workspace administrator.'
-      }}
-    </p>
-    <a mat-stroked-button routerLink="/requests">{{
-      'requestCreate.backToRequests' | translate: 'Back to requests'
-    }}</a>
   } @else {
     <form [formGroup]="form" (ngSubmit)="save()" class="task-form directory-panel">
       <mat-form-field appearance="outline">

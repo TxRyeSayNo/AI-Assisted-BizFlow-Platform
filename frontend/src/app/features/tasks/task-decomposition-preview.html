@@ -4,31 +4,32 @@
   </a>
 </header>
 <main id="main-content" class="page-content bf-editor-page" tabindex="-1">
-  <nav aria-label="Breadcrumb">
-    <a routerLink="/workspace">{{ 'common.workspace' | translate: 'Workspace' }}</a>
-    <span aria-hidden="true">/</span>
-    <a routerLink="/tasks">{{ 'tasks.title' | translate: 'Tasks' }}</a>
-    <span aria-hidden="true">/</span>
-    <span>{{ 'taskDecomp.breadcrumb' | translate: 'AI Decomposition' }}</span>
-  </nav>
-  <span class="eyebrow">{{ 'taskDecomp.eyebrow' | translate: 'AI Work Intelligence' }}</span>
-  <div class="bf-editor-header">
-    <div class="header-titles">
-      <h1 class="bf-page-title">
-        {{ 'taskDecomp.title' | translate: 'Phân rã Công việc Thông minh bằng AI' }}
-      </h1>
-      <p class="bf-page-subtitle">
-        {{
-          'taskDecomp.subtitle'
-            | translate
-              : 'Bóc tách đoạn văn hoặc kế hoạch tự nhiên thành các đầu việc và yêu cầu hỗ trợ có cấu trúc (INT-031, BR-028).'
-        }}
-      </p>
-    </div>
-    <div class="header-actions">
-      <a mat-stroked-button routerLink="/tasks"
-        >← {{ 'taskCreate.backToTasks' | translate: 'Quay lại danh sách' }}</a
-      >
+  <div class="task-page-header">
+    <nav class="compact-breadcrumb" aria-label="Breadcrumb">
+      <a routerLink="/workspace">{{ 'common.workspace' | translate: 'Workspace' }}</a>
+      <span class="sep" aria-hidden="true">/</span>
+      <a routerLink="/tasks">{{ 'tasks.title' | translate: 'Tasks' }}</a>
+      <span class="sep" aria-hidden="true">/</span>
+      <span class="breadcrumb-current">{{ 'taskDecomp.breadcrumb' | translate: 'AI Decomposition' }}</span>
+    </nav>
+    <div class="task-header-row">
+      <div class="header-titles">
+        <h1 class="task-header-title">
+          {{ 'taskDecomp.title' | translate: 'Phân rã Công việc Thông minh bằng AI' }}
+        </h1>
+        <p class="task-header-subtitle">
+          {{
+            'taskDecomp.subtitle'
+              | translate
+                : 'Bóc tách đoạn văn hoặc kế hoạch tự nhiên thành các đầu việc và yêu cầu hỗ trợ có cấu trúc (INT-031, BR-028).'
+          }}
+        </p>
+      </div>
+      <div class="task-nav-container" aria-label="Task navigation">
+        <a routerLink="/tasks" class="task-nav-btn" [title]="'taskCreate.backToTasks' | translate: 'Quay lại danh sách'">
+          <span>← {{ 'taskCreate.backToTasks' | translate: 'Quay lại danh sách' }}</span>
+        </a>
+      </div>
     </div>
   </div>
 

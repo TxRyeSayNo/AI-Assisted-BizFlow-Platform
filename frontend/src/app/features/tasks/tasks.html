@@ -5,32 +5,43 @@
   <span class="tenant-badge">{{ identity()?.tenantName }}</span>
 </header>
 <main id="main-content" class="page-content" tabindex="-1">
-  <nav aria-label="Breadcrumb">
-    <a routerLink="/workspace">{{ 'common.workspace' | translate: 'Workspace' }}</a
-    ><span aria-hidden="true"> / </span><span>{{ 'tasks.title' | translate: 'Tasks' }}</span>
-  </nav>
-  <span class="eyebrow">{{ 'tasks.eyebrow' | translate: 'Work management' }}</span>
-  <h1>{{ 'tasks.title' | translate: 'Tasks' }}</h1>
-  <div class="tasks-actions-bar" style="display: flex; gap: 0.5rem; margin-bottom: 1rem">
-    @if (session.hasPermission('tasks.create')) {
-      <a mat-flat-button routerLink="/tasks/new">{{ 'tasks.newTask' | translate: 'New task' }}</a>
-      <a mat-stroked-button color="primary" routerLink="/tasks/ai-decomposition">{{
-        'nav.aiDecomp' | translate: 'AI Decompose'
-      }}</a>
-    }
-    @if (session.hasPermission('records.search')) {
-      <a mat-stroked-button routerLink="/records/search">{{
-        'nav.searchRecords' | translate: 'Search records'
-      }}</a>
-    }
+  <div class="task-page-header">
+    <nav class="compact-breadcrumb" aria-label="Breadcrumb">
+      <a routerLink="/workspace">{{ 'common.workspace' | translate: 'Workspace' }}</a>
+      <span class="sep" aria-hidden="true">/</span>
+      <span class="breadcrumb-current">{{ 'tasks.title' | translate: 'Tasks' }}</span>
+    </nav>
+    <div class="task-header-row">
+      <div class="header-titles">
+        <h1 class="task-header-title">{{ 'tasks.title' | translate: 'Tasks' }}</h1>
+        <p class="task-header-subtitle">
+          {{
+            'tasks.subtitle'
+              | translate
+                : 'Track work, current responsibility and deadlines. Only tasks within your access scope appear here.'
+          }}
+        </p>
+      </div>
+      <div class="task-nav-container" aria-label="Task navigation">
+        @if (session.hasPermission('tasks.create')) {
+          <a class="task-nav-btn primary-nav-btn" routerLink="/tasks/new" [title]="'tasks.newTask' | translate: 'New task'">
+            <span class="nav-btn-icon" aria-hidden="true">+</span>
+            <span>{{ 'tasks.newTask' | translate: 'New task' }}</span>
+          </a>
+          <a class="task-nav-btn" routerLink="/tasks/ai-decomposition" [title]="'nav.aiDecomp' | translate: 'AI Decompose tasks into subtasks'">
+            <span class="nav-btn-icon" aria-hidden="true">⚡</span>
+            <span>{{ 'nav.aiDecomp' | translate: 'AI Decompose' }}</span>
+          </a>
+        }
+        @if (session.hasPermission('records.search')) {
+          <a class="task-nav-btn" routerLink="/records/search" [title]="'nav.searchRecords' | translate: 'Search audit records and history'">
+            <span class="nav-btn-icon" aria-hidden="true">🔍</span>
+            <span>{{ 'nav.searchRecords' | translate: 'Search records' }}</span>
+          </a>
+        }
+      </div>
+    </div>
   </div>
-  <p>
-    {{
-      'tasks.subtitle'
-        | translate
-          : 'Track work, current responsibility and deadlines. Only tasks within your access scope appear here.'
-    }}
-  </p>
   <section aria-label="Task list" class="directory-panel" [attr.aria-busy]="busy()">
     <form [formGroup]="filters" (ngSubmit)="apply()" class="filters">
       <mat-form-field appearance="outline" subscriptSizing="dynamic"

@@ -1,259 +1,124 @@
-<div class="auth-page light-ocean-theme">
-  <!-- Ambient Light Ocean Animated Atmosphere (CSS-Only, No Image) -->
-  <div class="light-ocean-ambient" aria-hidden="true">
-    <div class="ambient-glow glow-1"></div>
-    <div class="ambient-glow glow-2"></div>
-    <div class="ambient-glow glow-3"></div>
+<div class="auth-page ocean-theme">
+  <!-- Ambient Premium Ocean Animated Lighting (CSS-Only, No Images) -->
+  <div class="ocean-ambient-lights" aria-hidden="true">
+    <div class="ambient-orb orb-1"></div>
+    <div class="ambient-orb orb-2"></div>
+    <div class="ambient-orb orb-3"></div>
   </div>
 
-  <!-- Centered Frosted Glass Login Panel -->
+  <!-- Centered Login Container -->
   <main id="main-content" class="auth-centered-container" tabindex="-1">
     <div class="form-container">
-      <!-- Animated Luminous Outer Border Wrapper -->
+      <!-- Animated Luminous Outer Border Wrapper (Continuously Moving Gradient Border) -->
       <div class="animated-border-wrapper">
         <section class="auth-card" aria-labelledby="login-title">
-          <!-- Refined BizFlow Brand Identity -->
+          <!-- 1. BizFlow Logo & Brand Identity -->
           <div class="auth-card-header">
             <div class="brand-badge-compact">
               <span class="brand-mark" aria-hidden="true"></span>
               <span class="brand-text">BizFlow</span>
               <span class="brand-dot" aria-hidden="true"></span>
             </div>
-            <h1 id="login-title">{{ 'auth.loginTitle' | translate }}</h1>
+            <!-- 2. Existing Login Heading -->
+            <h1 id="login-title">{{ 'auth.loginTitle' | translate: 'ĐĂNG NHẬP TÀI KHOẢN' }}</h1>
+            <!-- 3. Existing Welcome/Supporting Description -->
             <p class="supporting-copy">
-              {{
-                (authMethod() === 'email-link' ? 'auth.emailLinkSubtitle' : 'auth.loginSubtitle')
-                  | translate
-              }}
+              {{ 'auth.loginSubtitle' | translate: 'Chào mừng bạn quay trở lại với hệ thống' }}
             </p>
           </div>
 
-          @if (authMethod() === 'password') {
-            <!-- Standard Authentication Form -->
-            <form [formGroup]="form" (ngSubmit)="submit()" [attr.aria-busy]="busy()">
-              <!-- 1. Workspace Key (Top Field as requested) -->
-              <mat-form-field appearance="outline" subscriptSizing="dynamic">
-                <mat-label>{{ 'auth.workspaceKey' | translate }}</mat-label>
-                <input
-                  matInput
-                  formControlName="tenantKey"
-                  autocomplete="organization"
-                  [readonly]="busy()"
-                  [placeholder]="'auth.workspaceKeyPlaceholder' | translate"
-                  [required]="!isSuperAdmin()"
-                  [attr.aria-required]="!isSuperAdmin()"
-                />
-              </mat-form-field>
+          <!-- Standard Authentication Form -->
+          <form [formGroup]="form" (ngSubmit)="submit()" [attr.aria-busy]="busy()">
+            <!-- 4. Workspace Key Field -->
+            <mat-form-field appearance="outline" subscriptSizing="dynamic">
+              <mat-label>{{ 'auth.workspaceKey' | translate: 'Mã không gian làm việc (Workspace Key)' }}</mat-label>
+              <input matInput formControlName="tenantKey" autocomplete="organization" [readonly]="busy()"
+                [placeholder]="'auth.workspaceKeyPlaceholder' | translate: 'Ví dụ: bizflow-corp'"
+                [required]="!isSuperAdmin()" [attr.aria-required]="!isSuperAdmin()" />
+            </mat-form-field>
 
-              <!-- Sub-selector for Identifier Type in ID Login (Employee Code vs Company Email) -->
-              <div class="toggle-group-container">
-                <mat-button-toggle-group
-                  class="toggle-group-separated"
-                  aria-label="Sign-in identifier type"
-                  hideSingleSelectionIndicator="true"
-                  [value]="mode()"
-                  (change)="changeMode($event.value)"
-                  [disabled]="busy()"
-                >
-                  <mat-button-toggle value="code">{{
-                    'auth.employeeCode' | translate
-                  }}</mat-button-toggle>
-                  <mat-button-toggle value="email">{{
-                    'auth.companyEmail' | translate
-                  }}</mat-button-toggle>
-                </mat-button-toggle-group>
-              </div>
+            <!-- 5. One Unified Account Input (Replaces redundant Employee Code / Company Email selection) -->
+            <mat-form-field appearance="outline" subscriptSizing="dynamic">
+              <mat-label>{{ 'auth.account' | translate: 'Tài khoản' }}</mat-label>
+              <input matInput formControlName="identifier" autocomplete="username" type="text" [readonly]="busy()"
+                [placeholder]="'auth.accountPlaceholder' | translate: 'Nhập tài khoản, mã nhân viên hoặc email'"
+                required />
+            </mat-form-field>
 
-              <!-- 2. Identifier (Employee code or Company email) -->
-              <mat-form-field appearance="outline" subscriptSizing="dynamic">
-                <mat-label>{{
-                  (mode() === 'email' ? 'auth.companyEmail' : 'auth.employeeCode') | translate
-                }}</mat-label>
-                <input
-                  matInput
-                  formControlName="identifier"
-                  autocomplete="username"
-                  [type]="mode() === 'email' ? 'email' : 'text'"
-                  [readonly]="busy()"
-                  [placeholder]="
-                    (mode() === 'email' ? 'auth.emailPlaceholder' : 'auth.codePlaceholder') | translate
-                  "
-                />
-              </mat-form-field>
-
-              <!-- 3. Password -->
-              <mat-form-field appearance="outline" subscriptSizing="dynamic">
-                <mat-label>{{ 'auth.password' | translate }}</mat-label>
-                <input
-                  matInput
-                  formControlName="password"
-                  autocomplete="current-password"
-                  [type]="showPassword() ? 'text' : 'password'"
-                  [readonly]="busy()"
-                  [placeholder]="'auth.passwordPlaceholder' | translate"
-                />
-                <button
-                  mat-button
-                  matSuffix
-                  type="button"
-                  [attr.aria-label]="
-                    (showPassword() ? 'auth.hidePassword' : 'auth.showPassword') | translate
-                  "
-                  [attr.aria-pressed]="showPassword()"
-                  (click)="showPassword.set(!showPassword())"
-                >
-                  {{ (showPassword() ? 'auth.hidePassword' : 'auth.showPassword') | translate }}
-                </button>
-              </mat-form-field>
-
-              <!-- 4. Forgot Password Link directly below password field -->
-              <div class="forgot-password-row">
-                <a routerLink="/forgot-password" class="forgot-link-inline">{{
-                  'auth.forgotPassword' | translate
-                }}</a>
-              </div>
-
-              <!-- 5. Remember Me Checkbox -->
-              <div class="remember-row">
-                <input
-                  type="checkbox"
-                  id="login-remember"
-                  [checked]="rememberMe()"
-                  (change)="rememberMe.set(!rememberMe())"
-                />
-                <label for="login-remember">{{ 'auth.rememberMe' | translate }}</label>
-              </div>
-
-              <!-- Accessible alert announcement without layout displacement -->
-              @if (error()) {
-                <div class="sr-only" role="alert" aria-live="assertive">{{ error() }}</div>
-              }
-
-              <!-- Primary Sign-In Action Button with Animated Rotating Laser Border -->
-              <div class="sign-in-btn-animated-border">
-                <button
-                  mat-flat-button
-                  id="sign-in-btn"
-                  class="sign-in-button"
-                  type="submit"
-                  [disabled]="busy()"
-                >
-                  @if (busy()) {
-                    <span>{{ 'auth.signingIn' | translate }}</span>
-                  } @else {
-                    <span>{{ 'auth.signInNow' | translate }} &rarr;</span>
-                  }
-                </button>
-              </div>
-
-              <!-- Clean Divider with OR -->
-              <div class="clean-divider">
-                <span class="divider-text">{{ 'common.or' | translate }}</span>
-              </div>
-
-              <!-- Google Sign In Button (Replaces manual email link with 1-click Account Chooser) -->
-              <button
-                type="button"
-                id="google-sign-in-btn"
-                class="btn-google-signin"
-                (click)="openGoogleAccountChooser()"
-                [disabled]="busy()"
-              >
-                <svg class="google-g-logo" viewBox="0 0 24 24" width="22" height="22">
-                  <path
-                    fill="#4285F4"
-                    d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                  />
-                  <path
-                    fill="#34A853"
-                    d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                  />
-                  <path
-                    fill="#FBBC05"
-                    d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
-                  />
-                  <path
-                    fill="#EA4335"
-                    d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
-                  />
-                </svg>
-                <span>Đăng nhập với Google</span>
+            <!-- 6. Existing Password Field with Visibility Control -->
+            <mat-form-field appearance="outline" subscriptSizing="dynamic">
+              <mat-label>{{ 'auth.password' | translate: 'Mật khẩu' }}</mat-label>
+              <input matInput formControlName="password" autocomplete="current-password"
+                [type]="showPassword() ? 'text' : 'password'" [readonly]="busy()"
+                [placeholder]="'auth.passwordPlaceholder' | translate: 'Nhập mật khẩu…'" required />
+              <button mat-button matSuffix type="button"
+                [attr.aria-label]="(showPassword() ? 'auth.hidePassword' : 'auth.showPassword') | translate"
+                [attr.aria-pressed]="showPassword()" (click)="showPassword.set(!showPassword())">
+                {{ (showPassword() ? 'auth.hidePassword' : 'auth.showPassword') | translate }}
               </button>
-            </form>
-          } @else {
-            <!-- Passwordless Email Link Form (FR-AUTH-005, INT-029) -->
-            <form [formGroup]="emailForm" (ngSubmit)="submitEmailLink()" [attr.aria-busy]="busy()">
-              <mat-form-field appearance="outline" subscriptSizing="dynamic">
-                <mat-label>{{ 'auth.companyEmail' | translate }}</mat-label>
-                <input
-                  matInput
-                  formControlName="email"
-                  type="email"
-                  autocomplete="email"
-                  [readonly]="busy()"
-                  placeholder="name@company.com"
-                  required
-                />
-              </mat-form-field>
+            </mat-form-field>
 
-              @if (emailSentMessage()) {
-                <div class="sr-only" role="status" aria-live="polite">✉️ {{ emailSentMessage() }}</div>
-              }
+            <!-- 7. One Horizontal Row: Remember-Me (Left) & Forgot Password (Right) -->
+            <div class="remember-forgot-row">
+              <label class="remember-group" for="login-remember">
+                <input type="checkbox" id="login-remember" [checked]="rememberMe()"
+                  (change)="rememberMe.set(!rememberMe())" />
+                <span>{{ 'auth.rememberMeShort' | translate: 'Ghi nhớ đăng nhập' }}</span>
+              </label>
+              <a routerLink="/forgot-password" class="forgot-link">
+                {{ 'auth.forgotPassword' | translate: 'Quên mật khẩu?' }}
+              </a>
+            </div>
 
-              <!-- Accessible alert announcement without layout displacement -->
-              @if (error()) {
-                <div class="sr-only" role="alert" aria-live="assertive">{{ error() }}</div>
-              }
-
-              <div class="sign-in-btn-animated-border" style="margin-top: 0.5rem">
-                <button
-                  mat-flat-button
-                  class="sign-in-button"
-                  type="submit"
-                  [disabled]="busy()"
-                >
-                  <span>{{ (busy() ? 'auth.sendingLink' : 'auth.sendEmailLink') | translate }}</span>
-                </button>
-              </div>
-
-              <div class="clean-divider">
-                <span class="divider-text">{{ 'common.or' | translate }}</span>
-              </div>
-
-              <button
-                type="button"
-                class="btn-secondary-outline"
-                (click)="setAuthMethod('password')"
-                [disabled]="busy()"
-              >
-                <span class="alt-icon" aria-hidden="true">🔑</span>
-                <span>{{ 'auth.signInWithPassword' | translate }}</span>
-              </button>
-            </form>
-          }
-
-          <!-- Footer Links: "Bạn muốn tạo doanh nghiệp mới? Đăng ký doanh nghiệp" -->
-          <div class="auth-card-footer">
-            @if (showRegisterLink()) {
-              <p class="register-text" style="margin-bottom: 0.5rem">
-                <a routerLink="/register-company" class="register-link"
-                  >&rarr; {{ 'auth.registerCompanyPrompt' | translate }}</a
-                >
-              </p>
+            <!-- Accessible Alert Announcement -->
+            @if (error()) {
+            <div class="sr-only" role="alert" aria-live="assertive">{{ error() }}</div>
             }
-            <p class="register-text">
-              <span>{{ 'auth.noAccountPrompt' | translate }} </span>
-              <a routerLink="/register-company" class="register-link">{{
-                'auth.registerCompany' | translate
-              }}</a>
-            </p>
-            <p class="small-copy auth-help">{{ 'auth.needAccess' | translate }}</p>
+
+            <!-- 8. Primary Sign-In Action Button -->
+            <div class="sign-in-btn-animated-border">
+              <button mat-flat-button id="sign-in-btn" class="sign-in-button" type="submit" [disabled]="busy()">
+                @if (busy()) {
+                <span>{{ 'auth.signingIn' | translate: 'Đang đăng nhập…' }}</span>
+                } @else {
+                <span>{{ 'auth.signInNow' | translate: 'ĐĂNG NHẬP NGAY' }} &rarr;</span>
+                }
+              </button>
+            </div>
+
+            <!-- 9. Clean OR Divider -->
+            <div class="clean-divider">
+              <span class="divider-text">{{ 'common.or' | translate: 'HOẶC' }}</span>
+            </div>
+
+            <!-- 10. Google Sign-In Button with Authentic Multicolor Google G Icon -->
+            <button type="button" class="btn-google-signin" (click)="signInWithGoogle()" [disabled]="busy()">
+              <svg class="google-icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+                <path fill="#4285F4"
+                  d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                <path fill="#34A853"
+                  d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                <path fill="#FBBC05"
+                  d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
+                <path fill="#EA4335"
+                  d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
+              </svg>
+              <span>{{ 'auth.signInWithGoogle' | translate: 'Đăng nhập bằng Google' }}</span>
+            </button>
+          </form>
+
+          <!-- 11. Simple Business Registration Link (No redundant introductory sentence) -->
+          <div class="auth-card-footer">
+            <a routerLink="/register-company" class="register-link-clean">
+              {{ 'auth.registerCompany' | translate: 'Đăng ký doanh nghiệp' }}
+            </a>
           </div>
         </section>
       </div>
 
-      <div class="auth-platform-tag">
-        BizFlow Platform <span class="tag-sep">•</span> Internal work orchestration & accountability.
+      <!-- Public Brand Footer Tag Below Card -->
+      <div class="auth-platform-tag-clean">
+        BizFlow Platform <span class="tag-sep">•</span> Quản trị quy trình & tác vụ doanh nghiệp.
       </div>
     </div>
   </main>
