@@ -91,6 +91,15 @@ public sealed class WorkTask
         };
     }
 
+    public static WorkTask CreateAssigned(Guid tenantId, Guid creatorId, string title, DateTimeOffset now,
+        string? description = null, TaskPriority priority = TaskPriority.Medium,
+        DateTimeOffset? deadline = null, Guid? requestId = null)
+    {
+        var task = CreateDraft(tenantId, creatorId, title, now, description, priority, deadline, requestId);
+        task.Status = TaskState.Assigned;
+        return task;
+    }
+
     public void Archive(DateTimeOffset now)
     {
         if (DeletedAt is not null)

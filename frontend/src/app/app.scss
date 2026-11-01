@@ -169,6 +169,26 @@
     transform: scale(0.96);
   }
 
+  .unread-badge {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 4px;
+    background: #ef4444;
+    color: #ffffff;
+    border-radius: 9px;
+    font-size: 0.6875rem;
+    font-weight: 700;
+    line-height: 18px;
+    text-align: center;
+    border: 2px solid #ffffff;
+    box-shadow: 0 2px 4px rgba(239, 68, 68, 0.4);
+    pointer-events: none;
+    box-sizing: border-box;
+  }
+
   .unread-dot {
     position: absolute;
     top: 8px;

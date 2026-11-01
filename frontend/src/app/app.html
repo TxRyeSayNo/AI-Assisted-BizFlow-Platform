@@ -25,9 +25,11 @@
 
     <div class="topbar-right">
       <!-- Notification Bell -->
-      <a routerLink="/notifications" class="notify-btn" title="Notifications" aria-label="Notifications">
+      <a routerLink="/notifications" class="notify-btn" title="Thông báo" aria-label="Thông báo">
         <span class="bell-icon" aria-hidden="true">🔔</span>
-        <span class="unread-dot" aria-hidden="true"></span>
+        @if (unreadNotifications() > 0) {
+          <span class="unread-badge">{{ unreadNotifications() > 99 ? '99+' : unreadNotifications() }}</span>
+        }
       </a>
 
       <!-- Current User Profile / Avatar -->
