@@ -1,4 +1,6 @@
 # Bảng Phân Tích Khoảng Trống Triển Khai (Implementation Gap Analysis)
+
+> **Lưu ý đối chiếu 01/11/2026:** Nội dung và trạng thái còn lại của tài liệu này phản ánh snapshot lịch sử; không xem là bằng chứng nghiệm thu hiện tại. Xem [đường cơ sở tại commit `61cca5c`](CURRENT_IMPLEMENTATION_BASELINE.md) cho hiện trạng, nguồn mã và giới hạn xác minh. Không thay đổi trạng thái quyết định chưa được phê duyệt.
 ## Báo Cáo Đối Soát Hiện Trạng Codebase Đối Với Đặc Tả v1.2-DRAFT
 
 - **Mã tài liệu:** `BIZFLOW-AUDIT-GAP-v1.2`

@@ -3,6 +3,8 @@
 
 ---
 
+> **Đối chiếu hiện trạng 01/11/2026 — commit `61cca5c`:** [Đường cơ sở triển khai hiện tại](../../project-audit/CURRENT_IMPLEMENTATION_BASELINE.md) ghi rõ mã, giới hạn và bằng chứng. Các phần thiết kế mục tiêu vẫn là yêu cầu, không phải khẳng định mọi rào chắn đã được thực thi. Số liệu và trạng thái cũ ở các bảng chưa được rà soát là lịch sử; không dùng làm chứng nhận hoàn thành.
+
 ## 0. Kiểm soát Tài liệu (Document Control)
 
 | Thuộc tính | Giá trị |
@@ -71,18 +73,17 @@ Tuân thủ tuyệt đối [05-assumptions-and-ambiguities.md](../../00-analysis
    - **Baseline Đã Xác nhận (`CONFIRMED` theo `FR-TEN-001`..`002`, `UC-001`):** Doanh nghiệp gửi đơn $\rightarrow$ đơn ở trạng thái `PENDING` $\rightarrow$ `PLATFORM_ADMIN` xem xét và phê duyệt thủ công tại `UI-02` $\rightarrow$ kích hoạt `Primary Tenant`.
    - **Phương án Đề xuất Multi-Tenant SaaS (`PROPOSED — NOT APPROVED` theo `FR-TEN-005`, `IR-UI-004`, `UC-013`, `ADR-SSS-007`, `OD-021`):** Điểm vào công khai `/register-company` (liên kết CTA từ `/login` `UI-01`); đại diện đăng ký thông tin công ty và tài khoản quản trị đầu tiên; sau khi hoàn tất **Xác minh Email (`Email Verification`, `OD-022`)**, hệ thống tự động khởi tạo nguyên tử **01 Primary Tenant (`DEC-WS-001`)** và gán vai trò `COMPANY_ADMIN` (hỗ trợ cờ cấu hình `Onboarding:ApprovalMode = "SelfService" | "PlatformAdminApproval"`).
 
-### 2.3. Đối chiếu Kiến trúc Mục tiêu và Hiện trạng Triển khai trong Repository (Target vs. Current Implementation Summary)
+### 2.3. Đối chiếu kiến trúc mục tiêu và mã nguồn
 
-| Khía cạnh Hệ thống | Kiến trúc Mục tiêu (`Target Architecture`) | Hiện trạng Mã nguồn (`Current Repository Implementation`) | Đánh giá Độ phủ |
-| :--- | :--- | :--- | :--- |
-| **Cấu trúc Solution & Phân tầng** | Modular Monolith trên `.NET 10` (`Api`, `Application`, `Domain`, `Infrastructure`) + `Angular 22` SPA | Đã triển khai đầy đủ 6 project trong [BizFlow.slnx](../../../BizFlow.slnx) (`BizFlow.Api`, `BizFlow.Application`, `BizFlow.Domain`, `BizFlow.Infrastructure`, `BizFlow.UnitTests`, `BizFlow.IntegrationTests`) và `frontend/`. | `IMPLEMENTED` (100% khung kiến trúc) |
-| **Giao diện REST API & Real-Time** | Các nhóm endpoint nghiệp vụ + Kênh thông báo WebSocket thời gian thực | Đã triển khai **31 REST Controllers** trong `BizFlow.Api/Controllers/` và SignalR `NotificationHub` (`/hubs/notifications`). | `IMPLEMENTED` |
-| **Giao diện Người dùng (Frontend)** | Ứng dụng SPA phân quyền theo vai trò và ngữ cảnh Tenant | Đã triển khai **28 định tuyến (`app.routes.ts`)** cùng `sessionGuard`, `tenantGuard`, `permissionGuard`. Tuyến `/register-company` và `/verify-email` đang ở mức đề xuất (`PROPOSED`). | `IMPLEMENTED` |
-| **Cơ sở dữ liệu Quan hệ (PostgreSQL)** | 43 bảng thực thể nghiệp vụ mục tiêu (`SRC-001`) | `BizFlowDbContext.cs` đã triển khai **36 `DbSet<T>`** qua **34 bản EF Core Migrations**; còn thiếu **7 bảng** (`RoutingRule`, `ApprovalRule`, `ApprovalRuleVersion`, `ApprovalInstance`, `ApprovalStepInstance`, `SLAState`, `SLAEvent`). | `PARTIAL` (36/43 bảng đã có) |
-| **Tiếp nhận & Cấp phát Tenant (`Onboarding`)** | Nộp đơn, xác minh email, cấp phát nguyên tử `Primary Tenant` + `COMPANY_ADMIN` kèm rollback (`ADR-SSS-007`) | Đã có thực thể `Company`, `Tenant`, cấu hình `HasIndex(CompanyId).IsUnique()` và `CompanyRegistrationsController` (`GET` queue); luồng tự động cấp phát và xác minh email đang ở mức đặc tả (`PROPOSED`). | `PARTIAL` (Schema `IMPLEMENTED`; Provisioning pipeline `PROPOSED`) |
-| **Cô lập Đa Thuê bao & Bảo vệ Bất biến** | Cô lập 5 lớp, bộ lọc truy vấn tự động và chống xóa cứng/sửa lịch sử | Đã triển khai `ClaimsTenantContext`, `TenantMembershipAuthorizer`, `ConfigureTenantFilter<T>` (fail-closed) và chốt chặn trong `BizFlowDbContext.SaveChangesAsync`. | `IMPLEMENTED` |
-| **Tích hợp AI có Kiểm soát (`ADR-0008`)** | 9 tính năng AI, lọc quyền qua `AiContextReader`, timeout `45s`, fallback an toàn, Human-in-the-Loop | Đã triển khai `AiAssistantService`, `AiContextReader`, `AiToolRegistry`, `AiActionDispatcher`, `OpenAiModelClient`. | `IMPLEMENTED` |
-| **Tiến trình Xử lý Ngầm (`MOD-BG-001`)** | Hangfire Server / Background Workers quét SLA, gửi SMTP từ `EmailQueueItems`, xử lý `ReportExportJobs` | Các bảng hàng đợi (`EmailQueueItems`, `NotificationQueueItems`, `ReportExportJobs`) đã có trong DB, nhưng `Program.cs` **chưa đăng ký** Hangfire hoặc `BackgroundService`. | `PROPOSED` / `NOT YET WIRED` (`OD-020`) |
+Mốc đối chiếu là commit `61cca5c`; bảng chi tiết, nguồn và giới hạn kiểm chứng nằm tại [đường cơ sở triển khai](../../project-audit/CURRENT_IMPLEMENTATION_BASELINE.md).
+
+| Phạm vi | Hiện trạng |
+| :--- | :--- |
+| Kiến trúc | Modular Monolith phân lớp .NET 10 và Angular 22; có 26 controller, 40 DbSet khai báo và 37 file migration. Không suy ra số bảng thực tế hay phần trăm hoàn thành từ các con số này. |
+| Identity/Tenant | Có đăng nhập JWT, refresh, email-link/Firebase, chọn workspace và API đăng ký/thẩm định; các tiêu chí email, cấp phát và bảo mật còn cần kiểm chứng đầu-cuối. |
+| Task/Request | Có các luồng chính tạo, giao/nhận, xử lý, kết quả/xác nhận và liên kết Request–Task; workflow phiên bản, một số chuyển tiếp và phê duyệt còn chưa hoàn chỉnh. |
+| AI/Robot | Có widget nhánh và API preview/confirm; có vector JSONB, daemon và self-reflection. Còn khoảng cách về phân quyền, thực thi, bảo vệ dữ liệu và kiểm thử thực tế. |
+| Notification/SLA | Có inbox/SignalR, cấu hình SLA và thành phần reminder; chưa có bằng chứng worker phát nhắc hạn hay SLA runtime đầy đủ. |
 
 ---
 
@@ -136,7 +137,7 @@ flowchart LR
     APP["BizFlow.Application\n(13 Business Modules + TaskWorkflowEngine + AiContextReader)"]
     DOM["BizFlow.Domain\n(Entities, Enums & Domain Invariants)"]
     INF["BizFlow.Infrastructure\n(BizFlowDbContext, Redis, S3/Local, OpenAI Adapter)"]
-    PG[("PostgreSQL 18\n(36 Implemented / 43 Target Tables)")]
+    PG[("PostgreSQL 18\n(EF Core)")]
     RD[("Redis Cache")]
     S3[("MinIO / S3 Storage")]
     OAI["OpenAI API"]
@@ -144,7 +145,7 @@ flowchart LR
     SPA -->|"HTTPS REST + WSS SignalR"| API
     API --> APP
     APP --> DOM
-    APP --> INF
+    INF --> APP
     INF --> DOM
     INF --> PG
     INF --> RD
@@ -154,9 +155,9 @@ flowchart LR
 
 ### 4.3. Các Nguyên tắc Kiến trúc Cốt lõi (Key Architectural Principles)
 1. **Defense-in-Depth Multi-Tenancy (`ADR-0007`, `ADR-SSS-001`):** Không tin tưởng bất kỳ lớp đơn lẻ nào; cô lập Tenant được thực thi từ Route Guard $\rightarrow$ Middleware $\rightarrow$ Application Policy $\rightarrow$ EF Core Global Query Filter (Fail-Closed) $\rightarrow$ `SaveChangesAsync` Write Guard.
-2. **Single Authority for Lifecycle Transitions (`ADR-0001`):** Mọi chuyển đổi trạng thái của `WorkTask` phải đi qua `IWorkflowEngine` (`TaskWorkflowEngine`); tầng DB Context chặn mọi nỗ lực ghi tắt.
-3. **Human-in-the-Loop AI (`ADR-0008`):** AI chỉ đọc dữ liệu trong phạm vi quyền của người gọi (`AiContextReader`) và chỉ đưa ra đề xuất (`AiSuggestion`); mọi hành động thay đổi nghiệp vụ phải được con người xác nhận.
-4. **Immutable History & Append-Only Audit (`ADR-0005`):** Không xóa cứng dữ liệu nghiệp vụ; mọi bảng lịch sử và kiểm toán chỉ cho phép ghi thêm (`Append-Only`).
+2. **Single Authority for Lifecycle Transitions (`ADR-0003`):** Mọi chuyển đổi trạng thái của `WorkTask` phải đi qua `IWorkflowEngine` (`TaskWorkflowEngine`); tầng DB Context chặn mọi nỗ lực ghi tắt.
+3. **Mục tiêu Human-in-the-Loop AI (`ADR-SSS-009`):** AI phải đọc dữ liệu theo phạm vi người gọi và thay đổi nghiệp vụ cần xác nhận; hiện trạng còn khoảng cách nêu tại [đường cơ sở](../../project-audit/CURRENT_IMPLEMENTATION_BASELINE.md#4-khoảng-cách-quản-trị-ai-và-tính-trung-thực).
+4. **Immutable History & Append-Only Audit (mục tiêu bảo toàn lịch sử):** Không xóa cứng dữ liệu nghiệp vụ; mọi bảng lịch sử và kiểm toán chỉ cho phép ghi thêm (`Append-Only`).
 5. **Non-Revealing Authorization Semantics (`ADR-0012`):** Khi truy vấn bản ghi cụ thể theo ID ngoài phạm vi quyền hoặc khác Tenant, luôn trả về `404 Not Found` để chống dò quét định danh.
 
 ---
@@ -191,29 +192,9 @@ Sơ đồ ngữ cảnh chi tiết được trình bày tại [01-system-context.
 
 ---
 
-## 6. Phân rã Hệ thống con và Module (Subsystem and Module Decomposition)
+## 6. Phân rã hệ thống con và module
 
-Hệ thống được phân rã thành **17 module** (gồm 15 module nghiệp vụ Backend `MOD-001..015`, 1 module giao diện `MOD-FE-001` và 1 module xử lý ngầm `MOD-BG-001`). Đặc tả đầy đủ 13 thuộc tính của từng module (Mục đích, Trách nhiệm, Không chịu trách nhiệm, Đầu vào, Đầu ra, Sở hữu dữ liệu, Phụ thuộc, Giao diện, Bảo mật, Yêu cầu SRS, Kiểm thử, Trạng thái) được trình bày chi tiết tại [MODULE_CATALOG.md](MODULE_CATALOG.md).
-
-| Mã Module | Tên Module | Các Lớp/Controller Đại diện trong Codebase | Bảng Dữ liệu Sở hữu Chính | Trạng thái |
-| :--- | :--- | :--- | :--- | :--- |
-| `MOD-001` | **Identity & Authentication** | `AuthController`, `EmailLinkAuthController`, `AccountController`, `SessionsController`, `ClaimsTenantContext` | `PasswordCredentials`, `UserSessions`, `RefreshTokens`, `PasswordResetTokens`, `EmailLoginTokens` | `PARTIAL` (ID login `IMPLEMENTED`; Email-link `NOT_IMPLEMENTED`) |
-| `MOD-002` | **Tenant & Workspace Management** | `CompanyRegistrationsController`, `TenantCodeAndDocumentController`, `PlatformTenantsController`, `WorkspacesController`, `TenantSettingsController`, `TenantMembershipAuthorizer` | `Tenants`, `Workspaces`, `TenantSettings`, `CompanyRegistrationRequests` (`Companies`), `CompanyRegistrationDocuments` | `PARTIAL` (Read queue `IMPLEMENTED`; 6 fields + MinIO docs `NOT_IMPLEMENTED`) |
-| `MOD-003` | **Organization & Access Control (RBAC)** | `OrganizationController`, `UsersController`, `DepartmentsController`, `RolesController`, `PermissionsController`, `MembershipsController` | `Users`, `Departments`, `Roles`, `Permissions`, `RolePermissions`, `UserRoles`, `DepartmentMemberships` | `IMPLEMENTED` |
-| `MOD-004` | **Service Catalog & Form Builder** | `ServiceCategoriesController`, `ServicesController`, `FormsController` | `ServiceCategories`, `ServiceTypes`, `FormDefinitions`, `FormFields` | `IMPLEMENTED` |
-| `MOD-005` | **Task Management & Execution** | `TasksController`, `TaskBlockersController`, `ConfirmationsController` | `WorkTasks`, `TaskAssignments`, `TaskBlockers`, `TaskHistories`, `Confirmations` | `IMPLEMENTED` |
-| `MOD-006` | **Request Management** | `RequestsController`, `ApprovalsController` | `RequestRecords`, `RequestFieldValues`, `RequestHistories`, `RequestTaskLinks` | `IMPLEMENTED` |
-| `MOD-007` | **Workflow, Routing & Approval Engine** | `WorkflowsController`, `TaskWorkflowEngine` | Đã có: `WorkflowDefinitions`, `WorkflowVersions`, `WorkflowSteps`, `WorkflowInstances`. Mục tiêu: `RoutingRules`, `ApprovalRules`, `ApprovalRuleVersions`, `ApprovalInstances`, `ApprovalStepInstances` | `PARTIAL` |
-| `MOD-008` | **SLA & Calendar Management** | `SlaProfilesController`, `CalendarsController` | Đã có: `SlaProfiles`, `Holidays`, `WorkingHours`. Mục tiêu: `SLAStates`, `SLAEvents` | `PARTIAL` |
-| `MOD-009` | **Notification & Real-Time Hub** | `NotificationsController`, `NotificationHub` | `Notifications`, `NotificationPreferences`, `NotificationQueueItems`, `EmailQueueItems`, `NotificationConnections` | `PARTIAL` |
-| `MOD-010` | **Collaboration, Evidence & Archival** | `CommentsController`, `AttachmentsController`, `EvidenceController`, `RecordsController` | `Comments`, `Attachments`, `CompletionEvidences`, `ArchivedRecordViews` | `IMPLEMENTED` |
-| `MOD-011` | **Reporting, Analytics & Dashboard** | `DashboardController`, `ReportsController`, `ReportExportsController` | `ReportExportJobs`, `ReportSnapshots` | `IMPLEMENTED` |
-| `MOD-012` | **AI Assistant & Governance** | `AiAssistantController`, `AiGovernanceController`, `AiAssistantService`, `AiContextReader`, `OpenAiModelClient` | `AiSuggestions`, `AiConfigs`, `AiExecutionLogs` | `IMPLEMENTED` |
-| `MOD-013` | **Audit & Security Compliance** | `AuditController`, `PlatformAuditController` | `AuditLogs`, `SecurityEvents` | `IMPLEMENTED` |
-| `MOD-014` | **Robot Chatbot & Natural Language Assistance** | `RobotAssistantController`, `AiTaskDecompositionController` | `RobotConversations`, `RobotMessages` | `NOT_IMPLEMENTED` |
-| `MOD-015` | **Deadline Reminder & Multi-Channel Dispatcher** | `DeadlineReminderController`, `DeadlineReminderWorker` | `DeadlineReminderSchedules`, `PushSubscriptions`, `NotificationLogs` | `NOT_IMPLEMENTED` |
-| `MOD-FE-001` | **Frontend SPA (Angular 22)** | `frontend/src/app/` (28 routes, Guards, Interceptors, Feature Components, Robot Widget) | Client Session, View State & Robot State (`sessionStorage`) | `IMPLEMENTED` |
-| `MOD-BG-001` | **Background Job & Timer Worker** | Dự kiến: Hangfire / `IHostedService` consumers (`DeadlineReminderWorker`, SLA Evaluator) | Tiêu thụ `EmailQueueItems`, `NotificationQueueItems`, `ReportExportJobs`, `DeadlineReminderSchedules` | `PROPOSED` (`ADR-SSS-002`) |
+Các miền logic gồm xác thực; tenant; tổ chức/phân quyền; danh mục dịch vụ; Task; Request; workflow/phê duyệt; SLA; thông báo; cộng tác; báo cáo; AI; audit; frontend và xử lý nền. [Danh mục module](MODULE_CATALOG.md) giữ thông tin thiết kế v1.2; hiện trạng áp dụng theo [bảng đối chiếu hiện tại](../../project-audit/CURRENT_IMPLEMENTATION_BASELINE.md#2-bản-đồ-chức-năng-và-giới-hạn). Tên class/bảng trong catalog lịch sử không bảo đảm tương ứng 1:1 với mã hiện tại.
 
 ---
 
@@ -233,29 +214,20 @@ Sơ đồ phụ thuộc vật lý và logic giữa các module được minh h�
 
 ### 7.2. Quy tắc Sở hữu Ghi và Truy cập Dữ liệu Liên Module (Data Access & Mutation Rules)
 - **Độc quyền Ghi Vòng đời Task (`ADR-0001`):** Chỉ `TaskWorkflowEngine` (`MOD-007`) được phép gọi `WorkTask.MarkWorkflowMutation()` để thay đổi các trường vòng đời của `WorkTask`.
-- **Cấm AI Ghi Trực tiếp (`ADR-0008` & `ADR-SSS-009`):** `MOD-012` (`AI Assistant`) và `MOD-014` (`Robot Chatbot`) chỉ đọc qua `AiContextReader` và chỉ phát lệnh tạo việc sau khi có xác nhận rõ ràng của con người (`BR-028`).
+- **Yêu cầu với AI (`ADR-SSS-009`):** thao tác nghiệp vụ cần được kiểm tra quyền và xác nhận theo `BR-028`. Hiện dispatcher có đường ghi trực tiếp và registry có công cụ không yêu cầu xác nhận; xem [đối chiếu](../../project-audit/CURRENT_IMPLEMENTATION_BASELINE.md#4-khoảng-cách-quản-trị-ai-và-tính-trung-thực).
 - **Tích hợp Đồng bộ vs. Bất đồng bộ:**
   - *Trong cùng giao dịch ACID:* Cập nhật trạng thái `WorkTask`/`RequestRecord` + ghi `TaskHistory`/`RequestHistory` + ghi `AuditLog` + xếp hàng `NotificationQueueItem`/`EmailQueueItem` (`ADR-0005`).
   - *Tách rời bất đồng bộ (Outbox):* Việc gửi email qua SMTP bên ngoài hoặc đẩy thông báo/xuất báo cáo không được phép làm rollback giao dịch nghiệp vụ đã cam kết.
 
 ---
 
-## 8. Kiến trúc Runtime và Các Luồng Nghiệp vụ Trọng yếu (Runtime Architecture and Important Workflows)
+## 8. Kiến trúc runtime và luồng nghiệp vụ
 
-Toàn bộ 10 sơ đồ tuần tự chi tiết (`SEQ-001` .. `SEQ-010`) được đặc tả tại [04-sequence-workflows.md](diagrams/04-sequence-workflows.md):
+Trình duyệt gọi REST API với Bearer JWT; API và Application kiểm tra phiên, quyền và phạm vi; Domain quyết định chuyển trạng thái; Infrastructure lưu qua EF Core/PostgreSQL, audit và thông báo theo từng use case. SignalR báo cập nhật inbox; kết nối ngoài gồm OpenAI, Redis và S3/MinIO tùy cấu hình.
 
-| Mã Luồng | Tên Luồng Runtime | Các Thành phần Tham gia Chính | Yêu cầu & ADR Liên quan | Hiện trạng trong Codebase |
-| :--- | :--- | :--- | :--- | :--- |
-| `SEQ-001` | **Xác thực, Thiết lập Ngữ cảnh Tenant & Kiểm tra Quyền hạn** | `MOD-FE-001` $\rightarrow$ `AuthController` $\rightarrow$ `ClaimsTenantContext` $\rightarrow$ `TenantMembershipAuthorizer` $\rightarrow$ `BizFlowDbContext` | `FR-AUTH-001..005`, `ADR-0007`, `ADR-0009` | `IMPLEMENTED` |
-| `SEQ-002` | **Tiếp nhận Yêu cầu Nội bộ, Kiểm tra Form Động & Định tuyến** | `RequestsController` $\rightarrow$ `RequestService` $\rightarrow$ `ServiceCatalog` $\rightarrow$ `Workflow/SLA` $\rightarrow$ `AuditLog` & `NotificationHub` | `FR-REQ-001..005`, `FR-SVC-003`, `FR-WF-003`, `FR-SLA-003` | `PARTIAL` (Intake, Form validation, Task link `IMPLEMENTED`; `RoutingRule`/`ApprovalInstance`/`SLAState` `PROPOSED`) |
-| `SEQ-003` | **Hỗ trợ Xử lý bằng AI có Kiểm soát Con người (`Human-in-the-Loop`)** | `AiAssistantController` $\rightarrow$ `AiAssistantService` $\rightarrow$ `AiContextReader` $\rightarrow$ `OpenAiModelClient` $\rightarrow$ `AiActionDispatcher` | `FR-AI-001..009`, `ADR-0008`, `SEC-AI-001..002` | `IMPLEMENTED` |
-| `SEQ-004` | **Giao việc Phòng ban, Nhân viên Nhận việc (`Claim`) & Xác nhận Hoàn thành** | `TasksController` $\rightarrow$ `TaskWorkflowEngine` $\rightarrow$ `EvidenceController` $\rightarrow$ `ConfirmationsController` $\rightarrow$ `BizFlowDbContext` | `FR-TSK-002..006`, `FR-COL-003`, `ADR-0001..0004`, `ADR-0010` | `IMPLEMENTED` |
-| `SEQ-005` | **Ngăn chặn Truy cập Trái phép Liên Tenant (`Defense-in-Depth`)** | `TenantMembershipAuthorizer` $\rightarrow$ Scoped Read Policy $\rightarrow$ EF Core `HasQueryFilter` $\rightarrow$ `404 Not Found` | `SEC-TEN-001..003`, `ADR-0007`, `ADR-0011`, `ADR-0012` | `IMPLEMENTED` |
-| `SEQ-006` | **Xử lý Lỗi Nhà cung cấp Bên ngoài & Chế độ Suy giảm An toàn** | `AiAssistantService` $\rightarrow$ `OpenAiModelClient` (Timeout `45s`) $\rightarrow$ `AiExecutionLog` $\rightarrow$ Deterministic Fallback | `NFR-REL-002..003`, `IR-EXT-001`, `ADR-0008` | `IMPLEMENTED` |
-| `SEQ-007` | **Đăng ký Doanh nghiệp, Xác minh Email & Khởi tạo Nguyên tử Primary Tenant kèm Rollback** | `MOD-FE-001` (`/register-company`) $\rightarrow$ `BizFlow.Api` $\rightarrow$ `TenantOnboardingService` (`MOD-002`) $\rightarrow$ `BizFlowDbContext` (Unit of Work) $\rightarrow$ Post-Provisioning Invariant Guard $\rightarrow$ `EmailQueueItems` (`MOD-009`) | `FR-TEN-001..005`, `IR-UI-004`, `IR-EXT-002`, `BR-023`, `BR-024`, `DEC-WS-001`, `ADR-SSS-007`, `OD-021..024` | `PARTIAL` (Thực thể & DB Unique constraint `IMPLEMENTED`; Quy trình tự động cấp phát & kiểm tra bất biến `PROPOSED` per `ADR-SSS-007`) |
-| `SEQ-008` | **Đăng nhập Hợp nhất & Đăng nhập Không Mật khẩu qua Email Link kèm Bộ chọn Workspace** | `MOD-FE-001` $\rightarrow$ `AuthController` / `EmailLinkAuthController` $\rightarrow$ `WorkspaceSelectorModal` (`IR-UI-005`) $\rightarrow$ `ClaimsTenantContext` | `FR-AUTH-001`, `FR-AUTH-005`, `IR-UI-005`, `IR-API-004`, `BR-025`, `ADR-SSS-008`, `OD-025` | `PARTIAL` (ID login `IMPLEMENTED`; Email link & selector `NOT_IMPLEMENTED`) |
-| `SEQ-009` | **Trợ lý Robot Nhúng UI & Bóc tách Việc AI có Xác nhận Con người Bắt buộc** | `RobotWidget` $\rightarrow$ `AiAssistantController` $\rightarrow$ `AiContextReader` $\rightarrow$ `PreviewChecklistUI` $\rightarrow$ `TaskWorkflowEngine` $\rightarrow$ `BizFlowDbContext` | `FR-AI-011..013`, `IR-API-006`, `BR-027..029`, `ADR-SSS-009`, `OD-028..030` | `NOT_IMPLEMENTED` |
-| `SEQ-010` | **Vòng đời Cấu hình & Phát Thông báo Nhắc Hạn Đa Kênh Tự động** | `DeadlineReminderController` $\rightarrow$ `DeadlineReminderWorker` $\rightarrow$ `NotificationHub` $\rightarrow$ W3C Web Push $\rightarrow$ SMTP Fallback | `FR-NOTIF-003..004`, `IR-API-007`, `IR-EXT-003`, `BR-030`, `ADR-SSS-010`, `OD-031..032` | `NOT_IMPLEMENTED` |
+Đối với `/task`, Robot gọi preview, hiển thị nhánh và chỉ gửi confirm khi người dùng chọn gửi. API confirm tạo Task/Request trong transaction, tuy nhiên không nên đồng nhất việc trả thành công với việc đã giao đúng phòng ban hoặc toàn bộ tiêu chí được nghiệm thu. Daemon AI đã đăng ký nhưng có rủi ro thiếu tenant/user context; worker nhắc hạn chưa được xác nhận. [Chi tiết và bằng chứng](../../project-audit/CURRENT_IMPLEMENTATION_BASELINE.md#2-bản-đồ-chức-năng-và-giới-hạn).
+
+Các sơ đồ trong [04-sequence-workflows.md](diagrams/04-sequence-workflows.md) mô tả thiết kế v1.2 và cần được đọc cùng đường cơ sở hiện tại.
 
 ---
 
@@ -276,26 +248,17 @@ Danh mục đầy đủ `32` giao diện hệ thống (`INT-001` .. `INT-032`) �
 
 Sơ đồ sở hữu dữ liệu và đối chiếu bảng được trình bày tại [06-data-and-integration-flow.md](diagrams/06-data-and-integration-flow.md).
 
-### 10.1. Chiến lược Cơ sở Dữ liệu và Đối chiếu 36/43 Bảng (`Target vs. Current DB Schema`)
-- **Hệ quản trị CSDL chính:** **PostgreSQL 18** được truy cập qua **Entity Framework Core 10 (`Npgsql`)**.
-- **Hiện trạng trong `BizFlowDbContext.cs` (`SRC-025`):**
-  - Đã triển khai **36 `DbSet<T>`** qua **34 bản migration** (`SRC-026`), bao phủ đầy đủ các phân hệ: Tenant/Workspace (4), Auth/Session (4), Organization/RBAC (7), Service Catalog/Form (4), Request (4), Task/Blocker/Confirmation (5), Workflow core (4), SLA config (3), Notification/Queue/Connection (5), Collaboration/Evidence/Archive (4), Reporting (2), AI (3), Audit/Security (2) *(Lưu ý: một số thực thể dùng chung hoặc mở rộng kỹ thuật nâng tổng số `DbSet` thực tế trong `BizFlowDbContext` lên đúng 36 bảng)*.
-  - **7 bảng mục tiêu chưa được tạo trong `BizFlowDbContext` (`PARTIAL GAP`):**
-    1. `RoutingRule` (`MOD-007` — `OD-001`)
-    2. `ApprovalRule` (`MOD-007` — `OD-002`)
-    3. `ApprovalRuleVersion` (`MOD-007` — `OD-002`)
-    4. `ApprovalInstance` (`MOD-007` — `OD-002`)
-    5. `ApprovalStepInstance` (`MOD-007` — `OD-002`)
-    6. `SLAState` (`MOD-008` — `OD-003`)
-    7. `SLAEvent` (`MOD-008` — `OD-003`)
+### 10.1. Cơ sở dữ liệu và mô hình hiện tại
 
-### 10.2. Các Chốt chặn Bất biến ở Tầng Persistence (`BizFlowDbContext.SaveChangesAsync`)
-Kiểm tra trực tiếp mã nguồn [BizFlowDbContext.cs](../../../backend/BizFlow.Infrastructure/Persistence/BizFlowDbContext.cs) xác nhận 5 cơ chế bảo vệ dữ liệu cốt lõi đã được cài đặt:
-1. **Cấm Lưu Đồng bộ (`No Synchronous SaveChanges`):** Phương thức `SaveChanges(bool)` ném `NotSupportedException("Use SaveChangesAsync to enforce persistence guards.")`.
-2. **Cấm Xóa Cứng (`No Hard Delete`):** Mọi thực thể ở trạng thái `EntityState.Deleted` đều bị chặn với ngoại lệ `PERSISTENCE.HARD_DELETE_DENIED`. Hệ thống chỉ cho phép xóa mềm (`Soft Delete`), hủy (`Cancelled`), vô hiệu hóa (`Inactive`) hoặc lưu trữ (`Archived`).
-3. **Bảo vệ Cột Bất biến (`Immutable Columns Guard`):** Khi cập nhật (`EntityState.Modified`), nếu bất kỳ cột định danh sở hữu nào (`TenantId`, `WorkspaceId`, `CreatedBy`, `CreatedAt`, `RequesterUserId`...) bị thay đổi, hệ thống ném lỗi `PERSISTENCE.IMMUTABLE_FIELD`.
-4. **Cưỡng chế Cổng Workflow cho `WorkTask` (`ValidateTaskWorkflowMutations`):** Nếu bất kỳ cột vòng đời nào của `WorkTask` (`Status`, `WorkflowInstanceId`, `WorkflowStepId`, `CompletedAt`, `CancelledAt`, `ArchivedAt`) bị sửa mà không có dấu xác nhận `HasWorkflowMutation` từ `TaskWorkflowEngine`, giao dịch bị hủy ngay lập tức.
-5. **Cưỡng chế Bất biến Xác nhận Hoàn thành (`ValidateConfirmationInvariants`):** Đảm bảo không thể chuyển `WorkTask` có `RequiresConfirmation = true` sang `Completed` nếu thiếu bản ghi `Confirmation` hợp lệ (`ADR-0004`).
+PostgreSQL được truy cập qua EF Core/Npgsql. Tại commit `61cca5c`, `BizFlowDbContext` khai báo 40 `DbSet`; repository có 37 file migration. Số này không chứng minh số bảng thực tế, version database đang chạy hoặc mức hoàn thành yêu cầu. Tenant filter, persistence guards và các trigger PostgreSQL là những lớp bảo vệ riêng; chi tiết tại [đường cơ sở](../../project-audit/CURRENT_IMPLEMENTATION_BASELINE.md#3-vòng-đời-và-bất-biến-dữ-liệu).
+
+---
+
+### 10.2. Bảo vệ tại tầng persistence
+
+`BizFlowDbContext` có global filters mặc định đóng cho nhiều thực thể tenant và kiểm tra khi gọi `SaveChangesAsync`; một số thực thể con dùng filter thông qua thực thể cha. Lệnh lưu đồng bộ bị chặn. Xóa cứng bị chặn ngoại trừ liên kết `UserRole`/`RolePermission`; một số trường sở hữu bất biến. Chuyển trạng thái Task qua EF chịu kiểm tra `WorkflowMutation`, người thực hiện, trạng thái cũ và dấu thời gian. Một số use case dùng SQL được kiểm soát cho cập nhật nhận phân công. Không xem các guard này là thay thế kiểm tra quyền tại Application hoặc là bằng chứng mọi đường ghi đều an toàn.
+
+Các migration `task_guard`, `task_checklist_guard`, `task_assignment_guard` áp đặt thêm ràng buộc ở PostgreSQL. Mô tả chính xác và liên kết nguồn tại [bất biến dữ liệu](../../project-audit/CURRENT_IMPLEMENTATION_BASELINE.md#3-vòng-đời-và-bất-biến-dữ-liệu).
 
 ---
 
@@ -309,7 +272,7 @@ Kiểm tra trực tiếp mã nguồn [BizFlowDbContext.cs](../../../backend/BizF
 Chi tiết sơ đồ 5 lớp cô lập được minh họa tại [06-data-and-integration-flow.md](diagrams/06-data-and-integration-flow.md):
 - **Lớp 1 — Giao diện & Cổng API (`Edge & Route Layer`):** Angular `tenantGuard` kiểm tra phía trình duyệt; Backend `ClaimsTenantContext` đọc `tenant_id` từ JWT và `TenantMembershipAuthorizer` xác minh người dùng thuộc Tenant đang ở trạng thái `Active`.
 - **Lớp 2 — Chính sách Phạm vi Ứng dụng (`Application Scope Layer`):** Kiểm tra quyền đọc 4 cấp (`tenant`, `managed`, `assigned`, `own` theo `ADR-0011`) và trả về `404 Not Found` khi ngoài phạm vi (`ADR-0012`).
-- **Lớp 3 — Bộ lọc Toàn cục EF Core Fail-Closed (`Global Query Filter Layer`):** `ConfigureTenantFilter<T>` áp dụng biểu thức `x => CurrentUserId != null && CurrentTenantId != null && x.TenantId == CurrentTenantId` cho toàn bộ các bảng dữ liệu thuộc Tenant. Nếu ngữ cảnh rỗng, truy vấn tự động trả về 0 dòng (**Fail-Closed**).
+- **Lớp 3 — Bộ lọc Toàn cục EF Core Fail-Closed (`Global Query Filter Layer`):** `BizFlowDbContext` áp dụng bộ lọc trực tiếp hoặc qua thực thể cha; biểu thức trực tiếp điển hình là `x => CurrentUserId != null && CurrentTenantId != null && x.TenantId == CurrentTenantId` cho toàn bộ các bảng dữ liệu thuộc Tenant. Nếu ngữ cảnh rỗng, truy vấn tự động trả về 0 dòng (**Fail-Closed**).
 - **Lớp 4 — Chốt chặn Ghi (`Persistence Write Guard`):** `AssertTenant` và `EnforceModifyImmutability` trong `BizFlowDbContext.SaveChangesAsync` ngăn chặn việc tạo hoặc chuyển bản ghi sang `TenantId` khác.
 - **Lớp 5 — Lưu trữ Tệp, Cache, SignalR & AI (`Infrastructure & AI Isolation`):** Khóa đối tượng S3/Local phân vùng theo `{tenantId}/...`; khóa Redis phân vùng theo `bizflow:{tenantId}:...`; kết nối SignalR định tuyến theo `TenantId` + `UserId`; `AiContextReader` chỉ nạp dữ liệu trong phạm vi `CurrentTenantId`.
 
@@ -334,78 +297,25 @@ Hệ thống kết hợp **Role-Based Access Control (RBAC)** với **Hierarchic
 
 ---
 
-## 13. Kiến trúc Tích hợp Trí tuệ Nhân tạo (AI Integration Architecture)
+## 13. Kiến trúc tích hợp trí tuệ nhân tạo
 
-Kiến trúc tích hợp AI của hệ thống tuân thủ nghiêm ngặt **`ADR-0008` (AI Integration Boundary and Human Control Contract)** và được hiện thực hóa tại module `MOD-012` (`AiAssistantService`, `AiContextReader`, `AiToolRegistry`, `AiActionDispatcher`, `OpenAiModelClient`).
+Yêu cầu quản trị là AI chỉ truy cập thông tin trong phạm vi người dùng, đề xuất có căn cứ, và người có thẩm quyền quyết định trước khi thực hiện thay đổi nghiệp vụ. [ADR-SSS-009](ARCHITECTURE_DECISIONS.md) và `BR-027`/`BR-028` mô tả yêu cầu này; không nhầm với `ADR-0008` trong `docs/01-decisions`, vốn nói về quyền cập nhật dịch vụ.
 
-### 13.1. Nguyên tắc Cốt lõi: Tư vấn có Kiểm soát của Con người (`Advisory / Human-in-the-Loop`)
-1. **AI không có quyền tự quyết (`No Autonomous State Mutation`):** AI tuyệt đối không được phép tự động phê duyệt/từ chối `RequestRecord`, tự động giao việc, hay tự động chuyển trạng thái `WorkTask` sang `Completed`/`Cancelled`. Mọi đầu ra của AI chỉ được lưu dưới dạng bản ghi đề xuất (`AiSuggestion`).
-2. **Đọc ngữ cảnh theo đúng quyền của người gọi (`Caller-Scoped Context Reading`):** `AiAssistantService` bắt buộc phải lấy dữ liệu đầu vào thông qua `AiContextReader` (`INT-017`). Nếu người dùng gọi AI không có quyền đọc một Request hoặc Task (theo `ADR-0011`), `AiContextReader` sẽ từ chối ngay từ đầu với ngữ nghĩa `404 Not Found` (`ADR-0012`) — ngăn chặn hoàn toàn việc dùng AI để khai thác trái phép dữ liệu nội bộ hoặc dữ liệu liên Tenant.
-3. **Thực thi hành động qua danh sách trắng (`Allowlisted Action Dispatch`):** Chỉ khi người dùng xem xét đề xuất trên giao diện và bấm nút xác nhận áp dụng, `IAiActionDispatcher` (`INT-018`) mới gọi Use Case nghiệp vụ tương ứng dưới danh nghĩa, `CurrentUserId` và `CurrentTenantId` của chính người dùng đó, kèm theo bản ghi `AuditLog`.
-
-### 13.2. Danh mục 9 Tính năng Trợ lý AI (`FR-AI-001` .. `FR-AI-009`)
-
-| Mã Yêu cầu | Tên Tính năng AI | Đầu vào Ngữ cảnh (`AiContextReader`) | Đầu ra Đề xuất (`AiSuggestion`) | Ranh giới Kiểm soát Con người |
-| :--- | :--- | :--- | :--- | :--- |
-| `FR-AI-001` | **Hỗ trợ Tiếp nhận Yêu cầu (`Intake Assist`)** | Mô tả ngôn ngữ tự nhiên của người gửi + Danh mục `ServiceType` & `FormDefinition` của Tenant | Bản nháp các trường biểu mẫu động đã trích xuất | Người gửi phải kiểm tra, chỉnh sửa và tự bấm nút `Submit Request`. |
-| `FR-AI-002` | **Gợi ý Phân loại & Độ ưu tiên (`Classification & Priority`)** | Tiêu đề, mô tả và trường dữ liệu của `RequestRecord` | Loại dịch vụ phù hợp nhất, mức độ ưu tiên (`Priority`) và lý do giải thích | Người dùng/Điều phối viên xác nhận trước khi áp dụng. |
-| `FR-AI-003` | **Phát hiện Thông tin Còn thiếu (`Missing Info Detection`)** | Nội dung `RequestRecord` đối chiếu với `FormDefinition` và ngữ cảnh nghiệp vụ | Danh sách câu hỏi/thông tin cần bổ sung | Người duyệt/Người gửi xem xét và quyết định gửi yêu cầu bổ sung. |
-| `FR-AI-004` | **Gợi ý Định tuyến & Giao việc (`Routing & Assignment`)** | Nội dung Request/Task + Danh sách `Department` trong Tenant | Phòng ban xử lý hoặc quy trình phù hợp | Người điều phối/Trưởng phòng xác nhận lệnh giao việc. |
-| `FR-AI-005` | **Tóm tắt Ngữ cảnh & Lịch sử (`Contextual Summary`)** | Nội dung Request/Task, chuỗi `Comment`, `TaskHistory`, `TaskBlocker` | Bản tóm tắt ngắn gọn tình trạng hiện tại và các mốc chính | Chỉ hiển thị hỗ trợ đọc nhanh, không thay đổi dữ liệu. |
-| `FR-AI-006` | **Đề xuất Hành động Tiếp theo (`Next-Best-Action`)** | Trạng thái hiện tại của `WorkTask`, hạn SLA, bằng chứng đã nộp | Danh sách bước hành động khuyến nghị từ `IAiToolRegistry` | Nhân viên xử lý chọn và xác nhận thực hiện. |
-| `FR-AI-007` | **Phân tích Vướng mắc (`Blocker Analysis`)** | Nội dung `TaskBlocker` đang mở và lịch sử xử lý | Phân tích nguyên nhân gốc rễ và gợi ý hướng tháo gỡ | Trưởng phòng/Nhân viên quyết định phương án xử lý thực tế. |
-| `FR-AI-008` | **Tóm tắt Nhận định Báo cáo (`Report Narrative Summary`)** | Số liệu tổng hợp đã lọc theo `ManagementScope` (`MOD-011`) | Bản nhận định xu hướng khối lượng công việc và điểm nghẽn SLA | Chỉ bao gồm dữ liệu trong phạm vi quyền báo cáo của người gọi. |
-| `FR-AI-009` | **Quản trị Cấu hình AI cấp Tenant (`Tenant AI Governance`)** | Cấu hình `AiConfig` của Tenant | Trạng thái bật/tắt AI hoặc giới hạn tính năng theo từng doanh nghiệp | Chỉ `Company Admin` mới có quyền thay đổi `AiConfig`. |
-
-### 13.3. Xử lý Lỗi Nhà cung cấp, Timeout và Nhật ký Thực thi (`OpenAiModelClient` & `AiExecutionLog`)
-- **Timeout cứng:** `OpenAiModelClient` áp dụng thời gian chờ tối đa cấu hình qua `OpenAi:TimeoutSeconds` (mặc định `45 giây` trong `appsettings.json`).
-- **Chế độ Suy giảm An toàn (`Graceful Fallback` — `SEQ-006`):** Nếu `OpenAi:ApiKey` chưa được cấu hình, hết thời gian chờ `45s`, hoặc OpenAI trả về lỗi `429`/`5xx`, hệ thống tự động chuyển sang bộ gợi ý quy tắc cục bộ (`Deterministic Fallback`) hoặc trả về thông báo trạng thái rõ ràng mà **không bao giờ chặn người dùng thực hiện quy trình thủ công**.
-- **Nhật ký Thực thi AI (`AiExecutionLog`):** Mọi lời gọi AI đều được ghi vào bảng `AiExecutionLogs` (thuộc `MOD-012`) với thông tin: `TenantId`, `UserId`, `FeatureType`, `ModelName`, `LatencyMs`, `Status` (`Succeeded`/`Fallback`/`Failed`), `ErrorCode`.
+Mã có RobotChatService, AiAssistanceService, registry/dispatcher, OpenAI adapter, RAG vector JSONB, proactive scanner và self-reflection. Tuy nhiên, một số đường đọc AI hiện chỉ lọc tenant; dispatcher có thao tác trực tiếp DbContext và `add_comment` không yêu cầu xác nhận trong registry; widget có dữ liệu fallback mẫu. Do đó ranh giới an toàn AI được đánh dấu `PARTIAL`, không phải đã chứng minh tuân thủ toàn bộ. [Chi tiết và bằng chứng](../../project-audit/CURRENT_IMPLEMENTATION_BASELINE.md#4-khoảng-cách-quản-trị-ai-và-tính-trung-thực).
 
 ---
 
 ## 14. Quản lý Trạng thái và Thực thi Quy trình (State Management and Workflow Execution)
 
-### 14.1. Máy Trạng thái Chính tắc của Công việc (`WorkTask` — `ADR-0010`, `ADR-0001..0004`)
-Theo `ADR-0010`, mọi `WorkTask` trong hệ thống chỉ sử dụng **9 trạng thái chính tắc** và được điều khiển độc quyền bởi `TaskWorkflowEngine`:
+### 14.1. Vòng đời công việc
 
-```mermaid
-stateDiagram-v2
-    [*] --> Draft: Tạo bản nháp
-    [*] --> Open: Tạo công việc mở
-    Draft --> Open: Phát hành công việc
-    Draft --> Cancelled: Hủy bản nháp
+Domain định nghĩa 10 trạng thái: `DRAFT`, `ASSIGNED`, `ACCEPTED`, `REJECTED`, `IN_PROGRESS`, `SUBMITTED`, `CONFIRMED`, `COMPLETED`, `CANCELLED`, `OVERDUE`. [TaskLifecyclePolicy](../../../backend/BizFlow.Domain/Tasks/TaskLifecyclePolicy.cs) là chính sách; [TaskWorkflowEngine](../../../backend/BizFlow.Domain/Workflows/TaskWorkflowEngine.cs) và controller hiện chỉ mở một tập con luồng.
 
-    Open --> Assigned: Giao cho Phòng ban (Dept Pool) hoặc Cá nhân (ADR-0002)
-    Open --> Cancelled: Hủy công việc
+Luồng thông thường: `DRAFT → ASSIGNED → ACCEPTED → IN_PROGRESS → SUBMITTED → CONFIRMED → COMPLETED`; xác nhận kết quả trong mã có thể ghi trạng thái cuối `COMPLETED` trực tiếp trong một bước engine. Từ chối kết quả `SUBMITTED → IN_PROGRESS`; công việc `OVERDUE` phải quay về `IN_PROGRESS` trước khi nộp. `REJECTED` biểu thị từ chối nhận việc, không phải từ chối kết quả. Xem [ADR-0003](../../01-decisions/ADR-0003-task-transition-precedence.md), [SRS §8.1](../../requirements/srs/SRS_v1.0_DRAFT.md#81-máy-trạng-thái-vòng-đời-công-việc-task-lifecycle-state-machine--10-trạng-thái-chuẩn) và [bất biến DB](../../project-audit/CURRENT_IMPLEMENTATION_BASELINE.md#3-vòng-đời-và-bất-biến-dữ-liệu).
 
-    Assigned --> InProgress: Nhân viên Claim & Bắt đầu xử lý (ADR-0002)
-    Assigned --> Cancelled: Hủy công việc
+### 14.2. Vòng đời Request
 
-    InProgress --> Blocked: Phát sinh TaskBlocker đang Active (ADR-0003)
-    Blocked --> InProgress: Toàn bộ TaskBlocker đã Resolved/Cancelled (ADR-0003)
-
-    InProgress --> PendingConfirmation: Hoàn tất thực thi (Khi RequiresConfirmation = true per ADR-0004)
-    InProgress --> Completed: Hoàn tất thực thi (Khi RequiresConfirmation = false & đủ Evidence)
-
-    PendingConfirmation --> Completed: Người có thẩm quyền Confirm (Approved per ADR-0004)
-    PendingConfirmation --> InProgress: Người có thẩm quyền Reject (Yêu cầu làm lại per ADR-0004)
-
-    InProgress --> Cancelled: Hủy công việc có lý do
-    Blocked --> Cancelled: Hủy công việc có lý do
-
-    Completed --> Archived: Lưu trữ hồ sơ bất biến (BR-021)
-    Cancelled --> Archived: Lưu trữ hồ sơ bất biến (BR-021)
-```
-
-### 14.2. Máy Trạng thái của Yêu cầu Dịch vụ (`RequestRecord` Lifecycle)
-Vòng đời của `RequestRecord` (`MOD-006`) vận hành đồng bộ với tiến trình phê duyệt và tiến trình thực thi các `WorkTask` liên kết (`RequestTaskLink`):
-- Các trạng thái chính: `Draft` $\rightarrow$ `Submitted` $\rightarrow$ `InReview` (hoặc `WaitingForInfo` $\leftrightarrow$ `InReview`) $\rightarrow$ `Approved` / `Rejected` $\rightarrow$ `InExecution` $\rightarrow$ `Completed` $\rightarrow$ `Closed` $\rightarrow$ `Archived` (hoặc `Cancelled` trước khi hoàn tất).
-- Khi toàn bộ các `WorkTask` bắt buộc gắn với `RequestRecord` đã chuyển sang `Completed`, `RequestRecord` được chuyển sang `Completed`/`Closed`.
-
-### 14.3. Vòng đời Vướng mắc (`TaskBlocker` — `ADR-0003`) và Xác nhận (`Confirmation` — `ADR-0004`)
-- **`TaskBlocker`:** Có 3 trạng thái `Active` $\rightarrow$ `Resolved` | `Cancelled`. Khi có ít nhất một `TaskBlocker` ở trạng thái `Active`, `WorkTask` không thể chuyển sang `PendingConfirmation` hoặc `Completed`.
-- **`Confirmation`:** Có 3 trạng thái `Pending` $\rightarrow$ `Approved` | `Rejected`. `BizFlowDbContext.ValidateConfirmationInvariants()` kiểm tra ở mức giao dịch DB rằng một `WorkTask` có `RequiresConfirmation = true` chỉ có thể mang trạng thái `Completed` khi tồn tại bản ghi `Confirmation` đã `Approved`.
+Request có policy và các command riêng cho tạo, gửi, định tuyến, nhận, bắt đầu, từ chối, hủy, giải quyết, xác nhận và sửa lại. Không suy diễn rằng các bảng/cơ chế Approval nhiều cấp hay workflow được ghim phiên bản đã hoàn chỉnh. Nguồn: [RequestLifecyclePolicy](../../../backend/BizFlow.Domain/Requests/RequestLifecyclePolicy.cs), [RequestsController](../../../backend/BizFlow.Api/Controllers/RequestsController.cs).
 
 ---
 
@@ -416,14 +326,14 @@ Mọi ngoại lệ phát sinh trong pipeline xử lý HTTP đều được bắt
 - Không bao giờ để lộ thông tin nhạy cảm của hạ tầng (như chuỗi kết nối DB hay stack trace chi tiết) ra phản hồi phía client.
 - Luôn đính kèm `traceId` trùng khớp với bản ghi log trong Serilog để phục vụ điều tra sự cố.
 
-### 15.2. Kiểm soát Đồng thời Lạc quan và Tính Lũy đẳng (`ADR-0006`)
+### 15.2. Kiểm soát đồng thời và tính lũy đẳng
 - Các thực thể có tranh chấp cao (như `WorkTask` khi nhiều nhân viên trong phòng ban cùng bấm `Claim`, hoặc hai quản lý cùng duyệt/xác nhận) được bảo vệ bằng kiểm tra phiên bản đồng thời (`Optimistic Concurrency`).
 - Nếu phiên bản dữ liệu đã thay đổi bởi một giao dịch khác, hệ thống từ chối ghi đè và trả về `409 Conflict` để client tải lại trạng thái mới nhất.
 
 ### 15.3. Ranh giới Giao dịch, Khởi tạo Thuê bao Nguyên tử và Hàng đợi Outbox (`Transaction Boundaries, Atomic Provisioning & Outbox`)
-- **Giao dịch nguyên tử (`Atomic DB Transaction`):** Mọi thay đổi trạng thái nghiệp vụ + bản ghi lịch sử (`TaskHistory`/`RequestHistory`) + bản ghi kiểm toán (`AuditLog`) + bản ghi hàng đợi thông báo (`NotificationQueueItem`/`EmailQueueItem`) được cam kết trong **cùng một lần gọi `SaveChangesAsync()`** trên `BizFlowDbContext`.
+- **Giao dịch nghiệp vụ:** Một số use case Task/Request lưu thay đổi, audit và thông báo trong cùng transaction; không suy rộng điều này cho mọi đường ghi AI hay cho các bảng hàng đợi chưa được xác nhận trong mô hình hiện tại.
 - **Khởi tạo Thuê bao và Workspace Nguyên tử (`Atomic Tenant & Workspace Provisioning` per `BR-023`, `ADR-SSS-007`, `OD-024`):** Toàn bộ quy trình kích hoạt doanh nghiệp (chuyển `Company` sang `Active`, khởi tạo `Tenant`, tạo 1 `Workspace` chính duy nhất theo `DEC-WS-001`, và gán vai trò `COMPANY_ADMIN` cho tài khoản người dùng đại diện) phải được bọc trong một Database Transaction nguyên tử (`IDbContextTransaction`). Nếu bất kỳ thao tác nào gặp lỗi (DB deadlock, trùng khóa, gán quyền thất bại), toàn bộ giao dịch lập tức rollback 100%, không để lại dữ liệu rác hay tình trạng Tenant mồ côi không có Workspace/Admin.
-- **Chốt chặn Bất biến Hậu Khởi tạo (`Post-Provisioning Invariant Guard` per `ADR-SSS-007`):** Trước khi `CommitTransactionAsync()`, hệ thống tự động kiểm tra điều kiện nghiệm thu: `Tenant` phải gắn với đúng 1 `Workspace` chính (`CompanyId` unique index) và có tối thiểu 1 người dùng sở hữu vai trò `COMPANY_ADMIN`. Nếu vi phạm bất biến, kích hoạt rollback và trả về lỗi `ONBOARDING.PROVISIONING_ROLLED_BACK`.
+- **Chốt chặn bất biến hậu khởi tạo (`ADR-SSS-007`):** Đây là yêu cầu/đề xuất cần đối chiếu với các quyết định còn mở; chưa xác nhận đầy đủ hành vi và mã lỗi qua kiểm thử đầu-cuối.
 - **Chịu lỗi thành phần ngoài (`Fault Isolation`):** Lỗi từ OpenAI API (`OpenAiModelClient`), Redis (`BizFlowRedisCacheService`) hoặc SMTP không được phép làm hỏng giao dịch cơ sở dữ liệu cốt lõi.
 
 ---
@@ -433,82 +343,42 @@ Mọi ngoại lệ phát sinh trong pipeline xử lý HTTP đều được bắt
 ### 16.1. Nhật ký Cấu trúc JSON và Tương quan Truy vết (`Serilog & TraceId`)
 Trong [Program.cs](../../../backend/BizFlow.Api/Program.cs):
 - Hệ thống cấu hình **Serilog** xuất nhật ký ra `Console` bằng `RenderedCompactJsonFormatter()`.
-- Lớp `TraceIdLogEventEnricher` tự động gắn thuộc tính `TraceId` của `HttpContext` vào mọi dòng log phát sinh trong suốt vòng đời request.
-- Các trường nhạy cảm (`Password`, `AccessToken`, `RefreshToken`, `ApiKey`) không bao giờ được ghi vào log.
+- Request logging bổ sung `TraceId` qua `EnrichDiagnosticContext`; chưa khẳng định mọi dòng log hay mọi đường lỗi đã được kiểm định đầy đủ về dữ liệu nhạy cảm.
 
 ### 16.2. Điểm Kiểm tra Sức khỏe Vận hành (`Health Probes`)
 - **`GET /health/live` (`INT-027`):** Trả về `200 OK` (`{ status: "Live", timestampUtc }`) xác nhận tiến trình web đang hoạt động.
 - **`GET /health/ready` (`INT-027`):** Gọi `DatabaseReadinessProbe.CheckAsync()` để kiểm tra kết nối thực tế tới PostgreSQL; trả về `200 OK` khi sẵn sàng hoặc `503 Service Unavailable` khi cơ sở dữ liệu chưa sẵn sàng.
 
 ### 16.3. Ba Tầng Nhật ký Kiểm toán Bất biến (`Immutable Audit Trail`)
-1. **Nhật ký Kiểm toán Nghiệp vụ & Nền tảng (`AuditLogs` — `MOD-013`):** Lưu vết người thực hiện (`ActorUserId`), hành động (`Action`), loại thực thể (`EntityType`), khóa thực thể (`EntityId`), dữ liệu trước/sau (`BeforeJson`/`AfterJson`), `TenantId` và `TraceId`.
-2. **Nhật ký Sự kiện Bảo mật (`SecurityEvents` — `MOD-013`):** Lưu vết đăng nhập thành công/thất bại, thu hồi phiên, thay đổi mật khẩu, vi phạm ranh giới quyền/tenant.
-3. **Nhật ký Thực thi AI (`AiExecutionLogs` — `MOD-012`):** Lưu vết toàn bộ các lệnh gọi mô hình AI, độ trễ, trạng thái thành công/fallback và lỗi.
+1. **Audit nghiệp vụ/nền tảng:** `AuditLog` ghi các sự kiện và dữ liệu liên quan theo từng use case; chưa khẳng định mọi thay đổi đều được audit đầy đủ.
+2. **Sự kiện bảo mật:** các luồng xác thực và từ chối quyền có cơ chế ghi nhận; phạm vi cần đối chiếu theo từng luồng.
+3. **Tương tác AI:** `AIInteraction`, `AIRecommendation`, `AIAgentAction` lưu một số tương tác và quyết định; không khẳng định mọi lời gọi AI đều có đủ ba bản ghi.
 
 ---
 
-## 17. Kiến trúc Triển khai và Hạ tầng (Deployment and Infrastructure View)
+## 17. Kiến trúc triển khai và hạ tầng
 
-Chi tiết sơ đồ triển khai mục tiêu (`Target Production Topology`) và sơ đồ môi trường hiện tại (`Current Developer Topology`) được trình bày tại [05-deployment-view.md](diagrams/05-deployment-view.md).
+Backend API dùng Kestrel và có profile HTTP cục bộ cổng 5154; frontend chạy Angular dev server hoặc đóng gói cùng hạ tầng triển khai. Compose mô tả PostgreSQL 18.3, Redis 7 và S3-compatible/MinIO; các cổng là giá trị cấu hình, không khẳng định môi trường nào đang hoạt động. Có `ProactiveAgentDaemon` được đăng ký; chưa xác nhận worker quét/gửi deadline reminder hoàn chỉnh. Email password-reset worker chỉ được đăng ký khi thỏa cấu hình của nó. [Program](../../../backend/BizFlow.Api/Program.cs), [Compose](../../../deploy/docker-compose.yml), [PasswordResetRegistration](../../../backend/BizFlow.Api/Security/PasswordResetRegistration.cs).
 
-| Thành phần Hạ tầng | Vai trò trong Kiến trúc Triển khai | Cấu hình Mục tiêu (`Production/Staging`) | Cấu hình Hiện tại (`Local Repo`) |
-| :--- | :--- | :--- | :--- |
-| **Ingress / Reverse Proxy** | Chấm dứt TLS (`HTTPS`/`WSS`), phân phối tải và phục vụ tài nguyên tĩnh | Nginx / Cloud Ingress Controller (TLS 1.2/1.3) | Chạy trực tiếp qua Kestrel (`localhost:5120`) và Angular Dev Server (`localhost:4200`) |
-| **Application Host (`BizFlow.Api`)** | Thực thi REST API + SignalR `NotificationHub` | Container `.NET 10` không trạng thái (Stateless), có thể nhân bản nhiều instance | Tiến trình `dotnet run --project backend/BizFlow.Api` |
-| **Background Worker (`MOD-BG-001`)** | Quét hạn SLA, gửi email từ `EmailQueueItems`, xử lý `ReportExportJobs` | Hangfire Server / Worker Container độc lập (`ADR-SSS-002`) | Chưa đăng ký trong `Program.cs` (`OD-020`) |
-| **Primary Database (`PostgreSQL 18`)** | Lưu trữ dữ liệu giao dịch quan hệ có cô lập `TenantId` | Cụm PostgreSQL 18 có sao lưu định kỳ và kết nối nội bộ | PostgreSQL cục bộ (`localhost:5432`, DB `bizflow_db`, 34 migrations) |
-| **Distributed Cache (`Redis`)** | Bộ nhớ đệm phân tán, bộ đếm Rate Limit, SignalR Backplane | Cụm Redis nội bộ có xác thực mật khẩu | Redis cục bộ (`localhost:6379`, prefix `bizflow:`) |
-| **Object Storage (`MinIO / S3`)** | Lưu trữ tệp đính kèm và bằng chứng hoàn thành | Bucket riêng tư trên MinIO hoặc AWS S3 (`Storage:Provider = S3`) | `LocalStorageProvider` (`App_Data/storage` khi `Storage:Provider = Local`) |
+## 18. Quản lý cấu hình và môi trường
+
+Cấu hình phụ thuộc vào environment variables, profile và file cấu hình local. `ConnectionStrings:BizFlow`, JWT, provider lưu trữ, OpenAI, Redis, SMTP và Firebase phải được xem theo từng môi trường; không ghi giá trị bí mật vào tài liệu. Profile hiện chọn DB `bizflow` qua cổng 5433, còn mặc định compose có thể khác. [Profile](../../../backend/BizFlow.Api/Properties/launchSettings.json), [hướng dẫn triển khai](../../../deploy/README.md).
 
 ---
 
-## 18. Quản lý Cấu hình và Môi trường (Configuration and Environment Management)
+## 19. Thuộc tính chất lượng và trạng thái
 
-Đối chiếu trực tiếp từ [appsettings.json](../../../backend/BizFlow.Api/appsettings.json) và [Program.cs](../../../backend/BizFlow.Api/Program.cs), hệ thống phân tách rõ cấu hình theo các nhóm khóa chuẩn:
+| Thuộc tính | Yêu cầu | Đối chiếu hiện tại |
+|---|---|---|
+| Cô lập tenant và phân quyền | Lọc tenant, kiểm tra quyền hành động và phạm vi hồ sơ. | Có nhiều lớp bảo vệ; một số đường AI cần kiểm chứng thêm phạm vi. |
+| Toàn vẹn và lịch sử | Bảo vệ vòng đời, ngăn xóa lịch sử, audit. | Có policy, persistence guards và trigger; từng luồng còn phải được xác minh độc lập. |
+| AI có kiểm soát | Ngữ cảnh theo quyền; hành động nghiệp vụ do người có thẩm quyền xác nhận. | `PARTIAL`: xem [các khoảng cách cụ thể](../../project-audit/CURRENT_IMPLEMENTATION_BASELINE.md#4-khoảng-cách-quản-trị-ai-và-tính-trung-thực). |
+| Tin cậy và thông báo | Không bịa dữ liệu; phát nhắc hạn và xử lý lỗi rõ ràng. | `PARTIAL`: widget có fallback dữ liệu mẫu; chưa thấy worker nhắc hạn đầy đủ. |
+| Quan sát và vận hành | Có log, liveness/readiness và kiểm thử. | Có mã tương ứng; chưa chứng minh toàn bộ chỉ tiêu vận hành hay nghiệm thu production. |
 
-| Nhóm Khóa Cấu hình | Các Tham số Chính | Nguồn Cấp phát ở Production | Hành vi Dự phòng / Bảo mật |
-| :--- | :--- | :--- | :--- |
-| `ConnectionStrings` | `DefaultConnection` (PostgreSQL), `Redis` | Biến môi trường / Secret Manager | Nếu thiếu kết nối DB, `/health/ready` báo `503`; nếu Redis lỗi, `BizFlowRedisCacheService` fallback an toàn. |
-| `Jwt` | `Issuer`, `Audience`, `SigningKey`, `AccessTokenMinutes` (`30`), `RefreshTokenDays` (`14`) | Secret Manager (`Jwt__SigningKey`) | Tuyệt đối không dùng khóa ký mẫu của môi trường dev trên Production (`SEC-AUTH-002`). |
-| `BootstrapAdmin` | `Email`, `FullName`, `Password` | Biến môi trường khởi tạo lần đầu | Dùng để khởi tạo tài khoản `Platform Super Admin` ban đầu. |
-| `Storage` | `Provider` (`Local` \| `S3` \| `MinIO`), `LocalRootPath`, `BucketName`, `Endpoint`, `AccessKey`, `SecretKey` | Biến môi trường / IAM Role | Tự động chọn `S3CompatibleStorageProvider` hoặc `LocalStorageProvider` trong `Program.cs`. |
-| `OpenAi` | `Enabled`, `BaseUrl`, `ApiKey`, `Model` (`gpt-4.1-mini`), `TimeoutSeconds` (`45`) | Secret Manager (`OpenAi__ApiKey`) | Nếu `ApiKey` rỗng hoặc `Enabled = false`, `AiAssistantService` chuyển sang chế độ fallback cục bộ mà không gây lỗi hệ thống. |
-| `Cors` | `AllowedOrigins` | Biến môi trường theo tên miền | Chỉ cho phép các origin giao diện web hợp lệ gọi API và kết nối SignalR. |
+## 20. Kiến trúc kiểm thử và xác minh
 
----
-
-## 19. Thuộc tính Chất lượng và Chiến thuật Kiến trúc (Quality Attributes and Architectural Tactics)
-
-Bảng dưới đây định nghĩa các chiến thuật kiến trúc có mã định danh (`ARCH-*`) để đáp ứng toàn bộ các yêu cầu phi chức năng (`NFR-*`) và bảo mật (`SEC-*`) của SRS:
-
-| Mã Chiến thuật | Lĩnh vực Chất lượng | Chiến thuật Kiến trúc Cụ thể (`Architectural Tactic`) | Thành phần Thực thi trong Hệ thống | Yêu cầu SRS Đáp ứng | Trạng thái |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| `ARCH-TEN-001` | **Multi-Tenant Isolation** | Cô lập đa thuê bao 5 lớp (`Route Guard` $\rightarrow$ `TenantMembershipAuthorizer` $\rightarrow$ `Scoped Policy` $\rightarrow$ `Fail-Closed EF Query Filter` $\rightarrow$ `SaveChangesAsync Write Guard`). | `TenantMembershipAuthorizer.cs`, `BizFlowDbContext.cs` | `SEC-TEN-001`, `SEC-TEN-002`, `SEC-TEN-003`, `DR-001` | `IMPLEMENTED` |
-| `ARCH-SEC-001` | **Authentication & Session Control** | Xác thực JWT ngắn hạn kết hợp kiểm tra trạng thái phiên (`UserSession`) và trạng thái `Tenant` (`Active`) tức thời trên mỗi request và kết nối SignalR (`CloseOnAuthenticationExpiration`). | `AuthController.cs`, `ClaimsTenantContext.cs`, `NotificationHub.cs` | `SEC-AUTH-001`, `SEC-AUTH-002`, `FR-AUTH-001..005` | `IMPLEMENTED` |
-| `ARCH-SEC-002` | **Scoped Authorization & Non-Revealing 404** | Phân quyền đọc 4 cấp (`tenant`, `managed`, `assigned`, `own`) kết hợp duyệt cây phòng ban (`BR-003`) và trả về `404 Not Found` khi truy cập ngoài phạm vi để chống dò quét ID (`ADR-0011`, `ADR-0012`). | `TaskService`, `RequestService`, `OrganizationService`, `ApiExceptionHandler.cs` | `SEC-AUTHZ-001`, `SEC-AUTHZ-002`, `FR-TSK-008` | `IMPLEMENTED` |
-| `ARCH-SEC-003` | **Data & Object Storage Protection** | Cấm xóa cứng (`HARD_DELETE_DENIED`), khóa cột bất biến (`IMMUTABLE_FIELD`), cô lập khóa lưu trữ tệp theo `{tenantId}/` và kiểm soát quyền trước khi tải tệp. | `BizFlowDbContext.cs`, `S3CompatibleStorageProvider.cs`, `LocalStorageProvider.cs` | `SEC-DATA-001`, `SEC-DATA-002`, `SEC-DATA-003` | `IMPLEMENTED` |
-| `ARCH-AI-001` | **Safe Human-in-the-Loop AI** | Đọc ngữ cảnh qua `AiContextReader` theo quyền người gọi, giới hạn công cụ qua `IAiToolRegistry`, áp dụng timeout `45s`, fallback an toàn và bắt buộc người dùng xác nhận qua `IAiActionDispatcher` (`ADR-0008`). | `AiAssistantService.cs`, `AiContextReader.cs`, `AiActionDispatcher.cs`, `OpenAiModelClient.cs` | `SEC-AI-001`, `SEC-AI-002`, `NFR-REL-003`, `FR-AI-001..009` | `IMPLEMENTED` |
-| `ARCH-REL-001` | **Workflow State & Concurrency Integrity** | Tập trung toàn bộ quyền sửa vòng đời `WorkTask` về `TaskWorkflowEngine` (`ADR-0001`), kiểm tra bất biến xác nhận (`ADR-0004`) và kiểm soát đồng thời lạc quan (`ADR-0006`). | `TaskWorkflowEngine.cs`, `BizFlowDbContext.cs` | `NFR-REL-001`, `DR-008`, `DR-009` | `IMPLEMENTED` |
-| `ARCH-REL-002` | **Transactional Outbox & Graceful Degradation** | Ghi hàng đợi `NotificationQueueItems` và `EmailQueueItems` trong cùng giao dịch DB; tách rời việc gửi SMTP/SignalR và bắt lỗi Redis/OpenAI để không làm gián đoạn luồng nghiệp vụ chính. | `BizFlowDbContext.cs`, `BizFlowRedisCacheService.cs`, `MOD-BG-001` | `NFR-REL-002`, `NFR-AVAIL-001` | `PARTIAL` (Outbox tables `IMPLEMENTED`; Worker `PROPOSED`) |
-| `ARCH-PERF-001` | **Pagination, Indexing & Distributed Caching** | Phân trang bắt buộc trên toàn bộ truy vấn danh sách, đánh chỉ mục tổ hợp theo `(TenantId, Status, ...)` trên PostgreSQL và đệm dữ liệu cấu hình qua `BizFlowRedisCacheService`. | `BizFlowDbContext.cs`, `BizFlowRedisCacheService.cs`, Controllers | `NFR-PERF-001`, `NFR-PERF-002`, `NFR-PERF-003`, `NFR-SCAL-001` | `IMPLEMENTED` |
-| `ARCH-OBS-001` | **Structured Observability & Immutable Audit** | Ghi log Serilog Compact JSON kèm `TraceId`, cung cấp `/health/live` & `/health/ready`, và cưỡng chế bảng `AuditLogs`, `SecurityEvents`, `TaskHistories`, `RequestHistories` ở chế độ chỉ ghi thêm (`Append-Only`). | `Program.cs`, `TraceIdLogEventEnricher.cs`, `DatabaseReadinessProbe.cs`, `BizFlowDbContext.cs` | `NFR-OBS-001`, `NFR-OBS-002`, `SEC-AUD-001`, `SEC-AUD-002`, `DR-015` | `IMPLEMENTED` |
-| `ARCH-MNT-001` | **Clean Modular Monolith & Contract Standardization** | Phân tách 13 module nghiệp vụ trong 4 project `.NET 10` không phụ thuộc ngược chiều, chuẩn hóa phản hồi lỗi `ProblemDetails` và chuẩn bị sẵn cột `WorkspaceId` cho lộ trình nâng cấp Enterprise (`DEC-WS-001`). | `BizFlow.slnx`, `ApiExceptionHandler.cs`, `frontend/` | `NFR-MAINT-001`, `NFR-MAINT-002`, `NFR-PORT-001`, `NFR-USE-001..002` | `IMPLEMENTED` |
-
-> **Lưu ý về các chỉ số định lượng (`Quantitative Metrics Note`):** Tuân thủ quy tắc không tự bịa số liệu cam kết khi chưa có phê duyệt chính thức, các thông số định lượng vận hành (như mục tiêu `p95`/`p99` ms cụ thể, `SLO %`, `RPO`/`RTO`, hạn mức token AI mỗi tháng và kích thước tệp tối đa) không bị gán cứng giả tạo làm cam kết thương mại mà được quản lý minh bạch tại [OPEN_DECISIONS.md](OPEN_DECISIONS.md) (`OD-006`, `OD-008..012`). Trong mã nguồn hiện tại, các thông số kỹ thuật đã có bằng chứng cấu hình cụ thể bao gồm: `Jwt:AccessTokenMinutes = 30`, `Jwt:RefreshTokenDays = 14`, `OpenAi:TimeoutSeconds = 45`.
-
----
-
-## 20. Kiến trúc Kiểm thử và Xác minh Thiết kế (Testing and Verification Architecture)
-
-Hệ thống sở hữu kiến trúc kiểm thử tự động 2 tầng trong [BizFlow.slnx](../../../BizFlow.slnx), ánh xạ trực tiếp tới 30 nhóm kịch bản kiểm thử (`TST-001..030`) của SRS:
-
-1. **Tầng Kiểm thử Đơn vị (`backend/BizFlow.UnitTests/` — 10 test suites):**
-   - Kiểm chứng độc lập các quy tắc miền và máy trạng thái trong `TaskWorkflowEngine`, `RequestService`, `OrganizationService`, `SlaService`, `ReportingService`, `AiAssistantService`.
-2. **Tầng Kiểm thử Tích hợp và Bất biến Kiến trúc (`backend/BizFlow.IntegrationTests/` — 22 test suites):**
-   - **Kiểm thử Cô lập Đa Thuê bao (`TenantIsolation`):** Xác minh người dùng của `Tenant A` không thể đọc, sửa, xóa hoặc dùng AI truy cập bất kỳ bản ghi nào của `Tenant B`.
-   - **Kiểm thử Phân quyền Đọc theo Phạm vi & Ngữ nghĩa `404` (`ADR-0011` & `ADR-0012`):** Xác minh `tasks.read.tenant`, `tasks.read.managed` (cây phòng ban `BR-003`), `tasks.read.assigned`, `tasks.read.own` và phản hồi `404 Not Found` khi truy cập ngoài phạm vi.
-   - **Kiểm thử Chốt chặn Persistence (`PersistenceGuards`):** Xác minh gọi `Remove()` bị chặn bởi `PERSISTENCE.HARD_DELETE_DENIED`, sửa `TenantId` bị chặn bởi `PERSISTENCE.IMMUTABLE_FIELD`, và sửa `WorkTask.Status` ngoài `TaskWorkflowEngine` bị chặn bởi `ValidateTaskWorkflowMutations`.
-   - **Kiểm thử Ranh giới AI (`AiIntegrationBoundary`):** Xác minh `AiContextReader`, timeout/fallback và nguyên tắc không tự động sửa dữ liệu khi chưa có xác nhận của người dùng (`ADR-0008`).
+Bộ kiểm thử gồm unit test, integration test với PostgreSQL container riêng và Playwright (mock hoặc API thật qua harness). Ngày 01/11/2026, **495 unit test backend đạt, không bỏ qua**; integration, frontend và E2E chưa chạy trong lượt cập nhật này. Không suy ra trigger hoặc daemon ngoài HTTP hoạt động từ test InMemory. [Phạm vi và bằng chứng](../../project-audit/CURRENT_IMPLEMENTATION_BASELINE.md#5-kiểm-thử-và-giới-hạn-xác-minh).
 
 ---
 
@@ -533,17 +403,14 @@ Chi tiết đầy đủ của toàn bộ 21 quyết định kiến trúc đượ
 
 ## 22. Rủi ro Kiến trúc, Ràng buộc và Quyết định Mở (Risks, Constraints, and Open Decisions)
 
-### 22.1. Danh mục Rủi ro Kiến trúc Trọng yếu (`RSK-001` .. `RSK-007`)
+### 22.1. Rủi ro và giới hạn đã quan sát
 
-| Mã Rủi ro | Mô tả Rủi ro Kiến trúc | Mức độ Ảnh hưởng | Biện pháp Giảm thiểu trong Kiến trúc (`Mitigation`) | Quyết định / Chiến thuật Liên quan |
-| :--- | :--- | :--- | :--- | :--- |
-| `RSK-001` | **Nguy cơ rò rỉ dữ liệu liên doanh nghiệp** nếu lập trình viên viết truy vấn mới quên điều kiện lọc `TenantId`. | `CRITICAL` | Cưỡng chế bộ lọc toàn cục Fail-Closed `ConfigureTenantFilter<T>` tại `BizFlowDbContext` và chốt chặn `AssertTenant` khi ghi. | `ADR-SSS-001`, `ARCH-TEN-001` |
-| `RSK-002` | **Nguy cơ lộ dữ liệu qua Prompt AI** hoặc AI tự ý thay đổi trạng thái công việc sai quy định. | `HIGH` | Bắt buộc đi qua `AiContextReader` (áp dụng đúng quyền của người gọi) và cấm AI ghi trực tiếp vào bảng nghiệp vụ (`ADR-0008`, `BR-028`). | `ADR-0008`, `ADR-SSS-009`, `ARCH-AI-001` |
-| `RSK-003` | **Chưa có tiến trình Background Worker chạy tự động trong `Program.cs`** khiến `EmailQueueItems`, `NotificationQueueItems`, `ReportExportJobs`, lịch nhắc hạn và cảnh báo quá hạn SLA chưa được quét định kỳ. | `HIGH` | Đã có sẵn các bảng hàng đợi trong PostgreSQL; cần phê duyệt và gắn `IHostedService` / Hangfire Server theo `ADR-SSS-002` và `OD-020`. | `ADR-SSS-002`, `ADR-SSS-010`, `OD-020`, `OD-032` |
-| `RSK-004` | **Thiếu 7 bảng dữ liệu runtime của Routing, Approval và SLA** (`RoutingRule`, `Approval*`, `SLAState`, `SLAEvent`) trong `BizFlowDbContext`. | `MEDIUM` | Đã cô lập rõ phạm vi trong `MOD-007` và `MOD-008`; bổ sung migration theo thiết kế tại `ADR-SSS-003` và `ADR-SSS-004`. | `OD-001`, `OD-002`, `OD-003` |
-| `RSK-005` | **Sự cố hoặc độ trễ cao từ OpenAI API bên ngoài** làm ảnh hưởng trải nghiệm người dùng. | `MEDIUM` | Áp dụng timeout cứng `45s` tại `OpenAiModelClient`, Rate Limiter riêng và cơ chế `Deterministic Fallback` không chặn luồng thủ công. | `ADR-0008`, `SEQ-006`, `ARCH-REL-002` |
-| `RSK-006` | **Xung đột đồng thời khi nhiều nhân viên trong cùng phòng ban bấm `Claim` một công việc** cùng lúc. | `MEDIUM` | Áp dụng kiểm soát đồng thời lạc quan (`Optimistic Concurrency`) và kiểm tra trạng thái phân công hiện hành trong `TaskWorkflowEngine` (`ADR-0002`, `ADR-0006`). | `ADR-0002`, `ADR-0006`, `ARCH-REL-001` |
-| `RSK-007` | **Khởi tạo Tenant/Workspace dở dang hoặc cấp quyền Admin ban đầu thất bại** dẫn đến Tenant mồ côi, không có Workspace chính hoặc quản trị viên không thể đăng nhập. | `HIGH` | Bọc toàn bộ quy trình kích hoạt/onboarding trong 1 Transaction nguyên tử duy nhất; áp dụng cơ chế tự động rollback và chốt chặn Post-Provisioning Invariant Guard. | `ADR-SSS-007`, `BR-023`, `OD-024` |
+- Một số đường AI đọc theo tenant nhưng chưa chứng minh quyền đọc theo từng hồ sơ; có dispatcher ghi trực tiếp và công cụ không yêu cầu xác nhận.
+- Daemon chủ động được đăng ký nhưng có nguy cơ không thấy dữ liệu do thiếu ngữ cảnh người dùng/tenant; nhắc hạn đa kênh chưa có bằng chứng worker đầy đủ.
+- Fallback widget và màn hình theo dõi SLA có dữ liệu mẫu; không được dùng như số liệu vận hành thật.
+- Các mã yêu cầu/ADR ở một số tài liệu không thống nhất; các thống kê cũ không thay thế bằng chứng kiểm thử hiện tại.
+
+Nguồn và điều kiện kiểm chứng tại [đường cơ sở triển khai](../../project-audit/CURRENT_IMPLEMENTATION_BASELINE.md).
 
 ### 22.2. Tham chiếu Sổ đăng ký 32 Quyết định Mở (`OD-001` .. `OD-032`)
 Toàn bộ 32 quyết định mở (`OD-001` .. `OD-032`), bao gồm các phương án lựa chọn, phương án khuyến nghị (`PROPOSED — NOT APPROVED`), tác động và người chịu trách nhiệm phê duyệt được đặc tả đầy đủ tại [OPEN_DECISIONS.md](OPEN_DECISIONS.md).
@@ -614,7 +481,7 @@ Bảng dưới đây được trích xuất trực tiếp từ [frontend/src/app
 | **Primary Workspace (Không gian làm việc chính)** | Không gian làm việc duy nhất của mỗi Tenant trong phạm vi MVP (`DEC-WS-001`), được định danh bởi `WorkspaceId`. |
 | **Service Type & Form Definition** | Loại dịch vụ nội bộ (ví dụ: Cấp quyền GitLab) và định nghĩa biểu mẫu trường dữ liệu động có quản lý phiên bản (`MOD-004`). |
 | **RequestRecord (Yêu cầu nội bộ)** | Hồ sơ yêu cầu dịch vụ do nhân viên tạo và gửi để được xét duyệt và thực thi (`MOD-006`). |
-| **WorkTask (Công việc thực thi)** | Đơn vị công việc cụ thể được giao cho phòng ban hoặc cá nhân xử lý, tuân thủ 9 trạng thái chính tắc của `ADR-0010` (`MOD-005`). |
+| **WorkTask (Công việc thực thi)** | Đơn vị công việc cụ thể được giao cho phòng ban hoặc cá nhân xử lý, tuân thủ 10 trạng thái được khai báo trong `TaskLifecyclePolicy` (`MOD-005`). |
 | **Department Pool & Claim (`ADR-0002`)** | Cơ chế giao một `WorkTask` về hàng đợi chung của một phòng ban (`OwnerDepartmentId`) để một thành viên trong phòng ban đó chủ động nhận việc (`Claim`). |
 | **TaskBlocker (`ADR-0003`)** | Bản ghi vướng mắc làm tạm dừng tiến độ của một `WorkTask` (chuyển sang `Blocked`) cho đến khi được tháo gỡ (`Resolved`/`Cancelled`). |
 | **Confirmation (`ADR-0004`)** | Bước xác nhận chất lượng kết quả hoàn thành đối với các `WorkTask` có `RequiresConfirmation = true` trước khi đóng công việc. |

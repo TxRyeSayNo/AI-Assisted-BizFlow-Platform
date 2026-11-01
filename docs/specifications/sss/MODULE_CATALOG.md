@@ -1,5 +1,7 @@
 # Danh mục Phân rã Module Hệ thống (System Module Catalog)
 
+> **Lưu ý đối chiếu 01/11/2026:** Nội dung và trạng thái còn lại của tài liệu này phản ánh snapshot lịch sử; không xem là bằng chứng nghiệm thu hiện tại. Xem [đường cơ sở tại commit `61cca5c`](../../project-audit/CURRENT_IMPLEMENTATION_BASELINE.md) cho hiện trạng, nguồn mã và giới hạn xác minh. Không thay đổi trạng thái quyết định chưa được phê duyệt.
+
 - **Mã tài liệu:** `SSS-MOD-v1.2`
 - **Phiên bản:** `1.2-DRAFT`
 - **Thuộc bộ tài liệu:** [SSS_v1.0_DRAFT.md](SSS_v1.0_DRAFT.md) — Mục 6, Mục 7 & Mục 10

@@ -1,69 +1,24 @@
-# Báo cáo Kiểm toán Toàn diện Dự án (Project Audit Report)
+# Báo cáo đối chiếu dự án
 
-- **Dự án:** AI-Assisted BizFlow Platform
-- **Mã tài liệu:** `BIZFLOW-AUDIT-v1.0`
-- **Ngày lập:** `2026-10-19`
-- **Nhóm đánh giá:** Nhóm Chuyên gia Kỹ thuật Cấp cao (Master Prompt, Senior PM, BA, Requirements, System Analyst, Architect, Fullstack, Database, AI, QA, DevOps)
-- **Tài liệu đối chiếu nguồn:**
-  - `docs/requirements/rds/` (`RDS_v1.0_DRAFT.md`, `REQUIREMENTS_CATALOG.csv`, `USE_CASES.md`, `OPEN_DECISIONS.md`)
-  - `docs/requirements/srs/` (`SRS_v1.0_DRAFT.md`, `REQUIREMENTS_CATALOG.csv`, `REQUIREMENTS_TRACEABILITY.md`, `OPEN_DECISIONS.md`)
-  - `docs/specifications/sss/` (`SSS_v1.0_DRAFT.md`, `MODULE_CATALOG.md`, `INTERFACE_CATALOG.md`, `ARCHITECTURE_DECISIONS.md`, `OPEN_DECISIONS.md`)
-  - Source code hiện hành tại `backend/`, `frontend/`, `tests/`, `deploy/`.
+- **Ngày cập nhật:** 01/11/2026; mã nguồn tại commit `61cca5c`.
+- **Phạm vi:** đối chiếu tĩnh các luồng, cấu hình và kiểm thử trọng yếu. [Đường cơ sở triển khai](CURRENT_IMPLEMENTATION_BASELINE.md) chứa bằng chứng theo chức năng và giới hạn chi tiết.
+- **Lưu ý:** báo cáo không chứng nhận an toàn, hoàn thành MVP hay 100% nghiệm thu. Các bản audit trước phản ánh snapshot lịch sử; không được dùng kết quả của chúng như kết quả test hiện tại.
 
----
+## Hiện trạng
 
-## 1. Tóm tắt Điều hành (Executive Summary)
+Hệ thống dùng Modular Monolith .NET 10, Angular 22, PostgreSQL, Redis và S3-compatible storage. Có mã cho xác thực/tenant, tổ chức, Task, Request, danh mục, workflow/SLA, thông báo, cộng tác, báo cáo và AI. Tại commit đối chiếu: 26 file controller, 40 DbSet và 37 file migration không tính designer/snapshot; đây không phải số bảng hoặc tỷ lệ hoàn thành.
 
-Nền tảng **AI-Assisted BizFlow Platform** là giải pháp SaaS B2B đa thuê bao (Multi-Tenant) phục vụ quản lý và điều phối luồng công việc nội bộ (yêu cầu dịch vụ, phân công công việc, quy trình phê duyệt, cam kết mức dịch vụ SLA và trợ lý AI).
+Các endpoint đăng ký, thẩm định company, tạo/sửa phòng ban và người dùng hiện đã có mã, khác báo cáo ngày 19/10. Trạng thái của từng yêu cầu vẫn là `PARTIAL` khi chưa chứng minh đầy đủ tiêu chí đầu-cuối, phân quyền và rollback. Workflow phê duyệt nhiều cấp, đồng hồ SLA runtime và cơ chế nhắc hạn tự động chưa có đủ bằng chứng hoàn chỉnh.
 
-### Hiện trạng Baseline của Dự án:
-1. **Kiến trúc Tổng thể:** Tuân thủ mô hình **Modular Monolith** phân tầng rõ ràng:
-   - Backend: ASP.NET Core .NET 10, Entity Framework Core 10, C# 13/14.
-   - Frontend: Angular 22 Single Page Application, TypeScript 5, Angular Material, GRID Design System.
-   - Database: PostgreSQL 18 với 34 EF Core Migrations, 37 bảng quan hệ.
-   - Cache: Redis 7 phân vùng khóa theo `TenantId`.
-   - Storage: S3 / MinIO (qua drop-in container `pgsty/silo`) hỗ trợ tải lên 3 bước tới 500 MB kèm băm SHA-256.
-   - AI: Tích hợp OpenAI API phía backend với 10 use case AI (Human-in-the-Loop, không tự trị).
-2. **Kiểm thử Tự động Baseline:**
-   - Backend: 405/405 Unit Tests đạt 100% Green.
-   - Frontend: 205/205 Component & Service Tests đạt 100% Green.
-   - Build Production: Frontend đóng gói thành công 0 lỗi.
-   - Health Probes: `/health/live` và `/health/ready` đạt HTTP 200 OK.
-3. **Mô hình Đa Thuê bao & Bảo mật:**
-   - Áp dụng triệt để nguyên tắc `1 Company = 1 Primary Tenant` trong MVP (`DEC-WS-001`).
-   - Cưỡng chế phòng vệ 5 lớp (`ADR-SSS-001`), bộ lọc EF Core Fail-Closed `TenantId == CurrentTenantId`.
-   - Cấm xóa cứng lịch sử (`PERSISTENCE.HARD_DELETE_DENIED`) và bảo vệ trường định danh bất biến (`PERSISTENCE.IMMUTABLE_FIELD`).
+Robot đã có chat, phân rã, xem/xóa nhánh và xác nhận gửi lẻ/hàng loạt. RAG lưu JSONB và tính cosine trong ứng dụng; có daemon chủ động và self-reflection. Các giới hạn đáng chú ý là phạm vi đọc ở một số đường AI, dispatcher ghi trực tiếp, claim AI không đồng nhất, daemon thiếu ngữ cảnh, fallback dữ liệu mẫu và lưu lịch sử chat chưa phân vùng tenant/user. Các điểm này là quan sát tĩnh, không thay thế kiểm thử khai thác hoặc E2E.
 
----
+## Kiểm thử
 
-## 2. Khoảng trống Triển khai Cốt lõi (Critical Gaps Identified)
+Ngày 01/11/2026: unit test backend `dotnet test tests/BizFlow.UnitTests/BizFlow.UnitTests.csproj --no-restore --verbosity quiet` đạt **495/495**, 0 bỏ qua. Chưa chạy integration PostgreSQL, frontend hay E2E trong lượt cập nhật tài liệu. Các test AI dùng InMemory không xác minh trigger hoặc daemon ngoài HTTP.
 
-Đối chiếu với 63 Yêu cầu Chức năng (`FR-*`), 28 Giao diện (`INT-*`) và 13 Ca sử dụng (`UC-*`):
+## Tài liệu và trạng thái quyết định
 
-### 1. Mô-đun M02 — Quản lý Đăng ký Doanh nghiệp (`FR-TEN-001`, `FR-TEN-002`, `FR-TEN-003`, `IR-UI-004`)
-- **Hiện trạng:** Bảng `Company` và `Tenant` đã tồn tại trong DB, API đọc hàng đợi `GET /api/v1/platform/company-registrations` đã có, giao diện `company-registrations.ts` đang hiển thị danh sách chỉ đọc.
-- **Khoảng trống:**
-  - Chưa có endpoint tiếp nhận đăng ký công khai `POST /api/v1/company-registrations` (`FR-TEN-001`).
-  - Chưa có endpoint phê duyệt `POST /api/v1/platform/company-registrations/{id}/approve` thực thi giao dịch nguyên tử (`BR-023`, `OD-024`): kích hoạt Company + tạo Primary Tenant + khởi tạo tài khoản `COMPANY_ADMIN` ban đầu (`FR-TEN-002`).
-  - Chưa có endpoint từ chối `POST /api/v1/platform/company-registrations/{id}/reject` bắt buộc nhập lý do (`BR-022`).
-  - Chưa có endpoint cập nhật trạng thái `PATCH /api/v1/platform/company-registrations/{id}/status` (`FR-TEN-003`).
-  - Frontend thiếu các nút hành động Approve/Reject trên `company-registrations.ts`, thiếu liên kết CTA từ `/login` sang `/register-company` (`IR-UI-004`), và chưa có màn hình đăng ký doanh nghiệp `/register-company`.
-
-### 2. Mô-đun M03 — Quản lý Cơ cấu Tổ chức & Người dùng (`FR-ORG-001`, `FR-ORG-002`, `FR-ORG-003`, `FR-ORG-004`)
-- **Hiện trạng:** Đã có đọc danh bạ phòng ban (`DepartmentQuery`), người dùng (`UserDirectoryQuery`), và quản lý vai trò tùy chỉnh (`RoleManagement` / `RolesController`).
-- **Khoảng trống:**
-  - Chưa có endpoint tạo tài khoản người dùng mới `POST /api/v1/users` (`FR-ORG-001`).
-  - Chưa có endpoint cập nhật hồ sơ/phòng ban `PUT /api/v1/users/{id}` (`FR-ORG-002`).
-  - Chưa có endpoint khóa/mở khóa người dùng `PATCH /api/v1/users/{id}/status` (`FR-ORG-003`).
-  - Chưa có endpoint tạo/sửa phòng ban `POST/PUT /api/v1/departments` (`FR-ORG-004`).
-
----
-
-## 3. Đánh giá Rủi ro & Chiến lược An toàn
-
-1. **Rủi ro Phá vỡ Multi-Tenant Guard:**
-   - Bộ bảo vệ `BizFlowDbContext.SaveChangesAsync` rất nghiêm ngặt. Khi Platform Administrator tạo Tenant hoặc gán quyền ban đầu, phải đảm bảo `AssertPlatformAccount()` cho phép xử lý mà không vi phạm quy tắc `AssertTenant()`.
-2. **Rủi ro Giao dịch Nguyên tử (Atomic Rollback):**
-   - Theo `BR-023` và `OD-024`, nếu bất kỳ bước nào trong chuỗi cấp phát 5 bước thất bại, toàn bộ giao dịch phải được rollback để không để lại Tenant mồ côi không có `COMPANY_ADMIN`.
-3. **Bảo toàn Test Suite Hiện có:**
-   - Toàn bộ 405 backend tests và 205 frontend tests phải được giữ vững 100% Green trong suốt quá trình hoàn thiện.
+- [SRS](../requirements/srs/SRS_v1.0_DRAFT.md) giữ yêu cầu và tiêu chí nghiệm thu; trạng thái được điều chỉnh khi đã đối chiếu.
+- [SSS](../specifications/sss/SSS_v1.0_DRAFT.md) mô tả kiến trúc và các bất biến dữ liệu.
+- [Ma trận truy vết](REQUIREMENT_TRACEABILITY_MATRIX.md) ánh xạ yêu cầu với bằng chứng, không coi liên kết là bằng chứng test đạt.
+- Các quyết định `PROPOSED — NOT APPROVED` và `OPEN` không tự chuyển thành đã duyệt khi code tồn tại. `git push` bị cấm theo chỉ dẫn dự án.

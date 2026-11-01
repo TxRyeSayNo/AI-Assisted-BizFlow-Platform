@@ -1,4 +1,6 @@
 # BÁO CÁO CÁC KHOẢNG TRỐNG CÒN LẠI VÀ HƯỚNG DẪN CẤU HÌNH NGOÀI
+
+> **Lưu ý đối chiếu 01/11/2026:** Nội dung và trạng thái còn lại của tài liệu này phản ánh snapshot lịch sử; không xem là bằng chứng nghiệm thu hiện tại. Xem [đường cơ sở tại commit `61cca5c`](CURRENT_IMPLEMENTATION_BASELINE.md) cho hiện trạng, nguồn mã và giới hạn xác minh. Không thay đổi trạng thái quyết định chưa được phê duyệt.
 ## AI-Assisted BizFlow Platform
 
 **Tài liệu:** `docs/project-audit/REMAINING_GAPS.md`  

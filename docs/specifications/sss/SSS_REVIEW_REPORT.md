@@ -1,5 +1,7 @@
 # SSS Review & Architectural Validation Gate Report — AI-Assisted BizFlow Platform
 
+> **Lưu ý đối chiếu 01/11/2026:** Nội dung và trạng thái còn lại của tài liệu này phản ánh snapshot lịch sử; không xem là bằng chứng nghiệm thu hiện tại. Xem [đường cơ sở tại commit `61cca5c`](../../project-audit/CURRENT_IMPLEMENTATION_BASELINE.md) cho hiện trạng, nguồn mã và giới hạn xác minh. Không thay đổi trạng thái quyết định chưa được phê duyệt.
+
 | Thuộc tính | Giá trị |
 | :--- | :--- |
 | **Mã tài liệu** | `BF-SSS-REV-2026-002` |

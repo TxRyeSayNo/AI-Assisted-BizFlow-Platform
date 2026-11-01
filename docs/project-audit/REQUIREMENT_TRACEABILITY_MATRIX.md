@@ -9,6 +9,19 @@
 
 ---
 
+> **Cập nhật 01/11/2026:** Ma trận dưới đây là ánh xạ v1.2 lịch sử; tỷ lệ 100% chỉ là khẳng định trong tài liệu cũ và chưa được kiểm chứng lại. Có mã test hay tên kịch bản không chứng minh yêu cầu đã triển khai, test đã chạy hoặc đã nghiệm thu. Đối chiếu hiện trạng tại [CURRENT_IMPLEMENTATION_BASELINE.md](CURRENT_IMPLEMENTATION_BASELINE.md).
+
+## Đối chiếu hiện trạng theo yêu cầu
+
+| Yêu cầu | Hiện trạng | Bằng chứng / giới hạn |
+|---|---|---|
+| `FR-AUTH-005` | `PARTIAL` | [Email-link service](../../backend/BizFlow.Application/Authentication/EmailLinkAuthenticationService.cs): có tạo/verify token và chọn workspace; chưa thấy gửi link trong phương thức request. |
+| `FR-TEN-001..003` | `PARTIAL` | Có [API đăng ký](../../backend/BizFlow.Api/Controllers/PublicCompanyRegistrationsController.cs) và [API thẩm định](../../backend/BizFlow.Api/Controllers/CompanyRegistrationsController.cs); chưa nghiệm thu toàn bộ. |
+| `FR-ORG-001..004` | `PARTIAL` | Có API [người dùng](../../backend/BizFlow.Api/Controllers/UsersController.cs) và [phòng ban](../../backend/BizFlow.Api/Controllers/DepartmentsController.cs); chưa chứng minh toàn bộ quản trị scope. |
+| `FR-AI-011..013` | `PARTIAL` | Có [Robot](../../frontend/src/app/shared/ai/robot-widget.ts), [preview/confirm](../../backend/BizFlow.Api/Controllers/AiTaskDecompositionController.cs); còn khoảng trống quyền/phòng ban và E2E. |
+| `FR-NOTIF-003..004` | `PARTIAL` | Có [service nhắc hạn](../../backend/BizFlow.Application/Notifications/DeadlineReminderService.cs), chưa thấy API/worker đầy đủ. |
+| `SEC-008..009` | `PARTIAL` | [Reader](../../backend/BizFlow.Infrastructure/AI/AiContextReader.cs), [dispatcher](../../backend/BizFlow.Infrastructure/AI/AiActionDispatcher.cs); chưa chứng minh phạm vi và xác nhận trên mọi đường gọi. |
+
 ## 1. Phương Pháp Luận và Mô Hình Truy Vết (Traceability Framework)
 
 Ma trận truy vết tổng thể được thiết lập nhằm liên kết chặt chẽ mọi mục tiêu kinh doanh, quy tắc nghiệp vụ, yêu cầu người dùng tới kiến trúc hệ thống và kịch bản nghiệm thu kiểm thử. Chuỗi liên kết tuân thủ mô hình 6 tầng nghiêm ngặt:
@@ -40,7 +53,7 @@ Ma trận truy vết tổng thể được thiết lập nhằm liên kết ch�
 
 ---
 
-## 2. Thống Kê Định Lượng Độ Phủ (Coverage Metrics)
+## 2. Thống Kê Định Lượng Độ Phủ (Số liệu lịch sử, chưa tái xác minh)
 
 | Thành Phần Khảo Sát | Tổng Số Mục | Tỷ Lệ Đã Ánh Xạ | Trạng Thái Phủ Kín |
 |---|---|---|---|
@@ -110,7 +123,7 @@ Ma trận truy vết tổng thể được thiết lập nhằm liên kết ch�
 
 ---
 
-## 5. Kết Luận Kiểm Toán Độ Phủ (Traceability Verification Sign-off)
+## 5. Kết Luận Kiểm Toán Lịch Sử (không phải sign-off hiện tại)
 
 1. **Tính Hoàn Hảo của Độ Phủ (100% End-to-End Coverage):**
    - Mọi Mục tiêu kinh doanh (`BIZ-*`) và Quy tắc nghiệp vụ (`BR-*`) đều có ít nhất một Yêu cầu chức năng (`FR-*`) và Tiêu chí nghiệm thu (`AC-*`) tương ứng.
