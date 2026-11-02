@@ -61,7 +61,7 @@ export class RobotWidgetComponent implements OnInit {
 
   checkSessionDisplayState() {
     try {
-      // AI Agent Widget defaults to minimized (closed as a floating circular FAB 🤖 at bottom-right)
+      // AI Agent Widget defaults to minimized (closed as a floating circular FAB at bottom-right)
       // so it no longer obstructs the right 1/3 of the screen across workspace screens.
       const userOpened = sessionStorage.getItem('bizflow_robot_open');
       if (userOpened === 'true') {
@@ -141,6 +141,16 @@ export class RobotWidgetComponent implements OnInit {
 
   onBranchTypeChange(id: string, type: 'Assignment' | 'SupportRequest') {
     this.agent.updateBranch(id, { type });
+  }
+
+  cleanText(text: string | null | undefined): string {
+    if (!text) return '';
+    return text
+      .replace(/[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{FE00}-\u{FE0F}]/gu, '')
+      .replace(/\*{1,3}/g, '')
+      .replace(/^>\s*/gm, '')
+      .replace(/[ \t]{2,}/g, ' ')
+      .trim();
   }
 
   onBranchTitleChange(id: string, title: string) {
@@ -255,7 +265,7 @@ export class RobotWidgetComponent implements OnInit {
             actionCards = [
               {
                 actionType: 'VIEW_BRANCHES',
-                title: `🌿 Xem các nhánh phân rã (${decompCard.payload.proposals.length} nhánh)`,
+                title: `Xem các nhánh phân rã (${decompCard.payload.proposals.length} nhánh)`,
               },
             ];
           }
@@ -263,11 +273,11 @@ export class RobotWidgetComponent implements OnInit {
           const robotMsg: ChatMessage = {
             id: crypto.randomUUID(),
             sender: 'robot',
-            text: res.response,
+            text: this.cleanText(res.response),
             time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
             actionCards,
             questionnaire: res.questionnaire,
-            agentThought: res.agentThought,
+            agentThought: res.agentThought ? this.cleanText(res.agentThought) : undefined,
             isThoughtExpanded: !!res.agentThought,
           };
 
@@ -334,12 +344,12 @@ export class RobotWidgetComponent implements OnInit {
       this.agent.setProposals(demoProposals);
 
       return {
-        text: `🤖 Trợ lý AI Agent đã phân rã yêu cầu thành **${demoProposals.length} nhánh nhiệm vụ**.\n` +
-          `👉 Bạn có thể bấm nút bên dưới để mở giao diện các nhánh, xem chi tiết và tạo việc ngay!`,
+        text: `Trợ lý AI Agent đã phân rã yêu cầu thành ${demoProposals.length} nhánh nhiệm vụ.\n` +
+          `Bạn có thể bấm nút bên dưới để mở giao diện các nhánh, xem chi tiết và tạo việc ngay.`,
         actionCards: [
           {
             actionType: 'VIEW_BRANCHES',
-            title: `🌿 Xem các nhánh phân rã (${demoProposals.length} nhánh)`,
+            title: `Xem các nhánh phân rã (${demoProposals.length} nhánh)`,
           },
         ],
       };
@@ -347,10 +357,10 @@ export class RobotWidgetComponent implements OnInit {
 
     if (lower.startsWith('/notifications') || lower.includes('thông báo') || lower.includes('notification')) {
       return {
-        text: '🔔 Bạn có 2 thông báo công việc mới trong hôm nay:\n' +
+        text: 'Bạn có 2 thông báo công việc mới trong hôm nay:\n' +
           '1. [Yêu cầu] Bàn giao thiết bị làm việc cho nhân viên mới — Cần duyệt.\n' +
           '2. [Cảnh báo SLA] Nhiệm vụ "Cập nhật tài liệu kỹ thuật" còn 4 giờ trước hạn.\n' +
-          '👉 Bấm bên dưới để xem toàn bộ thông báo:',
+          'Bấm bên dưới để xem toàn bộ thông báo:',
         actionCards: [
           {
             actionType: 'NAVIGATE',
@@ -363,7 +373,7 @@ export class RobotWidgetComponent implements OnInit {
 
     if (lower.includes('deadline') || lower.includes('hôm nay') || lower.includes('today')) {
       return {
-        text: '📅 Hôm nay bạn có 1 công việc đến hạn hoàn thành:\n' +
+        text: 'Hôm nay bạn có 1 công việc đến hạn hoàn thành:\n' +
           '• **Báo cáo tuần & Đánh giá tiến độ dịch vụ** (Hạn chót: 17:00 hôm nay).\n' +
           'Tất cả các công việc khác vẫn đang ở trạng thái an toàn (Healthy SLA).',
         actionCards: [
@@ -377,7 +387,7 @@ export class RobotWidgetComponent implements OnInit {
     }
 
     return {
-      text: `Xin chào! Tôi là Trợ lý AI Agent của BizFlow 🤖.\n` +
+      text: `Xin chào! Tôi là Trợ lý AI Agent của BizFlow.\n` +
         `Tôi luôn sẵn sàng hỗ trợ bạn quản lý công việc, theo dõi tiến độ, kiểm tra deadline và phân rã nhiệm vụ.\n` +
         `Bạn có thể thử các câu hỏi nhanh bên dưới hoặc gõ lệnh \`/task <mô tả>\` để bóc tách quy trình làm việc!`,
       actionCards: [
@@ -431,7 +441,7 @@ export class RobotWidgetComponent implements OnInit {
             const msg: ChatMessage = {
               id: crypto.randomUUID(),
               sender: 'robot',
-              text: res.success ? `✅ ${card.title} thành công!` : `❌ Thất bại: ${res.error}`,
+              text: res.success ? `${card.title} thành công.` : `Thất bại: ${res.error}`,
               time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
             };
             this.agent.messages.update((list) => [...list, msg]);
@@ -442,7 +452,7 @@ export class RobotWidgetComponent implements OnInit {
             const msg: ChatMessage = {
               id: crypto.randomUUID(),
               sender: 'robot',
-              text: `❌ Lỗi thực thi hành động: ${err?.error?.message || err.message}`,
+              text: `Lỗi thực thi hành động: ${err?.error?.message || err.message}`,
               time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
             };
             this.agent.messages.update((list) => [...list, msg]);

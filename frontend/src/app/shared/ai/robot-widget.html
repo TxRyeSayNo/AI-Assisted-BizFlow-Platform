@@ -42,11 +42,11 @@
       <nav class="agent-tabs-nav" aria-label="AI Agent Modes">
         <button type="button" class="agent-tab-btn" [class.active]="activeTab() === 'chat'" (click)="setTab('chat')"
           title="Giao diện trò chuyện">
-          💬 Trò chuyện
+          Trò chuyện
         </button>
         <button type="button" class="agent-tab-btn" [class.active]="activeTab() === 'history'"
           (click)="setTab('history')" title="Lịch sử hội thoại">
-          🕒 Lịch sử
+          Lịch sử
           @if (chatSessions().length > 0) {
           <span class="tab-badge-neutral">{{ chatSessions().length }}</span>
           }
@@ -86,7 +86,14 @@
     @if (branches().length > 0) {
     <div class="active-branches-banner" (click)="openBranchModal()" role="button" tabindex="0">
       <div class="branches-banner-left">
-        <span class="leaf-icon">🌿</span>
+        <span class="leaf-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="6" y1="3" x2="6" y2="15"></line>
+            <circle cx="18" cy="6" r="3"></circle>
+            <circle cx="6" cy="18" r="3"></circle>
+            <path d="M18 9a9 9 0 0 1-9 9"></path>
+          </svg>
+        </span>
         <span class="banner-text">Đang có <strong>{{ branches().length }} nhánh công việc</strong> đề xuất</span>
       </div>
       <button type="button" class="btn-open-modal-chip">
@@ -106,28 +113,40 @@
           <div class="agent-thought-container" [class.collapsed]="!msg.isThoughtExpanded">
             <button type="button" class="thought-toggle-btn" (click)="toggleThought(msg)"
               [title]="msg.isThoughtExpanded ? 'Thu gọn suy nghĩ' : 'Xem suy nghĩ của Agent'">
-              <span class="thought-icon">🧠</span>
+              <span class="thought-icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7z"></path>
+                  <path d="M9 21h6"></path>
+                </svg>
+              </span>
               <span class="thought-title">Quá trình Suy nghĩ & Đánh giá của Agent</span>
               <span class="thought-arrow">{{ msg.isThoughtExpanded ? '▲' : '▼' }}</span>
             </button>
             @if (msg.isThoughtExpanded) {
             <div class="thought-content">
-              <div class="thought-text" style="white-space: pre-wrap">{{ msg.agentThought }}</div>
+              <div class="thought-text" style="white-space: pre-wrap">{{ cleanText(msg.agentThought) }}</div>
             </div>
             }
           </div>
           }
 
           <div class="message-text" style="white-space: pre-wrap">
-            {{ msg.text }}
+            {{ cleanText(msg.text) }}
           </div>
 
           <!-- Interactive Clarification Questionnaire Card (ChatGPT Agent style) -->
           @if (msg.questionnaire && !msg.questionnaireAnswered) {
           <div class="agent-questionnaire-card">
             <div class="card-badge">
-              <span class="badge-icon">📋</span>
-              <span class="badge-label">Khảo sát làm rõ tương tác (AI Agent Form)</span>
+              <span class="badge-icon">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                  <polyline points="14 2 14 8 20 8"></polyline>
+                  <line x1="16" y1="13" x2="8" y2="13"></line>
+                  <line x1="16" y1="17" x2="8" y2="17"></line>
+                </svg>
+              </span>
+              <span class="badge-label">Khảo sát làm rõ thông tin</span>
             </div>
 
             @if (msg.questionnaire.contextExplanation) {
@@ -138,8 +157,14 @@
 
             @if (msg.questionnaire.riskAnalysis) {
             <div class="form-risk-alert">
-              <span class="alert-icon">⚠️</span>
-              <span class="alert-text">{{ msg.questionnaire.riskAnalysis }}</span>
+              <span class="alert-icon">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                  <line x1="12" y1="9" x2="12" y2="13"></line>
+                  <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                </svg>
+              </span>
+              <span class="alert-text">{{ cleanText(msg.questionnaire.riskAnalysis) }}</span>
             </div>
             }
 
@@ -148,9 +173,9 @@
               <div class="question-item">
                 <div class="question-header">
                   <span class="q-number">{{ qIdx + 1 }}.</span>
-                  <span class="q-title">{{ q.title }}</span>
+                  <span class="q-title">{{ cleanText(q.title) }}</span>
                   @if (q.required) {
-                  <span class="required-star" title="Bắt buộc">*</span>
+                  <span class="required-badge" title="Thông tin bắt buộc">Bắt buộc</span>
                   }
                 </div>
 
@@ -165,7 +190,7 @@
                       <span class="dot-inner"></span>
                       }
                     </span>
-                    <span class="option-label">{{ opt.label }}</span>
+                    <span class="option-label">{{ cleanText(opt.label) }}</span>
                   </label>
                   }
                 </div>
@@ -182,7 +207,7 @@
                       ✓
                       }
                     </span>
-                    <span class="option-label">{{ opt.label }}</span>
+                    <span class="option-label">{{ cleanText(opt.label) }}</span>
                   </label>
                   }
                 </div>
@@ -226,7 +251,11 @@
           <div class="action-cards-container">
             @for (card of msg.actionCards; track card.title) {
             <button type="button" class="action-card-btn" (click)="executeAction(card)">
-              <span class="card-icon">✦</span>
+              <span class="card-icon">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="9 18 15 12 9 6"></polyline>
+                  </svg>
+                </span>
               <span class="card-title">{{ card.title }}</span>
               <span class="card-arrow">→</span>
             </button>
@@ -270,7 +299,7 @@
     <div class="history-screen-body">
       <div class="history-header">
         <div class="history-title-block">
-          <h4 class="history-title">🕒 Lịch sử trò chuyện với AI Agent</h4>
+          <h4 class="history-title">Lịch sử trò chuyện với AI Agent</h4>
           <p class="history-subtitle">
             Các phiên làm việc trước đó được lưu tự động. Bạn có thể mở lại để tiếp tục hoặc xóa phiên cũ.
           </p>
@@ -290,7 +319,7 @@
 
       @if (chatSessions().length === 0) {
       <div class="history-empty-state">
-        <span class="empty-icon">💬</span>
+        <span class="empty-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg></span>
         <h5 class="empty-title">Chưa có lịch sử trò chuyện</h5>
         <p class="empty-desc">
           Mỗi khi bạn bắt đầu một cuộc hội thoại mới, phiên trước đó sẽ được tự động lưu vào đây.
@@ -324,7 +353,10 @@
             </button>
             <button type="button" class="btn-delete-session" (click)="agent.deleteSession(s.id)"
               title="Xóa đoạn chat này">
-              🗑️
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="3 6 5 6 21 6"></polyline>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+              </svg>
             </button>
           </div>
         </div>
@@ -361,7 +393,7 @@
 
       <div class="modal-header-right">
         <span class="branches-count-chip">
-          <span class="chip-spark" aria-hidden="true">✦</span> {{ branches().length }} nhánh nhiệm vụ
+           {{ branches().length }} nhánh nhiệm vụ
         </span>
         <button type="button" class="btn-close-modal" (click)="closeBranchModal()" title="Đóng không gian phân nhánh">
           ✕
@@ -401,7 +433,7 @@
             Chatbox.
           </p>
           <button type="button" class="btn-start-decompose" (click)="agent.initDefaultBranches()">
-            ✦ Bóc tách kế hoạch mẫu ngay
+            Bóc tách kế hoạch mẫu ngay
           </button>
         </div>
         } @else {
@@ -664,7 +696,7 @@
           @if (branch.reasoning) {
           <div class="detail-section reasoning-section">
             <h5 class="section-title">
-              <span class="sparkle-icon" aria-hidden="true">✦</span> Căn cứ đề xuất từ AI Agent
+              <span class="sparkle-icon" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg></span> Căn cứ đề xuất từ AI Agent
             </h5>
             <p class="reasoning-text">{{ branch.reasoning }}</p>
           </div>
