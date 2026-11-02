@@ -135,27 +135,13 @@ export class Login implements OnInit, OnDestroy {
   }
 
   showToast(title: string, message: string): void {
-    this.clearToastTimers();
-    this.toast.set({ title, message });
-    this.toastFading.set(false);
     this.toastService.error(message, title);
-
-    this.toastTimer = setTimeout(() => {
-      this.toastFading.set(true);
-      this.toastFadeTimer = setTimeout(() => {
-        this.toast.set(null);
-        this.toastFading.set(false);
-      }, 650);
-    }, 3000);
+    this.toast.set({ title, message });
   }
 
   dismissToast(): void {
-    this.clearToastTimers();
-    this.toastFading.set(true);
-    this.toastFadeTimer = setTimeout(() => {
-      this.toast.set(null);
-      this.toastFading.set(false);
-    }, 400);
+    this.toast.set(null);
+    this.toastService.clear();
   }
 
   checkSuperAdmin(identifier: string): boolean {
@@ -265,13 +251,18 @@ export class Login implements OnInit, OnDestroy {
       const passCtrl = this.form.controls.password;
       const tenantCtrl = this.form.controls.tenantKey;
 
-      if (idCtrl.invalid) {
+      if (idCtrl.invalid && passCtrl.invalid) {
+        this.showToast(
+          'Thiếu thông tin đăng nhập',
+          'Vui lòng nhập đầy đủ tài khoản và mật khẩu của bạn để tiếp tục.',
+        );
+      } else if (idCtrl.invalid) {
         if (idCtrl.errors?.['required']) {
           this.showToast(
             this.mode() === 'email' ? 'Thiếu email công ty' : 'Thiếu mã nhân viên',
             this.mode() === 'email'
               ? 'Vui lòng nhập địa chỉ email công ty của bạn.'
-              : 'Vui lòng nhập mã nhân viên của bạn.',
+              : 'Vui lòng nhập tài khoản hoặc mã nhân viên của bạn.',
           );
         } else if (idCtrl.errors?.['email']) {
           this.showToast(
@@ -281,29 +272,18 @@ export class Login implements OnInit, OnDestroy {
         } else {
           this.showToast('Mã nhân viên không hợp lệ', 'Mã nhân viên không được vượt quá 50 ký tự.');
         }
-        return;
-      }
-
-      if (passCtrl.invalid) {
+      } else if (passCtrl.invalid) {
         this.showToast('Thiếu mật khẩu', 'Vui lòng nhập mật khẩu của bạn.');
-        return;
+      } else if (tenantCtrl.invalid && !isSuper) {
+        const tTitle = tenantCtrl.errors?.['required']
+          ? 'Thiếu mã không gian làm việc'
+          : 'Mã không gian làm việc không hợp lệ';
+        const tMsg = tenantCtrl.errors?.['required']
+          ? 'Vui lòng nhập mã không gian làm việc của công ty.'
+          : 'Mã không gian làm việc chỉ bao gồm chữ thường, chữ số và dấu gạch ngang (ví dụ: bizflow-corp).';
+        this.showToast(tTitle, tMsg);
       }
 
-      if (tenantCtrl.invalid) {
-        if (tenantCtrl.errors?.['required']) {
-          this.showToast('Thiếu mã không gian làm việc', 'Vui lòng nhập mã không gian làm việc của công ty.');
-        } else if (tenantCtrl.errors?.['pattern']) {
-          this.showToast(
-            'Mã không gian làm việc không hợp lệ',
-            'Mã không gian làm việc chỉ bao gồm chữ thường, chữ số và dấu gạch ngang (ví dụ: bizflow-corp).',
-          );
-        } else {
-          this.showToast('Mã không gian làm việc không hợp lệ', 'Mã không gian làm việc không được vượt quá 80 ký tự.');
-        }
-        return;
-      }
-
-      this.showToast('Dữ liệu không hợp lệ', 'Vui lòng kiểm tra lại các trường bắt buộc và thử lại.');
       return;
     }
 
@@ -312,7 +292,7 @@ export class Login implements OnInit, OnDestroy {
     this.error.set('');
     this.dismissToast();
 
-    const tenantKey = isSuper && !values.tenantKey.trim() ? undefined : values.tenantKey.trim();
+    const tenantKey = isSuper ? undefined : (values.tenantKey?.trim() || undefined);
 
     this.session
       .login({
@@ -722,7 +702,6 @@ export class Login implements OnInit, OnDestroy {
             'requests.create',
             'tasks.read.own',
             'tasks.read.assigned',
-            'tasks.create',
             'tasks.execute',
             'tasks.submit',
           ],

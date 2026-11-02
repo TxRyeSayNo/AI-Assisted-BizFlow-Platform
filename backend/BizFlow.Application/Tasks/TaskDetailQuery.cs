@@ -12,7 +12,8 @@ public sealed record TaskReportView(Guid Id, Guid AuthorId, short Percent, strin
 public sealed record TaskResultView(Guid Id, Guid AuthorId, int RevisionNo, string? Content, DateTimeOffset SubmittedAt);
 public sealed record TaskDetailView(TaskListRow Task, string? Description, string? CreatorName,
     Guid? WorkflowVersionId, Guid? SlaVersionId, DateTimeOffset? CompletedAt, DateTimeOffset UpdatedAt,
-    TaskEvidencePage<TaskChecklistView> Checklist, TaskEvidencePage<TaskReportView> Reports, TaskEvidencePage<TaskResultView> Results);
+    TaskEvidencePage<TaskChecklistView> Checklist, TaskEvidencePage<TaskReportView> Reports, TaskEvidencePage<TaskResultView> Results,
+    IReadOnlyList<TaskListRow>? Subtasks = null, string? ParentTaskTitle = null);
 public interface ITaskDetailReader
 {
     Task<TaskDetailView?> GetAsync(TaskReadScope scope, Guid id, TaskDetailPages pages, CancellationToken cancellationToken);

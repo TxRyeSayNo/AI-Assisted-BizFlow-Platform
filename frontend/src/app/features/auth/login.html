@@ -1,57 +1,4 @@
 <div class="auth-page ocean-theme">
-  <!-- Top-Right Floating Pop-Up Alert (Fades out smoothly after 3s) -->
-  @if (toast(); as currentToast) {
-    <aside
-      id="auth-top-toast"
-      class="auth-top-toast"
-      [class.toast-fade-out]="toastFading()"
-      role="alert"
-      aria-live="assertive"
-    >
-      <div class="toast-icon-wrap" aria-hidden="true">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" class="toast-svg">
-          <circle cx="12" cy="12" r="10" />
-          <line x1="12" y1="8" x2="12" y2="12" />
-          <line x1="12" y1="16" x2="12.01" y2="16" />
-        </svg>
-      </div>
-      <div class="toast-content">
-        <div class="toast-title">{{ currentToast.title }}</div>
-        <div class="toast-desc">{{ currentToast.message }}</div>
-      </div>
-      <button type="button" class="toast-close-btn" (click)="dismissToast()" aria-label="Close notification">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <line x1="18" y1="6" x2="6" y2="18" />
-          <line x1="6" y1="6" x2="18" y2="18" />
-        </svg>
-      </button>
-
-      <!-- Precise SVG Rounded Perimeter Border Runner (3s full loop, perfectly matches corner radius) -->
-      <svg class="toast-perimeter-svg" aria-hidden="true">
-        <rect
-          class="toast-perimeter-track"
-          x="1.5"
-          y="1.5"
-          width="calc(100% - 3px)"
-          height="calc(100% - 3px)"
-          rx="14.5"
-          ry="14.5"
-          pathLength="100"
-        />
-        <rect
-          class="toast-perimeter-runner"
-          x="1.5"
-          y="1.5"
-          width="calc(100% - 3px)"
-          height="calc(100% - 3px)"
-          rx="14.5"
-          ry="14.5"
-          pathLength="100"
-        />
-      </svg>
-    </aside>
-  }
-
   <!-- Ambient Premium Ocean Animated Lighting (CSS-Only, No Images) -->
   <div class="ocean-ambient-lights" aria-hidden="true">
     <div class="ambient-orb orb-1"></div>
@@ -134,7 +81,7 @@
                 @if (busy()) {
                 <span>{{ 'auth.signingIn' | translate: 'Đang đăng nhập…' }}</span>
                 } @else {
-                <span>{{ 'auth.signInNow' | translate: 'ĐĂNG NHẬP NGAY' }} &rarr;</span>
+                <span>{{ 'auth.signInNow' | translate: 'Đăng nhập ngay' }}</span>
                 }
               </button>
             </div>

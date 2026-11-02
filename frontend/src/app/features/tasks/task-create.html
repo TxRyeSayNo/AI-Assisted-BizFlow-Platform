@@ -6,86 +6,107 @@
 <main id="main-content" class="page-content" tabindex="-1">
   <div class="task-page-header">
     <nav aria-label="Breadcrumb" class="compact-breadcrumb">
-      <a routerLink="/tasks">{{ 'tasks.title' | translate: 'Tasks' }}</a>
+      <a routerLink="/tasks">{{ 'tasks.title' | translate: 'Nhiệm vụ' }}</a>
       <span aria-hidden="true" class="breadcrumb-separator">/</span>
-      <span class="breadcrumb-current">{{ 'taskCreate.breadcrumbNew' | translate: 'New task' }}</span>
+      <span class="breadcrumb-current">{{ parentTaskId() ? 'Tạo nhiệm vụ con' : ('taskCreate.breadcrumbNew' | translate: 'Tạo nhiệm vụ mới') }}</span>
     </nav>
     <div class="task-header-row">
       <div class="header-titles">
-        <h1 class="task-header-title">{{ 'taskCreate.breadcrumbNew' | translate: 'New task' }}</h1>
+        <h1 class="task-header-title">
+          {{ parentTaskId() ? 'Phân rã Nhiệm vụ con' : ('taskCreate.breadcrumbNew' | translate: 'Khởi tạo Nhiệm vụ Mới') }}
+        </h1>
         <p class="task-header-subtitle">
-          {{
-            'taskCreate.subtitle'
-              | translate: 'Create an independent draft. Assignment and execution are separate steps.'
-          }}
+          @if (parentTaskId()) {
+            Tạo nhiệm vụ con trực thuộc nhiệm vụ cấp công ty và phân công cho nhân viên trong phòng ban thực hiện.
+          } @else {
+            Tạo bản thảo công việc. Quản trị viên phân công cho Quản lý phòng ban, Quản lý phân rã và giao việc cho nhân sự.
+          }
         </p>
       </div>
       <div class="task-nav-container">
-        <a routerLink="/tasks" class="task-nav-btn" title="Quay lại danh sách nhiệm vụ">
-          <span>← {{ 'taskCreate.backToTasks' | translate: 'Back to tasks' }}</span>
-        </a>
+        @if (parentTaskId()) {
+          <a [routerLink]="['/tasks', parentTaskId()]" class="task-nav-btn" title="Quay lại nhiệm vụ cha">
+            <span>← Quay lại nhiệm vụ cha</span>
+          </a>
+        } @else {
+          <a routerLink="/tasks" class="task-nav-btn" title="Quay lại danh sách nhiệm vụ">
+            <span>← Quay lại danh sách</span>
+          </a>
+        }
       </div>
     </div>
   </div>
 
+  @if (parentTaskId()) {
+    <div class="parent-task-banner" style="background: #eff6ff; border: 1.5px solid #bfdbfe; border-radius: 12px; padding: 14px 18px; margin-bottom: 20px; display: flex; align-items: center; gap: 12px;">
+      <span style="font-size: 24px;">🔗</span>
+      <div>
+        <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: #1e40af; letter-spacing: 0.5px;">Phân cấp Công việc Trực thuộc</div>
+        <div style="font-size: 14px; font-weight: 700; color: #0f172a;">{{ parentTaskTitle() || 'Nhiệm vụ cấp công ty' }}</div>
+      </div>
+    </div>
+  }
+
   <form
     class="directory-panel task-form"
     [formGroup]="form"
-    (ngSubmit)="save()"
+    (ngSubmit)="submit()"
     [attr.aria-busy]="busy()"
   >
     <mat-form-field appearance="outline" class="form-full-width">
-      <mat-label>{{ 'common.title' | translate: 'Task title' }}</mat-label>
-      <input matInput formControlName="title" maxlength="300" required />
+      <mat-label>{{ 'common.title' | translate: 'Tiêu đề nhiệm vụ *' }}</mat-label>
+      <input matInput formControlName="title" maxlength="300" required placeholder="Ví dụ: Triển khai kiểm thử tính năng phân rã nhiệm vụ..." />
     </mat-form-field>
 
     <mat-form-field appearance="outline" class="form-full-width task-description-field">
-      <mat-label>{{ 'tasks.description' | translate: 'Description' }}</mat-label>
-      <textarea matInput formControlName="description" rows="5" placeholder="Nhập mô tả chi tiết công việc, phạm vi và mục tiêu..."></textarea>
+      <mat-label>{{ 'tasks.description' | translate: 'Mô tả chi tiết công việc' }}</mat-label>
+      <textarea matInput formControlName="description" rows="5" placeholder="Nhập mô tả chi tiết mục tiêu, phạm vi và kết quả cần đạt..."></textarea>
     </mat-form-field>
 
     <mat-form-field appearance="outline">
-      <mat-label>{{ 'common.priority' | translate: 'Priority' }}</mat-label>
+      <mat-label>{{ 'common.priority' | translate: 'Độ ưu tiên' }}</mat-label>
       <mat-select formControlName="priority">
-        <mat-option value="LOW">{{ 'priority.LOW' | translate: 'Low' }}</mat-option>
-        <mat-option value="MEDIUM">{{ 'priority.MEDIUM' | translate: 'Medium' }}</mat-option>
-        <mat-option value="HIGH">{{ 'priority.HIGH' | translate: 'High' }}</mat-option>
-        <mat-option value="CRITICAL">{{ 'priority.CRITICAL' | translate: 'Critical' }}</mat-option>
+        <mat-option value="LOW">{{ 'priority.LOW' | translate: 'Thấp' }}</mat-option>
+        <mat-option value="MEDIUM">{{ 'priority.MEDIUM' | translate: 'Trung bình' }}</mat-option>
+        <mat-option value="HIGH">{{ 'priority.HIGH' | translate: 'Cao' }}</mat-option>
+        <mat-option value="CRITICAL">{{ 'priority.CRITICAL' | translate: 'Khẩn cấp' }}</mat-option>
       </mat-select>
     </mat-form-field>
 
     <mat-form-field appearance="outline">
       <mat-label>{{
-        'taskCreate.deadlineLabel' | translate: 'Deadline (local time, optional)'
+        'taskCreate.deadlineLabel' | translate: 'Hạn chót hoàn thành (tùy chọn)'
       }}</mat-label>
       <input matInput type="datetime-local" formControlName="deadline" />
-      <mat-hint>Được lưu theo mốc thời gian tuyệt đối UTC.</mat-hint>
+      <mat-hint>Mốc thời gian cam kết tiến độ nghiệm thu.</mat-hint>
     </mat-form-field>
 
     <mat-form-field appearance="outline" class="form-full-width task-checklist-field">
-      <mat-label>{{ 'tasks.checklist' | translate: 'Checklist (one item per line)' }}</mat-label>
-      <textarea matInput formControlName="checklist" rows="4" placeholder="Nhập các bước thực hiện, mỗi dòng một đầu việc..."></textarea>
+      <mat-label>{{ 'tasks.checklist' | translate: 'Danh mục kiểm tra (mỗi dòng một bước)' }}</mat-label>
+      <textarea matInput formControlName="checklist" rows="4" placeholder="Bước 1: Chuẩn bị tài liệu&#10;Bước 2: Triển khai thực hiện&#10;Bước 3: Báo cáo kết quả"></textarea>
     </mat-form-field>
 
     @if (error()) {
-      <p role="alert" class="form-full-width text-danger">{{ error() }}</p>
+      <p role="alert" class="form-full-width text-danger" style="color: #ef4444; font-weight: 600;">{{ error() }}</p>
     }
     @if (done()) {
-      <p role="status" class="form-full-width text-success">Đã hoàn tất gửi biểu mẫu. Mở danh sách nhiệm vụ nếu hệ thống chưa tự động chuyển trang.</p>
+      <p role="status" class="form-full-width text-success" style="color: #10b981; font-weight: 600;">Đã tạo thành công nhiệm vụ. Đang chuyển hướng…</p>
     }
-    <div class="actions">
+    <div class="actions" style="display: flex; gap: 12px; margin-top: 16px;">
       <button mat-flat-button color="primary" type="submit" class="submit-task-btn" [disabled]="busy() || done()">
         {{
           busy()
-            ? ('common.saving' | translate: 'Saving…')
+            ? ('common.saving' | translate: 'Đang lưu…')
             : uncertain()
-              ? 'Retry same submission'
-              : ('taskCreate.saveDraft' | translate: 'Create draft')
+              ? 'Thử lại gửi biểu mẫu'
+              : parentTaskId()
+                ? 'Tạo nhiệm vụ con'
+                : ('taskCreate.saveDraft' | translate: 'Lưu bản thảo nhiệm vụ')
         }}
       </button>
-      <a mat-stroked-button routerLink="/tasks">{{
-        'taskCreate.backToTasks' | translate: 'Back to tasks'
-      }}</a>
+      <a mat-stroked-button [routerLink]="parentTaskId() ? ['/tasks', parentTaskId()] : '/tasks'">
+        {{ 'common.cancel' | translate: 'Hủy bỏ' }}
+      </a>
     </div>
   </form>
 </main>

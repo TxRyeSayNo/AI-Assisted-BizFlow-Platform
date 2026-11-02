@@ -1,4 +1,4 @@
-import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
 import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -8,6 +8,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { SessionService } from '../../core/auth/session';
+import { ToastService } from '../../core/toast/toast.service';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
 
 @Component({
@@ -27,6 +28,7 @@ import { TranslatePipe } from '../../core/i18n/translate.pipe';
 })
 export class TaskCreate {
   readonly session = inject(SessionService);
+  private readonly toast = inject(ToastService);
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
@@ -36,6 +38,8 @@ export class TaskCreate {
   readonly done = signal(false);
   readonly error = signal('');
   readonly requestId = signal<string | null>(null);
+  readonly parentTaskId = signal<string | null>(null);
+  readonly parentTaskTitle = signal<string | null>(null);
   readonly aiPrompt = signal('');
   readonly aiBusy = signal(false);
   readonly aiMessage = signal('');
@@ -43,9 +47,33 @@ export class TaskCreate {
   private submitted?: object;
 
   constructor() {
+    if (!this.session.hasPermission('tasks.create')) {
+      this.toast.warning(
+        'Tài khoản Nhân viên không thể tạo nhiệm vụ cho cấp dưới. Vui lòng tạo Yêu cầu nếu cần đề xuất công việc.',
+        'Phân quyền từ chối',
+      );
+      void this.router.navigateByUrl('/tasks', { replaceUrl: true });
+      return;
+    }
+
     this.route.queryParams.pipe(takeUntilDestroyed(this.destroy)).subscribe((params) => {
       if (params['requestId']) {
         this.requestId.set(params['requestId']);
+      }
+      if (params['parentTaskId']) {
+        this.parentTaskId.set(params['parentTaskId']);
+        if (params['parentTaskTitle']) {
+          this.parentTaskTitle.set(params['parentTaskTitle']);
+        } else {
+          this.http
+            .get<any>(`/api/v1/tasks/${params['parentTaskId']}`)
+            .pipe(takeUntilDestroyed(this.destroy))
+            .subscribe({
+              next: (t) => {
+                this.parentTaskTitle.set(t.task?.title || t.title || 'Nhiệm vụ cha');
+              },
+            });
+        }
       }
       if (params['aiTitle'] || params['title']) {
         this.form.patchValue({
@@ -87,14 +115,12 @@ export class TaskCreate {
             this.aiMessage.set(
               `AI đã tạo bản thảo (Độ tin cậy: ${(draft.confidence * 100).toFixed(0)}%): ${draft.reasoning}`,
             );
-
           }
         },
         error: () => {
           this.aiBusy.set(false);
           this.aiMessage.set('Không thể kết nối trợ lý AI. Vui lòng thử lại.');
         },
-
       });
   }
 
@@ -113,39 +139,34 @@ export class TaskCreate {
         next: (res) => {
           this.aiBusy.set(false);
           if (res?.subtasks?.length) {
-            const list = res.subtasks
-              .map((s: any) => `${s.orderIndex}. ${s.title}: ${s.description}`)
-              .join('\n');
-            this.form.patchValue({ checklist: list });
-            this.aiMessage.set(
-              `AI đã phân rã thành ${res.subtasks.length} nhiệm vụ con: ${res.strategy}`,
-            );
-
+            const checklistText = res.subtasks.map((s: any) => s.title).join('\n');
+            this.form.patchValue({ checklist: checklistText });
+            this.aiMessage.set(`AI đã gợi ý phân rã thành ${res.subtasks.length} hạng mục checklist.`);
           }
         },
         error: () => {
           this.aiBusy.set(false);
-          this.aiMessage.set('Phân rã thất bại. Vui lòng kiểm tra tiêu đề.');
+          this.aiMessage.set('Không thể phân rã công việc qua AI.');
         },
-
       });
   }
-  save() {
-    if (this.busy() || this.done() || !this.session.hasPermission('tasks.create')) return;
-    if (!this.uncertain()) {
-      if (this.form.invalid) {
-        this.form.markAllAsTouched();
-        return;
-      }
-      const value = this.form.getRawValue();
-      const deadline = value.deadline ? new Date(value.deadline) : null;
-      if (deadline && (!Number.isFinite(deadline.getTime()) || deadline.getTime() <= Date.now())) {
-        this.error.set('Vui lòng chọn thời hạn trong tương lai theo giờ địa phương.');
-        return;
+
+  submit() {
+    if (this.busy() || this.form.invalid) return;
+    const value = this.form.getRawValue();
+    if (!this.uncertain() || !this.submitted) {
+      const rawDeadline = value.deadline.trim();
+      let deadline: Date | null = null;
+      if (rawDeadline) {
+        deadline = new Date(rawDeadline);
+        if (Number.isNaN(deadline.getTime())) {
+          this.error.set('Hạn chót không hợp lệ. Vui lòng nhập định dạng ngày giờ chuẩn.');
+          return;
+        }
       }
       this.submitted = {
-        title: value.title,
-        description: value.description || null,
+        title: value.title.trim(),
+        description: value.description.trim() ? value.description.trim() : null,
         priority: value.priority,
         deadline: deadline?.toISOString() ?? null,
         checklist: value.checklist
@@ -153,6 +174,7 @@ export class TaskCreate {
           .map((v) => v.trim())
           .filter(Boolean),
         ...(this.requestId() ? { requestId: this.requestId() } : {}),
+        ...(this.parentTaskId() ? { parentTaskId: this.parentTaskId() } : {}),
       };
     }
     this.busy.set(true);
@@ -175,58 +197,24 @@ export class TaskCreate {
         },
         error: (failure: HttpErrorResponse) => {
           this.busy.set(false);
-          const isDevMode =
-            typeof this.session?.accessToken === 'function' &&
-            Boolean(this.session.accessToken()?.startsWith('dev-'));
-          const isDevOrOffline =
-            isDevMode &&
-            (failure.status === 401 || failure.status === 500 || failure.status === 0);
-
-          if (isDevOrOffline && this.submitted) {
-            const mockId = crypto.randomUUID();
-            const val = this.submitted as any;
-            const mockTask = {
-              taskId: mockId,
-              title: val.title,
-              description: val.description || '',
-              status: 'DRAFT',
-              priority: val.priority || 'MEDIUM',
-              deadline: val.deadline || null,
-              assignedUserId: null,
-              assignedUserName: 'Chưa phân công',
-              assignedDepartmentId: null,
-              assignedDepartmentName: 'Phòng Điều hành',
-              requestId: val.requestId || null,
-              checklist: val.checklist || [],
-              createdAt: new Date().toISOString(),
-            };
-            try {
-              const existing = JSON.parse(sessionStorage.getItem('bizflow_mock_tasks') || '[]');
-              existing.unshift(mockTask);
-              sessionStorage.setItem('bizflow_mock_tasks', JSON.stringify(existing));
-            } catch {}
-            this.done.set(true);
-            void this.router.navigate(['/tasks']);
-            return;
-          }
-
           if (failure.status === 422 && !this.uncertain()) {
             this.form.enable();
             this.key = crypto.randomUUID();
             this.error.set('Vui lòng kiểm tra lại tiêu đề, danh mục kiểm tra và hạn chót. Nhiệm vụ chưa được tạo.');
           } else if (failure.status === 403 || failure.status === 401) {
             this.done.set(true);
-            this.error.set('Bạn không còn quyền tạo nhiệm vụ.');
+            this.error.set('Bạn không có quyền tạo nhiệm vụ.');
           } else {
             this.unknown();
           }
         },
       });
   }
+
   private unknown() {
     this.uncertain.set(true);
     this.error.set(
-      'The outcome is uncertain. Retry this exact submission safely with the same key, or check your task list before starting again.',
+      'Kết quả không chắc chắn. Vui lòng thử lại với cùng yêu cầu hoặc kiểm tra danh sách nhiệm vụ.',
     );
   }
 }

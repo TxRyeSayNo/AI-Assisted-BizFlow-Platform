@@ -119,7 +119,7 @@ public sealed class BizFlowDbContext(DbContextOptions<BizFlowDbContext> options,
 
         foreach (var entry in entries)
         {
-            if (entry.State == EntityState.Deleted && entry.Entity is not UserRole and not RolePermission and not WorkflowStep and not WorkflowTransition and not WorkflowVersion and not WorkflowDefinition)
+            if (entry.State == EntityState.Deleted && entry.Entity is not UserRole and not RolePermission and not ManagementScope and not WorkflowStep and not WorkflowTransition and not WorkflowVersion and not WorkflowDefinition)
                 throw new ApplicationFault(FaultKind.Conflict, "PERSISTENCE.HARD_DELETE_DENIED", "Không thể xóa các bản ghi lịch sử trong hệ thống.");
 
             if (entry.State == EntityState.Modified)
@@ -456,6 +456,7 @@ public sealed class BizFlowDbContext(DbContextOptions<BizFlowDbContext> options,
                     break;
                 case ManagementScope scope:
                     AssertTenant(scope.TenantId);
+                    if (entry.State == EntityState.Deleted) break;
                     if (entry.State != EntityState.Added || scope.CreatedBy != CurrentUserId ||
                         !await Users.AnyAsync(u => u.Id == scope.UserId, cancellationToken) ||
                         !await Users.AnyAsync(u => u.Id == scope.CreatedBy, cancellationToken) ||

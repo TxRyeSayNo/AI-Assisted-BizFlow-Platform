@@ -36,6 +36,9 @@ interface TaskRow {
   assignedDepartmentId: string | null;
   assignedDepartmentName: string | null;
   requestId: string | null;
+  parentTaskId?: string | null;
+  subtaskCount?: number;
+  completedSubtaskCount?: number;
 }
 interface TaskPage {
   items: TaskRow[];

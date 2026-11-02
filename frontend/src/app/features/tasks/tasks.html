@@ -122,6 +122,12 @@
               <tr>
                 <th scope="row">
                   <a class="task-title" [routerLink]="['/tasks', item.taskId]">{{ item.title }}</a>
+                  @if (item.parentTaskId) {
+                    <span class="badge-subtask" style="font-size: 11px; font-weight: 700; color: #4338ca; background: #e0e7ff; padding: 2px 7px; border-radius: 4px; margin-left: 8px;">↳ Việc con</span>
+                  }
+                  @if (item.subtaskCount && item.subtaskCount > 0) {
+                    <span class="badge-parent" style="font-size: 11px; font-weight: 700; color: #047857; background: #d1fae5; padding: 2px 7px; border-radius: 4px; margin-left: 8px;">Việc chính ({{ item.completedSubtaskCount }}/{{ item.subtaskCount }} việc con)</span>
+                  }
                   <span class="task-meta"
                     >{{ 'priority.' + item.priority | translate: priorities[item.priority] }}
                     {{ 'tasks.prioritySuffix' | translate: 'priority' }} ·

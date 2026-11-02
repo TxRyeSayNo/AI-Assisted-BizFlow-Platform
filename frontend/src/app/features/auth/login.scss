@@ -46,8 +46,10 @@
     position: absolute;
     top: 50%;
     left: 50%;
-    width: 260%;
-    height: 260%;
+    width: 1400px;
+    height: 1400px;
+    max-width: none;
+    max-height: none;
     transform: translate(-50%, -50%) rotate(0deg);
     transform-origin: center center;
     background: conic-gradient(
@@ -381,6 +383,116 @@ mat-form-field.mat-focused .leading-icon-wrapper {
     user-select: none;
     font-weight: 500;
   }
+}
+
+/* ==========================================================================
+   PRIMARY LOGIN ACTION BUTTON WITH ANIMATED ROTATING LASER BORDER
+   Matches forgot-password styling with cyan-blue luminous glow & shimmer
+   ========================================================================== */
+.sign-in-btn-animated-border {
+  width: 100%;
+  position: relative;
+  border-radius: 12px;
+  padding: 2px;
+  overflow: hidden;
+  background: rgba(220, 238, 255, 0.95);
+  box-shadow: 
+    0 4px 18px -2px rgba(36, 120, 242, 0.32),
+    0 0 14px rgba(0, 212, 255, 0.22);
+  transition: all 250ms cubic-bezier(0.16, 1, 0.3, 1);
+  margin-top: 0.35rem;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 520px;
+    height: 520px;
+    transform: translate(-50%, -50%) rotate(0deg);
+    transform-origin: center center;
+    background: conic-gradient(
+      from 0deg,
+      transparent 0deg,
+      #00f0ff 40deg,
+      #2478f2 85deg,
+      #70b7ff 125deg,
+      #ffffff 155deg,
+      #00e5ff 190deg,
+      #124cc4 240deg,
+      #00f0ff 300deg,
+      transparent 360deg
+    );
+    animation: rotate-login-btn-border 2.8s linear infinite;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 
+      0 8px 24px rgba(36, 120, 242, 0.45),
+      0 0 20px rgba(0, 240, 255, 0.38);
+  }
+
+  &:active {
+    transform: scale(0.985);
+  }
+
+  .sign-in-button, .btn-primary-crimson {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    min-height: 2.95rem !important;
+    height: 2.95rem !important;
+    margin-top: 0 !important;
+    background: linear-gradient(135deg, #0e44b8 0%, #1e6beb 50%, #2478f2 100%) !important;
+    color: #ffffff !important;
+    font-weight: 600 !important;
+    font-size: 0.95rem !important;
+    letter-spacing: 0.015em !important;
+    border-radius: 10px !important;
+    border: none !important;
+    box-shadow: none !important;
+    overflow: hidden !important;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.55rem;
+    transition: all 200ms cubic-bezier(0.16, 1, 0.3, 1) !important;
+
+    &::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -120%;
+      width: 80%;
+      height: 100%;
+      background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(255, 255, 255, 0.35) 50%,
+        transparent 100%
+      );
+      transition: left 600ms ease;
+    }
+
+    &:hover:not(:disabled)::after {
+      left: 130%;
+    }
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+  }
+}
+
+@keyframes rotate-login-btn-border {
+  0% { transform: translate(-50%, -50%) rotate(0deg); }
+  100% { transform: translate(-50%, -50%) rotate(360deg); }
 }
 
 /* Primary Ocean Blue Action Button (preserves .btn-primary-crimson selector for compatibility) */

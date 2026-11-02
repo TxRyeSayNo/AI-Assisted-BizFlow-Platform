@@ -4,58 +4,62 @@
   </a>
   <span class="tenant-badge">{{ identity()?.tenantName }}</span>
 </header>
+
 <main id="main-content" class="page-content" tabindex="-1">
   <nav aria-label="Breadcrumb">
-    <a routerLink="/workspace">{{ 'common.workspace' | translate: 'Workspace' }}</a
-    ><span aria-hidden="true"> / </span
-    ><span>{{ 'users.breadcrumb' | translate: 'Nhân sự' }}</span>
+    <a routerLink="/workspace">{{ 'common.workspace' | translate: 'Không gian làm việc' }}</a>
+    <span aria-hidden="true"> / </span>
+    <span>{{ 'users.breadcrumb' | translate: 'Danh bạ Nhân sự & Phân cấp Vai trò' }}</span>
   </nav>
-  <h1>{{ 'users.title' | translate: 'People' }}</h1>
-  <p>
-    {{
-      'users.subtitle'
-        | translate
-          : 'Find colleagues and their departments in your workspace. This directory is read-only.'
-    }}
-  </p>
-  <section aria-label="People directory" class="directory-panel" [attr.aria-busy]="busy()">
+
+  <div class="user-header-row">
+    <div>
+      <h1>{{ 'users.title' | translate: 'Danh bạ Nhân sự & Quản lý Vai trò' }}</h1>
+      <p class="subtitle-text">
+        {{
+          'users.subtitle'
+            | translate
+              : 'Quản lý cơ cấu nhân sự, phòng ban và phân cấp chức danh (Quản lý bộ phận / Nhân viên thực thi) theo mô hình phân quyền doanh nghiệp.'
+        }}
+      </p>
+    </div>
+  </div>
+
+  <section aria-label="Danh bạ nhân sự" class="directory-panel" [attr.aria-busy]="busy()">
     <form [formGroup]="filters" (ngSubmit)="apply()" class="filters">
       <mat-form-field appearance="outline" subscriptSizing="dynamic">
-        <mat-label>{{ 'users.searchLabel' | translate: 'Name, employee code or email' }}</mat-label>
-        <input matInput formControlName="search" maxlength="200" [readonly]="busy()" />
+        <mat-label>{{ 'users.searchLabel' | translate: 'Họ tên, mã nhân viên hoặc email' }}</mat-label>
+        <input matInput formControlName="search" maxlength="200" [readonly]="busy()" placeholder="Nhập từ khóa tìm kiếm…" />
       </mat-form-field>
       <mat-form-field appearance="outline" subscriptSizing="dynamic">
-        <mat-label>{{ 'users.statusLabel' | translate: 'Account status' }}</mat-label>
+        <mat-label>{{ 'users.statusLabel' | translate: 'Trạng thái tài khoản' }}</mat-label>
         <mat-select formControlName="status">
-          <mat-option value="">{{
-            'departments.allStatuses' | translate: 'All statuses'
-          }}</mat-option
-          ><mat-option value="ACTIVE">{{ 'departments.active' | translate: 'Active' }}</mat-option>
-          <mat-option value="INACTIVE">{{
-            'departments.inactive' | translate: 'Inactive'
-          }}</mat-option
-          ><mat-option value="LOCKED">{{ 'users.locked' | translate: 'Locked' }}</mat-option>
+          <mat-option value="">{{ 'departments.allStatuses' | translate: 'Tất cả trạng thái' }}</mat-option>
+          <mat-option value="ACTIVE">{{ 'departments.active' | translate: 'Đang hoạt động' }}</mat-option>
+          <mat-option value="INACTIVE">{{ 'departments.inactive' | translate: 'Ngừng hoạt động' }}</mat-option>
+          <mat-option value="LOCKED">{{ 'users.locked' | translate: 'Tạm khóa' }}</mat-option>
         </mat-select>
       </mat-form-field>
-      <button mat-flat-button type="submit" [disabled]="busy()">
-        {{ 'departments.applyFilters' | translate: 'Apply filters' }}
+      <button mat-flat-button color="primary" type="submit" [disabled]="busy()">
+        {{ 'departments.applyFilters' | translate: 'Lọc dữ liệu' }}
       </button>
     </form>
+
     @if (busy()) {
       <p role="status" class="directory-feedback">
-        {{ 'users.loading' | translate: 'Loading people…' }}
+        {{ 'users.loading' | translate: 'Đang tải danh sách nhân sự…' }}
       </p>
     } @else if (denied()) {
       <p role="alert" class="directory-feedback">
-        {{ 'users.denied' | translate: 'You no longer have access to this people directory.' }}
+        {{ 'users.denied' | translate: 'Bạn không có quyền truy cập danh bạ nhân sự.' }}
       </p>
     } @else if (error()) {
       <div class="directory-feedback">
         <p role="alert">
-          {{ 'users.error' | translate: 'People could not be loaded. Please try again.' }}
+          {{ 'users.error' | translate: 'Không thể tải danh sách nhân sự. Vui lòng thử lại.' }}
         </p>
         <button mat-stroked-button type="button" (click)="load(page())">
-          {{ 'common.retry' | translate: 'Retry' }}
+          {{ 'common.retry' | translate: 'Thử lại' }}
         </button>
       </div>
     } @else if (result(); as data) {
@@ -64,70 +68,194 @@
           {{
             'users.empty'
               | translate
-                : 'No people match these filters. Try another name, employee code, email or status.'
+                : 'Không tìm thấy nhân sự phù hợp với bộ lọc. Vui lòng kiểm tra lại họ tên, mã nhân sự hoặc email.'
           }}
         </p>
       } @else {
-        <table>
-          <caption>
-            {{
-              'users.tableCaption' | translate: 'Workspace people directory'
-            }}
-          </caption>
-          <thead>
-            <tr>
-              <th scope="col">{{ 'users.col.person' | translate: 'Person' }}</th>
-              <th scope="col">{{ 'common.status' | translate: 'Status' }}</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (item of data.items; track item.userId) {
+        <div class="table-container">
+          <table class="users-table">
+            <thead>
               <tr>
-                <th scope="row">
-                  {{ item.fullName }}
-                  <span class="department-code"
-                    >{{ item.employeeCode }} ·
-                    {{
-                      item.departmentName ?? ('users.noDepartment' | translate: 'No department')
-                    }}</span
-                  >
-                  <span class="person-email">{{ item.email }}</span>
-                </th>
-                <td>
-                  <span class="status-label">{{ labels[item.status] }}</span>
-                </td>
+                <th scope="col" style="min-width: 240px;">{{ 'users.col.person' | translate: 'Nhân sự' }}</th>
+                <th scope="col" style="min-width: 170px;">{{ 'users.col.department' | translate: 'Phòng ban' }}</th>
+                <th scope="col" style="width: 150px;">{{ 'users.col.role' | translate: 'Chức danh / Vai trò' }}</th>
+                <th scope="col" style="width: 130px;">{{ 'common.status' | translate: 'Trạng thái' }}</th>
+                @if (canManageRoles) {
+                  <th scope="col" style="width: 180px; text-align: right;">{{ 'common.actions' | translate: 'Thao tác' }}</th>
+                }
               </tr>
-            }
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              @for (item of data.items; track item.userId) {
+                <tr>
+                  <td>
+                    <div class="person-cell">
+                      <strong class="person-name">{{ item.fullName }}</strong>
+                      <span class="person-code">{{ item.employeeCode }}</span>
+                      <span class="person-email">{{ item.email }}</span>
+                    </div>
+                  </td>
+                  <td>
+                    <span class="dept-badge">{{ item.departmentName ?? 'Chưa phân bổ' }}</span>
+                  </td>
+                  <td>
+                    @if (item.isManager) {
+                      <span class="badge-role manager">👔 Quản lý / Trưởng phòng</span>
+                    } @else {
+                      <span class="badge-role employee">👤 Nhân viên</span>
+                    }
+                  </td>
+                  <td>
+                    <span class="status-chip" [class.active]="item.status === 'ACTIVE'" [class.inactive]="item.status === 'INACTIVE'" [class.locked]="item.status === 'LOCKED'">
+                      {{ labels[item.status] }}
+                    </span>
+                  </td>
+                  @if (canManageRoles) {
+                    <td style="text-align: right;">
+                      <div class="action-btn-group">
+                        @if (item.userId !== identity()?.userId) {
+                          @if (!item.isManager) {
+                            <button
+                              type="button"
+                              class="btn-tbl-action promote"
+                              (click)="promoteToManager(item)"
+                              [disabled]="actionBusy() || item.status !== 'ACTIVE'"
+                              title="Thăng cấp nhân sự này lên làm Quản lý / Trưởng phòng"
+                            >
+                              🎖️ Thăng cấp Quản lý
+                            </button>
+                          } @else {
+                            <button
+                              type="button"
+                              class="btn-tbl-action demote"
+                              (click)="openDemoteModal(item)"
+                              [disabled]="actionBusy()"
+                              title="Kiểm tra trách nhiệm và hạ cấp xuống làm Nhân viên"
+                            >
+                              🔻 Hạ cấp Nhân viên
+                            </button>
+                          }
+                        } @else {
+                          <span class="self-tag">(Tài khoản hiện tại)</span>
+                        }
+                      </div>
+                    </td>
+                  }
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
       }
-      <nav aria-label="People pages" class="pagination">
-        <span role="status"
-          >{{ data.total }}
-          {{
-            data.total === 1
-              ? ('users.person' | translate: 'person')
-              : ('users.people' | translate: 'people')
-          }}
-          · {{ 'common.page' | translate: 'Page' }} {{ data.page }}</span
-        >
-        <button
-          mat-stroked-button
-          type="button"
-          [disabled]="data.page <= 1"
-          (click)="load(data.page - 1)"
-        >
-          {{ 'common.previous' | translate: 'Previous' }}
-        </button>
-        <button
-          mat-stroked-button
-          type="button"
-          [disabled]="data.page * data.pageSize >= data.total"
-          (click)="load(data.page + 1)"
-        >
-          {{ 'common.next' | translate: 'Next' }}
-        </button>
+
+      <nav aria-label="Phân trang nhân sự" class="pagination">
+        <span role="status">
+          Tổng cộng {{ data.total }} nhân sự · Trang {{ data.page }}
+        </span>
+        <div style="display: flex; gap: 8px;">
+          <button
+            mat-stroked-button
+            type="button"
+            [disabled]="data.page <= 1"
+            (click)="load(data.page - 1)"
+          >
+            ← Trang trước
+          </button>
+          <button
+            mat-stroked-button
+            type="button"
+            [disabled]="data.page * data.pageSize >= data.total"
+            (click)="load(data.page + 1)"
+          >
+            Trang sau →
+          </button>
+        </div>
       </nav>
     }
   </section>
 </main>
+
+<!-- MODAL: KIỂM TRA TRÁCH NHIỆM & HẠ CẤP QUẢN LÝ -->
+@if (demoteModalOpen()) {
+  <div class="modal-backdrop" (click)="closeDemoteModal()">
+    <div class="modal-card" (click)="$event.stopPropagation()">
+      <div class="modal-head">
+        <h3>Hạ cấp Quản lý: {{ demoteTargetUser()?.fullName }}</h3>
+        <button type="button" class="btn-close" (click)="closeDemoteModal()">✕</button>
+      </div>
+
+      <div class="modal-body">
+        @if (actionBusy() && !demoteResponsibilities()) {
+          <p style="text-align: center; color: #64748b; padding: 24px;">Đang kiểm tra các nhiệm vụ và trách nhiệm đang phụ trách…</p>
+        } @else if (demoteResponsibilities(); as resp) {
+          <div class="resp-summary-card">
+            <h4 class="summary-title">Báo cáo Trách nhiệm Hiện tại</h4>
+            <div class="resp-stats-grid">
+              <div class="resp-stat-item">
+                <span class="stat-number">{{ resp.activeMainTasksCount }}</span>
+                <span class="stat-desc">Nhiệm vụ cấp công ty đang phụ trách</span>
+              </div>
+              <div class="resp-stat-item">
+                <span class="stat-number">{{ resp.activeChildTasksCount }}</span>
+                <span class="stat-desc">Nhiệm vụ con đang chỉ đạo nhân viên</span>
+              </div>
+              <div class="resp-stat-item">
+                <span class="stat-number">{{ resp.pendingApprovalsCount }}</span>
+                <span class="stat-desc">Yêu cầu / Nghiệm thu chờ duyệt</span>
+              </div>
+            </div>
+
+            @if (resp.activeMainTasksCount > 0) {
+              <div class="transfer-warning-box">
+                <p class="warning-title">⚠️ Bắt buộc chuyển giao công việc cấp công ty</p>
+                <p class="warning-desc">
+                  Quản lý này đang phụ trách <strong>{{ resp.activeMainTasksCount }} công việc chính</strong>. Để đảm bảo tiến độ không bị gián đoạn, vui lòng chọn Quản lý thay thế để tiếp nhận ngay toàn bộ các công việc này:
+                </p>
+
+                @if (resp.eligibleReplacementManagers.length > 0) {
+                  <div class="form-group" style="margin-top: 12px;">
+                    <label for="replacement-manager-select" style="font-size: 13px; font-weight: 600; display: block; margin-bottom: 6px;">
+                      Quản lý nhận chuyển giao công việc *:
+                    </label>
+                    <select
+                      id="replacement-manager-select"
+                      class="custom-select"
+                      [ngModel]="selectedReplacementManagerId()"
+                      (ngModelChange)="selectedReplacementManagerId.set($event)"
+                    >
+                      @for (mgr of resp.eligibleReplacementManagers; track mgr.userId) {
+                        <option [value]="mgr.userId">{{ mgr.fullName }} ({{ mgr.employeeCode }})</option>
+                      }
+                    </select>
+                  </div>
+                } @else {
+                  <p class="error-text" style="color: #ef4444; font-size: 13px; margin-top: 8px;">
+                    ❌ Hiện tại phòng ban không có Quản lý nào khác khả dụng để bàn giao. Vui lòng thăng cấp một nhân viên khác làm Quản lý trước khi hạ cấp người này.
+                  </p>
+                }
+              </div>
+            } @else {
+              <p class="safe-notice">
+                ✅ Quản lý này hiện không phụ trách công việc cấp công ty nào đang mở. Bạn có thể tiến hành hạ cấp an toàn về vai trò Nhân viên.
+              </p>
+            }
+          </div>
+        }
+      </div>
+
+      <div class="modal-foot">
+        <button type="button" class="btn-cancel" (click)="closeDemoteModal()" [disabled]="actionBusy()">
+          Hủy bỏ
+        </button>
+        <button
+          type="button"
+          class="btn-danger-confirm"
+          (click)="executeDemote()"
+          [disabled]="actionBusy() || (demoteResponsibilities()?.activeMainTasksCount || 0) > 0 && !selectedReplacementManagerId()"
+        >
+          <span>{{ actionBusy() ? 'Đang xử lý…' : 'Xác nhận Hạ cấp xuống Nhân viên' }}</span>
+        </button>
+      </div>
+    </div>
+  </div>
+}
