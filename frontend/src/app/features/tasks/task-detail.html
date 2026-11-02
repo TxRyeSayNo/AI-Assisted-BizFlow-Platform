@@ -76,6 +76,22 @@
         </div>
       </div>
     </div>
+    
+    @if (detail.parentTaskId || detail.task.parentTaskId) {
+      <div class="parent-task-link-box" style="background: #eff6ff; border: 1.5px solid #bfdbfe; border-radius: 12px; padding: 14px 18px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <span style="font-size: 20px;">🔗</span>
+          <div>
+            <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: #1e40af;">Nhiệm vụ cấp công ty (Nhiệm vụ cha)</div>
+            <strong style="color: #0f172a; font-size: 14px;">{{ detail.parentTaskTitle || 'Xem nhiệm vụ chính' }}</strong>
+          </div>
+        </div>
+        <a [routerLink]="['/tasks', detail.parentTaskId || detail.task.parentTaskId]" style="text-decoration: none; padding: 6px 14px; background: #ffffff; border-radius: 8px; border: 1px solid #cbd5e1; font-weight: 600; color: #1e40af; font-size: 13px;">
+          Mở nhiệm vụ cha →
+        </a>
+      </div>
+    }
+
     <section class="directory-panel detail-section" aria-label="Task summary">
       <dl>
         <dt>{{ 'common.status' | translate: 'Status' }}</dt>
@@ -111,6 +127,87 @@
           <a [routerLink]="['/requests', detail.task.requestId]" class="request-link">{{
             detail.task.requestId
           }}</a>
+        </p>
+      }
+    </section>
+    <!-- SUBTASKS DELEGATION HUB -->
+    <section class="directory-panel subtasks-hub-section" aria-label="Danh sách nhiệm vụ con" style="margin-top: 1.5rem; margin-bottom: 1.5rem; padding: 18px 24px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 12px;">
+        <div>
+          <h2 style="font-size: 1.15rem; font-weight: 700; margin: 0; color: #0f172a;">
+            📋 Phân rã Công việc & Nhiệm vụ Con ({{ detail.subtasks?.length || 0 }})
+          </h2>
+          <p style="font-size: 0.8125rem; color: #64748b; margin: 4px 0 0;">
+            Quản lý phòng ban phân rã công việc cấp công ty và ủy quyền cho nhân sự phụ trách thực hiện.
+          </p>
+        </div>
+        @if (canCreateSubtask()) {
+          <a
+            mat-flat-button
+            color="primary"
+            [routerLink]="['/tasks/create']"
+            [queryParams]="{ parentTaskId: detail.task.taskId, parentTaskTitle: detail.task.title }"
+            style="background: #1e40af; color: #ffffff;"
+          >
+            + Thêm nhiệm vụ con / Phân công nhân sự
+          </a>
+        }
+      </div>
+
+      @if (detail.subtasks && detail.subtasks.length > 0) {
+        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px 16px; margin-bottom: 16px;">
+          <div style="display: flex; justify-content: space-between; font-size: 12px; font-weight: 600; color: #475569; margin-bottom: 6px;">
+            <span>Tiến độ hoàn thành nhiệm vụ con</span>
+            <span>{{ completedSubtasksCount() }} / {{ detail.subtasks.length }} hoàn thành ({{ subtasksProgressPercent() }}%)</span>
+          </div>
+          <div style="height: 8px; background: #e2e8f0; border-radius: 9999px; overflow: hidden;">
+            <div style="height: 100%; background: #10b981; border-radius: 9999px; transition: width 300ms ease;" [style.width.%]="subtasksProgressPercent()"></div>
+          </div>
+        </div>
+
+        <div class="table-container" style="overflow-x: auto;">
+          <table style="width: 100%; min-width: 720px; border-collapse: separate; border-spacing: 0; font-size: 13px;">
+            <thead>
+              <tr style="background: #f8fafc; text-align: left; color: #64748b; font-size: 11px; text-transform: uppercase;">
+                <th style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0;">Tiêu đề nhiệm vụ con</th>
+                <th style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; width: 180px;">Nhân sự thực thi</th>
+                <th style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; width: 140px;">Trạng thái</th>
+                <th style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; width: 110px;">Độ ưu tiên</th>
+                <th style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; width: 110px; text-align: right;">Chi tiết</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (sub of detail.subtasks; track sub.taskId) {
+                <tr>
+                  <td style="padding: 10px 14px; border-bottom: 1px solid #f1f5f9;">
+                    <a [routerLink]="['/tasks', sub.taskId]" style="font-weight: 600; color: #1d4ed8; text-decoration: none;">
+                      {{ sub.title }}
+                    </a>
+                  </td>
+                  <td style="padding: 10px 14px; border-bottom: 1px solid #f1f5f9;">
+                    <span style="font-weight: 500; color: #1e293b;">{{ sub.assignedUserName ?? 'Chưa phân công' }}</span>
+                  </td>
+                  <td style="padding: 10px 14px; border-bottom: 1px solid #f1f5f9;">
+                    <span class="status-chip" [class.active]="sub.status === 'COMPLETED' || sub.status === 'CONFIRMED'">
+                      {{ 'status.' + sub.status | translate: sub.status }}
+                    </span>
+                  </td>
+                  <td style="padding: 10px 14px; border-bottom: 1px solid #f1f5f9;">
+                    <span>{{ 'priority.' + sub.priority | translate: sub.priority }}</span>
+                  </td>
+                  <td style="padding: 10px 14px; border-bottom: 1px solid #f1f5f9; text-align: right;">
+                    <a [routerLink]="['/tasks', sub.taskId]" style="font-size: 12px; font-weight: 600; color: #2563eb; text-decoration: none;">
+                      Xem →
+                    </a>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      } @else {
+        <p style="color: #64748b; font-size: 13px; margin: 0; font-style: italic;">
+          Nhiệm vụ này chưa được phân rã thành các nhiệm vụ con.
         </p>
       }
     </section>

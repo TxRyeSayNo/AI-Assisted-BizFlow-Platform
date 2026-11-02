@@ -150,7 +150,8 @@ export class AiAgentService {
     this.restoreCurrentSessionFromStorage();
   }
 
-  loadDepartments(): void {
+  loadDepartments(force = false): void {
+    if (!force && this.departments().length > 0) return;
     // fetch departments
     this.http.get<any>('/api/v1/departments?pageSize=100').subscribe({
       next: (res) => {
@@ -182,7 +183,6 @@ export class AiAgentService {
 
   open(tab: 'chat' | 'branches' | 'history' = 'chat', expand?: boolean): void {
     if (tab === 'branches') {
-      this.loadDepartments();
       this.openBranchModal();
     }
     this.isOpen.set(true);
@@ -282,7 +282,6 @@ export class AiAgentService {
   }
 
   selectBranch(branch: SubtaskBranch | null): void {
-    this.loadDepartments();
     this.selectedBranch.set(branch);
   }
 
@@ -707,8 +706,12 @@ export class AiAgentService {
 
   // --- Submitting Single Branch or All Branches ---
 
-  submitSingleBranch(branch: SubtaskBranch): void {
-    if (branch.status === 'created' || branch.status === 'submitting') return;
+  submitSingleBranch(branch: SubtaskBranch, force: boolean = false): void {
+    if (branch.status === 'submitting') return;
+    if (!this.session.hasPermission('tasks.create')) {
+      this.showToast('Tài khoản Nhân viên không thể tạo nhiệm vụ cho cấp dưới. Vui lòng tạo Yêu cầu nếu cần đề xuất công việc.', 'error');
+      return;
+    }
 
     // Optimistic UI status
     const currentList = this.branches();
@@ -791,9 +794,16 @@ export class AiAgentService {
   }
 
   submitAllBranches(): void {
-    const pendingBranches = this.branches().filter((b) => b.status !== 'created');
+    if (!this.session.hasPermission('tasks.create')) {
+      this.showToast('Tài khoản Nhân viên không thể tạo nhiệm vụ cho cấp dưới. Vui lòng tạo Yêu cầu nếu cần đề xuất công việc.', 'error');
+      return;
+    }
+    let pendingBranches = this.branches().filter((b) => b.status !== 'created');
+    if (pendingBranches.length === 0 && this.branches().length > 0) {
+      pendingBranches = this.branches();
+    }
     if (pendingBranches.length === 0) {
-      this.showToast('Tất cả các nhánh nhiệm vụ đã được tạo thành công!', 'info');
+      this.showToast('Chưa có nhánh nhiệm vụ nào để gửi vào hệ thống.', 'info');
       return;
     }
 

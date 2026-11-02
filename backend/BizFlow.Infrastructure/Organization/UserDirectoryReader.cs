@@ -24,9 +24,13 @@ public sealed class UserDirectoryReader(BizFlowDbContext db) : IUserDirectoryRea
             .Select(u => new
             {
                 u.Id, u.EmployeeCode, u.FullName, u.Email, u.DepartmentId, u.Status,
-                DepartmentName = db.Departments.Where(d => d.TenantId == tenantId && d.Id == u.DepartmentId).Select(d => d.Name).FirstOrDefault()
+                DepartmentName = db.Departments.Where(d => d.TenantId == tenantId && d.Id == u.DepartmentId).Select(d => d.Name).FirstOrDefault(),
+                IsManager = db.UserRoles.Any(ur => ur.UserId == u.Id && db.Roles.Any(r => r.Id == ur.RoleId && r.Name == "MANAGER")),
+                RoleName = db.UserRoles.Where(ur => ur.UserId == u.Id)
+                    .Select(ur => db.Roles.Where(r => r.Id == ur.RoleId).Select(r => r.Name).FirstOrDefault())
+                    .FirstOrDefault()
             }).ToListAsync(cancellationToken);
         return new(rows.Select(u => new UserDirectoryRow(u.Id, u.EmployeeCode, u.FullName, u.Email,
-            u.DepartmentId, u.DepartmentName, u.Status.ToString().ToUpperInvariant())).ToArray(), filter.Page, filter.PageSize, total);
+            u.DepartmentId, u.DepartmentName, u.Status.ToString().ToUpperInvariant(), u.IsManager, u.RoleName)).ToArray(), filter.Page, filter.PageSize, total);
     }
 }

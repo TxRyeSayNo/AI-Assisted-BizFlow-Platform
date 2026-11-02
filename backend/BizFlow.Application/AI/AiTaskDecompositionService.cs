@@ -176,7 +176,30 @@ public sealed class AiTaskDecompositionService(
 
         if (hasAssignment)
         {
-            await authorizer.AuthorizeAsync("tasks.create", new(tenantId), cancellationToken: cancellationToken);
+            try
+            {
+                await authorizer.AuthorizeAsync("tasks.create", new(tenantId), cancellationToken: cancellationToken);
+            }
+            catch (ApplicationFault)
+            {
+                // Fallback: If caller only has requests.create, convert assignment items to SupportRequest
+                try
+                {
+                    await authorizer.AuthorizeAsync("requests.create", new(tenantId), cancellationToken: cancellationToken);
+                    command = command with
+                    {
+                        Items = command.Items.Select(i => string.Equals(i.Type, "Assignment", StringComparison.OrdinalIgnoreCase)
+                            ? i with { Type = "SupportRequest" }
+                            : i).ToList()
+                    };
+                    hasAssignment = false;
+                    hasSupportRequest = true;
+                }
+                catch
+                {
+                    throw;
+                }
+            }
         }
 
         if (hasSupportRequest)

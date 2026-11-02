@@ -451,7 +451,7 @@ public sealed class AuditLog
             { idempotency = new { operation = "TASK.CREATE", keyHash = idempotencyKeyHash, fingerprint = requestFingerprint } }),
             AfterJson = JsonSerializer.Serialize(new
             {
-                taskId = task.Id, creatorId = task.CreatorId, requestId = task.RequestId,
+                taskId = task.Id, creatorId = task.CreatorId, requestId = task.RequestId, parentTaskId = task.ParentTaskId,
                 title = task.Title, description = task.Description, priority = task.Priority.ToString().ToUpperInvariant(),
                 deadline = task.Deadline, status = "DRAFT", workflowVersionId = task.WorkflowVersionId,
                 slaVersionId = task.SlaVersionId, createdAt = task.CreatedAt,

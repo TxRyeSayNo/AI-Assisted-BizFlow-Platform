@@ -43,7 +43,14 @@ interface Detail {
     assignedUserName: string | null;
     assignedUserId: string | null;
     assignedDepartmentName: string | null;
+    assignedDepartmentId?: string | null;
+    parentTaskId?: string | null;
+    subtaskCount?: number;
+    completedSubtaskCount?: number;
   };
+  parentTaskId?: string | null;
+  parentTaskTitle?: string | null;
+  subtasks?: Array<any>;
   description: string | null;
   creatorName: string | null;
   checklist: EvidencePage;
@@ -64,6 +71,26 @@ interface Detail {
   styleUrls: ['../organization/departments.scss', './task-editor.scss'],
 })
 export class TaskDetail {
+  canCreateSubtask(): boolean {
+    const d = this.data();
+    if (!d?.task) return false;
+    // Only Managers and Company Admins can decompose/create subtasks for subordinates
+    const isManagerOrAdmin = this.session.hasPermission('tasks.assign') && this.session.hasPermission('tasks.create');
+    return isManagerOrAdmin && d.task.status !== 'CANCELLED' && d.task.status !== 'COMPLETED';
+  }
+
+  completedSubtasksCount(): number {
+    const subs = this.data()?.subtasks;
+    if (!subs || !subs.length) return 0;
+    return subs.filter((s: any) => s.status === 'COMPLETED' || s.status === 'CONFIRMED').length;
+  }
+
+  subtasksProgressPercent(): number {
+    const subs = this.data()?.subtasks;
+    if (!subs || !subs.length) return 0;
+    return Math.round((this.completedSubtasksCount() / subs.length) * 100);
+  }
+
   readonly session = inject(SessionService);
   private readonly dialog = inject(MatDialog);
   private assigning = false;

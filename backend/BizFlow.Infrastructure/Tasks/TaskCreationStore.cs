@@ -47,9 +47,14 @@ public sealed class TaskCreationStore(BizFlowDbContext db, ITenantContext contex
             {
                 reqId = parsedId;
             }
+            Guid? parentId = null;
+            if (root.TryGetProperty("parentTaskId", out var parentProp) && parentProp.ValueKind == JsonValueKind.String && Guid.TryParse(parentProp.GetString(), out var parsedParentId))
+            {
+                parentId = parsedParentId;
+            }
             return new(metadata.RootElement.GetProperty("idempotency").GetProperty("fingerprint").GetString()!,
                 new(root.GetProperty("taskId").GetGuid(), root.GetProperty("title").GetString()!,
-                    root.GetProperty("status").GetString()!, root.GetProperty("createdAt").GetDateTimeOffset(), reqId));
+                    root.GetProperty("status").GetString()!, root.GetProperty("createdAt").GetDateTimeOffset(), reqId, parentId));
         }
         public async Task<bool> ValidateRequestAsync(Guid requestId, CancellationToken cancellationToken)
         {
@@ -58,6 +63,12 @@ public sealed class TaskCreationStore(BizFlowDbContext db, ITenantContext contex
             return req.Status != BizFlow.Domain.Requests.RequestState.Cancelled &&
                    req.Status != BizFlow.Domain.Requests.RequestState.Closed &&
                    req.Status != BizFlow.Domain.Requests.RequestState.Rejected;
+        }
+        public async Task<bool> ValidateParentTaskAsync(Guid parentTaskId, CancellationToken cancellationToken)
+        {
+            var parent = await db.WorkTasks.AsNoTracking().SingleOrDefaultAsync(t => t.TenantId == tenantId && t.Id == parentTaskId && t.DeletedAt == null, cancellationToken);
+            if (parent is null) return false;
+            return parent.Status != TaskState.Cancelled && parent.Status != TaskState.Completed;
         }
         public async Task CommitAsync(WorkTask task, IReadOnlyList<TaskChecklistItem> checklist, AuditLog audit, CancellationToken cancellationToken)
         {

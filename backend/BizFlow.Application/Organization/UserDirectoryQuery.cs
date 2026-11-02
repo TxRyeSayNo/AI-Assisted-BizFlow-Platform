@@ -6,7 +6,7 @@ namespace BizFlow.Application.Organization;
 public sealed record UserDirectoryFilter(int Page = 1, int PageSize = 25, string? Search = null,
     string? Status = null, Guid? DepartmentId = null);
 public sealed record UserDirectoryRow(Guid UserId, string EmployeeCode, string FullName, string Email,
-    Guid? DepartmentId, string? DepartmentName, string Status);
+    Guid? DepartmentId, string? DepartmentName, string Status, bool IsManager = false, string? RoleName = null);
 public sealed record UserDirectoryPage(IReadOnlyList<UserDirectoryRow> Items, int Page, int PageSize, long Total);
 public interface IUserDirectoryReader
 {

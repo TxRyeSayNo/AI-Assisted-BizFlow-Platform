@@ -20,7 +20,7 @@ import { TranslatePipe } from '../../core/i18n/translate.pipe';
         <span class="tenant-badge">
           {{
             identity()?.tenantName ??
-              ('common.platformAdmin' | translate: 'Platform administration')
+              ('common.platformAdmin' | translate: 'Quản trị Nền tảng Hệ thống')
           }}
         </span>
       </div>
@@ -90,10 +90,10 @@ import { TranslatePipe } from '../../core/i18n/translate.pipe';
           }
         } @else {
           <a routerLink="/platform/companies" class="nav-link">{{
-            'nav.companyRegistrations' | translate: 'Companies'
+            'nav.companyRegistrations' | translate: 'Doanh nghiệp'
           }}</a>
           <a routerLink="/platform/audit" class="nav-link">{{
-            'nav.platformAudit' | translate: 'Platform Audit'
+            'nav.platformAudit' | translate: 'Kiểm toán Nền tảng'
           }}</a>
         }
       </nav>
@@ -340,7 +340,7 @@ import { TranslatePipe } from '../../core/i18n/translate.pipe';
           }
 
           <!-- 6. Tra cứu Hồ sơ Hợp nhất -->
-          @if (session.hasPermission('records.search') || !identity()?.tenantId) {
+          @if (session.hasPermission('records.search')) {
             <article class="module-card">
               <div class="module-icon">🔍</div>
               <h3>{{ 'workspace.cardSearchTitle' | translate: 'Tra cứu Hồ sơ Hợp nhất' }}</h3>
@@ -362,7 +362,7 @@ import { TranslatePipe } from '../../core/i18n/translate.pipe';
           }
 
           <!-- 7. Danh bạ Nhân sự -->
-          @if (session.hasPermission('users.read') || !identity()?.tenantId) {
+          @if (session.hasPermission('users.read')) {
             <article class="module-card">
               <div class="module-icon">👥</div>
               <h3>{{ 'workspace.cardUsersTitle' | translate: 'Danh bạ Nhân sự & Tài khoản' }}</h3>
@@ -408,7 +408,7 @@ import { TranslatePipe } from '../../core/i18n/translate.pipe';
           }
 
           <!-- 9. Nhật ký Kiểm toán -->
-          @if (session.hasPermission('audit.read') || !identity()?.tenantId) {
+          @if (session.hasPermission('audit.read') && identity()?.tenantId) {
             <article class="module-card">
               <div class="module-icon">🛡</div>
               <h3>{{ 'workspace.cardAuditTitle' | translate: 'Nhật ký Kiểm toán' }}</h3>

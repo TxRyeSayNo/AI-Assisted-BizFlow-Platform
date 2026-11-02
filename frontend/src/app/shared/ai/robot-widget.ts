@@ -54,6 +54,7 @@ export class RobotWidgetComponent implements OnInit {
   readonly chatSessions = computed(() => this.agent.chatSessions());
   readonly busy = computed(() => this.agent.busy());
   readonly isAuthenticated = computed(() => this.session.signedIn());
+  readonly canCreateTasks = computed(() => this.session.hasPermission('tasks.create'));
 
   ngOnInit() {
     this.checkSessionDisplayState();
@@ -295,6 +296,20 @@ export class RobotWidgetComponent implements OnInit {
     const lower = trimmed.toLowerCase();
 
     if (lower.startsWith('/task') || lower.startsWith('phân rã') || lower.startsWith('lên kế hoạch')) {
+      if (!this.canCreateTasks()) {
+        return {
+          text: '🔒 **Thông báo phân cấp quyền hạn**: Tài khoản của bạn đang có vai trò **Nhân viên**.\n' +
+            'Theo mô hình phân cấp quản lý BizFlow, Nhân viên không thể phân rã hoặc tạo nhiệm vụ cho cấp dưới.\n\n' +
+            '👉 Nếu bạn cần đề xuất phương án làm việc hoặc xin nguồn lực, vui lòng tạo **Yêu cầu (Request)** gửi lên Quản lý phòng ban xem xét.',
+          actionCards: [
+            {
+              actionType: 'NAVIGATE',
+              title: '➕ Tạo Yêu cầu mới (Request)',
+              linkUrl: '/requests/new',
+            },
+          ],
+        };
+      }
       const prompt = trimmed.replace(/^\/task/i, '').trim();
       const demoProposals = [
         {

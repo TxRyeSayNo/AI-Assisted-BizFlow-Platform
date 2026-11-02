@@ -9,6 +9,7 @@ public sealed class WorkTask
 {
     public Guid Id { get; private set; }
     public Guid TenantId { get; private set; }
+    public Guid? ParentTaskId { get; private set; }
     public Guid? RequestId { get; private set; }
     public Guid CreatorId { get; private set; }
     public string Title { get; private set; } = "";
@@ -73,17 +74,22 @@ public sealed class WorkTask
     // must authorize the creator, validate source ownership and apply workflow/SLA deadline rules.
     public static WorkTask CreateDraft(Guid tenantId, Guid creatorId, string title, DateTimeOffset now,
         string? description = null, TaskPriority priority = TaskPriority.Medium,
-        DateTimeOffset? deadline = null, Guid? requestId = null)
+        DateTimeOffset? deadline = null, Guid? requestId = null, Guid? parentTaskId = null)
     {
         if (!Enum.IsDefined(priority)) throw new ArgumentException("Unknown task priority.", nameof(priority));
         if (requestId is { } request) EntityRules.Id(request, nameof(requestId));
+        if (parentTaskId is { } parent) EntityRules.Id(parent, nameof(parentTaskId));
         var normalizedTitle = EntityRules.Text(title, 300, nameof(title));
         if (normalizedTitle.Any(char.IsControl)) throw new ArgumentException("Title must be plain text.", nameof(title));
         if (description?.Any(c => char.IsControl(c) && c is not ('\r' or '\n' or '\t')) == true)
             throw new ArgumentException("Description must be plain text.", nameof(description));
+        var id = Guid.CreateVersion7();
+        if (parentTaskId.HasValue && parentTaskId.Value == id)
+            throw new ArgumentException("Parent task cannot be self-referencing.", nameof(parentTaskId));
         return new()
         {
-            Id = Guid.CreateVersion7(), TenantId = EntityRules.Id(tenantId, nameof(tenantId)),
+            Id = id, TenantId = EntityRules.Id(tenantId, nameof(tenantId)),
+            ParentTaskId = parentTaskId,
             CreatorId = EntityRules.Id(creatorId, nameof(creatorId)), RequestId = requestId,
             Title = normalizedTitle, Description = string.IsNullOrWhiteSpace(description) ? null : description.Trim(),
             Priority = priority, Deadline = deadline?.ToUniversalTime(), Status = TaskState.Draft,

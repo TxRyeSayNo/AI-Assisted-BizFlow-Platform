@@ -32,8 +32,15 @@ export const routes: Routes = [
     loadComponent: () => import('./features/tasks/task-create').then((m) => m.TaskCreate),
   },
   {
+    path: 'tasks/create',
+    canActivate: [tenantGuard, permissionGuard],
+    data: { permission: 'tasks.create' },
+    loadComponent: () => import('./features/tasks/task-create').then((m) => m.TaskCreate),
+  },
+  {
     path: 'tasks/ai-decomposition',
-    canActivate: [tenantGuard],
+    canActivate: [tenantGuard, permissionGuard],
+    data: { permission: 'tasks.create' },
     loadComponent: () =>
       import('./features/tasks/task-decomposition-preview').then((m) => m.TaskDecompositionPreview),
   },

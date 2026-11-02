@@ -21,6 +21,20 @@ public sealed record UpdateUserRequest(
     IReadOnlyList<Guid>? RoleIds = null);
 
 public sealed record UpdateUserStatusRequest(string Status);
+public sealed record DemoteUserRequest(Guid? TransferToUserId = null);
+
+public sealed record EligibleManagerView(Guid UserId, string FullName, string EmployeeCode);
+public sealed record UserResponsibilitiesView(
+    Guid UserId,
+    string FullName,
+    string EmployeeCode,
+    Guid? DepartmentId,
+    string? DepartmentName,
+    int ActiveMainTasksCount,
+    int ActiveChildTasksCount,
+    int PendingApprovalsCount,
+    bool IsSoleDepartmentManager,
+    IReadOnlyList<EligibleManagerView> EligibleReplacementManagers);
 
 public sealed record UserOperationResult(
     Guid UserId,
@@ -40,6 +54,9 @@ public interface IUserManagementStore
     Task<UserOperationResult> CreateUserAsync(UserAccount user, IReadOnlyList<Guid> roleIds, AuditLog audit, CancellationToken cancellationToken);
     Task<UserOperationResult> UpdateUserAsync(Guid tenantId, Guid userId, string fullName, Guid? departmentId, IReadOnlyList<Guid>? roleIds, Guid actorId, DateTimeOffset now, CancellationToken cancellationToken);
     Task<UserOperationResult> UpdateStatusAsync(Guid tenantId, Guid userId, UserStatus newStatus, Guid actorId, DateTimeOffset now, CancellationToken cancellationToken);
+    Task<UserResponsibilitiesView> GetResponsibilitiesAsync(Guid tenantId, Guid userId, CancellationToken cancellationToken);
+    Task<UserOperationResult> PromoteToManagerAsync(Guid tenantId, Guid userId, Guid actorId, DateTimeOffset now, CancellationToken cancellationToken);
+    Task<UserOperationResult> DemoteToEmployeeAsync(Guid tenantId, Guid userId, Guid? transferToUserId, Guid actorId, DateTimeOffset now, CancellationToken cancellationToken);
 }
 
 public sealed class UserManagement(
@@ -117,5 +134,29 @@ public sealed class UserManagement(
 
         var now = clock.GetUtcNow();
         return await store.UpdateStatusAsync(tenantId, userId, newStatus, context.UserId!.Value, now, cancellationToken);
+    }
+
+    public async Task<UserResponsibilitiesView> GetResponsibilitiesAsync(Guid userId, CancellationToken cancellationToken)
+    {
+        var tenantId = await AuthorizeAsync(cancellationToken);
+        return await store.GetResponsibilitiesAsync(tenantId, userId, cancellationToken);
+    }
+
+    public async Task<UserOperationResult> PromoteToManagerAsync(Guid userId, CancellationToken cancellationToken)
+    {
+        var tenantId = await AuthorizeAsync(cancellationToken);
+        if (context.UserId == userId)
+            throw new ApplicationFault(FaultKind.Conflict, "USER.CANNOT_PROMOTE_SELF", "You cannot promote your own account.");
+        var now = clock.GetUtcNow();
+        return await store.PromoteToManagerAsync(tenantId, userId, context.UserId!.Value, now, cancellationToken);
+    }
+
+    public async Task<UserOperationResult> DemoteToEmployeeAsync(Guid userId, DemoteUserRequest request, CancellationToken cancellationToken)
+    {
+        var tenantId = await AuthorizeAsync(cancellationToken);
+        if (context.UserId == userId)
+            throw new ApplicationFault(FaultKind.Conflict, "USER.CANNOT_DEMOTE_SELF", "You cannot demote your own account.");
+        var now = clock.GetUtcNow();
+        return await store.DemoteToEmployeeAsync(tenantId, userId, request.TransferToUserId, context.UserId!.Value, now, cancellationToken);
     }
 }

@@ -27,4 +27,16 @@ public sealed class UsersController(
     [HttpPatch("{id:guid}/status")]
     public Task<UserOperationResult> UpdateStatus(Guid id, [FromBody] UpdateUserStatusRequest request, CancellationToken cancellationToken) =>
         management.UpdateStatusAsync(id, request, cancellationToken);
+
+    [HttpGet("{id:guid}/responsibilities")]
+    public Task<UserResponsibilitiesView> GetResponsibilities(Guid id, CancellationToken cancellationToken) =>
+        management.GetResponsibilitiesAsync(id, cancellationToken);
+
+    [HttpPost("{id:guid}/promote-manager")]
+    public Task<UserOperationResult> PromoteToManager(Guid id, CancellationToken cancellationToken) =>
+        management.PromoteToManagerAsync(id, cancellationToken);
+
+    [HttpPost("{id:guid}/demote-employee")]
+    public Task<UserOperationResult> DemoteToEmployee(Guid id, [FromBody] DemoteUserRequest request, CancellationToken cancellationToken) =>
+        management.DemoteToEmployeeAsync(id, request, cancellationToken);
 }

@@ -31,30 +31,30 @@ import { ToastService } from '../../core/toast/toast.service';
       </header>
       <main id="main-content" class="auth-content" tabindex="-1">
         <section class="auth-intro">
-          <span class="eyebrow">{{ 'reset.eyebrow' | translate: 'Account security' }}</span>
-          <h1>{{ 'reset.title' | translate: 'Choose a new password.' }}</h1>
+          <span class="eyebrow">{{ 'reset.eyebrow' | translate: 'Bảo mật Tài khoản' }}</span>
+          <h1>{{ 'reset.title' | translate: 'Đặt lại mật khẩu mới' }}</h1>
           <p>
             {{
               'reset.subtitle'
                 | translate
-                  : 'Reset links are short-lived and single-use. Changing your password signs out all existing sessions.'
+                  : 'Liên kết đặt lại có thời hạn ngắn và chỉ dùng một lần. Đổi mật khẩu sẽ đăng xuất khỏi tất cả phiên đăng nhập hiện tại.'
             }}
           </p>
         </section>
         <section class="auth-card" aria-labelledby="reset-title">
-          <h2 id="reset-title">{{ 'reset.title' | translate: 'Reset your password' }}</h2>
+          <h2 id="reset-title">{{ 'reset.title' | translate: 'Đặt lại mật khẩu mới' }}</h2>
           @if (complete()) {
             <p class="inline-alert" role="status">
               {{
                 'reset.success'
-                  | translate: 'Your password has been changed. Sign in with your new password.'
+                  | translate: 'Mật khẩu của bạn đã được thay đổi. Hãy đăng nhập bằng mật khẩu mới.'
               }}
             </p>
           } @else if (!hasToken()) {
             <p class="inline-alert" role="alert">
               {{
                 'reset.noToken'
-                  | translate: 'Open the reset link from your email, or request a new link.'
+                  | translate: 'Vui lòng mở liên kết đặt lại từ email, hoặc yêu cầu liên kết mới.'
               }}
             </p>
           } @else {
@@ -62,13 +62,13 @@ import { ToastService } from '../../core/toast/toast.service';
               {{
                 'reset.passwordReqs'
                   | translate
-                    : 'Use at least 12 characters and four distinct characters. Your company may require a stronger password.'
+                    : 'Sử dụng ít nhất 12 ký tự. Công ty của bạn có thể yêu cầu mật khẩu mạnh hơn.'
               }}
             </p>
             <form [formGroup]="form" (ngSubmit)="submit()" [attr.aria-busy]="busy()">
               <mat-form-field appearance="outline"
                 ><mat-label>{{
-                  'forgot.identifier' | translate: 'Employee code or company email'
+                  'forgot.identifier' | translate: 'Mã nhân viên hoặc email công ty'
                 }}</mat-label>
                 <input
                   matInput
@@ -77,12 +77,12 @@ import { ToastService } from '../../core/toast/toast.service';
                   [readonly]="busy()"
                 />
                 <mat-error>{{
-                  'forgot.identifierReq' | translate: 'Enter your employee code or company email.'
+                  'forgot.identifierReq' | translate: 'Vui lòng nhập mã nhân viên hoặc email công ty.'
                 }}</mat-error></mat-form-field
               >
               <mat-form-field appearance="outline" subscriptSizing="dynamic"
                 ><mat-label>{{
-                  'forgot.workspaceKey' | translate: 'Workspace key'
+                  'forgot.workspaceKey' | translate: 'Mã không gian làm việc'
                 }}</mat-label>
                 <input
                   matInput
@@ -92,14 +92,14 @@ import { ToastService } from '../../core/toast/toast.service';
                 />
                 <mat-hint>{{
                   'forgot.workspaceKeyHint'
-                    | translate: 'Optional; the reset link is bound to your account.'
+                    | translate: 'Không bắt buộc; liên kết khôi phục đã gắn với tài khoản của bạn.'
                 }}</mat-hint
                 ><mat-error>{{
-                  'forgot.workspaceKeyInvalid' | translate: 'Use a valid company workspace key.'
+                  'forgot.workspaceKeyInvalid' | translate: 'Vui lòng nhập mã không gian làm việc hợp lệ.'
                 }}</mat-error></mat-form-field
               >
               <mat-form-field appearance="outline"
-                ><mat-label>{{ 'reset.newPassword' | translate: 'New password' }}</mat-label>
+                ><mat-label>{{ 'reset.newPassword' | translate: 'Mật khẩu mới' }}</mat-label>
                 <input
                   matInput
                   type="password"
@@ -108,12 +108,12 @@ import { ToastService } from '../../core/toast/toast.service';
                   [readonly]="busy()"
                 />
                 <mat-error>{{
-                  'reset.passwordLength' | translate: 'Use 12–1024 characters.'
+                  'reset.passwordLength' | translate: 'Sử dụng từ 12 đến 1024 ký tự.'
                 }}</mat-error></mat-form-field
               >
               <mat-form-field appearance="outline"
                 ><mat-label>{{
-                  'reset.confirmPassword' | translate: 'Confirm new password'
+                  'reset.confirmPassword' | translate: 'Xác nhận mật khẩu mới'
                 }}</mat-label>
                 <input
                   matInput
@@ -123,7 +123,7 @@ import { ToastService } from '../../core/toast/toast.service';
                   [readonly]="busy()"
                 />
                 <mat-error>{{
-                  'reset.confirmPasswordReq' | translate: 'Confirm your new password.'
+                  'reset.confirmPasswordReq' | translate: 'Vui lòng xác nhận mật khẩu mới của bạn.'
                 }}</mat-error></mat-form-field
               >
               <!-- Accessible alert announcement without layout displacement -->
@@ -133,18 +133,18 @@ import { ToastService } from '../../core/toast/toast.service';
               <button mat-flat-button class="sign-in-button" type="submit" [disabled]="busy()">
                 {{
                   busy()
-                    ? ('reset.submitting' | translate: 'Changing password…')
-                    : ('reset.submit' | translate: 'Change password')
+                    ? ('reset.submitting' | translate: 'Đang cập nhật…')
+                    : ('reset.submit' | translate: 'Cập nhật mật khẩu')
                 }}
               </button>
             </form>
           }
           <p class="auth-help">
             <a routerLink="/forgot-password">{{
-              'reset.requestNewLink' | translate: 'Request a new reset link'
+              'reset.requestNewLink' | translate: 'Yêu cầu liên kết đặt lại mới'
             }}</a>
             ·
-            <a routerLink="/login">{{ 'reset.backToSignIn' | translate: 'Back to sign in' }}</a>
+            <a routerLink="/login">{{ 'reset.backToSignIn' | translate: 'Quay lại đăng nhập' }}</a>
           </p>
         </section>
       </main>

@@ -119,109 +119,111 @@
         }
       </div>
     } @else {
-      <table class="wf-table">
-        <thead>
-          <tr>
-            <th scope="col" class="th-name" style="min-width: 220px;">Tên quy trình</th>
-            <th scope="col" class="th-type" style="width: 160px; min-width: 160px; white-space: nowrap;">Loại nghiệp vụ</th>
-            <th scope="col" class="th-status" style="width: 200px; min-width: 200px; white-space: nowrap;">Trạng thái</th>
-            <th scope="col" class="th-version" style="width: 260px; min-width: 260px; white-space: nowrap;">Phiên bản mới nhất</th>
-            <th scope="col" class="th-actions" style="min-width: 320px; text-align: right; white-space: nowrap;">Thao tác</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (row of data.items; track row.workflowId) {
+      <div class="wf-table-container">
+        <table class="wf-table">
+          <thead>
             <tr>
-              <td class="td-name">
-                <div class="wf-name-cell">
-                  <span class="wf-name-text">{{ row.name }}</span>
-                </div>
-              </td>
-              <td class="td-type">
-                <span class="badge-type" [class.request]="row.businessType === 'REQUEST'" [class.task]="row.businessType === 'TASK'">
-                  {{ labels[row.businessType] }}
-                </span>
-              </td>
-              <td class="td-status">
-                <span
-                  class="badge-status"
-                  [class.draft]="row.status === 'DRAFT'"
-                  [class.active]="row.status === 'ACTIVE'"
-                  [class.inactive]="row.status === 'INACTIVE'"
-                >
-                  {{ labels[row.status] }}
-                </span>
-              </td>
-              <td class="td-version">
-                @if (row.latestVersionId) {
-                  <div class="wf-version-cell">
-                    <a
-                      class="version-link"
-                      [routerLink]="['/settings/workflows', row.workflowId, 'versions', row.latestVersionId]"
-                      title="Mở phiên bản {{ row.latestVersionNo }} trong trình thiết kế"
-                    >
-                      Phiên bản {{ row.latestVersionNo }}
-                    </a>
-                    <span
-                      class="badge-status"
-                      [class.draft]="row.latestVersionStatus === 'Draft' || row.latestVersionStatus === 'DRAFT'"
-                      [class.published]="row.latestVersionStatus === 'Published' || row.latestVersionStatus === 'PUBLISHED'"
-                    >
-                      {{ labels[row.latestVersionStatus ?? ''] || 'Bản nháp' }}
-                    </span>
+              <th scope="col" class="th-name" style="min-width: 220px;">Tên quy trình</th>
+              <th scope="col" class="th-type" style="width: 150px; min-width: 150px; white-space: nowrap;">Loại nghiệp vụ</th>
+              <th scope="col" class="th-status" style="width: 200px; min-width: 200px; white-space: nowrap;">Trạng thái</th>
+              <th scope="col" class="th-version" style="width: 280px; min-width: 280px; white-space: nowrap;">Phiên bản mới nhất</th>
+              <th scope="col" class="th-actions" style="min-width: 320px; text-align: right; white-space: nowrap;">Thao tác</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of data.items; track row.workflowId) {
+              <tr>
+                <td class="td-name">
+                  <div class="wf-name-cell">
+                    <span class="wf-name-text">{{ row.name }}</span>
                   </div>
-                } @else {
-                  <span style="color: #94a3b8; font-style: italic;">Chưa có phiên bản</span>
-                }
-              </td>
-              <td class="td-actions" style="text-align: right;">
-                <div class="action-btn-group" style="justify-content: flex-end;">
-                  @if (row.latestVersionId) {
-                    <a
-                      class="tbl-btn primary"
-                      [routerLink]="['/settings/workflows', row.workflowId, 'versions', row.latestVersionId]"
-                      title="Mở trình thiết kế trực quan kéo thả"
-                    >
-                      ✏️ Thiết kế
-                    </a>
-                  }
-
-                  <button
-                    type="button"
-                    class="tbl-btn"
-                    (click)="openHistory(row)"
-                    title="Xem các phiên bản quy trình"
+                </td>
+                <td class="td-type">
+                  <span class="badge-type" [class.request]="row.businessType === 'REQUEST'" [class.task]="row.businessType === 'TASK'">
+                    {{ labels[row.businessType] }}
+                  </span>
+                </td>
+                <td class="td-status">
+                  <span
+                    class="badge-status"
+                    [class.draft]="row.status === 'DRAFT'"
+                    [class.active]="row.status === 'ACTIVE'"
+                    [class.inactive]="row.status === 'INACTIVE'"
                   >
-                    🕒 Lịch sử
-                  </button>
+                    {{ labels[row.status] }}
+                  </span>
+                </td>
+                <td class="td-version">
+                  @if (row.latestVersionId) {
+                    <div class="wf-version-cell">
+                      <a
+                        class="version-link"
+                        [routerLink]="['/settings/workflows', row.workflowId, 'versions', row.latestVersionId]"
+                        title="Mở phiên bản {{ row.latestVersionNo }} trong trình thiết kế"
+                      >
+                        Phiên bản {{ row.latestVersionNo }}
+                      </a>
+                      <span
+                        class="badge-status"
+                        [class.draft]="row.latestVersionStatus === 'Draft' || row.latestVersionStatus === 'DRAFT'"
+                        [class.published]="row.latestVersionStatus === 'Published' || row.latestVersionStatus === 'PUBLISHED'"
+                      >
+                        {{ labels[row.latestVersionStatus ?? ''] || 'Bản nháp' }}
+                      </span>
+                    </div>
+                  } @else {
+                    <span style="color: #94a3b8; font-style: italic;">Chưa có phiên bản</span>
+                  }
+                </td>
+                <td class="td-actions" style="text-align: right;">
+                  <div class="action-btn-group" style="justify-content: flex-end;">
+                    @if (row.latestVersionId) {
+                      <a
+                        class="tbl-btn primary"
+                        [routerLink]="['/settings/workflows', row.workflowId, 'versions', row.latestVersionId]"
+                        title="Mở trình thiết kế trực quan kéo thả"
+                      >
+                        ✏️ Thiết kế
+                      </a>
+                    }
 
-                  @if (session.hasPermission('workflows.configure') && row.status !== 'DRAFT') {
                     <button
                       type="button"
                       class="tbl-btn"
-                      (click)="toggleStatus(row)"
-                      [title]="row.status === 'ACTIVE' ? 'Tạm dừng áp dụng quy trình' : 'Kích hoạt áp dụng quy trình'"
+                      (click)="openHistory(row)"
+                      title="Xem các phiên bản quy trình"
                     >
-                      {{ row.status === 'ACTIVE' ? '⏸ Tạm dừng' : '▶ Kích hoạt' }}
+                      🕒 Lịch sử
                     </button>
-                  }
 
-                  @if (session.hasPermission('workflows.configure') && row.status === 'DRAFT') {
-                    <button
-                      type="button"
-                      class="tbl-btn danger"
-                      (click)="confirmDelete(row)"
-                      title="Xóa quy trình bản thảo"
-                    >
-                      🗑 Xóa
-                    </button>
-                  }
-                </div>
-              </td>
-            </tr>
-          }
-        </tbody>
-      </table>
+                    @if (session.hasPermission('workflows.configure') && row.status !== 'DRAFT') {
+                      <button
+                        type="button"
+                        class="tbl-btn"
+                        (click)="toggleStatus(row)"
+                        [title]="row.status === 'ACTIVE' ? 'Tạm dừng áp dụng quy trình' : 'Kích hoạt áp dụng quy trình'"
+                      >
+                        {{ row.status === 'ACTIVE' ? '⏸ Tạm dừng' : '▶ Kích hoạt' }}
+                      </button>
+                    }
+
+                    @if (session.hasPermission('workflows.configure') && row.status === 'DRAFT') {
+                      <button
+                        type="button"
+                        class="tbl-btn danger"
+                        (click)="confirmDelete(row)"
+                        title="Xóa quy trình bản thảo"
+                      >
+                        🗑 Xóa
+                      </button>
+                    }
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
 
       <!-- PAGINATION -->
       <nav class="pagination" aria-label="Phân trang" style="margin-top: 16px; display: flex; justify-content: space-between; align-items: center;">
