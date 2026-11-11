@@ -13,6 +13,7 @@ import { Subscription } from 'rxjs';
 import { SessionService } from '../../core/auth/session';
 import { AuditDetail } from './audit-detail';
 import { AuditPage, AuditRow } from './audit-model';
+import { I18nService } from '../../core/i18n/i18n.service';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
 
 @Component({
@@ -35,6 +36,7 @@ export class Audit {
   private readonly http = inject(HttpClient);
   private readonly destroy = inject(DestroyRef);
   private readonly dialog = inject(MatDialog);
+  private readonly i18n = inject(I18nService);
   private request?: Subscription;
   private detail?: MatDialogRef<AuditDetail>;
   private applied: Record<string, string> = {};
@@ -72,13 +74,23 @@ export class Audit {
           (!idPattern.test(id.trim()) || /^0{8}-0{4}-0{4}-0{4}-0{12}$/.test(id.trim())),
       )
     ) {
-      this.validation.set('Enter a complete actor or object UUID, or leave the field blank.');
+      this.validation.set(
+        this.i18n.t(
+          'audit.errInvalidUuid',
+          'Enter a complete actor or object UUID, or leave the field blank.',
+        ),
+      );
       return;
     }
     const from = this.date(values.fromDate, false);
     const until = this.date(values.throughDate, true);
     if (from === null || until === null || (from && until && from >= until)) {
-      this.validation.set('Choose valid UTC dates with the start on or before the through date.');
+      this.validation.set(
+        this.i18n.t(
+          'audit.errInvalidDates',
+          'Choose valid UTC dates with the start on or before the through date.',
+        ),
+      );
       return;
     }
     this.validation.set('');
@@ -133,7 +145,12 @@ export class Audit {
   open(row: AuditRow) {
     this.detail?.close();
     this.detail = this.dialog.open(AuditDetail, {
-      data: { event: row, scopeLabel: this.platform ? 'Platform event' : 'Workspace event' },
+      data: {
+        event: row,
+        scopeLabel: this.platform
+          ? this.i18n.t('audit.platformEvent', 'Platform event')
+          : this.i18n.t('audit.workspaceEvent', 'Workspace event'),
+      },
       ariaLabelledBy: 'audit-detail-title',
       autoFocus: 'first-heading',
       restoreFocus: true,

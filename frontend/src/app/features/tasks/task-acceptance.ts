@@ -18,29 +18,29 @@ import { SessionService } from '../../core/auth/session';
     MatInputModule,
   ],
   template: `
-    <h2 mat-dialog-title id="task-acceptance-title">Accept task</h2>
+    <h2 mat-dialog-title id="task-acceptance-title">Tiếp nhận nhiệm vụ</h2>
     <mat-dialog-content>
       <p>{{ data.title }}</p>
       <p>
-        Confirm that you will undertake this task. Accepting a department queue claims it for you.
-        The server checks your current assignment and permissions.
+        Xác nhận bạn sẽ tiếp nhận và thực hiện nhiệm vụ này. Nếu nhiệm vụ đang thuộc hàng đợi phòng
+        ban, thao tác sẽ gán trực tiếp cho bạn. Hệ thống sẽ kiểm tra lại phân công và quyền hạn hiện tại.
       </p>
       @if (error()) {
         <p role="alert">{{ error() }}</p>
       }
       <mat-form-field appearance="outline">
-        <mat-label>Acceptance note (optional)</mat-label>
+        <mat-label>Ghi chú tiếp nhận (tùy chọn)</mat-label>
         <textarea matInput rows="4" [formControl]="note"></textarea>
       </mat-form-field>
     </mat-dialog-content>
     <mat-dialog-actions align="end">
-      <button mat-stroked-button type="button" [disabled]="busy()" (click)="close()">Close</button>
+      <button mat-stroked-button type="button" [disabled]="busy()" (click)="close()">Đóng</button>
       <button mat-flat-button type="button" [disabled]="busy() || terminal()" (click)="save()">
-        {{ uncertain() ? 'Retry same acceptance' : 'Confirm acceptance' }}
+        {{ uncertain() ? 'Thử lại tiếp nhận' : 'Xác nhận tiếp nhận' }}
       </button>
     </mat-dialog-actions>
   `,
-  styles: ['mat-form-field { width: 100%; } mat-dialog-actions { gap: 0.5rem; flex-wrap: wrap; }'],
+  styles: ['mat-form-field { width: 100%; } mat-dialog-actions { gap: 0.75rem; flex-wrap: wrap; }'],
 })
 export class TaskAcceptanceEditor {
   readonly data = inject<{ taskId: string; title: string }>(MAT_DIALOG_DATA);
@@ -91,11 +91,11 @@ export class TaskAcceptanceEditor {
           if (!this.uncertain() && failure.status === 422) {
             this.note.enable();
             this.key = crypto.randomUUID();
-            this.error.set('Vui lòng kiểm tra lại ghi chú nghiệm thu và thử lại.');
+            this.error.set('Vui lòng kiểm tra lại ghi chú tiếp nhận và thử lại.');
           } else if ([401, 403, 404, 409].includes(failure.status)) {
             this.terminal.set(true);
             this.error.set(
-              'The assignment or your access changed. Close and review the current task.',
+              'Phân công hoặc quyền truy cập vừa thay đổi. Vui lòng đóng hộp thoại và kiểm tra lại nhiệm vụ.',
             );
           } else this.unknown();
         },
@@ -107,7 +107,7 @@ export class TaskAcceptanceEditor {
   private unknown() {
     this.uncertain.set(true);
     this.error.set(
-      'The outcome is uncertain. Retry the same acceptance safely, or close and review the task.',
+      'Chưa nhận được phản hồi xác nhận từ máy chủ. Bạn có thể thử lại an toàn hoặc đóng để kiểm tra nhiệm vụ.',
     );
   }
 }

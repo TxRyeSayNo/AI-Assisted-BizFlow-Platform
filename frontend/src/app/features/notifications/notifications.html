@@ -81,11 +81,10 @@
       </p>
     } @else if (result(); as data) {
       <p class="directory-feedback" role="status">
-        {{ data.unreadCount }} {{ 'notifications.unreadCount' | translate: 'unread' }}
         {{
           data.unreadCount === 1
-            ? ('notifications.notification' | translate: 'notification')
-            : ('notifications.notifications' | translate: 'notifications')
+            ? ('notifications.unreadCountOne' | translate: '1 unread notification')
+            : data.unreadCount + ' ' + ('notifications.unreadCountMany' | translate: 'unread notifications')
         }}
       </p>
       @if (data.items.length === 0) {
@@ -100,21 +99,18 @@
         <ol class="notification-list" aria-label="Notification list">
           @for (row of data.items; track row.notificationId) {
             <li>
-              <article [attr.aria-label]="row.title">
+              <article [attr.aria-label]="displayTitle(row.title)">
                 <span class="status-label">{{
                   row.readAt
                     ? ('notifications.read' | translate: 'Read')
                     : ('notifications.unread' | translate: 'Unread')
                 }}</span>
-                <h2>{{ row.title }}</h2>
+                <h2>{{ displayTitle(row.title) }}</h2>
                 <p class="notification-content">{{ row.content }}</p>
-                <p class="notification-meta">{{ row.type }}</p>
+                <p class="notification-meta">{{ displayType(row.type) }}</p>
                 @if (row.objectType) {
                   <p class="notification-meta">
-                    {{ 'notifications.related' | translate: 'Related:' }} {{ row.objectType }}
-                    @if (row.objectId) {
-                      · {{ row.objectId }}
-                    }
+                    {{ 'notifications.related' | translate: 'Related:' }} {{ displayObjectType(row.objectType) }}
                   </p>
                 }
                 <div class="notification-actions">
@@ -134,7 +130,7 @@
                       class="action-btn mark-read-btn"
                       [disabled]="reading() !== null"
                       (click)="markRead(row)"
-                      [attr.aria-label]="'Đánh dấu đã đọc: ' + row.title"
+                      [attr.aria-label]="'Đánh dấu đã đọc: ' + displayTitle(row.title)"
                     >
                       {{
                         reading() === row.notificationId
@@ -146,8 +142,8 @@
                 </div>
                 @if (row.readAt) {
                   <p class="notification-meta read-timestamp">
-                    {{ 'notifications.read' | translate: 'Đã đọc lúc' }}
-                    {{ row.readAt | date: 'yyyy-MM-dd HH:mm:ss' : 'UTC' }} UTC
+                    {{ 'notifications.readAt' | translate: 'Đã đọc lúc' }}
+                    {{ row.readAt | date: 'medium' }}
                   </p>
                 }
               </article>

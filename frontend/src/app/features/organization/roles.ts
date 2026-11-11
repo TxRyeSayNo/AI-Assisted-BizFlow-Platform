@@ -70,10 +70,10 @@ export class Roles {
   readonly selection = signal<string[]>([]);
   readonly page = signal(1);
   readonly scopeLabels: Record<string, string> = {
-    TENANT: 'Workspace',
-    DEPARTMENT: 'Department',
-    SELF: 'Own resources',
-    ASSIGNED: 'Assigned resources',
+    TENANT: 'Toàn không gian làm việc',
+    DEPARTMENT: 'Cấp phòng ban',
+    SELF: 'Tài nguyên cá nhân',
+    ASSIGNED: 'Tài nguyên được phân công',
   };
 
   constructor() {

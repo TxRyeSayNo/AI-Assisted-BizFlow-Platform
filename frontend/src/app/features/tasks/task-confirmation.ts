@@ -20,43 +20,42 @@ import { SessionService } from '../../core/auth/session';
     MatSelectModule,
   ],
   template: `
-    <h2 mat-dialog-title id="task-confirmation-title">Review task result</h2>
+    <h2 mat-dialog-title id="task-confirmation-title">Đánh giá kết quả nhiệm vụ</h2>
     <mat-dialog-content>
       <p>{{ data.title }}</p>
       <p>
-        Review submitted results and choose whether to confirm completion or return the task for
-        rework.
+        Xem xét kết quả đã nộp để xác nhận hoàn thành nhiệm vụ hoặc gửi yêu cầu làm lại.
       </p>
       @if (error()) {
         <p role="alert">{{ error() }}</p>
       }
       <form [formGroup]="form">
         <mat-form-field appearance="outline">
-          <mat-label>Decision</mat-label>
+          <mat-label>Quyết định</mat-label>
           <mat-select formControlName="decision">
-            <mat-option value="CONFIRMED">Approve & Complete</mat-option>
-            <mat-option value="REWORK">Request Rework</mat-option>
+            <mat-option value="CONFIRMED">Phê duyệt & hoàn thành</mat-option>
+            <mat-option value="REWORK">Yêu cầu làm lại</mat-option>
           </mat-select>
         </mat-form-field>
         <mat-form-field appearance="outline">
           <mat-label
-            >Review note
-            {{ form.controls.decision.value === 'REWORK' ? '(required)' : '(optional)' }}</mat-label
+            >Ghi chú đánh giá
+            {{ form.controls.decision.value === 'REWORK' ? '(bắt buộc)' : '(tùy chọn)' }}</mat-label
           >
           <textarea
             matInput
             rows="4"
             formControlName="note"
-            placeholder="Provide feedback or reasons for rework..."
+            placeholder="Nhập nhận xét hoặc lý do cần chỉnh sửa lại..."
           ></textarea>
           @if (form.controls.note.hasError('required')) {
-            <mat-error>A note is required when requesting rework.</mat-error>
+            <mat-error>Cần nhập ghi chú khi yêu cầu làm lại.</mat-error>
           }
         </mat-form-field>
       </form>
     </mat-dialog-content>
     <mat-dialog-actions align="end">
-      <button mat-stroked-button type="button" [disabled]="busy()" (click)="close()">Close</button>
+      <button mat-stroked-button type="button" [disabled]="busy()" (click)="close()">Đóng</button>
       <button
         mat-flat-button
         type="button"
@@ -65,16 +64,16 @@ import { SessionService } from '../../core/auth/session';
       >
         {{
           uncertain()
-            ? 'Retry review decision'
+            ? 'Thử lại đánh giá'
             : form.controls.decision.value === 'REWORK'
-              ? 'Send for rework'
-              : 'Confirm completion'
+              ? 'Gửi yêu cầu làm lại'
+              : 'Xác nhận hoàn thành'
         }}
       </button>
     </mat-dialog-actions>
   `,
   styles: [
-    'mat-form-field { width: 100%; } mat-dialog-actions { gap: 0.5rem; flex-wrap: wrap; } form { display: flex; flex-direction: column; gap: 0.5rem; }',
+    'mat-form-field { width: 100%; } mat-dialog-actions { gap: 0.75rem; flex-wrap: wrap; } form { display: flex; flex-direction: column; gap: 0.5rem; }',
   ],
 })
 export class TaskConfirmationEditor {
@@ -165,7 +164,7 @@ export class TaskConfirmationEditor {
           } else if ([401, 403, 404, 409].includes(failure.status)) {
             this.terminal.set(true);
             this.error.set(
-              'The task status, assignment, or your access changed. Close and review the current task.',
+              'Trạng thái nhiệm vụ, phân công hoặc quyền hạn vừa thay đổi. Vui lòng đóng và kiểm tra lại.',
             );
           } else this.unknown();
         },
@@ -179,7 +178,7 @@ export class TaskConfirmationEditor {
   private unknown() {
     this.uncertain.set(true);
     this.error.set(
-      'The outcome is uncertain. Retry the decision safely, or close and review the task.',
+      'Chưa nhận được phản hồi xác nhận từ máy chủ. Bạn có thể thử lại an toàn hoặc đóng để kiểm tra nhiệm vụ.',
     );
   }
 }

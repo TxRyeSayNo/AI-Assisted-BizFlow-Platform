@@ -3,8 +3,8 @@
   <mat-dialog-content>
     <p>{{ data.title }}</p>
     <p>
-      Chọn đối tượng phân công trong phạm vi quản lý. Phân công phòng ban sẽ duy trì
-      an unclaimed team queue.
+      Chọn đối tượng phân công trong phạm vi quản lý. Phân công cho phòng ban sẽ đưa nhiệm vụ vào
+      hàng đợi chung của phòng ban.
     </p>
     <mat-form-field appearance="outline"
       ><mat-label>Loại đối tượng</mat-label
@@ -23,28 +23,28 @@
       (click)="load(1)"
       [disabled]="busy() || uncertain() || terminal()"
     >
-      Search targets
+      Tìm đối tượng
     </button>
     @if (loading()) {
-      <p role="status">Loading targets…</p>
+      <p role="status">Đang tải danh sách đối tượng…</p>
     }
     <mat-form-field appearance="outline" floatLabel="always"
       ><mat-label>Đối tượng phân công</mat-label
-      ><mat-select formControlName="targetId" placeholder="Select a target">
+      ><mat-select formControlName="targetId" placeholder="Chọn đối tượng thực hiện">
         @for (option of options(); track option.id) {
           <mat-option [value]="option.id">{{ option.label }}</mat-option>
         }</mat-select
       ><mat-error>Vui lòng chọn đối tượng.</mat-error></mat-form-field
     >
     <div class="target-pages">
-      <span>{{ total() }} directory entries · Page {{ page() }}</span>
+      <span>{{ total() }} mục danh bạ · Trang {{ page() }}</span>
       <button
         mat-stroked-button
         type="button"
         (click)="load(page() - 1)"
         [disabled]="page() <= 1 || loading() || busy() || uncertain() || terminal()"
       >
-        Previous targets
+        Trang trước
       </button>
       <button
         mat-stroked-button
@@ -52,12 +52,12 @@
         (click)="load(page() + 1)"
         [disabled]="page() * 25 >= total() || loading() || busy() || uncertain() || terminal()"
       >
-        Next targets
+        Trang sau
       </button>
     </div>
     <p>
-      Directory visibility does not grant assignment authority. The server checks scope when you
-      assign.
+      Việc hiển thị trong danh bạ không mặc nhiên cấp quyền phân công. Máy chủ sẽ kiểm tra lại
+      phạm vi quản lý khi thực hiện.
     </p>
     <mat-form-field appearance="outline"
       ><mat-label>Ghi chú phân công (tùy chọn)</mat-label
@@ -70,7 +70,7 @@
   <mat-dialog-actions
     ><button mat-stroked-button type="button" [disabled]="busy()" (click)="close()">Đóng</button
     ><button mat-flat-button type="submit" [disabled]="busy() || loading() || terminal()">
-      {{ busy() ? 'Assigning…' : uncertain() ? 'Retry same assignment' : 'Confirm assignment' }}
+      {{ busy() ? 'Đang phân công…' : uncertain() ? 'Thử lại phân công' : 'Xác nhận phân công' }}
     </button></mat-dialog-actions
   >
 </form>

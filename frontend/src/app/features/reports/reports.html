@@ -61,6 +61,7 @@
     <div class="filter-group">
       <mat-form-field
         appearance="outline"
+        subscriptSizing="dynamic"
         class="filter-field"
         *ngIf="activeTab() !== 'sla' && activeTab() !== 'company'"
       >
@@ -75,12 +76,12 @@
         </mat-select>
       </mat-form-field>
 
-      <mat-form-field appearance="outline" class="filter-field">
+      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="filter-field">
         <mat-label>{{ 'reports.fromDate' | translate: 'From Date' }}</mat-label>
         <input matInput type="date" formControlName="from" />
       </mat-form-field>
 
-      <mat-form-field appearance="outline" class="filter-field">
+      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="filter-field">
         <mat-label>{{ 'reports.toDate' | translate: 'To Date' }}</mat-label>
         <input matInput type="date" formControlName="to" />
       </mat-form-field>
@@ -229,7 +230,7 @@
           <div class="kpi-value">{{ comp.taskCompletionRatePercent }}%</div>
           <div class="kpi-sub">
             {{ comp.totalTasksCompleted }} {{ 'common.of' | translate: 'of' }}
-            {{ comp.totalTasksCreated }} tasks
+            {{ comp.totalTasksCreated }} {{ 'reports.unitTasks' | translate: 'tasks' }}
           </div>
         </div>
         <div class="kpi-card accent-blue">
@@ -239,8 +240,8 @@
           <div class="kpi-value">
             {{
               comp.averageTaskCompletionTimeHours !== null
-                ? (comp.averageTaskCompletionTimeHours | number: '1.1-1') + ' hrs'
-                : 'N/A'
+                ? (comp.averageTaskCompletionTimeHours | number: '1.1-1') + ' ' + ('reports.unitHours' | translate: 'hrs')
+                : '—'
             }}
           </div>
         </div>
@@ -251,7 +252,7 @@
           <div class="kpi-value">{{ comp.requestResolutionRatePercent }}%</div>
           <div class="kpi-sub">
             {{ comp.totalRequestsClosed }} {{ 'common.of' | translate: 'of' }}
-            {{ comp.totalRequestsSubmitted }} requests
+            {{ comp.totalRequestsSubmitted }} {{ 'reports.unitRequests' | translate: 'requests' }}
           </div>
         </div>
         <div class="kpi-card accent-blue">
@@ -261,8 +262,8 @@
           <div class="kpi-value">
             {{
               comp.averageRequestResolutionTimeHours !== null
-                ? (comp.averageRequestResolutionTimeHours | number: '1.1-1') + ' hrs'
-                : 'N/A'
+                ? (comp.averageRequestResolutionTimeHours | number: '1.1-1') + ' ' + ('reports.unitHours' | translate: 'hrs')
+                : '—'
             }}
           </div>
         </div>

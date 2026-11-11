@@ -140,9 +140,9 @@ export interface GoogleAccountItem {
       .google-chooser-container {
         background-color: #1a1a1a;
         color: #e8eaed;
-        font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        font-family: var(--tp-font-body, 'Be Vietnam Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif);
         padding: 24px 28px;
-        min-width: 380px;
+        min-width: 340px;
         max-width: 440px;
         border-radius: 16px;
         box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);

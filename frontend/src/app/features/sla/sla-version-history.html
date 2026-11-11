@@ -51,13 +51,14 @@
           {{
             data.total === 0
               ? ('sla.noVersions' | translate: 'This profile has no saved versions.')
-              : 'No saved versions on this page.'
+              : ('sla.noVersionsOnPage' | translate: 'No saved versions on this page.')
           }}
         </p>
       } @else {
+        <div class="table-scroll">
         <table>
           <caption>
-            Newest first · All timing values are working minutes
+            {{ 'sla.historyTableCaption' | translate: 'Mới nhất trước · Mọi giá trị tính theo phút làm việc' }}
           </caption>
           <thead>
             <tr>
@@ -74,7 +75,7 @@
                     mat-button
                     type="button"
                     (click)="inspect(row)"
-                    [attr.aria-label]="'Inspect version ' + row.versionNo"
+                    [attr.aria-label]="('sla.inspectVersionAria' | translate: 'Xem phiên bản') + ' ' + row.versionNo"
                   >
                     {{ 'workflows.version' | translate: 'Version' }} {{ row.versionNo }}
                   </button>
@@ -83,22 +84,23 @@
                       mat-stroked-button
                       type="button"
                       (click)="createTimingVersion(row)"
-                      [attr.aria-label]="'Create timing version from version ' + row.versionNo"
+                      [attr.aria-label]="('sla.createVersionFromHint' | translate: 'Tạo phiên bản thời gian từ phiên bản') + ' ' + row.versionNo"
                     >
                       {{ 'sla.adjustTiming' | translate: 'Adjust timing' }}
                     </button>
                   }
                 </th>
-                <td>{{ row.targetMinutes }} min</td>
-                <td>{{ row.warningMinutes }} min</td>
+                <td>{{ row.targetMinutes }} {{ 'sla.minutesShort' | translate: 'min' }}</td>
+                <td>{{ row.warningMinutes }} {{ 'sla.minutesShort' | translate: 'min' }}</td>
               </tr>
             }
           </tbody>
         </table>
+        </div>
       }
       <nav class="pagination" aria-label="SLA version pages">
         <span role="status"
-          >{{ data.total }} {{ data.total === 1 ? 'version' : 'versions' }} ·
+          >{{ data.total }} {{ data.total === 1 ? ('sla.versionSingular' | translate: 'version') : ('sla.versionPlural' | translate: 'versions') }} ·
           {{ 'common.page' | translate: 'Page' }} {{ data.page }}</span
         >
         <button

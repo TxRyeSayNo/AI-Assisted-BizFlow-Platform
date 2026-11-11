@@ -1162,15 +1162,15 @@ export class AiAssistantComponent {
   getPlaceholder(): string {
     switch (this.mode()) {
       case 'task':
-        return 'e.g., "Prepare monthly compliance report for HR and coordinate with Sarah by next Thursday with 3 review stages"';
+        return 'Ví dụ: "Lập báo cáo tuân thủ tháng cho nhân sự và phối hợp với bộ phận pháp chế trước thứ Năm tuần tới gồm 3 bước rà soát"';
       case 'request':
-        return 'e.g., "Need workstation upgrade, laptop repair, and access to Jira and GitHub repositories"';
+        return 'Ví dụ: "Cần nâng cấp máy trạm, sửa chữa laptop và cấp quyền truy cập hệ thống quản lý dự án"';
       case 'risk':
-        return 'e.g., "Task #T-104 is at day 4 of 5 with 2 pending evidence attachments and no assignee update"';
+        return 'Ví dụ: "Nhiệm vụ #T-104 đang ở ngày thứ 4/5 nhưng còn 2 tài liệu chưa đính kèm và chưa có cập nhật tiến độ"';
       case 'branching':
-        return 'e.g., "Tiếp nhận 5 nhân sự mới cho phòng IT: cấp laptop, tạo email, ký hợp đồng lao động và đào tạo nội bộ"';
+        return 'Ví dụ: "Tiếp nhận 5 nhân sự mới cho phòng CNTT: cấp laptop, tạo email, ký hợp đồng lao động và đào tạo nội bộ"';
       case 'summarizer':
-        return 'e.g., "Dán nội dung biên bản họp, hợp đồng dịch vụ hoặc quy chế nội bộ để tóm tắt và trích xuất việc cần làm…"';
+        return 'Ví dụ: "Dán nội dung biên bản họp, hợp đồng dịch vụ hoặc quy chế nội bộ để tóm tắt và trích xuất việc cần làm…"';
     }
   }
 
@@ -1195,7 +1195,7 @@ export class AiAssistantComponent {
     } else if (this.mode() === 'request') {
       this.http
         .post<AiMultiIntentResult>('/api/v1/ai/request-multi-intent', {
-          title: 'User Request',
+          title: 'Yêu cầu dịch vụ từ người dùng',
           description: this.promptText,
         })
         .subscribe({
@@ -1465,54 +1465,60 @@ export class AiAssistantComponent {
 
   private generateTaskFallback(prompt: string): AiTaskSuggestion {
     const isUrgent =
-      prompt.toLowerCase().includes('urgent') || prompt.toLowerCase().includes('asap');
+      prompt.toLowerCase().includes('khẩn') ||
+      prompt.toLowerCase().includes('gấp') ||
+      prompt.toLowerCase().includes('urgent') ||
+      prompt.toLowerCase().includes('asap');
     return {
-      title: prompt.slice(0, 60).replace(/^[a-z]/, (c) => c.toUpperCase()),
-      description: `Task drafted from instruction:\n${prompt}\n\nPlease review parameters before saving.`,
+      title: prompt.slice(0, 60).replace(/^[a-zà-ỹ]/, (c) => c.toUpperCase()),
+      description: `Nhiệm vụ được đề xuất từ mô tả:\n${prompt}\n\nVui lòng kiểm tra lại các thông số trước khi lưu.`,
       priority: isUrgent ? 'HIGH' : 'MEDIUM',
       suggestedDurationDays: 3,
       checklistItems: [
-        'Review initial objective and scope',
-        'Collect required evidence deliverables',
-        'Submit completion confirmation',
+        'Rà soát mục tiêu ban đầu và phạm vi thực hiện',
+        'Thu thập và đính kèm tài liệu bằng chứng cần thiết',
+        'Gửi xác nhận hoàn thành để quản lý phê duyệt',
       ],
       confidence: 0.92,
       reasoning:
-        'Extracted key action verbs and milestones. Priority determined by timeline keywords.',
+        'Trích xuất từ khóa hành động và cột mốc chính; mức độ ưu tiên được xác định theo từ khóa thời hạn.',
     };
   }
 
   private generateRequestFallback(prompt: string): AiMultiIntentResult {
-    const hasAnd = prompt.toLowerCase().includes(' and ') || prompt.includes(',');
+    const hasAnd =
+      prompt.toLowerCase().includes(' và ') ||
+      prompt.toLowerCase().includes(' and ') ||
+      prompt.includes(',');
     return {
       isMultiIntent: hasAnd,
       confidence: 0.88,
       rationale: hasAnd
-        ? 'Multiple coordination intents detected separated by conjunctions.'
-        : 'Single cohesive request identified.',
+        ? 'Phát hiện nhiều đầu việc phối hợp độc lập qua từ nối.'
+        : 'Xác định một yêu cầu nghiệp vụ thống nhất.',
       intents: hasAnd
         ? [
             {
               intentIndex: 0,
-              title: 'Primary Service Request',
-              description: prompt.split(/ and |, /)[0] || prompt,
-              suggestedServiceName: 'General Enterprise Services',
+              title: 'Yêu cầu dịch vụ chính',
+              description: prompt.split(/ và | and |, /)[0] || prompt,
+              suggestedServiceName: 'Dịch vụ doanh nghiệp tổng hợp',
               confidence: 0.9,
             },
             {
               intentIndex: 1,
-              title: 'Secondary Service Request',
-              description: prompt.split(/ and |, /)[1] || 'Follow-up requirement',
-              suggestedServiceName: 'IT & Infrastructure',
+              title: 'Yêu cầu dịch vụ bổ sung',
+              description: prompt.split(/ và | and |, /)[1] || 'Hạng mục phối hợp tiếp theo',
+              suggestedServiceName: 'Hỗ trợ kỹ thuật & hạ tầng',
               confidence: 0.85,
             },
           ]
         : [
             {
               intentIndex: 0,
-              title: 'Service Request',
+              title: 'Yêu cầu dịch vụ',
               description: prompt,
-              suggestedServiceName: 'Enterprise Operations',
+              suggestedServiceName: 'Vận hành doanh nghiệp',
               confidence: 0.94,
             },
           ],

@@ -9,6 +9,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { Subscription } from 'rxjs';
 import { SessionService } from '../../core/auth/session';
+import { I18nService } from '../../core/i18n/i18n.service';
 
 interface DirectoryPage {
   items: {
@@ -38,6 +39,7 @@ export class TaskAssignmentEditor {
   readonly data = inject<{ taskId: string; title: string }>(MAT_DIALOG_DATA);
   readonly dialog = inject<MatDialogRef<TaskAssignmentEditor, boolean>>(MatDialogRef);
   readonly session = inject(SessionService);
+  private readonly i18n = inject(I18nService);
   private readonly http = inject(HttpClient);
   private readonly destroy = inject(DestroyRef);
   private query?: Subscription;
@@ -156,13 +158,22 @@ export class TaskAssignmentEditor {
             this.key = crypto.randomUUID();
             this.error.set(
               failure.status === 403
-                ? 'That target is outside your configured management scope. Choose another target or ask your administrator to review your scope.'
-                : 'The task or target is unavailable, or the assignment input is invalid. Review the selection.',
+                ? this.i18n.t(
+                    'taskDialog.outOfScope',
+                    'That target is outside your configured management scope. Choose another target or ask your administrator to review your scope.',
+                  )
+                : this.i18n.t(
+                    'taskDialog.invalidTarget',
+                    'The task or target is unavailable, or the assignment input is invalid. Review the selection.',
+                  ),
             );
           } else if (failure.status === 409 || failure.status === 403 || failure.status === 401) {
             this.terminal.set(true);
             this.error.set(
-              'The task, permissions or saved submission changed. Close and review the current task before acting again.',
+              this.i18n.t(
+                'taskDialog.assignConflict',
+                'The task, permissions or saved submission changed. Close and review the current task before acting again.',
+              ),
             );
           } else {
             this.unknown();
@@ -176,7 +187,10 @@ export class TaskAssignmentEditor {
   private unknown() {
     this.uncertain.set(true);
     this.error.set(
-      'The outcome is uncertain. Retry the same submission safely, or close and review the current task.',
+      this.i18n.t(
+        'taskDialog.assignUncertain',
+        'The outcome is uncertain. Retry the same submission safely, or close and review the current task.',
+      ),
     );
   }
 }

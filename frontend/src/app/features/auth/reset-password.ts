@@ -209,12 +209,24 @@ export class ResetPassword {
           this.form.controls.confirmPassword.reset();
           this.error.set(
             failure.status === 401
-              ? 'This link is invalid or expired. Request a new reset link.'
+              ? this.i18n.t(
+                  'reset.errInvalidLink',
+                  'This link is invalid or expired. Request a new reset link.',
+                )
               : failure.error?.code === 'AUTH.PASSWORD_POLICY'
-                ? 'Choose a stronger password that meets your company password policy.'
+                ? this.i18n.t(
+                    'reset.errPasswordPolicy',
+                    'Choose a stronger password that meets your company password policy.',
+                  )
                 : failure.status === 429
-                  ? 'Too many requests. Please wait before trying again.'
-                  : 'Password reset is temporarily unavailable. Please try again shortly.',
+                  ? this.i18n.t(
+                      'reset.errTooMany',
+                      'Too many requests. Please wait before trying again.',
+                    )
+                  : this.i18n.t(
+                      'reset.errUnavailable',
+                      'Password reset is temporarily unavailable. Please try again shortly.',
+                    ),
           );
         },
       });

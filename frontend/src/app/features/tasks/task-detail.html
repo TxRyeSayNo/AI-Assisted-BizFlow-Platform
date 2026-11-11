@@ -30,8 +30,8 @@
             <button mat-flat-button color="primary" type="button" (click)="start()">
               {{
                 detail.task.status === 'OVERDUE'
-                  ? 'Resume work'
-                  : ('taskDetail.startWorkBtn' | translate: 'Start work')
+                  ? ('taskDetail.resumeWork' | translate: 'Resume work')
+                  : ('taskDetail.startWork' | translate: 'Start work')
               }}
             </button>
           }
@@ -99,7 +99,7 @@
         <dt>{{ 'common.priority' | translate: 'Priority' }}</dt>
         <dd>{{ 'priority.' + detail.task.priority | translate: detail.task.priority }}</dd>
         <dt>{{ 'tasks.creator' | translate: 'Created by' }}</dt>
-        <dd>{{ detail.creatorName ?? 'Unavailable' }}</dd>
+        <dd>{{ detail.creatorName ?? ('taskDetail.unavailable' | translate: 'Unavailable') }}</dd>
         <dt>{{ 'tasks.colResponsibility' | translate: 'Responsibility' }}</dt>
         <dd>
           {{
@@ -124,9 +124,9 @@
       @if (detail.task.requestId) {
         <p>
           {{ 'taskDetail.sourceRequest' | translate: 'Linked request' }}:
-          <a [routerLink]="['/requests', detail.task.requestId]" class="request-link">{{
-            detail.task.requestId
-          }}</a>
+          <a [routerLink]="['/requests', detail.task.requestId]" class="request-link">
+            {{ 'taskDetail.linkedRequestReady' | translate: 'Open linked request' }} →
+          </a>
         </p>
       }
     </section>
@@ -135,7 +135,7 @@
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 12px;">
         <div>
           <h2 style="font-size: 1.15rem; font-weight: 700; margin: 0; color: #0f172a;">
-            📋 Phân rã Công việc & Nhiệm vụ Con ({{ detail.subtasks?.length || 0 }})
+            📋 Phân rã công việc & nhiệm vụ con ({{ detail.subtasks?.length || 0 }})
           </h2>
           <p style="font-size: 0.8125rem; color: #64748b; margin: 4px 0 0;">
             Quản lý phòng ban phân rã công việc cấp công ty và ủy quyền cho nhân sự phụ trách thực hiện.
@@ -170,10 +170,10 @@
             <thead>
               <tr style="background: #f8fafc; text-align: left; color: #64748b; font-size: 11px; text-transform: uppercase;">
                 <th style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0;">Tiêu đề nhiệm vụ con</th>
-                <th style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; width: 180px;">Nhân sự thực thi</th>
-                <th style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; width: 140px;">Trạng thái</th>
-                <th style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; width: 110px;">Độ ưu tiên</th>
-                <th style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; width: 110px; text-align: right;">Chi tiết</th>
+                <th style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; min-width: 170px; white-space: nowrap;">Nhân sự thực thi</th>
+                <th style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; min-width: 155px; white-space: nowrap;">Trạng thái</th>
+                <th style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; min-width: 130px; white-space: nowrap;">Độ ưu tiên</th>
+                <th style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; min-width: 110px; white-space: nowrap; text-align: right;">Chi tiết</th>
               </tr>
             </thead>
             <tbody>
@@ -267,7 +267,7 @@
                     ? '#ea580c'
                     : '#16a34a'
               "
-              >{{ risk.riskLevel }} (Điểm: {{ (risk.riskScore * 100).toFixed(0) }}%)</span
+              >{{ 'priority.' + risk.riskLevel | translate: risk.riskLevel }} (Điểm: {{ (risk.riskScore * 100).toFixed(0) }}%)</span
             >
           </p>
 
@@ -317,29 +317,29 @@
       }
     </section>
     @for (section of sections; track section.key) {
-      <section class="directory-panel detail-section" [attr.aria-label]="section.name">
-        <h2>{{ section.name }}</h2>
+      <section class="directory-panel detail-section" [attr.aria-label]="section.nameKey | translate: section.fallback">
+        <h2>{{ section.nameKey | translate: section.fallback }}</h2>
         @for (item of detail[section.key].items; track item.id) {
           @if (section.key === 'checklist') {
-            <p>{{ item.isCompleted ? 'Completed' : 'Open' }} · {{ item.title }}</p>
+            <p>{{ item.isCompleted ? ('taskDetail.checklistDone' | translate: 'Completed') : ('taskDetail.checklistOpen' | translate: 'Open') }} · {{ item.title }}</p>
           } @else {
             <article>
               <p>
                 {{
                   item.percent !== undefined
-                    ? item.percent + '% progress'
-                    : 'Revision ' + item.revisionNo
+                    ? item.percent + ('taskDetail.progressSuffix' | translate: '% progress')
+                    : ('taskDetail.revisionPrefix' | translate: 'Revision ') + item.revisionNo
                 }}
                 · {{ item.submittedAt | date: 'medium' }}
               </p>
-              <p>{{ item.content ?? 'No text content' }}</p>
+              <p>{{ item.content ?? ('taskDetail.noTextContent' | translate: 'No text content') }}</p>
             </article>
           }
         } @empty {
-          <p>No {{ section.name.toLowerCase() }} on this page.</p>
+          <p>{{ section.emptyKey | translate: section.emptyFallback }}</p>
         }
-        <nav class="pagination" [attr.aria-label]="section.name + ' pages'">
-          <span>{{ detail[section.key].total }} items · Page {{ detail[section.key].page }}</span>
+        <nav class="pagination" [attr.aria-label]="(section.nameKey | translate: section.fallback) + ' pages'">
+          <span>{{ detail[section.key].total }} {{ 'taskDetail.itemsPagePrefix' | translate: 'items · Page' }} {{ detail[section.key].page }}</span>
           <button
             mat-stroked-button
             [disabled]="detail[section.key].page <= 1"

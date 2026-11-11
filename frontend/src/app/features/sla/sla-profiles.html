@@ -19,7 +19,7 @@
     }}
   </p>
   @if (created(); as row) {
-    <p class="inline-alert" role="status">Draft profile created: {{ row.name }}.</p>
+    <p class="inline-alert" role="status">{{ 'sla.draftCreatedPrefix' | translate: 'Draft profile created:' }} {{ row.name }}.</p>
   }
   @if (mutationError()) {
     <p class="inline-alert" role="alert">{{ mutationError() }}</p>
@@ -79,9 +79,10 @@
           {{ 'sla.empty' | translate: 'No SLA profiles match these filters.' }}
         </p>
       } @else {
+        <div class="table-scroll">
         <table>
           <caption>
-            Workspace SLA profiles
+            {{ 'sla.tableCaption' | translate: 'Workspace SLA profiles' }}
           </caption>
           <thead>
             <tr>
@@ -95,15 +96,16 @@
                 <th scope="row">
                   <a
                     [routerLink]="['/settings/sla-profiles', row.slaProfileId, 'versions']"
-                    title="View version history"
+                    [title]="'sla.viewHistoryTitle' | translate: 'Xem lịch sử phiên bản'"
                     >{{ row.name }}</a
                   >
                 </th>
-                <td>{{ labels[row.status] }}</td>
+                <td>{{ 'reqStatus.' + row.status | translate: labels[row.status] }}</td>
               </tr>
             }
           </tbody>
         </table>
+        </div>
       }
       <nav class="pagination" aria-label="SLA profile pages">
         <span role="status"

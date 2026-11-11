@@ -6,6 +6,7 @@ import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { SessionService } from '../../core/auth/session';
+import { I18nService } from '../../core/i18n/i18n.service';
 import { SlaVersionDetail } from './sla-version-detail';
 import { SlaTimingEditor, SlaTimingOutcome } from './sla-timing-editor';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
@@ -43,6 +44,7 @@ export interface SlaHistoryPage {
 export class SlaVersionHistory {
   private readonly http = inject(HttpClient);
   private readonly destroy = inject(DestroyRef);
+  private readonly i18n = inject(I18nService);
   private readonly route = inject(ActivatedRoute);
   private readonly dialog = inject(MatDialog);
   private request?: Subscription;
@@ -139,8 +141,11 @@ export class SlaVersionHistory {
         if (this.profileId !== profileId || !outcome?.reviewHistory) return;
         this.notice.set(
           outcome.versionNo
-            ? `SLA version ${outcome.versionNo} created. Earlier snapshots are unchanged.`
-            : 'Review saved versions before creating another snapshot.',
+            ? `${this.i18n.t('sla.versionCreatedPrefix', 'SLA version')} ${outcome.versionNo} ${this.i18n.t('sla.versionCreatedNoticeSuffix', 'created. Earlier snapshots are unchanged.')}`
+            : this.i18n.t(
+                'sla.reviewSavedFirst',
+                'Review saved versions before creating another snapshot.',
+              ),
         );
         this.load(1);
       });

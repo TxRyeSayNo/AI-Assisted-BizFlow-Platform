@@ -157,7 +157,7 @@ interface RegistrationPage {
             >
               <table>
                 <caption>
-                  Company registration queue
+                  Danh sách hồ sơ đăng ký doanh nghiệp
                 </caption>
                 <thead>
                   <tr>
@@ -177,7 +177,7 @@ interface RegistrationPage {
                         <strong>{{ item.name }}</strong>
                         <span class="company-code">{{ item.code }}</span>
                         @if (item.tenantKey) {
-                          <span class="company-code" style="color: #0369a1; background: #e0f2fe; border: 1px solid #bae6fd; border-radius: 9999px; padding: 2px 8px; font-weight: 600;">Workspace: {{ item.tenantKey }}</span>
+                          <span class="company-code" style="color: #0369a1; background: #e0f2fe; border: 1px solid #bae6fd; border-radius: 9999px; padding: 2px 8px; font-weight: 600;">Mã không gian: {{ item.tenantKey }}</span>
                         }
                         @if (item.taxId) {
                           <span class="company-code" style="color: #145da0; font-weight: 600;"
@@ -212,9 +212,9 @@ interface RegistrationPage {
                         }}</span>
                       </td>
                       <td>
-                        {{ item.createdAt | date: 'mediumDate' : 'UTC' }}
+                        {{ item.createdAt | date: 'mediumDate' }}
                         <span class="company-code"
-                          >{{ item.createdAt | date: 'shortTime' : 'UTC' }} UTC</span
+                          >{{ item.createdAt | date: 'shortTime' }}</span
                         >
                       </td>
                       <td style="text-align: right;">
@@ -514,12 +514,12 @@ export class CompanyRegistrations {
         next: () => {
           this.actionBusy.set(false);
           this.approvingItem.set(null);
-          this.actionSuccess.set(`Company ${item.name} approved and provisioned successfully!`);
+          this.actionSuccess.set(`Đã phê duyệt và khởi tạo không gian làm việc cho ${item.name} thành công!`);
           this.load(this.page());
         },
         error: (err: HttpErrorResponse) => {
           this.actionBusy.set(false);
-          this.actionError.set(err.error?.message || 'Failed to approve company registration.');
+          this.actionError.set(err.error?.message || 'Không thể phê duyệt hồ sơ đăng ký doanh nghiệp.');
         },
       });
   }
@@ -543,12 +543,12 @@ export class CompanyRegistrations {
         next: () => {
           this.actionBusy.set(false);
           this.rejectingItem.set(null);
-          this.actionSuccess.set(`Company ${item.name} registration rejected.`);
+          this.actionSuccess.set(`Đã từ chối hồ sơ đăng ký của doanh nghiệp ${item.name}.`);
           this.load(this.page());
         },
         error: (err: HttpErrorResponse) => {
           this.actionBusy.set(false);
-          this.actionError.set(err.error?.message || 'Failed to reject company registration.');
+          this.actionError.set(err.error?.message || 'Không thể từ chối hồ sơ đăng ký doanh nghiệp.');
         },
       });
   }
@@ -559,11 +559,12 @@ export class CompanyRegistrations {
       .patch(`/api/v1/platform/company-registrations/${item.companyId}/status`, { status })
       .subscribe({
         next: () => {
-          this.actionSuccess.set(`Company ${item.name} status updated to ${status}.`);
+          const statusText = this.labels[status] ?? status;
+          this.actionSuccess.set(`Đã cập nhật trạng thái doanh nghiệp ${item.name} thành ${statusText}.`);
           this.load(this.page());
         },
         error: (err: HttpErrorResponse) => {
-          this.actionError.set(err.error?.message || 'Failed to update company status.');
+          this.actionError.set(err.error?.message || 'Không thể cập nhật trạng thái doanh nghiệp.');
         },
       });
   }

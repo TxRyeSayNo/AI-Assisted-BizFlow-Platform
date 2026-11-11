@@ -10,15 +10,15 @@ import { SessionService } from '../../core/auth/session';
   imports: [MatButtonModule, MatDialogModule],
   template: `
     <h2 mat-dialog-title id="task-execution-title">
-      {{ data.resume ? 'Resume work' : 'Start work' }}
+      {{ data.resume ? 'Tiếp tục thực hiện' : 'Bắt đầu thực hiện' }}
     </h2>
     <mat-dialog-content>
       <p>{{ data.title }}</p>
       <p>
         {{
           data.resume
-            ? 'Resume this task in progress. Its deadline and overdue history remain unchanged.'
-            : 'Mark your accepted task as in progress. This does not submit results or complete the task.'
+            ? 'Tiếp tục xử lý nhiệm vụ này. Thời hạn và lịch sử quá hạn vẫn được giữ nguyên.'
+            : 'Chuyển nhiệm vụ đã tiếp nhận sang trạng thái đang thực hiện. Thao tác này chưa nộp kết quả hoặc đóng nhiệm vụ.'
         }}
       </p>
       @if (error()) {
@@ -26,13 +26,13 @@ import { SessionService } from '../../core/auth/session';
       }
     </mat-dialog-content>
     <mat-dialog-actions align="end">
-      <button mat-stroked-button type="button" [disabled]="busy()" (click)="close()">Close</button>
+      <button mat-stroked-button type="button" [disabled]="busy()" (click)="close()">Đóng</button>
       <button mat-flat-button type="button" [disabled]="busy() || terminal()" (click)="save()">
-        {{ uncertain() ? 'Retry same action' : data.resume ? 'Confirm resume' : 'Confirm start' }}
+        {{ uncertain() ? 'Thử lại thao tác' : data.resume ? 'Xác nhận tiếp tục' : 'Xác nhận bắt đầu' }}
       </button>
     </mat-dialog-actions>
   `,
-  styles: ['mat-dialog-actions { gap: 0.5rem; flex-wrap: wrap; }'],
+  styles: ['mat-dialog-actions { gap: 0.75rem; flex-wrap: wrap; }'],
 })
 export class TaskExecutionAction {
   readonly data = inject<{ taskId: string; title: string; resume: boolean }>(MAT_DIALOG_DATA);
@@ -78,7 +78,7 @@ export class TaskExecutionAction {
           if ([401, 403, 404, 409, 422].includes(failure.status)) {
             this.terminal.set(true);
             this.error.set(
-              'The task, assignment or your access changed. Close and review the current task.',
+              'Nhiệm vụ, phân công hoặc quyền truy cập vừa thay đổi. Vui lòng đóng và kiểm tra lại.',
             );
           } else this.unknown();
         },
@@ -90,7 +90,7 @@ export class TaskExecutionAction {
   private unknown() {
     this.uncertain.set(true);
     this.error.set(
-      'The outcome is uncertain. Retry the same action safely, or close and review the task.',
+      'Chưa nhận được phản hồi xác nhận từ máy chủ. Bạn có thể thử lại an toàn hoặc đóng để kiểm tra nhiệm vụ.',
     );
   }
 }

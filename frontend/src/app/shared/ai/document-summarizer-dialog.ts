@@ -254,7 +254,7 @@ export interface CreateTasksFromSummaryResponse {
                         class="badge-priority"
                         [class]="'pri-' + (item.suggestedPriority || 'medium').toLowerCase()"
                       >
-                        {{ item.suggestedPriority || 'Medium' }}
+                        {{ 'priority.' + (item.suggestedPriority || 'MEDIUM').toUpperCase() | translate: (item.suggestedPriority || 'Trung bình') }}
                       </span>
                       <span *ngIf="item.suggestedDurationDays" class="badge-days">
                         ⏱ {{ item.suggestedDurationDays }} {{ 'common.days' | translate: 'ngày' }}
@@ -295,7 +295,7 @@ export interface CreateTasksFromSummaryResponse {
                     {{ createdTasksResult()?.totalCreated }}
                     {{
                       'ai.tasksSpawned'
-                        | translate: 'nhiệm vụ mới đã được lưu vào hệ thống ở trạng thái DRAFT.'
+                        | translate: 'nhiệm vụ mới đã được lưu ở trạng thái bản nháp.'
                     }}
                   </p>
                 </div>

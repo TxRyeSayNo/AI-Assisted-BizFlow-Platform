@@ -18,7 +18,7 @@
     }}
   </p>
   @if (created(); as row) {
-    <p class="inline-alert" role="status">Service created: {{ row.code }} — {{ row.name }}.</p>
+    <p class="inline-alert" role="status">{{ 'services.createdPrefix' | translate: 'Service created:' }} {{ row.code }} — {{ row.name }}.</p>
   }
   @if (mutationError()) {
     <p class="inline-alert" role="alert">{{ mutationError() }}</p>
@@ -107,9 +107,10 @@
           {{ 'services.empty' | translate: 'No services match these filters.' }}
         </p>
       } @else {
+        <div class="table-scroll">
         <table>
           <caption>
-            Workspace services
+            {{ 'services.workspaceServicesHeading' | translate: 'Workspace services' }}
           </caption>
           <thead>
             <tr>
@@ -126,7 +127,7 @@
                   <strong>{{ row.name }}</strong
                   ><span class="department-code">{{ row.code }}</span>
                   <details>
-                    <summary [attr.aria-label]="'Details for ' + row.code">
+                    <summary [attr.aria-label]="('services.details' | translate: 'Details') + ' ' + row.code">
                       {{ 'services.details' | translate: 'Details' }}
                     </summary>
                     <p class="description">
@@ -147,18 +148,20 @@
                         </li>
                       }
                     </ul>
-<p>
+                    <p>
                       {{ 'services.workflowVersion' | translate: 'Workflow version:' }}
                       {{
-                        row.activeWorkflowVersionId ||
-                          ('services.notConfigured' | translate: 'Not configured')
+                        row.activeWorkflowVersionId
+                          ? ('services.workflowConfigured' | translate: 'Configured')
+                          : ('services.notConfigured' | translate: 'Not configured')
                       }}
                     </p>
                     <p>
                       {{ 'services.slaVersion' | translate: 'SLA version:' }}
                       {{
-                        row.activeSlaVersionId ||
-                          ('services.notConfigured' | translate: 'Not configured')
+                        row.activeSlaVersionId
+                          ? ('services.slaConfigured' | translate: 'Configured')
+                          : ('services.notConfigured' | translate: 'Not configured')
                       }}
                     </p>
                     <div class="service-actions-group">
@@ -192,6 +195,7 @@
             }
           </tbody>
         </table>
+        </div>
       }
       <nav class="pagination" aria-label="Service pages">
         <span role="status"

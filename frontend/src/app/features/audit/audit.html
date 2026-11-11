@@ -118,12 +118,14 @@
           {{ 'audit.empty' | translate: 'No audit events match these filters.' }}
         </p>
       } @else {
+        <div class="table-scroll">
         <table>
           <caption>
             {{
-              platform ? 'Platform-level' : 'Workspace'
+              platform
+                ? ('audit.platformHistoryCaption' | translate: 'Platform-level audit history')
+                : ('audit.workspaceHistoryCaption' | translate: 'Workspace audit history')
             }}
-            audit history
           </caption>
           <thead>
             <tr>
@@ -137,15 +139,12 @@
                 <th scope="row">
                   {{ row.action
                   }}<span class="audit-meta"
-                    >{{ row.createdAt | date: 'yyyy-MM-dd HH:mm:ss' : 'UTC' }} UTC ·
+                    >{{ row.createdAt | date: 'medium' }} ·
                     {{
                       'audit.actor.' + row.actorType | translate: actorLabels[row.actorType]
                     }}</span
                   ><span class="audit-meta"
                     >{{ row.objectType ?? ('audit.noObject' | translate: 'No object') }}
-                    @if (row.objectId) {
-                      · {{ row.objectId }}
-                    }
                   </span>
                 </th>
                 <td>
@@ -153,7 +152,7 @@
                     mat-stroked-button
                     type="button"
                     (click)="open(row)"
-                    [attr.aria-label]="'View audit event ' + row.auditLogId"
+                    [attr.aria-label]="('audit.view' | translate: 'View') + ' ' + row.action"
                   >
                     {{ 'audit.view' | translate: 'View' }}
                   </button>
@@ -162,6 +161,7 @@
             }
           </tbody>
         </table>
+        </div>
       }
       <nav class="pagination" aria-label="Audit pages">
         <span role="status"

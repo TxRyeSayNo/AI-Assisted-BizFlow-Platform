@@ -5,6 +5,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { lastValueFrom } from 'rxjs';
 import { SessionService } from '../../core/auth/session';
+import { I18nService } from '../../core/i18n/i18n.service';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
 import { DocumentSummarizerDialog } from '../../shared/ai/document-summarizer-dialog';
 import { ToastService } from '../../core/toast/toast.service';
@@ -54,6 +55,7 @@ export class WorkItemAttachments implements OnInit {
   readonly session = inject(SessionService);
   private readonly http = inject(HttpClient);
   private readonly toast = inject(ToastService);
+  private readonly i18n = inject(I18nService);
 
   readonly attachments = signal<AttachmentItem[]>([]);
   readonly loading = signal(false);
@@ -109,7 +111,7 @@ export class WorkItemAttachments implements OnInit {
           this.loading.set(false);
         },
         error: (err) => {
-          this.error.set(err?.error?.message ?? 'Failed to load attachments.');
+          this.error.set(err?.error?.message ?? this.i18n.t('attachments.errLoad', 'Failed to load attachments.'));
           this.loading.set(false);
         },
       });
@@ -127,7 +129,7 @@ export class WorkItemAttachments implements OnInit {
     }
 
     this.uploading.set(true);
-    this.uploadMessage.set('Preparing upload session…');
+    this.uploadMessage.set('Đang chuẩn bị phiên tải lên…');
     this.error.set('');
 
     try {
@@ -142,10 +144,12 @@ export class WorkItemAttachments implements OnInit {
         }),
       );
 
-      if (!sessionResult) throw new Error('Failed to create upload session.');
+      if (!sessionResult) {
+        throw new Error(this.i18n.t('attachments.errCreateSession', 'Failed to create upload session.'));
+      }
 
       // Step 2: Upload binary
-      this.uploadMessage.set('Uploading file…');
+      this.uploadMessage.set('Đang tải tệp lên…');
       const fileBytes = await file.arrayBuffer();
       await lastValueFrom(
         this.http.put(sessionResult.uploadUrl, fileBytes, {
@@ -154,11 +158,11 @@ export class WorkItemAttachments implements OnInit {
       );
 
       // Step 3: Compute SHA-256 hash
-      this.uploadMessage.set('Verifying integrity…');
+      this.uploadMessage.set('Đang kiểm tra toàn vẹn tệp…');
       const hashHex = await this.computeSha256(fileBytes);
 
       // Step 4: Finalize
-      this.uploadMessage.set('Finalizing attachment…');
+      this.uploadMessage.set('Đang hoàn tất đính kèm…');
       const finalized = await lastValueFrom(
         this.http.post<AttachmentItem>('/api/v1/attachments/finalize', {
           attachmentId: sessionResult.attachmentId,
@@ -171,7 +175,7 @@ export class WorkItemAttachments implements OnInit {
       }
       inputElement.value = '';
     } catch (err: any) {
-      this.error.set(err?.error?.message ?? err?.message ?? 'Attachment upload failed.');
+      this.error.set(err?.error?.message ?? err?.message ?? 'Tải tệp đính kèm thất bại.');
     } finally {
       this.uploading.set(false);
       this.uploadMessage.set('');
@@ -187,7 +191,7 @@ export class WorkItemAttachments implements OnInit {
         this.attachments.update((prev) => prev.filter((a) => a.attachmentId !== attachmentId));
       },
       error: (err) => {
-        this.error.set(err?.error?.message ?? 'Failed to delete attachment.');
+        this.error.set(err?.error?.message ?? this.i18n.t('attachments.errDelete', 'Failed to delete attachment.'));
       },
     });
   }

@@ -6,6 +6,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { SessionService } from '../../core/auth/session';
+import { I18nService } from '../../core/i18n/i18n.service';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
 import { ToastService } from '../../core/toast/toast.service';
 
@@ -45,6 +46,7 @@ export class WorkItemComments implements OnInit {
   readonly session = inject(SessionService);
   private readonly http = inject(HttpClient);
   private readonly toast = inject(ToastService);
+  private readonly i18n = inject(I18nService);
 
   readonly comments = signal<CommentItem[]>([]);
   readonly loading = signal(false);
@@ -84,7 +86,7 @@ export class WorkItemComments implements OnInit {
           this.loading.set(false);
         },
         error: (err) => {
-          this.error.set(err?.error?.message ?? 'Failed to load comments.');
+          this.error.set(err?.error?.message ?? this.i18n.t('comments.errLoad', 'Failed to load comments.'));
           this.loading.set(false);
         },
       });
@@ -110,7 +112,7 @@ export class WorkItemComments implements OnInit {
           this.submitting.set(false);
         },
         error: (err) => {
-          this.error.set(err?.error?.message ?? 'Failed to post comment.');
+          this.error.set(err?.error?.message ?? this.i18n.t('comments.errPost', 'Failed to post comment.'));
           this.submitting.set(false);
         },
       });
@@ -141,7 +143,7 @@ export class WorkItemComments implements OnInit {
         this.savingEdit = false;
       },
       error: (err) => {
-        this.error.set(err?.error?.message ?? 'Failed to update comment.');
+        this.error.set(err?.error?.message ?? this.i18n.t('comments.errUpdate', 'Failed to update comment.'));
         this.savingEdit = false;
       },
     });
@@ -156,7 +158,7 @@ export class WorkItemComments implements OnInit {
         this.comments.update((prev) => prev.filter((c) => c.commentId !== commentId));
       },
       error: (err) => {
-        this.error.set(err?.error?.message ?? 'Failed to delete comment.');
+        this.error.set(err?.error?.message ?? this.i18n.t('comments.errDelete', 'Failed to delete comment.'));
       },
     });
   }

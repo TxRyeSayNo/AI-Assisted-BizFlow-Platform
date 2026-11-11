@@ -49,13 +49,7 @@
         ><input matInput formControlName="search" maxlength="200" [readonly]="busy()"
       /></mat-form-field>
       <mat-form-field appearance="outline" subscriptSizing="dynamic"
-        ><mat-label>{{
-          'common.status'
-            | translate
-              : 'Task
-          status'
-        }}</mat-label
-        ><mat-select formControlName="status"
+        ><mat-label>{{ 'common.status' | translate: 'Task status' }}</mat-label><mat-select formControlName="status"
           ><mat-option value="">{{ 'common.allStatuses' | translate: 'All statuses' }}</mat-option>
           @for (option of stateOptions; track option[0]) {
             <mat-option [value]="option[0]">{{
@@ -104,6 +98,7 @@
           {{ 'tasks.noTasksMatch' | translate: 'No tasks match your access scope and filters.' }}
         </p>
       } @else {
+        <div class="table-scroll">
         <table>
           <caption>
             {{
@@ -114,8 +109,8 @@
           <thead>
             <tr>
               <th scope="col">{{ 'tasks.colTask' | translate: 'Nhiệm vụ & Người phụ trách' }}</th>
-              <th scope="col" style="width: 220px; min-width: 190px; white-space: nowrap;">Loại nhiệm vụ</th>
-              <th scope="col" style="width: 240px; min-width: 220px; white-space: nowrap;">{{ 'tasks.colStatus' | translate: 'Trạng thái & Thời hạn' }}</th>
+              <th scope="col" style="min-width: 230px; white-space: nowrap;">Loại nhiệm vụ</th>
+              <th scope="col" style="min-width: 240px; white-space: nowrap;">{{ 'tasks.colStatus' | translate: 'Trạng thái & Thời hạn' }}</th>
             </tr>
           </thead>
           <tbody>
@@ -124,21 +119,20 @@
                 <th scope="row">
                   <a class="task-title" [routerLink]="['/tasks', item.taskId]">{{ item.title }}</a>
                   <span class="task-meta"
-                    >{{ 'priority.' + item.priority | translate: priorities[item.priority] }}
-                    {{ 'tasks.prioritySuffix' | translate: 'ưu tiên' }} ·
+                    >{{ 'priorityBadge.' + item.priority | translate: priorities[item.priority] + ' priority' }} ·
                     {{
                       item.requestId
-                        ? ('tasks.linkedToRequest' | translate: 'Gắn với yêu cầu')
-                        : ('tasks.independentTask' | translate: 'Nhiệm vụ độc lập')
+                        ? ('tasks.linkedToRequest' | translate: 'Linked to a request')
+                        : ('tasks.independentTask' | translate: 'Independent task')
                     }}</span
                   >
                   <span class="task-meta">
                     @if (item.assignedUserId) {
-                      {{ item.assignedUserName ?? 'Chưa xác định người thực hiện' }}
+                      {{ item.assignedUserName ?? ('tasks.unassigned' | translate: 'Unassigned') }}
                     } @else if (item.assignedDepartmentId) {
-                      {{ 'tasks.departmentQueue' | translate: 'Hàng đợi phòng ban' }}
+                      {{ 'tasks.departmentQueue' | translate: 'Department queue' }}
                     } @else {
-                      {{ 'tasks.unassigned' | translate: 'Chưa phân công' }}
+                      {{ 'tasks.unassigned' | translate: 'Unassigned' }}
                     }
                     @if (item.assignedDepartmentId) {
                       · {{ item.assignedDepartmentName ?? 'Chưa có phòng ban' }}
@@ -182,10 +176,11 @@
             }
           </tbody>
         </table>
+        </div>
       }
       <nav aria-label="Task pages" class="pagination">
         <span role="status"
-          >{{ data.total }} {{ data.total === 1 ? 'task' : 'tasks' }} ·
+          >{{ data.total }} {{ data.total === 1 ? ('tasks.itemSingular' | translate: 'task') : ('tasks.itemPlural' | translate: 'tasks') }} ·
           {{ 'common.page' | translate: 'Page' }} {{ data.page }}</span
         >
         <button

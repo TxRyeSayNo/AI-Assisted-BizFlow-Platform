@@ -7,6 +7,7 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { RouterLink } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { SessionService } from '../../core/auth/session';
+import { I18nService } from '../../core/i18n/i18n.service';
 import { InboxUpdates } from '../../core/notifications/inbox-updates';
 import { NotificationCountService } from '../../core/notifications/notification-count.service';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
@@ -41,6 +42,7 @@ export class Notifications {
   private readonly destroy = inject(DestroyRef);
   private request?: Subscription;
   readonly session = inject(SessionService);
+  private readonly i18n = inject(I18nService);
   readonly updates = inject(InboxUpdates);
   private readonly notifCount = inject(NotificationCountService, { optional: true });
   private refreshTimer?: ReturnType<typeof setTimeout>;
@@ -110,6 +112,23 @@ export class Notifications {
       });
   }
 
+  displayTitle(title: string): string {
+    return this.i18n.t(`notifTitle.${title}`, title);
+  }
+
+  displayType(type: string): string {
+    if (!type) return '';
+    const snake = type
+      .replace(/([a-z0-9])([A-Z])/g, '$1_$2')
+      .replace(/-/g, '_')
+      .toUpperCase();
+    return this.i18n.t(`notifType.${snake}`, type);
+  }
+
+  displayObjectType(objectType: string): string {
+    return this.i18n.t(`notifObj.${objectType}`, objectType);
+  }
+
   markRead(row: NotificationRow) {
     if (this.reading() || this.busy() || row.readAt) return;
     this.reading.set(row.notificationId);
@@ -124,15 +143,21 @@ export class Notifications {
       .subscribe({
         next: () => {
           this.reading.set(null);
-          this.receiptMessage.set('Notification marked read.');
+          this.receiptMessage.set(this.i18n.t('notifications.markedRead', 'Notification marked read.'));
           this.load(this.page());
         },
         error: (failure: HttpErrorResponse) => {
           this.reading.set(null);
           this.receiptError.set(
             failure.status === 403 || failure.status === 404
-              ? 'This notification is no longer available to you. Refresh the inbox.'
-              : 'The read receipt could not be confirmed. Refresh or try again.',
+              ? this.i18n.t(
+                  'notifications.errUnavailable',
+                  'This notification is no longer available to you. Refresh the inbox.',
+                )
+              : this.i18n.t(
+                  'notifications.errConfirmReceipt',
+                  'The read receipt could not be confirmed. Refresh or try again.',
+                ),
           );
           if (failure.status === 403 || failure.status === 404) this.load(this.page());
         },

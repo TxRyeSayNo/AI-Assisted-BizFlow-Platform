@@ -30,7 +30,7 @@
               {{ comment.createdAt | date: 'medium' }}
             </time>
             @if (comment.editedAt) {
-              <span class="edited-tag" title="Edited on {{ comment.editedAt | date: 'medium' }}">{{
+              <span class="edited-tag" [title]="('comments.editedAtPrefix' | translate: 'Chỉnh sửa lúc') + ' ' + (comment.editedAt | date: 'medium')">{{
                 'comments.edited' | translate: '(edited)'
               }}</span>
             }
@@ -62,7 +62,7 @@
                   [(ngModel)]="editingText"
                   rows="3"
                   maxlength="4000"
-                  placeholder="Update your comment…"
+                  [placeholder]="'comments.updatePlaceholder' | translate: 'Cập nhật nội dung bình luận…'"
                 ></textarea>
                 <mat-hint align="end">{{ editingText.length }} / 4000</mat-hint>
               </mat-form-field>
@@ -73,7 +73,7 @@
                   [disabled]="savingEdit || !editingText.trim()"
                   (click)="saveEdit(comment.commentId)"
                 >
-                  {{ savingEdit ? 'Saving…' : ('common.save' | translate: 'Save') }}
+                  {{ savingEdit ? ('common.saving' | translate: 'Saving…') : ('common.save' | translate: 'Save') }}
                 </button>
                 <button mat-stroked-button type="button" (click)="cancelEdit()">
                   {{ 'common.cancel' | translate: 'Cancel' }}

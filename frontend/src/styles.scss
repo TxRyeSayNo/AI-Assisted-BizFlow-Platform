@@ -1197,10 +1197,30 @@ body:has(.auth-page) {
    PAGE LAYOUT & DIRECTORY PANELS (Main Application Canvas)
    ========================================================================== */
 .page-content {
+  width: 100%;
   max-width: 82rem;
+  min-width: 0;
+  box-sizing: border-box;
   margin: auto;
   padding: 2.25rem 2rem;
   animation: card-entrance 300ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.table-scroll {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+@media (max-width: 768px) {
+  .page-content {
+    padding: 1.25rem 1rem;
+  }
+
+  .directory-panel {
+    padding: 1rem;
+  }
 }
 
 .directory-panel {
@@ -1888,6 +1908,12 @@ td .badge-task-parent,
 td .badge-task-child,
 td .badge-task-independent,
 td .badge-type,
+td .type-pill,
+td .type-badge,
+td .priority-badge,
+td .priority-indicator,
+td .escalation-badge,
+td .archived-tag,
 td .company-code {
   white-space: nowrap !important;
   word-break: keep-all !important;

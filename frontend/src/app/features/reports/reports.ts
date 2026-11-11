@@ -10,6 +10,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { RouterLink } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { SessionService } from '../../core/auth/session';
+import { I18nService } from '../../core/i18n/i18n.service';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
 
 export interface TaskMetricsView {
@@ -141,6 +142,7 @@ export interface DepartmentOption {
 export class Reports implements OnInit {
   private readonly http = inject(HttpClient);
   private readonly destroy = inject(DestroyRef);
+  private readonly i18n = inject(I18nService);
   readonly session = inject(SessionService);
 
   readonly activeTab = signal<'manager' | 'company' | 'workload' | 'sla'>('manager');
@@ -257,7 +259,10 @@ export class Reports implements OnInit {
             this.busy.set(false);
           },
           error: (err) => {
-            this.error.set(err?.error?.message ?? 'Failed to load manager dashboard.');
+            this.error.set(
+              err?.error?.message ??
+                this.i18n.t('reports.errManager', 'Failed to load manager dashboard.'),
+            );
             this.busy.set(false);
           },
         });
@@ -271,7 +276,10 @@ export class Reports implements OnInit {
             this.busy.set(false);
           },
           error: (err) => {
-            this.error.set(err?.error?.message ?? 'Failed to load company report.');
+            this.error.set(
+              err?.error?.message ??
+                this.i18n.t('reports.errCompany', 'Failed to load company report.'),
+            );
             this.busy.set(false);
           },
         });
@@ -285,7 +293,10 @@ export class Reports implements OnInit {
             this.busy.set(false);
           },
           error: (err) => {
-            this.error.set(err?.error?.message ?? 'Failed to load workload report.');
+            this.error.set(
+              err?.error?.message ??
+                this.i18n.t('reports.errWorkload', 'Failed to load workload report.'),
+            );
             this.busy.set(false);
           },
         });
@@ -299,7 +310,10 @@ export class Reports implements OnInit {
             this.busy.set(false);
           },
           error: (err) => {
-            this.error.set(err?.error?.message ?? 'Failed to load SLA report.');
+            this.error.set(
+              err?.error?.message ??
+                this.i18n.t('reports.errSla', 'Failed to load SLA report.'),
+            );
             this.busy.set(false);
           },
         });

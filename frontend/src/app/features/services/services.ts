@@ -10,6 +10,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { RouterLink } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { SessionService } from '../../core/auth/session';
+import { I18nService } from '../../core/i18n/i18n.service';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
 
 interface CategoryRow {
@@ -57,6 +58,7 @@ export class Services {
   private request?: Subscription;
   private applied = { search: '', status: '' };
   readonly session = inject(SessionService);
+  private readonly i18n = inject(I18nService);
   readonly filters = this.forms.group(this.applied);
   readonly categories = this.forms.array<ReturnType<Services['categoryForm']>>([]);
   readonly form = this.forms.group({
@@ -181,11 +183,21 @@ export class Services {
       })),
     };
     if (!input.code || !input.name || input.categories.some((c) => !c.code || !c.name)) {
-      this.mutationError.set('Enter a code and name for the service and each category.');
+      this.mutationError.set(
+        this.i18n.t(
+          'services.errCodeNameAll',
+          'Enter a code and name for the service and each category.',
+        ),
+      );
       return;
     }
     if (new Set(input.categories.map((c) => c.code)).size !== input.categories.length) {
-      this.mutationError.set('Category codes must be unique within the service.');
+      this.mutationError.set(
+        this.i18n.t(
+          'services.errUniqueCategory',
+          'Category codes must be unique within the service.',
+        ),
+      );
       return;
     }
     this.saving.set(true);
@@ -217,10 +229,19 @@ export class Services {
           this.uncertain.set(!known);
           this.mutationError.set(
             failure.status === 409
-              ? 'A service with this code already exists. Choose another code.'
+              ? this.i18n.t(
+                  'services.errCodeExists',
+                  'A service with this code already exists. Choose another code.',
+                )
               : failure.status === 422
-                ? 'Check the service and category values: codes up to 80 characters, names up to 200 characters, and plain text.'
-                : 'Creation could not be confirmed. Reload the catalog and check for your service before trying again.',
+                ? this.i18n.t(
+                    'services.errInvalidCreate',
+                    'Check the service and category values: codes up to 80 characters, names up to 200 characters, and plain text.',
+                  )
+                : this.i18n.t(
+                    'services.errCreateUncertain',
+                    'Creation could not be confirmed. Reload the catalog and check for your service before trying again.',
+                  ),
           );
         },
       });
@@ -261,7 +282,12 @@ export class Services {
     const raw = this.existingCategoryForm.getRawValue();
     const input = { code: raw.code.trim(), name: raw.name.trim(), active: raw.active };
     if (!input.code || !input.name) {
-      this.categoryError.set('Enter a code and name for the category.');
+      this.categoryError.set(
+        this.i18n.t(
+          'services.errCategoryCodeName',
+          'Enter a code and name for the category.',
+        ),
+      );
       return;
     }
     this.categorySaving.set(true);
@@ -278,7 +304,10 @@ export class Services {
           if (updated.serviceId !== service.serviceId || !updated.eTag) {
             this.categoryNeedsReload.set(true);
             this.categoryError.set(
-              'Saving could not be confirmed. Reload the catalog, check its categories, and select the service again before retrying.',
+              this.i18n.t(
+                'services.errCategorySaveUncertain',
+                'Saving could not be confirmed. Reload the catalog, check its categories, and select the service again before retrying.',
+              ),
             );
             return;
           }
@@ -292,7 +321,9 @@ export class Services {
                 }
               : data,
           );
-          this.categoryCreated.set(`Category added: ${input.code} to ${service.code}.`);
+          this.categoryCreated.set(
+            `${this.i18n.t('services.categoryAddedPrefix', 'Category added:')} ${input.code} ${this.i18n.t('services.categoryAddedTo', 'to')} ${service.code}.`,
+          );
           this.selectedService.set(null);
           this.categoryDraftServiceId = undefined;
           this.existingCategoryForm.reset({ code: '', name: '', active: true });
@@ -313,12 +344,24 @@ export class Services {
           this.categoryNeedsReload.set(!duplicate && failure.status !== 422);
           this.categoryError.set(
             duplicate
-              ? 'A category with this code already exists in the service. Choose another code.'
+              ? this.i18n.t(
+                  'services.errCategoryExists',
+                  'A category with this code already exists in the service. Choose another code.',
+                )
               : failure.status === 422
-                ? 'Check the category values: code up to 80 characters, name up to 200 characters, and plain text.'
+                ? this.i18n.t(
+                    'services.errCategoryInvalid',
+                    'Check the category values: code up to 80 characters, name up to 200 characters, and plain text.',
+                  )
                 : stale
-                  ? 'The service changed. Reload the catalog, check its categories, and select the service again before retrying.'
-                  : 'Saving could not be confirmed. Reload the catalog, check its categories, and select the service again before retrying.',
+                  ? this.i18n.t(
+                      'services.errCategoryStale',
+                      'The service changed. Reload the catalog, check its categories, and select the service again before retrying.',
+                    )
+                  : this.i18n.t(
+                      'services.errCategorySaveUncertain',
+                      'Saving could not be confirmed. Reload the catalog, check its categories, and select the service again before retrying.',
+                    ),
           );
         },
       });
@@ -372,7 +415,9 @@ export class Services {
       active: raw.active,
     };
     if (!input.code || !input.name) {
-      this.metadataError.set('Enter a code and name for the service.');
+      this.metadataError.set(
+        this.i18n.t('services.errServiceCodeName', 'Enter a code and name for the service.'),
+      );
       return;
     }
     this.metadataSaving.set(true);
@@ -389,11 +434,16 @@ export class Services {
           if (row.serviceId !== service.serviceId || !row.eTag) {
             this.metadataNeedsReload.set(true);
             this.metadataError.set(
-              'Saving could not be confirmed. Reload the catalog, check the service, and select it again before retrying.',
+              this.i18n.t(
+                'services.errServiceSaveUncertain',
+                'Saving could not be confirmed. Reload the catalog, check the service, and select it again before retrying.',
+              ),
             );
             return;
           }
-          this.metadataSaved.set(`Service updated: ${row.code} — ${row.name}.`);
+          this.metadataSaved.set(
+            `${this.i18n.t('services.updatedPrefix', 'Service updated:')} ${row.code} — ${row.name}.`,
+          );
           this.created.set(null);
           this.categoryCreated.set('');
           this.metadataDraftServiceId = undefined;
@@ -417,12 +467,24 @@ export class Services {
           this.metadataNeedsReload.set(!duplicate && failure.status !== 422);
           this.metadataError.set(
             duplicate
-              ? 'A service with this code already exists. Choose another code.'
+              ? this.i18n.t(
+                  'services.errCodeExists',
+                  'A service with this code already exists. Choose another code.',
+                )
               : failure.status === 422
-                ? 'Check the service values: code up to 80 characters, name up to 200 characters, and plain text.'
+                ? this.i18n.t(
+                    'services.errServiceInvalid',
+                    'Check the service values: code up to 80 characters, name up to 200 characters, and plain text.',
+                  )
                 : stale
-                  ? 'The service changed. Reload the catalog, check its current values, and select it again before retrying.'
-                  : 'Saving could not be confirmed. Reload the catalog, check the service, and select it again before retrying.',
+                  ? this.i18n.t(
+                      'services.errServiceStale',
+                      'The service changed. Reload the catalog, check its current values, and select it again before retrying.',
+                    )
+                  : this.i18n.t(
+                      'services.errServiceSaveUncertain',
+                      'Saving could not be confirmed. Reload the catalog, check the service, and select it again before retrying.',
+                    ),
           );
         },
       });

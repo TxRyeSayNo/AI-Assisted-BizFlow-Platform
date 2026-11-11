@@ -1,13 +1,15 @@
-<h2 mat-dialog-title id="sla-timing-title">Tạo phiên bản thời gian SLA</h2>
+<h2 mat-dialog-title id="sla-timing-title">{{ 'sla.timingTitle' | translate: 'Tạo phiên bản thời gian SLA' }}</h2>
 <form [formGroup]="form" (ngSubmit)="save()" [attr.aria-busy]="busy()">
   <mat-dialog-content>
-    <p>{{ data.profileName }} · Based on version {{ data.source.versionNo }}</p>
+    <p>{{ data.profileName }} · {{ 'sla.basedOnVersion' | translate: 'Based on version' }} {{ data.source.versionNo }}</p>
     <p>
-      This creates a new immutable snapshot. No saved version or currently pinned work will be
-      changed.
+      {{
+        'sla.timingSnapshotDesc'
+          | translate: 'Thao tác này tạo một bản chụp bất biến mới. Mọi phiên bản đã lưu và công việc đang áp dụng sẽ không bị thay đổi.'
+      }}
     </p>
     <mat-form-field appearance="outline">
-      <mat-label>Số phút làm việc mục tiêu</mat-label>
+      <mat-label>{{ 'sla.targetMinutesLabel' | translate: 'Số phút làm việc mục tiêu' }}</mat-label>
       <input
         matInput
         type="number"
@@ -20,7 +22,7 @@
       <mat-error>Vui lòng nhập số nguyên dương cho số phút làm việc.</mat-error>
     </mat-form-field>
     <mat-form-field appearance="outline">
-      <mat-label>Số phút làm việc cảnh báo từ lúc bắt đầu</mat-label>
+      <mat-label>{{ 'sla.warningMinutesLabel' | translate: 'Số phút làm việc cảnh báo từ lúc bắt đầu' }}</mat-label>
       <input
         matInput
         type="number"
@@ -33,32 +35,41 @@
       <mat-error>Vui lòng nhập số nguyên không âm cho số phút làm việc.</mat-error>
     </mat-form-field>
     <p class="hint">
-      Warning time is elapsed working time from SLA start, and must be less than the target.
+      {{
+        'sla.timingWarningRule'
+          | translate: 'Warning time is elapsed working time from SLA start, and must be less than the target.'
+      }}
     </p>
     @if (form.hasError('timing') && form.touched) {
-      <p role="alert">Use whole minutes with 0 ≤ warning &lt; target.</p>
+      <p role="alert">{{ 'sla.timingInvalidRange' | translate: 'Nhập số phút nguyên với 0 ≤ cảnh báo < mục tiêu.' }}</p>
     }
-    <h3>Cấu hình được bảo lưu</h3>
+    <h3>{{ 'sla.preservedConfigHeading' | translate: 'Cấu hình được bảo lưu' }}</h3>
     <dl>
-      <dt>Lịch làm việc cố định</dt>
-      <dd>{{ data.source.calendar.timeZone }} · {{ data.source.calendar.calendarId }}</dd>
-      <dt>Các cấp leo thang</dt>
-      <dd>{{ data.source.escalationConfig?.levels?.length ?? 0 }} · Unchanged</dd>
+      <dt>{{ 'sla.frozenCalendarTerm' | translate: 'Lịch làm việc cố định' }}</dt>
+      <dd>{{ data.source.calendar.timeZone }}</dd>
+      <dt>{{ 'sla.escalationLevelsTerm' | translate: 'Các cấp leo thang' }}</dt>
+      <dd>{{ data.source.escalationConfig?.levels?.length ?? 0 }} · {{ 'sla.unchangedLabel' | translate: 'Giữ nguyên' }}</dd>
     </dl>
     <p>
-      Only timing values are edited here. The selected version's frozen calendar and escalation
-      policy are copied unchanged.
+      {{
+        'sla.timingOnlyDesc'
+          | translate: 'Chỉ cập nhật giá trị thời gian tại đây. Lịch làm việc và chính sách leo thang của phiên bản nguồn được sao chép giữ nguyên.'
+      }}
     </p>
     @if (error()) {
       <p class="feedback" role="alert">{{ error() }}</p>
     }
     @if (busy()) {
-      <p role="status">Creating immutable version…</p>
+      <p role="status">{{ 'sla.creatingImmutable' | translate: 'Đang tạo phiên bản bất biến…' }}</p>
     }
   </mat-dialog-content>
   <mat-dialog-actions>
     <button mat-stroked-button type="button" [disabled]="busy()" (click)="close()">
-      {{ uncertain() ? 'Close and review history' : 'Cancel' }}
+      {{
+        uncertain()
+          ? ('sla.closeReviewHistory' | translate: 'Close and review history')
+          : ('common.cancel' | translate: 'Cancel')
+      }}
     </button>
     <button
       mat-flat-button
@@ -71,7 +82,7 @@
         !session.hasPermission('sla.configure')
       "
     >
-      Create new version
+      {{ 'sla.createNewVersionBtn' | translate: 'Create new version' }}
     </button>
   </mat-dialog-actions>
 </form>

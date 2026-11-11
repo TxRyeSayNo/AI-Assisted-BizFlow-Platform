@@ -889,7 +889,7 @@
                   @if (node.departmentName) {
                     <span class="badge badge-dept">{{ node.departmentName }}</span>
                   }
-                  <span class="badge badge-pri">{{ node.priority }}</span>
+                  <span class="badge badge-pri">{{ 'priorityBadge.' + node.priority | translate: node.priority }}</span>
                   <span class="badge-days"
                     >⏱ {{ node.suggestedDurationDays }}
                     {{ 'common.days' | translate: 'ngày' }}</span
@@ -1079,7 +1079,7 @@
           <h2>{{ 'requestDetail.linkedTasks' | translate: 'Linked Tasks' }}</h2>
           <span class="badge"
             >{{ detail.tasks?.length || 0 }}
-            {{ detail.tasks?.length === 1 ? 'task' : 'tasks' }}</span
+            {{ 'requestDetail.unitTasks' | translate: (detail.tasks?.length === 1 ? 'task' : 'tasks') }}</span
           >
         </div>
         @if (canCreateTask()) {
@@ -1172,7 +1172,7 @@
           <h2>{{ 'requestDetail.resolutionHistory' | translate: 'Resolution History' }}</h2>
           <span class="badge"
             >{{ detail.resolutions.length }}
-            {{ detail.resolutions.length === 1 ? 'revision' : 'revisions' }}</span
+            {{ 'requestDetail.unitRevisions' | translate: (detail.resolutions.length === 1 ? 'revision' : 'revisions') }}</span
           >
         </div>
         <div class="history-list">
@@ -1208,7 +1208,7 @@
           </h2>
           <span class="badge"
             >{{ detail.confirmations.length }}
-            {{ detail.confirmations.length === 1 ? 'decision' : 'decisions' }}</span
+            {{ 'requestDetail.unitDecisions' | translate: (detail.confirmations.length === 1 ? 'decision' : 'decisions') }}</span
           >
         </div>
         <div class="history-list">

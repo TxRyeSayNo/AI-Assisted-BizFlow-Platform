@@ -265,13 +265,17 @@ export class RequestDetail implements OnInit {
       this.confirmNote.set('');
     } else if (modal === 'revise') {
       const d = this.data();
-      this.reviseTitle.set(d ? `Revised: ${d.title}` : '');
+      this.reviseTitle.set(
+        d ? `${this.i18n.t('requestDetail.revisedTitlePrefix', 'Revised:')} ${d.title}` : '',
+      );
       this.reviseDescription.set(d?.description ?? '');
       this.revisePriority.set(d?.priority ?? 'MEDIUM');
       this.reviseSubmitImmediately.set(false);
     } else if (modal === 'create-task') {
       const d = this.data();
-      this.taskTitle.set(d ? `Task: ${d.title}` : '');
+      this.taskTitle.set(
+        d ? `${this.i18n.t('requestDetail.defaultTaskTitlePrefix', 'Task:')} ${d.title}` : '',
+      );
       this.taskDescription.set(d?.description ?? '');
       this.taskPriority.set(d?.priority ?? 'MEDIUM');
       this.taskDeadline.set('');
@@ -514,7 +518,7 @@ export class RequestDetail implements OnInit {
           } else if (err.status === 409) {
             this.actionError.set('Yêu cầu không thể điều phối ở trạng thái hiện tại.');
           } else {
-            this.actionError.set(err.error?.message || 'Failed to route request.');
+            this.actionError.set(err.error?.message || this.i18n.t('requestDetail.routeFail', 'Failed to route request.'));
           }
         },
       });
@@ -550,7 +554,7 @@ export class RequestDetail implements OnInit {
           } else if (err.status === 409) {
             this.actionError.set('Yêu cầu không thể tiếp nhận ở trạng thái hiện tại.');
           } else {
-            this.actionError.set(err.error?.message || 'Failed to receive request.');
+            this.actionError.set(err.error?.message || this.i18n.t('requestDetail.receiveFail', 'Failed to receive request.'));
           }
         },
       });
@@ -584,7 +588,7 @@ export class RequestDetail implements OnInit {
           } else if (err.status === 409) {
             this.actionError.set('Yêu cầu không thể chuyển sang Đang xử lý ở trạng thái hiện tại.');
           } else {
-            this.actionError.set(err.error?.message || 'Failed to start processing request.');
+            this.actionError.set(err.error?.message || this.i18n.t('requestDetail.startFail', 'Failed to start processing request.'));
           }
         },
       });
@@ -625,7 +629,7 @@ export class RequestDetail implements OnInit {
           } else if (err.status === 409) {
             this.actionError.set('Yêu cầu không thể từ chối ở trạng thái hiện tại.');
           } else {
-            this.actionError.set(err.error?.message || 'Failed to reject request.');
+            this.actionError.set(err.error?.message || this.i18n.t('requestDetail.rejectFail', 'Failed to reject request.'));
           }
         },
       });
@@ -660,7 +664,7 @@ export class RequestDetail implements OnInit {
           } else if (err.status === 409) {
             this.actionError.set('Yêu cầu không thể hủy ở trạng thái hiện tại.');
           } else {
-            this.actionError.set(err.error?.message || 'Failed to cancel request.');
+            this.actionError.set(err.error?.message || this.i18n.t('requestDetail.cancelFail', 'Failed to cancel request.'));
           }
         },
       });
@@ -701,7 +705,7 @@ export class RequestDetail implements OnInit {
           } else if (err.status === 409) {
             this.actionError.set('Yêu cầu không thể hoàn tất giải quyết ở trạng thái hiện tại.');
           } else {
-            this.actionError.set(err.error?.message || 'Failed to resolve request.');
+            this.actionError.set(err.error?.message || this.i18n.t('requestDetail.resolveFail', 'Failed to resolve request.'));
           }
         },
       });
@@ -744,12 +748,18 @@ export class RequestDetail implements OnInit {
           this.actionInProgress.set(false);
           if (err.status === 403) {
             this.actionError.set(
-              'You do not have permission to confirm or request rework for this request.',
+              this.i18n.t(
+                'requestDetail.confirmDenied',
+                'You do not have permission to confirm or request rework for this request.',
+              ),
             );
           } else if (err.status === 409) {
             this.actionError.set('Yêu cầu không thể xác nhận ở trạng thái hiện tại.');
           } else {
-            this.actionError.set(err.error?.message || 'Failed to submit confirmation.');
+            this.actionError.set(
+              err.error?.message ||
+                this.i18n.t('requestDetail.confirmFail', 'Failed to submit confirmation.'),
+            );
           }
         },
       });
@@ -793,7 +803,10 @@ export class RequestDetail implements OnInit {
           } else if (err.status === 409) {
             this.actionError.set('Yêu cầu không thể sửa đổi ở trạng thái hiện tại.');
           } else {
-            this.actionError.set(err.error?.message || 'Failed to create revised request.');
+            this.actionError.set(
+              err.error?.message ||
+                this.i18n.t('requestDetail.reviseFail', 'Failed to create revised request.'),
+            );
           }
         },
       });
@@ -860,7 +873,10 @@ export class RequestDetail implements OnInit {
           } else if (err.status === 409) {
             this.actionError.set('Không thể liên kết nhiệm vụ: yêu cầu không ở trạng thái hoạt động.');
           } else {
-            this.actionError.set(err.error?.message || 'Failed to create task.');
+            this.actionError.set(
+              err.error?.message ||
+                this.i18n.t('requestDetail.createTaskFail', 'Failed to create task.'),
+            );
           }
         },
       });
@@ -966,7 +982,10 @@ export class RequestDetail implements OnInit {
           } else if (err.status === 409) {
             this.actionError.set('Yêu cầu không thể lưu trữ ở trạng thái hiện tại.');
           } else {
-            this.actionError.set(err.error?.message || 'Failed to archive request.');
+            this.actionError.set(
+              err.error?.message ||
+                this.i18n.t('requestDetail.archiveFail', 'Failed to archive request.'),
+            );
           }
         },
       });

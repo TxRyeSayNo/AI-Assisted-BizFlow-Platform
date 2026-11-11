@@ -21,11 +21,11 @@ import { TranslatePipe } from '../../core/i18n/translate.pipe';
         <dt>{{ 'audit.timeUtc' | translate: 'Time (UTC)' }}</dt>
         <dd>{{ data.event.createdAt | date: 'yyyy-MM-dd HH:mm:ss' : 'UTC' }}</dd>
         <dt>{{ 'audit.actor' | translate: 'Actor' }}</dt>
-        <dd>{{ data.event.actorType }} · {{ data.event.actorId ?? 'No actor ID recorded' }}</dd>
+        <dd>{{ data.event.actorType }} · {{ data.event.actorId ?? ('audit.noActorId' | translate: 'No actor ID recorded') }}</dd>
         <dt>{{ 'audit.object' | translate: 'Object' }}</dt>
         <dd>
-          {{ data.event.objectType ?? 'No object type recorded' }} ·
-          {{ data.event.objectId ?? 'No object ID recorded' }}
+          {{ data.event.objectType ?? ('audit.noObjectType' | translate: 'No object type recorded') }} ·
+          {{ data.event.objectId ?? ('audit.noObjectId' | translate: 'No object ID recorded') }}
         </dd>
       </dl>
       <h3>{{ 'audit.before' | translate: 'Before' }}</h3>

@@ -15,7 +15,7 @@
     "
   >
     <h1>{{ 'requests.title' | translate: 'Yêu cầu' }}</h1>
-    <div style="display: flex; gap: 0.5rem">
+    <div style="display: flex; flex-wrap: wrap; gap: 0.75rem">
       @if (session.hasPermission('requests.create')) {
         <a mat-flat-button routerLink="/requests/new">{{
           'requests.newRequest' | translate: 'New request'
@@ -151,9 +151,8 @@
                   }}</span>
                   <span class="request-meta">
                     <span class="priority-indicator" [ngClass]="priorityClass(item.priority)">
-                      {{ 'priority.' + item.priority | translate: getPriorityName(item.priority) }}
+                      {{ 'priorityBadge.' + item.priority | translate: getPriorityName(item.priority) + ' priority' }}
                     </span>
-                    {{ 'tasks.prioritySuffix' | translate: 'priority' }}
                   </span>
                 </td>
               </tr>
@@ -177,7 +176,7 @@
             }}
             {{ 'common.total' | translate: 'total' }})
           </span>
-          <div style="display: flex; gap: 0.5rem">
+          <div style="display: flex; flex-wrap: wrap; gap: 0.75rem">
             <button
               mat-stroked-button
               type="button"

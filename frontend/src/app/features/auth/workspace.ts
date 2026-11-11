@@ -1140,10 +1140,10 @@ export class Workspace implements OnInit {
 
   readonly kpiData = computed(() => {
     switch (this.userRole()) {
-      case 'SUPERADMIN':
+          case 'SUPERADMIN':
         return {
           box1: {
-            title: 'Hồ sơ Đăng ký',
+            title: 'Hồ sơ đăng ký',
             badge: 'Chờ duyệt',
             metric: String(this.tasksActiveCount()),
             sublabel: `${this.tasksActiveCount()} doanh nghiệp chờ duyệt`,
@@ -1151,7 +1151,7 @@ export class Workspace implements OnInit {
             label: 'Duyệt đăng ký doanh nghiệp',
           },
           box2: {
-            title: 'Kiểm toán Hệ thống',
+            title: 'Kiểm toán hệ thống',
             badge: 'Nhật ký bảo mật',
             metric: String(this.auditCount()),
             sublabel: `${this.auditCount()} bản ghi kiểm toán`,
@@ -1159,15 +1159,15 @@ export class Workspace implements OnInit {
             label: 'Xem nhật ký kiểm toán',
           },
           box3: {
-            title: 'Trạng thái Nền tảng',
-            badge: '100% Hoạt động',
+            title: 'Trạng thái nền tảng',
+            badge: '100% hoạt động',
             metric: 'Ổn định',
             sublabel: 'Tất cả dịch vụ trực tuyến',
             link: '/platform/companies',
             label: 'Giám sát vận hành',
           },
           box4: {
-            title: 'Thông báo Hệ thống',
+            title: 'Thông báo hệ thống',
             badge: 'Chưa đọc',
             metric: String(this.unreadNotificationsCount()),
             sublabel: `${this.unreadNotificationsCount()} thông báo mới`,
@@ -1178,7 +1178,7 @@ export class Workspace implements OnInit {
       case 'COMPANY_ADMIN':
         return {
           box1: {
-            title: 'Nhiệm vụ Toàn công ty',
+            title: 'Nhiệm vụ toàn công ty',
             badge: 'Đang làm',
             metric: String(this.tasksActiveCount()),
             sublabel: `${this.tasksActiveCount()} đang làm · ${this.tasksTotalCount()} tổng số`,
@@ -1186,7 +1186,7 @@ export class Workspace implements OnInit {
             label: 'Xem danh sách công việc',
           },
           box2: {
-            title: 'Yêu cầu Toàn công ty',
+            title: 'Yêu cầu toàn công ty',
             badge: 'Chưa xong',
             metric: String(this.requestsPendingCount()),
             sublabel: `${this.requestsPendingCount()} chưa xong · ${this.requestsTotalCount()} tổng số`,
@@ -1194,15 +1194,15 @@ export class Workspace implements OnInit {
             label: 'Xem danh sách yêu cầu',
           },
           box3: {
-            title: 'Tuân thủ SLA Doanh nghiệp',
+            title: 'Tuân thủ SLA doanh nghiệp',
             badge: this.slaRate(),
             metric: this.slaStatus(),
             sublabel: 'Cam kết chất lượng vận hành',
             link: '/reports',
-            label: 'Báo cáo & Dashboard',
+            label: 'Báo cáo & thống kê',
           },
           box4: {
-            title: 'Hộp thư Cập nhật',
+            title: 'Hộp thư cập nhật',
             badge: 'Chưa đọc',
             metric: String(this.unreadNotificationsCount()),
             sublabel: `${this.unreadNotificationsCount()} chưa đọc · ${this.totalNotificationsCount()} tổng số`,
@@ -1213,7 +1213,7 @@ export class Workspace implements OnInit {
       case 'MANAGER':
         return {
           box1: {
-            title: 'Nhiệm vụ Phòng ban',
+            title: 'Nhiệm vụ phòng ban',
             badge: 'Phụ trách',
             metric: String(this.tasksActiveCount()),
             sublabel: `${this.tasksActiveCount()} đang làm · ${this.tasksTotalCount()} tổng số`,
@@ -1221,7 +1221,7 @@ export class Workspace implements OnInit {
             label: 'Xem danh sách công việc',
           },
           box2: {
-            title: 'Yêu cầu Phòng ban',
+            title: 'Yêu cầu phòng ban',
             badge: 'Cần duyệt',
             metric: String(this.requestsPendingCount()),
             sublabel: `${this.requestsPendingCount()} chưa xong · ${this.requestsTotalCount()} tổng số`,
@@ -1229,7 +1229,7 @@ export class Workspace implements OnInit {
             label: 'Xem danh sách yêu cầu',
           },
           box3: {
-            title: 'Tuân thủ SLA Phòng ban',
+            title: 'Tuân thủ SLA phòng ban',
             badge: this.slaRate(),
             metric: this.slaStatus(),
             sublabel: 'Tiến độ xử lý phòng ban',
@@ -1237,7 +1237,7 @@ export class Workspace implements OnInit {
             label: 'Giám sát SLA',
           },
           box4: {
-            title: 'Hộp thư Cập nhật',
+            title: 'Hộp thư cập nhật',
             badge: 'Chưa đọc',
             metric: String(this.unreadNotificationsCount()),
             sublabel: `${this.unreadNotificationsCount()} chưa đọc · ${this.totalNotificationsCount()} tổng số`,
@@ -1267,7 +1267,7 @@ export class Workspace implements OnInit {
             label: 'Xem yêu cầu của tôi',
           },
           box3: {
-            title: 'Tiến độ Hoàn thành',
+            title: 'Tiến độ hoàn thành',
             badge: empRate,
             metric: 'Đạt chuẩn',
             sublabel: 'Chỉ số năng suất cá nhân',
@@ -1275,7 +1275,7 @@ export class Workspace implements OnInit {
             label: 'Chi tiết tiến độ',
           },
           box4: {
-            title: 'Hộp thư Cập nhật',
+            title: 'Hộp thư cập nhật',
             badge: 'Chưa đọc',
             metric: String(this.unreadNotificationsCount()),
             sublabel: `${this.unreadNotificationsCount()} chưa đọc · ${this.totalNotificationsCount()} tổng số`,
@@ -1289,9 +1289,9 @@ export class Workspace implements OnInit {
 
   currentRoleLabel(): string {
     const id = this.identity();
-    if (!id?.tenantId) return 'Quản trị viên Hệ thống';
-    if (id.permissions.includes('roles.configure')) return 'Quản trị viên Doanh nghiệp';
-    if (id.permissions.includes('tasks.assign')) return 'Quản lý Vận hành';
+    if (!id?.tenantId) return 'Quản trị viên nền tảng';
+    if (id.permissions.includes('roles.configure')) return 'Quản trị viên doanh nghiệp';
+    if (id.permissions.includes('tasks.assign')) return 'Quản lý vận hành';
     return 'Thành viên';
   }
 

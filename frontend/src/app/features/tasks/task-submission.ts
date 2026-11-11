@@ -18,34 +18,33 @@ import { SessionService } from '../../core/auth/session';
     MatInputModule,
   ],
   template: `
-    <h2 mat-dialog-title id="task-submission-title">Submit task result</h2>
+    <h2 mat-dialog-title id="task-submission-title">Nộp kết quả nhiệm vụ</h2>
     <mat-dialog-content>
       <p>{{ data.title }}</p>
       <p>
-        Submit your completed deliverables for review. Once submitted, a manager will review and
-        confirm your results or request rework.
+        Gửi kết quả hoàn thành để người quản lý xem xét, xác nhận hoàn tất hoặc yêu cầu chỉnh sửa bổ sung.
       </p>
       @if (error()) {
         <p role="alert">{{ error() }}</p>
       }
       <mat-form-field appearance="outline">
-        <mat-label>Result summary / Deliverables (optional)</mat-label>
+        <mat-label>Tóm tắt kết quả / sản phẩm bàn giao (tùy chọn)</mat-label>
         <textarea
           matInput
           rows="4"
           [formControl]="content"
-          placeholder="Describe the completed work or attach deliverable references..."
+          placeholder="Mô tả kết quả đã hoàn thành hoặc dẫn chiếu tài liệu bàn giao..."
         ></textarea>
       </mat-form-field>
     </mat-dialog-content>
     <mat-dialog-actions align="end">
-      <button mat-stroked-button type="button" [disabled]="busy()" (click)="close()">Close</button>
+      <button mat-stroked-button type="button" [disabled]="busy()" (click)="close()">Đóng</button>
       <button mat-flat-button type="button" [disabled]="busy() || terminal()" (click)="save()">
-        {{ uncertain() ? 'Retry submission' : 'Submit for review' }}
+        {{ uncertain() ? 'Thử lại nộp kết quả' : 'Nộp để phê duyệt' }}
       </button>
     </mat-dialog-actions>
   `,
-  styles: ['mat-form-field { width: 100%; } mat-dialog-actions { gap: 0.5rem; flex-wrap: wrap; }'],
+  styles: ['mat-form-field { width: 100%; } mat-dialog-actions { gap: 0.75rem; flex-wrap: wrap; }'],
 })
 export class TaskSubmissionEditor {
   readonly data = inject<{ taskId: string; title: string }>(MAT_DIALOG_DATA);
@@ -104,7 +103,7 @@ export class TaskSubmissionEditor {
           } else if ([401, 403, 404, 409].includes(failure.status)) {
             this.terminal.set(true);
             this.error.set(
-              'The task status, assignment, or your access changed. Close and review the current task.',
+              'Trạng thái nhiệm vụ, phân công hoặc quyền hạn vừa thay đổi. Vui lòng đóng và kiểm tra lại.',
             );
           } else this.unknown();
         },
@@ -118,7 +117,7 @@ export class TaskSubmissionEditor {
   private unknown() {
     this.uncertain.set(true);
     this.error.set(
-      'The outcome is uncertain. Retry the submission safely, or close and review the task.',
+      'Chưa nhận được phản hồi xác nhận từ máy chủ. Bạn có thể thử lại an toàn hoặc đóng để kiểm tra nhiệm vụ.',
     );
   }
 }

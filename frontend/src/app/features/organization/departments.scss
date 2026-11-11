@@ -65,9 +65,12 @@ thead th:last-child {
 }
 .status-label {
   display: inline-block;
+  white-space: nowrap;
   border: var(--tp-bw) solid var(--tp-line);
   border-radius: var(--tp-r-sm);
   padding: var(--tp-space-1) var(--tp-space-2);
+  font-size: var(--tp-small-size);
+  font-weight: 600;
 }
 .pagination {
   display: flex;
