@@ -3,7 +3,7 @@
   bottom: 24px;
   right: 24px;
   z-index: 1050;
-  font-family: var(--bf-font-sans, 'Plus Jakarta Sans', system-ui, sans-serif);
+  font-family: var(--bf-font-sans, 'Be Vietnam Pro', 'Plus Jakarta Sans', system-ui, sans-serif);
 }
 
 /* Floating Action Button (FAB) */
@@ -1589,4 +1589,18 @@
       }
     }
   }
+}
+
+.required-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: #64748b;
+  background: rgba(100, 116, 139, 0.12);
+  padding: 1px 6px;
+  border-radius: 4px;
+  margin-left: 6px;
+  vertical-align: middle;
+  line-height: 1.3;
 }

@@ -62,8 +62,13 @@ export interface SlaBreachItem {
             <span class="kpi-label">{{ 'slaMonitor.onTimeCompliance' | translate: 'Tỷ lệ Đúng hạn' }}</span>
             <span class="live-beacon"></span>
           </div>
+<<<<<<< HEAD
           <div class="kpi-value text-azure">98.6%</div>
           <p class="kpi-meta">{{ 'slaMonitor.rollingDays' | translate: '30 ngày làm việc gần nhất' }}</p>
+=======
+          <div class="kpi-value text-azure">{{ complianceRate() }}</div>
+          <p class="kpi-meta">{{ 'slaMonitor.rollingDays' | translate: 'Last 30 rolling business days' }}</p>
+>>>>>>> 167fcb1cf97dda1194ded203001ad13f8beb177d
         </div>
 
         <div class="kpi-card highlight-danger">
@@ -72,7 +77,11 @@ export interface SlaBreachItem {
             <span class="pulse-beacon"></span>
           </div>
           <div class="kpi-value text-danger">{{ overdueCount() }}</div>
+<<<<<<< HEAD
           <p class="kpi-meta">{{ 'slaMonitor.immediateIntervention' | translate: 'Cần can thiệp ngay' }}</p>
+=======
+          <p class="kpi-meta">{{ 'slaMonitor.immediateIntervention' | translate: 'Cần can thiệp ngay lập tức' }}</p>
+>>>>>>> 167fcb1cf97dda1194ded203001ad13f8beb177d
         </div>
 
         <div class="kpi-card highlight-warning">
@@ -116,6 +125,11 @@ export interface SlaBreachItem {
               </tr>
             </thead>
             <tbody>
+              <tr *ngIf="monitoredItems().length === 0">
+                <td colspan="8" style="text-align: center; padding: 2.5rem; color: #64748b;">
+                  {{ 'slaMonitor.noBreaches' | translate: 'Hiện không có công việc hoặc yêu cầu nào vi phạm hoặc tiệm cận ngưỡng cảnh báo SLA.' }}
+                </td>
+              </tr>
               <tr *ngFor="let item of monitoredItems()" [class.row-overdue]="item.state === 'OVERDUE'">
                 <td>
                   <span class="status-chip" [attr.data-status]="item.state">
@@ -422,77 +436,54 @@ export class SlaMonitor implements OnInit {
   readonly session = inject(SessionService);
 
   readonly monitoredItems = signal<SlaBreachItem[]>([]);
-  readonly overdueCount = signal<number>(1);
-  readonly warningCount = signal<number>(2);
+  readonly overdueCount = signal<number>(0);
+  readonly warningCount = signal<number>(0);
+  readonly complianceRate = signal<string>('100%');
 
   ngOnInit(): void {
-    // Queries overdue tasks from the live backend
-    this.http.get<{ items: Array<{ taskId: string; title: string; status: string; deadline: string; assignedUserName?: string }> }>('/api/v1/tasks?status=OVERDUE&pageSize=10').subscribe({
+    // Queries real SLA performance report from the live backend
+    this.http.get<any>('/api/v1/reports/sla').subscribe({
       next: (res) => {
-        const liveItems: SlaBreachItem[] = (res.items || []).map(t => ({
-          id: t.taskId,
-          type: 'TASK',
-          title: t.title,
-          assignee: t.assignedUserName || 'Performer',
-          department: 'Operations',
-          deadline: t.deadline || new Date().toISOString(),
-          slaProfileName: 'Standard Resolution (48h)',
-          state: 'OVERDUE',
-          hoursRemaining: -6,
-          escalationLevel: 'Cấp 2 · Trưởng bộ phận'
-        }));
-
-        if (liveItems.length > 0) {
-          this.monitoredItems.set(liveItems);
-          this.overdueCount.set(liveItems.length);
-        } else {
-          this.loadDefaultWatchlist();
+        if (typeof res?.complianceRatePercent === 'number') {
+          this.complianceRate.set(`${res.complianceRatePercent.toFixed(1)}%`);
         }
       },
-      error: () => {
-        this.loadDefaultWatchlist();
-      }
+      error: () => {},
     });
-  }
 
-  private loadDefaultWatchlist(): void {
-    this.monitoredItems.set([
-      {
-        id: 't-101',
-        type: 'TASK',
-        title: 'Vá lỗ hổng Firmware máy chủ khẩn cấp',
-        assignee: 'Alex Morgan',
-        department: 'Hạ tầng kỹ thuật',
-        deadline: new Date(Date.now() - 3600000 * 5).toISOString(),
-        slaProfileName: 'Sự cố Khẩn cấp (4h)',
-        state: 'OVERDUE',
-        hoursRemaining: -5,
-        escalationLevel: 'Cấp 2 · Báo cáo Quản lý'
-      },
-      {
-        id: 'r-204',
-        type: 'REQUEST',
-        title: 'Cấp thẻ & quyền truy cập an ninh Ban điều hành',
-        assignee: 'Bộ phận An ninh',
-        department: 'An ninh Doanh nghiệp',
-        deadline: new Date(Date.now() + 3600000 * 2.5).toISOString(),
-        slaProfileName: 'Truy cập An ninh (24h)',
-        state: 'WARNING',
-        hoursRemaining: 2.5,
-        escalationLevel: 'Cấp 1 · Cảnh báo'
-      },
-      {
-        id: 't-108',
-        type: 'TASK',
-        title: 'Soát xét & Kiểm toán sổ cái đóng quý 3 Phòng Tài chính',
-        assignee: 'Nguyễn Văn A',
-        department: 'Ban Tài chính',
-        deadline: new Date(Date.now() + 3600000 * 3.8).toISOString(),
-        slaProfileName: 'Soát xét Tài chính (72h)',
-        state: 'WARNING',
-        hoursRemaining: 3.8,
-        escalationLevel: 'Cấp 1 · Cảnh báo'
-      }
-    ]);
+    // Queries overdue tasks from the live backend
+    this.http
+      .get<{
+        items: Array<{
+          taskId: string;
+          title: string;
+          status: string;
+          deadline: string;
+          assignedUserName?: string;
+        }>;
+      }>('/api/v1/tasks?status=OVERDUE&pageSize=10')
+      .subscribe({
+        next: (res) => {
+          const liveItems: SlaBreachItem[] = (res.items || []).map((t) => ({
+            id: t.taskId,
+            type: 'TASK',
+            title: t.title,
+            assignee: t.assignedUserName || 'Chuyên viên xử lý',
+            department: 'Phòng ban thực hiện',
+            deadline: t.deadline || new Date().toISOString(),
+            slaProfileName: 'Cam kết SLA Nội bộ',
+            state: 'OVERDUE',
+            hoursRemaining: -1,
+            escalationLevel: 'Cấp 2 · Báo cáo Trưởng bộ phận',
+          }));
+
+          this.monitoredItems.set(liveItems);
+          this.overdueCount.set(liveItems.length);
+        },
+        error: () => {
+          this.monitoredItems.set([]);
+          this.overdueCount.set(0);
+        },
+      });
   }
 }

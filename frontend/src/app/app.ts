@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { SessionService } from './core/auth/session';
@@ -7,6 +7,7 @@ import { TranslatePipe } from './core/i18n/translate.pipe';
 import { RobotWidgetComponent } from './shared/ai/robot-widget';
 import { ToastContainerComponent } from './core/toast/toast-container.component';
 import { AiAgentService } from './core/ai/ai-agent.service';
+import { NotificationCountService } from './core/notifications/notification-count.service';
 
 @Component({
   selector: 'app-root',
@@ -27,11 +28,23 @@ export class App {
   readonly session = inject(SessionService, { optional: true });
   readonly i18n = inject(I18nService);
   readonly aiAgent = inject(AiAgentService);
+  readonly notifCount = inject(NotificationCountService);
+  readonly unreadNotifications = computed(() => this.notifCount.unreadCount());
   private readonly router = inject(Router);
 
   readonly avatarFailed = signal(false);
   readonly sidebarWidth = signal<number>(this.getInitialSidebarWidth());
   private isResizing = false;
+
+  constructor() {
+    try {
+      effect(() => {
+        if (this.signedIn()) {
+          this.notifCount.refresh();
+        }
+      });
+    } catch {}
+  }
 
   private getInitialSidebarWidth(): number {
     if (typeof window !== 'undefined' && window.localStorage) {

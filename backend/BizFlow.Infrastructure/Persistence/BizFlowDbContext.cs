@@ -43,6 +43,7 @@ public sealed class BizFlowDbContext(DbContextOptions<BizFlowDbContext> options,
     public DbSet<AIInteraction> AIInteractions => Set<AIInteraction>();
     public DbSet<AIRecommendation> AIRecommendations => Set<AIRecommendation>();
     public DbSet<AIAgentAction> AIAgentActions => Set<AIAgentAction>();
+    public DbSet<AiLearnedChoice> AiLearnedChoices => Set<AiLearnedChoice>();
     public DbSet<UserAccount> Users => Set<UserAccount>();
     public DbSet<Department> Departments => Set<Department>();
     public DbSet<ManagementScope> ManagementScopes => Set<ManagementScope>();
@@ -88,6 +89,7 @@ public sealed class BizFlowDbContext(DbContextOptions<BizFlowDbContext> options,
         model.Entity<AIRecommendation>().HasQueryFilter(x => CurrentUserId != null && CurrentTenantId != null && x.TenantId == CurrentTenantId);
         model.Entity<AIAgentAction>().HasQueryFilter(x => CurrentUserId != null && CurrentTenantId != null && x.TenantId == CurrentTenantId);
         model.Entity<AiVectorMemory>().HasQueryFilter(x => CurrentUserId != null && CurrentTenantId != null && x.TenantId == CurrentTenantId);
+        model.Entity<AiLearnedChoice>().HasQueryFilter(x => CurrentUserId != null && CurrentTenantId != null && x.TenantId == CurrentTenantId && (x.UserId == null || x.UserId == CurrentUserId));
         model.Entity<Company>().HasQueryFilter(x => Tenants.Any(t => t.CompanyId == x.Id));
         model.Entity<UserAccount>().HasQueryFilter(x => CurrentUserId != null && CurrentTenantId != null && x.TenantId == CurrentTenantId && x.DeletedAt == null);
         model.Entity<Department>().HasQueryFilter(x => CurrentUserId != null && CurrentTenantId != null && x.TenantId == CurrentTenantId);
@@ -218,8 +220,7 @@ public sealed class BizFlowDbContext(DbContextOptions<BizFlowDbContext> options,
                 case TaskAssignment assignment:
                     // Initial records only until the authorized assignment/receipt/end use cases exist.
                     // Persisted ownership and active targets cannot be replaced by tracked forgeries.
-                    var isTaskActive = WorkTasks.Local.Any(t => t.Id == assignment.TaskId && t.Status != TaskState.Completed && t.Status != TaskState.Cancelled) ||
-                        await WorkTasks.AnyAsync(t => t.Id == assignment.TaskId && t.Status != TaskState.Completed && t.Status != TaskState.Cancelled, cancellationToken);
+                    var isTaskActive = await WorkTasks.AnyAsync(t => t.Id == assignment.TaskId && t.Status != TaskState.Completed && t.Status != TaskState.Cancelled, cancellationToken);
                     if (entry.State != EntityState.Added || assignment.AcceptedAt is not null || assignment.RejectedAt is not null ||
                         assignment.RejectionReason is not null || assignment.EndedAt is not null ||
                         !isTaskActive ||
@@ -418,7 +419,8 @@ public sealed class BizFlowDbContext(DbContextOptions<BizFlowDbContext> options,
                     else if (entry.State != EntityState.Modified ||
                         entry.Properties.Any(p => p.IsModified && p.Metadata.Name is not (nameof(InternalService.Code) or nameof(InternalService.Name) or
                             nameof(InternalService.Description) or nameof(InternalService.Status) or nameof(InternalService.UpdatedAt) or nameof(InternalService.ActiveWorkflowVersionId))) ||
-                        !await Services.AsNoTracking().AnyAsync(s => s.Id == service.Id && s.TenantId == service.TenantId, cancellationToken)) throw Denied();
+                        !await Services.AsNoTracking().AnyAsync(s => s.Id == service.Id && s.TenantId == service.TenantId, cancellationToken) ||
+                        (service.ActiveWorkflowVersionId is { } wfVerId && !await WorkflowVersions.AsNoTracking().AnyAsync(v => v.Id == wfVerId && v.Status == WorkflowVersionStatus.Published && Workflows.Any(w => w.Id == v.WorkflowId && w.TenantId == service.TenantId && w.BusinessType == WorkflowBusinessType.Request), cancellationToken))) throw Denied();
                     break;
                 case ServiceCategory category:
                     if (entry.State != EntityState.Added) throw Denied();

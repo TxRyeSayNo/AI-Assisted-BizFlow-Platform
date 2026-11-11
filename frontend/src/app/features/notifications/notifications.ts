@@ -8,6 +8,7 @@ import { RouterLink } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { SessionService } from '../../core/auth/session';
 import { InboxUpdates } from '../../core/notifications/inbox-updates';
+import { NotificationCountService } from '../../core/notifications/notification-count.service';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
 
 export interface NotificationRow {
@@ -41,6 +42,7 @@ export class Notifications {
   private request?: Subscription;
   readonly session = inject(SessionService);
   readonly updates = inject(InboxUpdates);
+  private readonly notifCount = inject(NotificationCountService, { optional: true });
   private refreshTimer?: ReturnType<typeof setTimeout>;
   readonly result = signal<NotificationPage | null>(null);
   readonly unreadOnly = signal(false);
@@ -94,6 +96,10 @@ export class Notifications {
             return;
           }
           this.result.set(data);
+          if (this.notifCount && typeof data?.unreadCount === 'number') {
+            this.notifCount.unreadCount.set(data.unreadCount);
+            this.notifCount.totalCount.set(data.total);
+          }
           this.busy.set(false);
         },
         error: (failure: HttpErrorResponse) => {

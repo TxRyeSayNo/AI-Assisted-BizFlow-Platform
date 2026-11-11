@@ -16,256 +16,295 @@
 
   <!-- FLOATING TOAST POP-UP -->
   @if (toastMessage()) {
-    <div class="wf-toast-popup" [class.success]="toastType() === 'success'" [class.error]="toastType() === 'error'">
-      <div class="toast-indicator"></div>
-      <div class="toast-body">
-        <span class="toast-icon">{{ toastType() === 'success' ? '✓' : toastType() === 'error' ? '⛔' : 'ℹ️' }}</span>
-        <span class="toast-text">{{ toastMessage() }}</span>
-      </div>
+  <div class="wf-toast-popup" [class.success]="toastType() === 'success'" [class.error]="toastType() === 'error'">
+    <div class="toast-indicator"></div>
+    <div class="toast-body">
+      <span class="toast-icon">{{ toastType() === 'success' ? '✓' : toastType() === 'error' ? '⛔' : 'ℹ️' }}</span>
+      <span class="toast-text">{{ toastMessage() }}</span>
     </div>
+  </div>
   }
 
   <!-- TOP HEADER ROW -->
   @if (version(); as data) {
-    <div class="wf-version-header">
-      <div class="header-left">
-        <div class="title-row">
-          @if (data.status === 'DRAFT') {
-            <div class="title-edit-container">
-              <input
-                type="text"
-                class="title-inline-input"
-                [ngModel]="workflowNameEdit()"
-                (ngModelChange)="workflowNameEdit.set($event)"
-                (blur)="saveWorkflowName()"
-                (keydown.enter)="saveWorkflowName()"
-                maxlength="200"
-                placeholder="Nhập tên quy trình…"
-                title="Bấm để chỉnh sửa tên quy trình bản thảo"
-              />
-              <span class="edit-badge-chip">✏️ Nhấp để sửa tên</span>
-            </div>
-          } @else {
-            <h1>{{ data.name }}</h1>
-          }
-          <span class="badge-type {{ data.businessType | lowercase }}">
-            {{ data.businessType === 'REQUEST' ? 'Quy trình Yêu cầu' : 'Quy trình Nhiệm vụ' }}
-          </span>
-          <span class="badge-status {{ data.status | lowercase }}">
-            {{ data.status === 'DRAFT' ? 'Bản nháp' : 'Đã xuất bản' }} v{{ data.versionNo }}
-          </span>
+  <div class="wf-version-header">
+    <div class="header-left">
+      <div class="title-row">
+        @if (data.status === 'DRAFT') {
+        <div class="title-edit-container">
+          <input type="text" class="title-inline-input" [ngModel]="workflowNameEdit()"
+            (ngModelChange)="workflowNameEdit.set($event)" (blur)="saveWorkflowName()"
+            (keydown.enter)="saveWorkflowName()" maxlength="200" placeholder="Nhập tên quy trình…"
+            title="Bấm để chỉnh sửa tên quy trình bản thảo" />
+          <span class="edit-badge-chip">✏️ Nhấp để sửa tên</span>
         </div>
-        <p class="subtitle">
-          @if (data.status === 'DRAFT') {
-            Bản nháp đang được thiết kế. Sau khi hoàn tất và kiểm tra hợp lệ, bạn có thể xuất bản để áp dụng chính thức vào hệ thống.
-          } @else {
-            Phiên bản chính thức đã ban hành vào {{ data.publishedAt | date: 'dd/MM/yyyy HH:mm' }}. Cấu hình bất biến để đảm bảo tính toàn vẹn nghiệp vụ.
-          }
-        </p>
+        } @else {
+        <h1>{{ data.name }}</h1>
+        }
+        <span class="badge-type {{ data.businessType | lowercase }}">
+          {{ data.businessType === 'REQUEST' ? 'Quy trình Yêu cầu' : 'Quy trình Nhiệm vụ' }}
+        </span>
+        <span class="badge-status {{ data.status | lowercase }}">
+          {{ data.status === 'DRAFT' ? 'Bản nháp' : 'Đã xuất bản' }} v{{ data.versionNo }}
+        </span>
+      </div>
+      <p class="subtitle">
+        @if (data.status === 'DRAFT') {
+        Bản nháp đang được thiết kế. Sau khi hoàn tất và kiểm tra hợp lệ, bạn có thể xuất bản để áp dụng chính thức vào
+        hệ thống.
+        } @else {
+        Phiên bản chính thức đã ban hành vào {{ data.publishedAt | date: 'dd/MM/yyyy HH:mm' }}. Cấu hình bất biến để đảm
+        bảo tính toàn vẹn nghiệp vụ.
+        }
+      </p>
+    </div>
+
+    <div class="header-actions">
+      <button type="button" class="btn-outline" (click)="showHistoryModal.set(true)"
+        title="Xem danh sách các phiên bản đã lưu của quy trình này">
+        🕒 Lịch sử phiên bản ({{ versionHistory().length }})
+      </button>
+
+      @if (data.status === 'DRAFT') {
+      <button type="button" class="btn-outline ai-btn" (click)="openAiModal()"
+        title="Sử dụng AI phân tích tài liệu để thiết kế tự động sơ đồ quy trình"
+        style="color: #6366f1; border-color: #c7d2fe; font-weight: 600;">
+        🤖 AI Tạo từ tài liệu
+      </button>
+
+      <button type="button" class="btn-primary" (click)="onSaveDraft()" [disabled]="savingDraft()">
+        {{ savingDraft() ? 'Đang lưu…' : '💾 Lưu bản nháp' }}
+      </button>
+
+      <button type="button" class="btn-success" (click)="openPublishModal()" [disabled]="publishing()">
+        🚀 Xuất bản quy trình
+      </button>
+      } @else {
+      @if (session.hasPermission('workflows.configure')) {
+      <button type="button" class="btn-primary" (click)="createNextVersion()" [disabled]="creating()">
+        {{ creating() ? 'Đang tạo…' : '+ Tạo bản nháp mới (v' + (data.versionNo + 1) + ')' }}
+      </button>
+      }
+      }
+    </div>
+  </div>
+
+  @if (created(); as nextRow) {
+  <div class="version-banner success"
+    style="margin-bottom: 12px; padding: 10px 16px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; font-size: 13px; color: #166534; display: flex; align-items: center; justify-content: space-between;">
+    <span>Đã khởi tạo bản nháp phiên bản {{ nextRow.latestVersionNo }} thành công.</span>
+    <a [routerLink]="['/settings/workflows', nextRow.workflowId, 'versions', nextRow.latestVersionId]"
+      class="tbl-btn primary" style="text-decoration: none; font-weight: 600;">
+      Mở bản nháp v{{ nextRow.latestVersionNo }} →
+    </a>
+  </div>
+  }
+
+  @if (createFailure()) {
+  <div role="alert"
+    style="margin-bottom: 12px; padding: 10px 16px; background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; font-size: 13px; color: #dc2626;">
+    {{ createFailure() }}
+  </div>
+  }
+
+  <!-- MAIN VISUAL DESIGNER COMPONENT -->
+  <div class="designer-host-area">
+    <bf-workflow-designer [workflowId]="data.workflowId" [workflowName]="data.name" [businessType]="data.businessType"
+      [versionNo]="data.versionNo" [versionStatus]="data.status" [readonly]="data.status !== 'DRAFT'"
+      [initialDefinition]="data.definition" [departments]="departments()" [roles]="roles()" [users]="users()" (saveDraft)="onSaveDraft()"
+      (validateWorkflow)="onValidate()" (publishWorkflow)="openPublishModal()"></bf-workflow-designer>
+  </div>
+
+  <!-- PUBLISH CONFIRMATION MODAL -->
+  @if (showPublishModal()) {
+  <div class="modal-backdrop" (click)="showPublishModal.set(false)">
+    <div class="modal-card" (click)="$event.stopPropagation()">
+      <div class="modal-head">
+        <h3>🚀 Xác nhận xuất bản quy trình v{{ data.versionNo }}</h3>
+        <button type="button" class="btn-close" (click)="showPublishModal.set(false)">✕</button>
       </div>
 
-      <div class="header-actions">
-        <button
-          type="button"
-          class="btn-outline"
-          (click)="showHistoryModal.set(true)"
-          title="Xem danh sách các phiên bản đã lưu của quy trình này"
-        >
-          🕒 Lịch sử phiên bản ({{ versionHistory().length }})
+      <div class="modal-body">
+        <p class="modal-alert-info">
+          ⚠️ <strong>Lưu ý quan trọng:</strong> Khi đã xuất bản, phiên bản này sẽ trở thành phiên bản chính thức
+          áp dụng cho toàn bộ các giao dịch mới. Cấu hình sẽ được khóa (bất biến) để đảm bảo an toàn vận hành.
+        </p>
+
+        @if (data.businessType === 'REQUEST') {
+        <div class="form-group" style="margin-top: 16px;">
+          <label for="associate-service-select"><strong>Gắn quy trình với Dịch vụ nội bộ (tùy chọn):</strong></label>
+          <select id="associate-service-select" class="form-select" [ngModel]="selectedAssociateServiceId()"
+            (ngModelChange)="selectedAssociateServiceId.set($event)">
+            <option value="">-- Chưa gắn dịch vụ cụ thể --</option>
+            @for (s of services(); track s.id) {
+            <option [value]="s.id">{{ s.name }} (Mã: {{ s.code }})</option>
+            }
+          </select>
+          <p class="hint-text" style="font-size: 11.5px; color: #64748b; margin-top: 4px;">
+            Nếu chọn, các yêu cầu mới thuộc dịch vụ này sẽ tự động tuân theo quy trình vừa xuất bản.
+          </p>
+        </div>
+        }
+      </div>
+
+      <div class="modal-foot">
+        <button type="button" class="btn-cancel" (click)="showPublishModal.set(false)">Hủy bỏ</button>
+        <button type="button" class="btn-confirm-publish" (click)="confirmPublish()" [disabled]="publishing()">
+          {{ publishing() ? 'Đang xuất bản…' : 'Xác nhận xuất bản' }}
         </button>
+      </div>
+    </div>
+  </div>
+  }
 
-        @if (data.status === 'DRAFT') {
-          <button
-            type="button"
-            class="btn-primary"
-            (click)="onSaveDraft()"
-            [disabled]="savingDraft()"
-          >
-            {{ savingDraft() ? 'Đang lưu…' : '💾 Lưu bản nháp' }}
-          </button>
+  <!-- VERSION HISTORY MODAL -->
+  @if (showHistoryModal()) {
+  <div class="modal-backdrop" (click)="showHistoryModal.set(false)">
+    <div class="modal-card modal-lg" (click)="$event.stopPropagation()">
+      <div class="modal-head">
+        <h3>🕒 Lịch sử phiên bản: {{ data.name }}</h3>
+        <button type="button" class="btn-close" (click)="showHistoryModal.set(false)">✕</button>
+      </div>
 
-          <button
-            type="button"
-            class="btn-success"
-            (click)="openPublishModal()"
-            [disabled]="publishing()"
-          >
-            🚀 Xuất bản quy trình
-          </button>
+      <div class="modal-body">
+        @if (versionHistory().length === 0) {
+        <p>Chưa có thông tin phiên bản nào khác.</p>
         } @else {
-          @if (session.hasPermission('workflows.configure')) {
-            <button
-              type="button"
-              class="btn-primary"
-              (click)="createNextVersion()"
-              [disabled]="creating()"
-            >
-              {{ creating() ? 'Đang tạo…' : '+ Tạo bản nháp mới (v' + (data.versionNo + 1) + ')' }}
-            </button>
+        <table class="history-table">
+          <thead>
+            <tr>
+              <th>Phiên bản</th>
+              <th>Trạng thái</th>
+              <th>Ngày xuất bản</th>
+              <th>Thao tác</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (v of versionHistory(); track v.versionId) {
+            <tr [class.current]="v.versionId === data.versionId">
+              <td>
+                <strong>v{{ v.versionNo }}</strong>
+                @if (v.versionId === data.versionId) {
+                <span class="current-badge">Đang xem</span>
+                }
+              </td>
+              <td>
+                <span class="badge-status {{ v.status | lowercase }}">
+                  {{ v.status === 'DRAFT' ? 'Bản nháp' : 'Đã xuất bản' }}
+                </span>
+              </td>
+              <td>{{ v.publishedAt ? (v.publishedAt | date: 'dd/MM/yyyy HH:mm') : '—' }}</td>
+              <td>
+                @if (v.versionId !== data.versionId) {
+                <a class="action-link" [routerLink]="['/settings/workflows', data.workflowId, 'versions', v.versionId]"
+                  (click)="showHistoryModal.set(false)">
+                  Mở phiên bản này →
+                </a>
+                } @else {
+                <span style="color: #94a3b8;">Phiên bản hiện tại</span>
+                }
+              </td>
+            </tr>
+            }
+          </tbody>
+        </table>
+        }
+      </div>
+
+      <div class="modal-foot">
+        <button type="button" class="btn-cancel" (click)="showHistoryModal.set(false)">Đóng</button>
+      </div>
+    </div>
+  </div>
+  }
+
+  <!-- MODAL: AI TẠO WORKFLOW TỪ TÀI LIỆU -->
+  @if (showAiModal()) {
+  <div class="modal-backdrop" (click)="closeAiModal()">
+    <div class="modal-card ai-workflow-modal" (click)="$event.stopPropagation()" style="max-width: 680px; width: 90%;">
+      <div class="modal-head">
+        <h3>🤖 AI Phân tích Tài liệu & Thiết kế Sơ đồ Quy trình</h3>
+        <button type="button" class="btn-close" (click)="closeAiModal()">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <p style="font-size: 13px; color: #475569; margin-bottom: 12px;">
+          Tải lên tài liệu mô tả quy trình (Word <code>.docx</code>, Text <code>.txt</code>) hoặc dán trực tiếp nội dung
+          quy trình.
+          AI sẽ tự động bóc tách các bước, vai trò thực thi, điểm phê duyệt và thời hạn SLA để nạp vào Canvas.
+        </p>
+
+        <textarea class="custom-textarea" rows="6" [ngModel]="aiDocText()" (ngModelChange)="aiDocText.set($event)"
+          placeholder="Dán nội dung quy trình tại đây (ví dụ: Quy trình thanh toán chi phí, Quy trình tiếp nhận nhân sự mới)..."
+          [disabled]="aiAnalyzing()"
+          style="width: 100%; border: 1px solid #cbd5e1; border-radius: 6px; padding: 10px; font-family: inherit; font-size: 13px;"></textarea>
+
+        <div style="margin-top: 12px; display: flex; flex-wrap: wrap; gap: 8px; justify-content: space-between; align-items: center;">
+          <div>
+            <span style="font-size: 13px; font-weight: 500;">Chọn tệp tin từ máy tính: </span>
+            <input type="file" accept=".docx, .txt, .md, .pdf" (change)="onAiFileSelected($event)"
+              [disabled]="aiAnalyzing()" />
+          </div>
+          @if (aiDocFile(); as f) {
+          <span style="font-size: 12px; color: #6366f1; font-weight: 600;">📎 {{ f.name }}</span>
           }
+        </div>
+
+        @if (aiAnalysisResult(); as result) {
+        <div class="ai-preview-card"
+          style="margin-top: 16px; padding: 14px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <strong style="color: #0f172a; font-size: 14px;">{{ result.workflowName }}</strong>
+            <span class="badge-type {{ result.businessType | lowercase }}">{{ result.businessType }}</span>
+          </div>
+          <p style="font-size: 12px; color: #64748b; margin-bottom: 10px;">{{ result.summaryExplanation }}</p>
+
+          <div style="font-size: 12px; font-weight: 600; color: #334155; margin-bottom: 6px;">
+            Các bước được AI đề xuất ({{ result.nodes.length }} bước):
+          </div>
+          <ul style="margin: 0; padding-left: 20px; font-size: 12px; color: #475569;">
+            @for (node of result.nodes; track node.id) {
+            <li style="margin-bottom: 4px;">
+              <strong>[{{ node.type }}]</strong> {{ node.name }}
+              @if (node.departmentName) { · <em>Phòng: {{ node.departmentName }}</em> }
+              @if (node.slaHours) { · <span>SLA: {{ node.slaHours }}h</span> }
+            </li>
+            }
+          </ul>
+        </div>
+        }
+      </div>
+
+      <div class="modal-foot">
+        <button type="button" class="btn-cancel" (click)="closeAiModal()" [disabled]="aiAnalyzing()">
+          Hủy bỏ
+        </button>
+        <button type="button" class="btn-primary" (click)="runAiDocumentAnalysis()"
+          [disabled]="aiAnalyzing() || (!aiDocText().trim() && !aiDocFile())"
+          style="background: #6366f1; border-color: #4f46e5;">
+          🔍 {{ aiAnalyzing() ? 'Đang phân tích...' : 'Phân tích tài liệu' }}
+        </button>
+        @if (aiAnalysisResult()) {
+        <button type="button" class="btn-success" (click)="applyAiWorkflowToCanvas()" [disabled]="aiAnalyzing()">
+          🎨 Nạp sơ đồ vào Canvas
+        </button>
         }
       </div>
     </div>
-
-    @if (created(); as nextRow) {
-      <div class="version-banner success" style="margin-bottom: 12px; padding: 10px 16px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; font-size: 13px; color: #166534; display: flex; align-items: center; justify-content: space-between;">
-        <span>Đã khởi tạo bản nháp phiên bản {{ nextRow.latestVersionNo }} thành công.</span>
-        <a [routerLink]="['/settings/workflows', nextRow.workflowId, 'versions', nextRow.latestVersionId]" class="tbl-btn primary" style="text-decoration: none; font-weight: 600;">
-          Mở bản nháp v{{ nextRow.latestVersionNo }} →
-        </a>
-      </div>
-    }
-
-    @if (createFailure()) {
-      <div role="alert" style="margin-bottom: 12px; padding: 10px 16px; background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; font-size: 13px; color: #dc2626;">
-        {{ createFailure() }}
-      </div>
-    }
-
-    <!-- MAIN VISUAL DESIGNER COMPONENT -->
-    <div class="designer-host-area">
-      <bf-workflow-designer
-        [workflowId]="data.workflowId"
-        [workflowName]="data.name"
-        [businessType]="data.businessType"
-        [versionNo]="data.versionNo"
-        [versionStatus]="data.status"
-        [readonly]="data.status !== 'DRAFT'"
-        [initialDefinition]="data.definition"
-        [departments]="departments()"
-        [roles]="roles()"
-        (saveDraft)="onSaveDraft()"
-        (validateWorkflow)="onValidate()"
-        (publishWorkflow)="openPublishModal()"
-      ></bf-workflow-designer>
-    </div>
-
-    <!-- PUBLISH CONFIRMATION MODAL -->
-    @if (showPublishModal()) {
-      <div class="modal-backdrop" (click)="showPublishModal.set(false)">
-        <div class="modal-card" (click)="$event.stopPropagation()">
-          <div class="modal-head">
-            <h3>🚀 Xác nhận xuất bản quy trình v{{ data.versionNo }}</h3>
-            <button type="button" class="btn-close" (click)="showPublishModal.set(false)">✕</button>
-          </div>
-
-          <div class="modal-body">
-            <p class="modal-alert-info">
-              ⚠️ <strong>Lưu ý quan trọng:</strong> Khi đã xuất bản, phiên bản này sẽ trở thành phiên bản chính thức
-              áp dụng cho toàn bộ các giao dịch mới. Cấu hình sẽ được khóa (bất biến) để đảm bảo an toàn vận hành.
-            </p>
-
-            @if (data.businessType === 'REQUEST') {
-              <div class="form-group" style="margin-top: 16px;">
-                <label for="associate-service-select"><strong>Gắn quy trình với Dịch vụ nội bộ (tùy chọn):</strong></label>
-                <select
-                  id="associate-service-select"
-                  class="form-select"
-                  [ngModel]="selectedAssociateServiceId()"
-                  (ngModelChange)="selectedAssociateServiceId.set($event)"
-                >
-                  <option value="">-- Chưa gắn dịch vụ cụ thể --</option>
-                  @for (s of services(); track s.id) {
-                    <option [value]="s.id">{{ s.name }} (Mã: {{ s.code }})</option>
-                  }
-                </select>
-                <p class="hint-text" style="font-size: 11.5px; color: #64748b; margin-top: 4px;">
-                  Nếu chọn, các yêu cầu mới thuộc dịch vụ này sẽ tự động tuân theo quy trình vừa xuất bản.
-                </p>
-              </div>
-            }
-          </div>
-
-          <div class="modal-foot">
-            <button type="button" class="btn-cancel" (click)="showPublishModal.set(false)">Hủy bỏ</button>
-            <button
-              type="button"
-              class="btn-confirm-publish"
-              (click)="confirmPublish()"
-              [disabled]="publishing()"
-            >
-              {{ publishing() ? 'Đang xuất bản…' : 'Xác nhận xuất bản' }}
-            </button>
-          </div>
-        </div>
-      </div>
-    }
-
-    <!-- VERSION HISTORY MODAL -->
-    @if (showHistoryModal()) {
-      <div class="modal-backdrop" (click)="showHistoryModal.set(false)">
-        <div class="modal-card modal-lg" (click)="$event.stopPropagation()">
-          <div class="modal-head">
-            <h3>🕒 Lịch sử phiên bản: {{ data.name }}</h3>
-            <button type="button" class="btn-close" (click)="showHistoryModal.set(false)">✕</button>
-          </div>
-
-          <div class="modal-body">
-            @if (versionHistory().length === 0) {
-              <p>Chưa có thông tin phiên bản nào khác.</p>
-            } @else {
-              <table class="history-table">
-                <thead>
-                  <tr>
-                    <th>Phiên bản</th>
-                    <th>Trạng thái</th>
-                    <th>Ngày xuất bản</th>
-                    <th>Thao tác</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  @for (v of versionHistory(); track v.versionId) {
-                    <tr [class.current]="v.versionId === data.versionId">
-                      <td>
-                        <strong>v{{ v.versionNo }}</strong>
-                        @if (v.versionId === data.versionId) {
-                          <span class="current-badge">Đang xem</span>
-                        }
-                      </td>
-                      <td>
-                        <span class="badge-status {{ v.status | lowercase }}">
-                          {{ v.status === 'DRAFT' ? 'Bản nháp' : 'Đã xuất bản' }}
-                        </span>
-                      </td>
-                      <td>{{ v.publishedAt ? (v.publishedAt | date: 'dd/MM/yyyy HH:mm') : '—' }}</td>
-                      <td>
-                        @if (v.versionId !== data.versionId) {
-                          <a
-                            class="action-link"
-                            [routerLink]="['/settings/workflows', data.workflowId, 'versions', v.versionId]"
-                            (click)="showHistoryModal.set(false)"
-                          >
-                            Mở phiên bản này →
-                          </a>
-                        } @else {
-                          <span style="color: #94a3b8;">Phiên bản hiện tại</span>
-                        }
-                      </td>
-                    </tr>
-                  }
-                </tbody>
-              </table>
-            }
-          </div>
-
-          <div class="modal-foot">
-            <button type="button" class="btn-cancel" (click)="showHistoryModal.set(false)">Đóng</button>
-          </div>
-        </div>
-      </div>
-    }
+  </div>
+  }
   } @else if (busy()) {
-    <div class="loading-state">
-      <div class="spinner"></div>
-      <p>Đang tải cấu hình quy trình…</p>
-    </div>
+  <div class="loading-state">
+    <div class="spinner"></div>
+    <p>Đang tải cấu hình quy trình…</p>
+  </div>
   } @else if (failure()) {
-    <div class="error-card">
-      <p class="error-msg">⛔ {{ failure() }}</p>
-      @if (retryable()) {
-        <button mat-stroked-button type="button" (click)="load()">Thử lại</button>
-      }
-      <a routerLink="/settings/workflows" class="back-link">← Quay về danh sách quy trình</a>
-    </div>
+  <div class="error-card">
+    <p class="error-msg">⛔ {{ failure() }}</p>
+    @if (retryable()) {
+    <button mat-stroked-button type="button" (click)="load()">Thử lại</button>
+    }
+    <a routerLink="/settings/workflows" class="back-link">← Quay về danh sách quy trình</a>
+  </div>
   }
 </main>

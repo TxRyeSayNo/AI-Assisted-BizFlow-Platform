@@ -15,6 +15,24 @@ import { FormsModule } from '@angular/forms';
 
 export type NodeType = 'START' | 'DEPARTMENT' | 'APPROVAL' | 'DECISION' | 'CONFIRMATION' | 'END';
 
+export interface DesignerCondition {
+  id: string;
+  field: string;
+  operator: 'EQ' | 'NEQ' | 'GT' | 'GTE' | 'LT' | 'LTE' | 'IN' | 'IS_EMPTY' | 'IS_NOT_EMPTY';
+  value: string;
+  label?: string;
+  targetNodeId: string;
+  isDefault?: boolean;
+}
+
+export interface UserLookupItem {
+  id: string;
+  fullName: string;
+  employeeCode: string;
+  email: string;
+  departmentId?: string | null;
+}
+
 export interface DesignerNode {
   id: string;
   type: NodeType;
@@ -25,20 +43,21 @@ export interface DesignerNode {
   departmentName?: string;
   roleId?: string;
   roleName?: string;
+  assignmentMethod?: 'DEPARTMENT_QUEUE' | 'BUSINESS_ROLE' | 'DEPARTMENT_MANAGER' | 'DIRECT_MANAGER' | 'SPECIFIC_USER' | 'REQUESTER';
+  specificUserId?: string;
+  specificUserName?: string;
   description?: string;
   slaHours?: number;
   approverType?: 'ROLE' | 'DEPARTMENT_LEAD' | 'SPECIFIC_USER';
+  approvalCountPolicy?: 'SINGLE' | 'ALL' | 'ANY';
+  rejectionReasonRequired?: boolean;
+  requireNotes?: boolean;
+  requireAttachment?: boolean;
+  requireDeliverable?: boolean;
   milestone?: 'RECEIVE' | 'RESULT' | 'RESOLUTION';
-  trigger?: string;
-  completionState?: string;
-  conditions?: {
-    id: string;
-    field: string;
-    operator: string;
-    value: string;
-    label: string;
-    targetNodeId: string;
-  }[];
+  trigger?: 'MANUAL' | 'REQUEST_CREATED' | 'TASK_CREATED' | string;
+  completionState?: 'COMPLETED' | 'REJECTED' | 'CANCELLED' | 'FAILED' | string;
+  conditions?: DesignerCondition[];
 }
 
 export interface DesignerEdge {
@@ -46,6 +65,10 @@ export interface DesignerEdge {
   source: string;
   target: string;
   label?: string;
+  outcomeCode?: string;
+  conditionId?: string;
+  isDefault?: boolean;
+  priorityOrder?: number;
   guard?: Record<string, unknown>;
 }
 
@@ -88,6 +111,7 @@ export class WorkflowDesigner implements OnInit {
   @Input() readonly = false;
   @Input() departments: LookupItem[] = [];
   @Input() roles: LookupItem[] = [];
+  @Input() users: UserLookupItem[] = [];
 
   @Input() set initialDefinition(def: Record<string, unknown> | null) {
     if (def && typeof def === 'object') {
@@ -144,7 +168,7 @@ export class WorkflowDesigner implements OnInit {
       name: this.businessType === 'REQUEST' ? 'Nộp yêu cầu' : 'Tạo nhiệm vụ',
       x: 80,
       y: 180,
-      trigger: this.businessType === 'REQUEST' ? 'REQUEST_SUBMITTED' : 'TASK_CREATED',
+      trigger: this.businessType === 'REQUEST' ? 'REQUEST_CREATED' : 'TASK_CREATED',
     };
 
     const initialDeptNode: DesignerNode = {
@@ -155,6 +179,7 @@ export class WorkflowDesigner implements OnInit {
       y: 160,
       departmentId: this.departments[0]?.id || '',
       departmentName: this.departments[0]?.name || 'Phòng ban chuyên trách',
+      assignmentMethod: 'DEPARTMENT_QUEUE',
       slaHours: 24,
       description: 'Tiếp nhận hồ sơ và kiểm tra thông tin ban đầu',
     };
@@ -292,21 +317,27 @@ export class WorkflowDesigner implements OnInit {
       y: posY,
     };
 
-    if (type === 'DEPARTMENT') {
-      newNode.departmentId = this.departments[0]?.id || '';
-      newNode.departmentName = this.departments[0]?.name || 'Chọn phòng ban';
+    if (type === 'START') {
+      newNode.trigger = this.businessType === 'REQUEST' ? 'REQUEST_CREATED' : 'TASK_CREATED';
+    } else if (type === 'END') {
+      newNode.completionState = 'COMPLETED';
+    } else if (type === 'DEPARTMENT') {
+      newNode.departmentId = '';
+      newNode.departmentName = '';
+      newNode.assignmentMethod = 'DEPARTMENT_QUEUE';
       newNode.slaHours = 24;
     } else if (type === 'APPROVAL') {
-      newNode.approverType = 'ROLE';
-      newNode.roleId = this.roles[0]?.id || '';
-      newNode.roleName = this.roles[0]?.name || 'Người duyệt';
+      newNode.assignmentMethod = 'BUSINESS_ROLE';
+      newNode.roleId = '';
+      newNode.roleName = '';
+      newNode.approvalCountPolicy = 'SINGLE';
+      newNode.rejectionReasonRequired = true;
+      newNode.slaHours = 24;
     } else if (type === 'CONFIRMATION') {
       newNode.milestone = 'RESULT';
+      newNode.assignmentMethod = 'REQUESTER';
     } else if (type === 'DECISION') {
-      newNode.conditions = [
-        { id: 'c1', field: 'priority', operator: '=', value: 'HIGH', label: 'Ưu tiên cao', targetNodeId: '' },
-        { id: 'c2', field: 'default', operator: 'default', value: '', label: 'Mặc định', targetNodeId: '' },
-      ];
+      newNode.conditions = [];
     }
 
     this.nodes.update((list) => [...list, newNode]);
@@ -658,6 +689,71 @@ export class WorkflowDesigner implements OnInit {
       roleId: roleId,
       roleName: found?.name || '',
     });
+  }
+
+  onUserSelect(userId: string) {
+    const node = this.selectedNode();
+    if (!node) return;
+    const found = this.users.find((u) => u.id === userId);
+    this.updateSelectedNodeProps({
+      specificUserId: userId,
+      specificUserName: found ? `${found.fullName} (${found.employeeCode})` : '',
+    });
+  }
+
+  getFilteredUsers(departmentId?: string): UserLookupItem[] {
+    if (!departmentId) return this.users;
+    return this.users.filter((u) => !u.departmentId || u.departmentId === departmentId);
+  }
+
+  getOutgoingNodes(nodeId: string): DesignerNode[] {
+    const outgoingTargets = new Set(this.edges().filter((e) => e.source === nodeId).map((e) => e.target));
+    return this.nodes().filter((n) => outgoingTargets.has(n.id));
+  }
+
+  addCondition(node: DesignerNode) {
+    const conditions = [...(node.conditions || [])];
+    const outgoing = this.getOutgoingNodes(node.id);
+    const newCond: DesignerCondition = {
+      id: `c_${Date.now().toString(36)}`,
+      field: 'amount',
+      operator: 'GT',
+      value: '20000000',
+      label: 'Giá trị > 20 triệu',
+      targetNodeId: outgoing[0]?.id || '',
+      isDefault: false,
+    };
+    conditions.push(newCond);
+    this.updateSelectedNodeProps({ conditions });
+  }
+
+  removeCondition(node: DesignerNode, conditionId: string) {
+    const conditions = (node.conditions || []).filter((c) => c.id !== conditionId);
+    this.updateSelectedNodeProps({ conditions });
+  }
+
+  updateCondition(node: DesignerNode, conditionId: string, patch: Partial<DesignerCondition>) {
+    const conditions = (node.conditions || []).map((c) =>
+      c.id === conditionId ? { ...c, ...patch } : c
+    );
+    this.updateSelectedNodeProps({ conditions });
+  }
+
+  toggleDefaultBranch(node: DesignerNode, conditionId: string) {
+    const conditions = (node.conditions || []).map((c) =>
+      c.id === conditionId ? { ...c, isDefault: !c.isDefault } : { ...c, isDefault: false }
+    );
+    this.updateSelectedNodeProps({ conditions });
+  }
+
+  updateSelectedEdgeProps(partial: Partial<DesignerEdge>) {
+    const current = this.selectedEdge();
+    if (!current) return;
+
+    const updated: DesignerEdge = { ...current, ...partial };
+    this.selectedEdge.set(updated);
+    this.edges.update((list) => list.map((e) => (e.id === updated.id ? updated : e)));
+    this.emitChange();
   }
 
   updateSelectedNodeProps(partial: Partial<DesignerNode>) {

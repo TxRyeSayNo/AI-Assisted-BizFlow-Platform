@@ -97,6 +97,15 @@ public sealed class WorkTask
         };
     }
 
+    public static WorkTask CreateAssigned(Guid tenantId, Guid creatorId, string title, DateTimeOffset now,
+        string? description = null, TaskPriority priority = TaskPriority.Medium,
+        DateTimeOffset? deadline = null, Guid? requestId = null)
+    {
+        var task = CreateDraft(tenantId, creatorId, title, now, description, priority, deadline, requestId);
+        task.Status = TaskState.Assigned;
+        return task;
+    }
+
     public void Archive(DateTimeOffset now)
     {
         if (DeletedAt is not null)
@@ -125,5 +134,19 @@ public sealed class TaskChecklistItem
         if (text.Any(char.IsControl)) throw new ArgumentException("Checklist text must be plain text.", nameof(title));
         if (sortOrder < 1) throw new ArgumentOutOfRangeException(nameof(sortOrder));
         return new() { Id = Guid.CreateVersion7(), TaskId = EntityRules.Id(taskId, nameof(taskId)), Title = text, SortOrder = sortOrder };
+    }
+
+    public void Complete(Guid userId, DateTimeOffset now)
+    {
+        IsCompleted = true;
+        CompletedBy = EntityRules.Id(userId, nameof(userId));
+        CompletedAt = now.ToUniversalTime();
+    }
+
+    public void Uncomplete()
+    {
+        IsCompleted = false;
+        CompletedBy = null;
+        CompletedAt = null;
     }
 }

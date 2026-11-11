@@ -44,7 +44,8 @@ public sealed record RobotChatCommand(
     string? Locale = null,
     IReadOnlyList<RobotChatMessageDto>? History = null,
     string? FormId = null,
-    IReadOnlyList<AgentAnswerDto>? FormAnswers = null);
+    IReadOnlyList<AgentAnswerDto>? FormAnswers = null,
+    string? ConversationId = null);
 
 public sealed record RobotActionCard(
     string ActionType, // "OPEN_DECOMPOSITION" | "OPEN_NOTIFICATIONS" | "VIEW_TASK" | "PREFILL_PROMPT" | "CONFIRM_ACTION" | "VIEW_BRANCHES"

@@ -50,6 +50,7 @@ describe('workflow version view', () => {
     const http = TestBed.inject(HttpTestingController);
     http.match('/api/v1/workflows/lookup/departments').forEach((r) => r.flush([]));
     http.match('/api/v1/workflows/lookup/roles').forEach((r) => r.flush([]));
+    http.match('/api/v1/workflows/lookup/users').forEach((r) => r.flush([]));
     http.match('/api/v1/workflows/lookup/services').forEach((r) => r.flush([]));
     http.match('/api/v1/workflows/workflow/versions').forEach((r) => r.flush([]));
   };
@@ -142,5 +143,54 @@ describe('workflow version view', () => {
     expect(fixture.nativeElement.textContent).toContain('Bạn không có quyền truy cập');
     expect(fixture.nativeElement.textContent).not.toContain('untrusted');
     expect(fixture.nativeElement.textContent).not.toContain('private-details');
+  });
+
+  it('analyzes workflow text description with AI and applies generated graph into designer', () => {
+    canConfigure = true;
+    const fixture = TestBed.createComponent(WorkflowVersion);
+    pending().flush(version);
+    flushLookups();
+    fixture.detectChanges();
+
+    const comp = fixture.componentInstance;
+    comp.openAiModal();
+    expect(comp.showAiModal()).toBe(true);
+
+    comp.aiDocText.set('Bước 1: Tiếp nhận hồ sơ. Bước 2: Trưởng phòng phê duyệt. Bước 3: Hoàn tất.');
+    comp.runAiDocumentAnalysis();
+
+    const http = TestBed.inject(HttpTestingController);
+    const req = http.expectOne('/api/v1/workflows/analyze-text');
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body.businessType).toBe('TASK');
+    expect(req.request.body.textContent).toContain('Bước 1: Tiếp nhận hồ sơ');
+
+    req.flush({
+      workflowName: 'Quy trình tiếp nhận và phê duyệt hồ sơ',
+      businessType: 'TASK',
+      summaryExplanation: 'Sơ đồ gồm 3 bước thực hiện.',
+      nodes: [
+        { id: 'start', type: 'START', name: 'Bắt đầu', x: 80, y: 180 },
+        { id: 'step-1', type: 'DEPARTMENT', name: 'Tiếp nhận hồ sơ', x: 320, y: 180 },
+        { id: 'step-2', type: 'APPROVAL', name: 'Phê duyệt', x: 560, y: 180 },
+        { id: 'end', type: 'END', name: 'Hoàn tất', x: 800, y: 180 },
+      ],
+      edges: [
+        { id: 'e1', source: 'start', target: 'step-1', label: 'Tiếp nhận' },
+        { id: 'e2', source: 'step-1', target: 'step-2', label: 'Trình duyệt' },
+        { id: 'e3', source: 'step-2', target: 'end', label: 'Duyệt thành công' },
+      ],
+    });
+
+    fixture.detectChanges();
+    expect(comp.aiAnalyzing()).toBe(false);
+    expect(comp.aiAnalysisResult()).not.toBeNull();
+    expect(comp.aiAnalysisResult()?.workflowName).toBe('Quy trình tiếp nhận và phê duyệt hồ sơ');
+    expect(comp.aiAnalysisResult()?.nodes.length).toBe(4);
+
+    // Apply into Canvas
+    comp.applyAiWorkflowToCanvas();
+    expect(comp.showAiModal()).toBe(false);
+    expect(comp.toastMessage()).toContain('Đã nạp sơ đồ quy trình AI');
   });
 });

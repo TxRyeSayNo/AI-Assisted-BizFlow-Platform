@@ -9,6 +9,7 @@ using BizFlow.Domain.Organization;
 using BizFlow.IntegrationTests.Authentication;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
 namespace BizFlow.IntegrationTests.Persistence;
@@ -25,7 +26,15 @@ public sealed class AttachmentApiTests(PostgresFixture database)
     public async Task Attachment_upload_session_binary_upload_finalize_download_and_soft_delete_flow()
     {
         var env = await SeedEnvironmentAsync();
-        await using var factory = new AuthenticationFactory(database);
+        var storageOverrides = new Dictionary<string, string?>
+        {
+            ["Storage:Provider"] = "Local",
+            ["Storage:BasePath"] = Path.Combine(Path.GetTempPath(), "bizflow-test-attachments-" + Guid.NewGuid().ToString("N"))
+        };
+        await using var factory = new AuthenticationFactory(database, storageOverrides, configureServices: services =>
+        {
+            services.AddScoped<BizFlow.Application.Collaboration.IObjectStorageProvider, BizFlow.Infrastructure.Collaboration.LocalStorageProvider>();
+        });
         using var requesterClient = factory.CreateClient();
         using var managerClient = factory.CreateClient();
         using var bystanderClient = factory.CreateClient();
@@ -144,7 +153,15 @@ public sealed class AttachmentApiTests(PostgresFixture database)
     public async Task Attachment_validation_and_size_limits()
     {
         var env = await SeedEnvironmentAsync();
-        await using var factory = new AuthenticationFactory(database);
+        var storageOverrides = new Dictionary<string, string?>
+        {
+            ["Storage:Provider"] = "Local",
+            ["Storage:BasePath"] = Path.Combine(Path.GetTempPath(), "bizflow-test-attachments-" + Guid.NewGuid().ToString("N"))
+        };
+        await using var factory = new AuthenticationFactory(database, storageOverrides, configureServices: services =>
+        {
+            services.AddScoped<BizFlow.Application.Collaboration.IObjectStorageProvider, BizFlow.Infrastructure.Collaboration.LocalStorageProvider>();
+        });
         using var requesterClient = factory.CreateClient();
         using var managerClient = factory.CreateClient();
         await LoginAsync(requesterClient, env.Requester);

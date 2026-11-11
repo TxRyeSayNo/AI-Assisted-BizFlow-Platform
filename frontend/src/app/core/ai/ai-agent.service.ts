@@ -183,6 +183,7 @@ export class AiAgentService {
 
   open(tab: 'chat' | 'branches' | 'history' = 'chat', expand?: boolean): void {
     if (tab === 'branches') {
+      this.loadDepartments();
       this.openBranchModal();
     }
     this.isOpen.set(true);
@@ -216,7 +217,6 @@ export class AiAgentService {
   }
 
   openBranchModal(): void {
-    this.loadDepartments();
     if (this.branches().length === 0) {
       this.initDefaultBranches();
     }
@@ -747,7 +747,6 @@ export class AiAgentService {
           this.branches.set(list);
           this.selectedBranch.set(list[bIdx]);
         }
-        this.saveMockTask(branch);
         this.showToast(`✅ Đã tạo nhiệm vụ "${branch.title}" thành công!`, 'success');
         this.addRobotFeedback(
           `✅ Đã tạo thành công nhiệm vụ nhánh: **"${branch.title}"** [${branch.departmentName}] vào hệ thống!`,
@@ -756,30 +755,6 @@ export class AiAgentService {
         this.persistCurrentSession();
       },
       error: (err) => {
-        const isOffline =
-          this.session.accessToken()?.startsWith('dev-') ||
-          err?.status === 401 ||
-          err?.status === 0 ||
-          err?.status === 500;
-
-        if (isOffline) {
-          this.saveMockTask(branch);
-          const list = [...this.branches()];
-          const bIdx = list.findIndex((b) => b.id === branch.id);
-          if (bIdx >= 0) {
-            list[bIdx] = { ...list[bIdx], status: 'created' };
-            this.branches.set(list);
-            this.selectedBranch.set(list[bIdx]);
-          }
-          this.showToast(`✅ Đã tạo nhiệm vụ "${branch.title}" thành công!`, 'success');
-          this.addRobotFeedback(
-            `✅ Đã tạo thành công nhiệm vụ nhánh: **"${branch.title}"** [${branch.departmentName}] vào hệ thống!`,
-            false,
-          );
-          this.persistCurrentSession();
-          return;
-        }
-
         const list = [...this.branches()];
         const bIdx = list.findIndex((b) => b.id === branch.id);
         if (bIdx >= 0) {
@@ -787,7 +762,7 @@ export class AiAgentService {
           this.branches.set(list);
           this.selectedBranch.set(list[bIdx]);
         }
-        const errMsg = err?.error?.message || err?.message || 'Không thể tạo nhiệm vụ. Vui lòng thử lại.';
+        const errMsg = err?.error?.message || err?.message || 'Không thể tạo nhiệm vụ. Vui lòng kiểm tra lại dịch vụ máy chủ.';
         this.showToast(`❌ Lỗi tạo nhiệm vụ: ${errMsg}`, 'error');
       },
     });
@@ -826,7 +801,6 @@ export class AiAgentService {
       next: (resp) => {
         this.busy.set(false);
         const count = resp?.totalCreated ?? pendingBranches.length;
-        pendingBranches.forEach((b) => this.saveMockTask(b));
         const list = this.branches().map((b) => ({
           ...b,
           status: 'created' as const,
@@ -844,36 +818,8 @@ export class AiAgentService {
         this.persistCurrentSession();
       },
       error: (err) => {
-        const isOffline =
-          this.session.accessToken()?.startsWith('dev-') ||
-          err?.status === 401 ||
-          err?.status === 0 ||
-          err?.status === 500;
-
-        if (isOffline) {
-          this.busy.set(false);
-          const count = pendingBranches.length;
-          pendingBranches.forEach((b) => this.saveMockTask(b));
-          const list = this.branches().map((b) => ({
-            ...b,
-            status: 'created' as const,
-          }));
-          this.branches.set(list);
-          if (this.selectedBranch()) {
-            const updatedSelected = list.find((b) => b.id === this.selectedBranch()?.id);
-            this.selectedBranch.set(updatedSelected || null);
-          }
-          this.showToast(`🚀 Đã tạo thành công toàn bộ ${count} nhiệm vụ vào hệ thống!`, 'success');
-          this.addRobotFeedback(
-            `🚀 Đã tạo hàng loạt thành công **${count} nhiệm vụ** phân nhánh vào hệ thống! Bạn có thể kiểm tra danh sách nhiệm vụ trên hệ thống.`,
-            false,
-          );
-          this.persistCurrentSession();
-          return;
-        }
-
         this.busy.set(false);
-        const errMsg = err?.error?.message || err?.message || 'Không thể tạo hàng loạt. Vui lòng thử lại.';
+        const errMsg = err?.error?.message || err?.message || 'Không thể tạo hàng loạt. Vui lòng kiểm tra lại dịch vụ máy chủ.';
         this.showToast(`❌ Lỗi tạo hàng loạt: ${errMsg}`, 'error');
       },
     });
@@ -954,30 +900,5 @@ export class AiAgentService {
           this.showToast(`❌ Lỗi kết nối: ${errMsg}`, 'error');
         },
       });
-  }
-
-  private saveMockTask(item: any): void {
-    if (typeof window === 'undefined') return;
-    const mockId = crypto.randomUUID();
-    const mockTask = {
-      taskId: mockId,
-      title: item.title,
-      description: item.description || '',
-      status: 'ASSIGNED',
-      priority: item.priority || 'MEDIUM',
-      deadline: new Date(Date.now() + (item.suggestedDurationDays || 3) * 86400000).toISOString(),
-      assignedUserId: null,
-      assignedUserName: 'Chưa phân công',
-      assignedDepartmentId: item.departmentId || null,
-      assignedDepartmentName: item.departmentName || 'Phòng Kỹ thuật & CNTT',
-      requestId: null,
-      checklist: item.checklistItems || [],
-      createdAt: new Date().toISOString(),
-    };
-    try {
-      const existing = JSON.parse(sessionStorage.getItem('bizflow_mock_tasks') || '[]');
-      existing.unshift(mockTask);
-      sessionStorage.setItem('bizflow_mock_tasks', JSON.stringify(existing));
-    } catch { }
   }
 }

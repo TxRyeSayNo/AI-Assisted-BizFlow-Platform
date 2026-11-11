@@ -68,7 +68,7 @@ public sealed class TaskDecompositionStore(
                             : RequestPriority.Medium;
 
                         var description = string.IsNullOrWhiteSpace(item.Description) ? item.Title : item.Description;
-                        var request = WorkRequest.CreateDraft(
+                        var request = WorkRequest.CreateSubmitted(
                             tenantId,
                             actorId,
                             service.Id,
@@ -102,15 +102,12 @@ public sealed class TaskDecompositionStore(
                     ? now.AddDays(item.SuggestedDurationDays.Value)
                     : (DateTimeOffset?)null;
 
-                var task = WorkTask.CreateDraft(
-                    tenantId,
-                    actorId,
-                    item.Title,
-                    now,
-                    item.Description,
-                    taskPriority,
-                    deadline,
-                    null);
+                var hasDept = resolvedDeptId.HasValue && await dbContext.Departments
+                    .AnyAsync(d => d.TenantId == tenantId && d.Id == resolvedDeptId.Value && d.Status == RecordStatus.Active, cancellationToken);
+
+                var task = hasDept
+                    ? WorkTask.CreateAssigned(tenantId, actorId, item.Title, now, item.Description, taskPriority, deadline, null)
+                    : WorkTask.CreateDraft(tenantId, actorId, item.Title, now, item.Description, taskPriority, deadline, null);
 
                 dbContext.WorkTasks.Add(task);
 
@@ -128,16 +125,10 @@ public sealed class TaskDecompositionStore(
                 var taskAudit = AuditLog.TaskCreated(task, checklist, now);
                 dbContext.AuditLogs.Add(taskAudit);
 
-                if (resolvedDeptId.HasValue)
+                if (hasDept && resolvedDeptId.HasValue)
                 {
-                    var deptExists = await dbContext.Departments
-                        .AnyAsync(d => d.TenantId == tenantId && d.Id == resolvedDeptId.Value && d.Status == RecordStatus.Active, cancellationToken);
-
-                    if (deptExists)
-                    {
-                        var assignment = TaskAssignment.Create(task.Id, actorId, resolvedDeptId.Value, null, now);
-                        dbContext.TaskAssignments.Add(assignment);
-                    }
+                    var assignment = TaskAssignment.Create(task.Id, actorId, resolvedDeptId.Value, null, now);
+                    dbContext.TaskAssignments.Add(assignment);
                 }
 
                 created.Add(new CreatedDecompositionItemDto(

@@ -4,6 +4,7 @@ using BizFlow.Application.Security;
 using BizFlow.Application.Workflows;
 using BizFlow.Domain.Audit;
 using BizFlow.Domain.Organization;
+using BizFlow.Domain.Security;
 using BizFlow.Domain.Workflows;
 using BizFlow.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -245,9 +246,29 @@ public sealed class WorkflowLibraryStore(BizFlowDbContext db, ITenantContext con
     {
         AssertTenant(tenantId);
         return await db.Roles.AsNoTracking()
-            .Where(r => (r.TenantId == tenantId || r.IsSystem) && r.Status == RecordStatus.Active)
+            .Where(r => r.Status == RecordStatus.Active &&
+                        (r.TenantId == tenantId || (r.IsSystem && r.Name != "PLATFORM_ADMIN")) &&
+                        !db.RolePermissions.Any(rp => rp.RoleId == r.Id &&
+                            db.Permissions.IgnoreQueryFilters().Any(p => p.Id == rp.PermissionId && p.ScopeType == PermissionScope.Platform)))
             .OrderBy(r => r.Name)
             .Select(r => new WorkflowLookupItem(r.Id, r.Name, null))
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<WorkflowUserLookupItem>> GetActiveUsersAsync(Guid tenantId, Guid? departmentId, CancellationToken cancellationToken)
+    {
+        AssertTenant(tenantId);
+        var query = db.Users.AsNoTracking()
+            .Where(u => u.TenantId == tenantId && !u.IsPlatformAdministrator && u.Status == UserStatus.Active && u.DeletedAt == null);
+
+        if (departmentId.HasValue && departmentId.Value != Guid.Empty)
+        {
+            query = query.Where(u => u.DepartmentId == departmentId.Value);
+        }
+
+        return await query
+            .OrderBy(u => u.FullName)
+            .Select(u => new WorkflowUserLookupItem(u.Id, u.FullName, u.EmployeeCode, u.Email, u.DepartmentId))
             .ToListAsync(cancellationToken);
     }
 

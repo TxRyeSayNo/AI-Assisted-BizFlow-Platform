@@ -50,7 +50,7 @@ public sealed class ReportingReader(BizFlowDbContext db) : IReportingReader
         int cancelledTasks = taskRows.Count(t => t.Status == TaskState.Cancelled);
         int overdueTasks = taskRows.Count(t => t.Status == TaskState.Overdue ||
             (t.Status != TaskState.Completed && t.Status != TaskState.Cancelled && t.Deadline.HasValue && t.Deadline.Value < now));
-        int activeTasks = taskRows.Count(t => t.Status is TaskState.Assigned or TaskState.Accepted or TaskState.InProgress or TaskState.Submitted or TaskState.Confirmed);
+        int activeTasks = taskRows.Count(t => t.Status is TaskState.Assigned or TaskState.Accepted or TaskState.InProgress or TaskState.Submitted or TaskState.Confirmed or TaskState.Overdue);
 
         var tasksByStatus = taskRows
             .GroupBy(t => t.Status.ToString().ToUpperInvariant())
@@ -80,7 +80,7 @@ public sealed class ReportingReader(BizFlowDbContext db) : IReportingReader
         int closedRequests = requestRows.Count(r => r.Status == RequestState.Closed);
         int rejectedRequests = requestRows.Count(r => r.Status == RequestState.Rejected);
         int cancelledRequests = requestRows.Count(r => r.Status == RequestState.Cancelled);
-        int pendingRequests = requestRows.Count(r => r.Status is RequestState.Submitted or RequestState.InProgress or RequestState.Resolved or RequestState.Confirmed);
+        int pendingRequests = requestRows.Count(r => r.Status is RequestState.Submitted or RequestState.Routed or RequestState.Received or RequestState.InProgress or RequestState.Resolved or RequestState.Confirmed or RequestState.WaitingForInformation or RequestState.Overdue);
 
         var requestsByStatus = requestRows
             .GroupBy(r => r.Status.ToString().ToUpperInvariant())

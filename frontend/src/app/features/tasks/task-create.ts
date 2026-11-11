@@ -152,7 +152,11 @@ export class TaskCreate {
   }
 
   submit() {
-    if (this.busy() || this.form.invalid) return;
+    if (this.done() || this.busy() || this.form.invalid) return;
+    if (!this.session.hasPermission('tasks.create')) {
+      this.error.set('Bạn không có quyền tạo nhiệm vụ.');
+      return;
+    }
     const value = this.form.getRawValue();
     if (!this.uncertain() || !this.submitted) {
       const rawDeadline = value.deadline.trim();
@@ -161,6 +165,10 @@ export class TaskCreate {
         deadline = new Date(rawDeadline);
         if (Number.isNaN(deadline.getTime())) {
           this.error.set('Hạn chót không hợp lệ. Vui lòng nhập định dạng ngày giờ chuẩn.');
+          return;
+        }
+        if (deadline.getTime() <= Date.now()) {
+          this.error.set('Hạn chót phải ở trong tương lai.');
           return;
         }
       }

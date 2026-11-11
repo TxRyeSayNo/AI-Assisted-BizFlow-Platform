@@ -1,4 +1,6 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject, signal, OnInit } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { NotificationCountService } from '../../core/notifications/notification-count.service';
 import { Router, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { SessionService } from '../../core/auth/session';
@@ -81,6 +83,9 @@ import { TranslatePipe } from '../../core/i18n/translate.pipe';
           }
           @if (
             session.hasPermission('roles.configure') ||
+            session.hasPermission('users.read') ||
+            session.hasPermission('departments.read') ||
+            session.hasPermission('workflows.configure') ||
             session.hasPermission('sla.configure') ||
             session.hasPermission('service.create')
           ) {
@@ -290,7 +295,12 @@ import { TranslatePipe } from '../../core/i18n/translate.pipe';
           }
 
           <!-- 3. Danh mục Dịch vụ -->
-          @if (identity()?.tenantId) {
+          @if (
+            (session.hasPermission('service.create') ||
+              session.hasPermission('service.update') ||
+              session.hasPermission('service.manage')) &&
+            identity()?.tenantId
+          ) {
             <article class="module-card">
               <div class="module-icon">⚙</div>
               <h3>{{ 'workspace.cardServicesTitle' | translate: 'Danh mục dịch vụ' }}</h3>
@@ -312,7 +322,12 @@ import { TranslatePipe } from '../../core/i18n/translate.pipe';
           }
 
           <!-- 4. Phòng ban & Bộ phận -->
-          @if (identity()?.tenantId) {
+          @if (
+            (session.hasPermission('roles.configure') ||
+              session.hasPermission('departments.manage') ||
+              session.hasPermission('departments.read')) &&
+            identity()?.tenantId
+          ) {
             <article class="module-card">
               <div class="module-icon">🏢</div>
               <h3>{{ 'workspace.cardDeptsTitle' | translate: 'Phòng ban & bộ phận' }}</h3>
@@ -408,6 +423,9 @@ import { TranslatePipe } from '../../core/i18n/translate.pipe';
           <!-- 8. Thiết lập Doanh nghiệp & Quy trình -->
           @if (
             session.hasPermission('roles.configure') ||
+            session.hasPermission('users.read') ||
+            session.hasPermission('departments.read') ||
+            session.hasPermission('workflows.configure') ||
             session.hasPermission('sla.configure') ||
             session.hasPermission('service.create')
           ) {
@@ -783,6 +801,35 @@ import { TranslatePipe } from '../../core/i18n/translate.pipe';
         gap: 1rem;
         margin-bottom: 2rem;
       }
+      .kpi-sublabel {
+        font-size: 0.8125rem;
+        font-weight: 500;
+        color: #64748b;
+        margin-top: 0.25rem;
+        margin-bottom: 0.6rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .unread-badge {
+        position: absolute;
+        top: 4px;
+        right: 4px;
+        min-width: 18px;
+        height: 18px;
+        padding: 0 4px;
+        background: #ef4444;
+        color: #ffffff;
+        border-radius: 9px;
+        font-size: 0.6875rem;
+        font-weight: 700;
+        line-height: 18px;
+        text-align: center;
+        border: 2px solid #ffffff;
+        box-shadow: 0 2px 4px rgba(239, 68, 68, 0.4);
+        pointer-events: none;
+        box-sizing: border-box;
+      }
       .kpi-box {
         background: #ffffff;
         border: 1px solid #dfe8f2;
@@ -937,11 +984,23 @@ import { TranslatePipe } from '../../core/i18n/translate.pipe';
   ],
 
 })
-export class Workspace {
+export class Workspace implements OnInit {
   readonly session = inject(SessionService);
   readonly i18n = inject(I18nService);
   private readonly router = inject(Router);
   readonly aiAgent = inject(AiAgentService);
+  private readonly http = inject(HttpClient);
+  readonly notifCount = inject(NotificationCountService);
+
+  readonly tasksActiveCount = signal<number>(0);
+  readonly tasksTotalCount = signal<number>(0);
+  readonly requestsPendingCount = signal<number>(0);
+  readonly requestsTotalCount = signal<number>(0);
+  readonly auditCount = signal<number>(0);
+  readonly unreadNotificationsCount = computed(() => this.notifCount.unreadCount());
+  readonly totalNotificationsCount = computed(() => this.notifCount.totalCount());
+  readonly slaRate = signal<string>('100%');
+  readonly slaStatus = signal<string>('Tối ưu');
   readonly identity = this.session.identity;
 
   openAiAgent(): void {
@@ -969,10 +1028,94 @@ export class Workspace {
     return name.slice(0, 2).toUpperCase();
   }
 
+  ngOnInit(): void {
+    this.loadLiveMetrics();
+  }
+
+  loadLiveMetrics(): void {
+    this.notifCount.refresh();
+
+    if (!this.identity()?.tenantId) {
+      this.http.get<any>('/api/v1/platform/companies?pageSize=1&status=PENDING').subscribe({
+        next: (res) => {
+          if (typeof res?.total === 'number') this.tasksActiveCount.set(res.total);
+        },
+        error: () => {},
+      });
+      this.http.get<any>('/api/v1/audit?pageSize=1').subscribe({
+        next: (res) => {
+          if (typeof res?.total === 'number') this.auditCount.set(res.total);
+        },
+        error: () => {},
+      });
+      return;
+    }
+
+    // Fetch live SLA reports for company/manager
+    this.http.get<any>('/api/v1/reports/sla').subscribe({
+      next: (res) => {
+        if (typeof res?.complianceRatePercent === 'number') {
+          this.slaRate.set(`${res.complianceRatePercent.toFixed(1)}%`);
+          this.slaStatus.set(
+            res.complianceRatePercent >= 95
+              ? 'Tối ưu'
+              : res.complianceRatePercent >= 80
+                ? 'Khá'
+                : 'Cần chú ý',
+          );
+        }
+      },
+      error: () => {},
+    });
+
+    if (
+      this.session.hasPermission('reports.manager') ||
+      this.session.hasPermission('roles.configure') ||
+      this.session.hasPermission('tasks.read.tenant')
+    ) {
+      this.http.get<any>('/api/v1/dashboard/manager').subscribe({
+        next: (res) => {
+          if (res?.taskMetrics) {
+            this.tasksActiveCount.set(res.taskMetrics.activeTasks ?? 0);
+            this.tasksTotalCount.set(res.taskMetrics.totalTasks ?? 0);
+          }
+          if (res?.requestMetrics) {
+            this.requestsPendingCount.set(res.requestMetrics.pendingRequests ?? 0);
+            this.requestsTotalCount.set(res.requestMetrics.totalRequests ?? 0);
+          }
+        },
+        error: () => {},
+      });
+    } else {
+      this.http.get<any>('/api/v1/tasks?pageSize=1').subscribe({
+        next: (res) => {
+          if (typeof res?.total === 'number') {
+            this.tasksTotalCount.set(res.total);
+            this.tasksActiveCount.set(res.total);
+          }
+        },
+        error: () => {},
+      });
+      this.http.get<any>('/api/v1/requests?pageSize=1').subscribe({
+        next: (res) => {
+          if (typeof res?.total === 'number') {
+            this.requestsTotalCount.set(res.total);
+            this.requestsPendingCount.set(res.total);
+          }
+        },
+        error: () => {},
+      });
+    }
+  }
+
   welcomeName(): string {
     const raw = this.identity()?.fullName?.trim();
     if (!raw) return 'Quản trị viên Hệ thống';
-    if (raw === 'Platform Administrator' || raw === 'superadmin' || raw.toLowerCase().includes('platform admin')) {
+    if (
+      raw === 'Platform Administrator' ||
+      raw === 'superadmin' ||
+      raw.toLowerCase().includes('platform admin')
+    ) {
       return 'Quản trị viên Hệ thống';
     }
     if (raw === 'Company Administrator') {
@@ -999,32 +1142,148 @@ export class Workspace {
     switch (this.userRole()) {
       case 'SUPERADMIN':
         return {
-          box1: { title: 'Hồ sơ Đăng ký', badge: 'Chờ duyệt', metric: '2', link: '/platform/companies', label: 'Duyệt đăng ký doanh nghiệp' },
-          box2: { title: 'Kiểm toán Hệ thống', badge: '24 giờ qua', metric: '23', link: '/platform/audit', label: 'Xem nhật ký kiểm toán' },
-          box3: { title: 'Trạng thái Nền tảng', badge: '100% Hoạt động', metric: 'Ổn định', link: '/platform/companies', label: 'Giám sát vận hành' },
-          box4: { title: 'Thông báo Hệ thống', badge: 'Chưa đọc', metric: '1', link: '/notifications', label: 'Xem thông báo' },
+          box1: {
+            title: 'Hồ sơ Đăng ký',
+            badge: 'Chờ duyệt',
+            metric: String(this.tasksActiveCount()),
+            sublabel: `${this.tasksActiveCount()} doanh nghiệp chờ duyệt`,
+            link: '/platform/companies',
+            label: 'Duyệt đăng ký doanh nghiệp',
+          },
+          box2: {
+            title: 'Kiểm toán Hệ thống',
+            badge: 'Nhật ký bảo mật',
+            metric: String(this.auditCount()),
+            sublabel: `${this.auditCount()} bản ghi kiểm toán`,
+            link: '/platform/audit',
+            label: 'Xem nhật ký kiểm toán',
+          },
+          box3: {
+            title: 'Trạng thái Nền tảng',
+            badge: '100% Hoạt động',
+            metric: 'Ổn định',
+            sublabel: 'Tất cả dịch vụ trực tuyến',
+            link: '/platform/companies',
+            label: 'Giám sát vận hành',
+          },
+          box4: {
+            title: 'Thông báo Hệ thống',
+            badge: 'Chưa đọc',
+            metric: String(this.unreadNotificationsCount()),
+            sublabel: `${this.unreadNotificationsCount()} thông báo mới`,
+            link: '/notifications',
+            label: 'Xem thông báo',
+          },
         };
       case 'COMPANY_ADMIN':
         return {
-          box1: { title: 'Nhiệm vụ Toàn công ty', badge: 'Đang chạy', metric: '7', link: '/tasks', label: 'Xem danh sách công việc' },
-          box2: { title: 'Yêu cầu Toàn công ty', badge: 'Đang xử lý', metric: '5', link: '/requests', label: 'Xem danh sách yêu cầu' },
-          box3: { title: 'Tuân thủ SLA Doanh nghiệp', badge: '98.6%', metric: 'Tối ưu', link: '/reports', label: 'Báo cáo & Dashboard' },
-          box4: { title: 'Hộp thư Cập nhật', badge: 'Chưa đọc', metric: '3', link: '/notifications', label: 'Xem thông báo' },
+          box1: {
+            title: 'Nhiệm vụ Toàn công ty',
+            badge: 'Đang làm',
+            metric: String(this.tasksActiveCount()),
+            sublabel: `${this.tasksActiveCount()} đang làm · ${this.tasksTotalCount()} tổng số`,
+            link: '/tasks',
+            label: 'Xem danh sách công việc',
+          },
+          box2: {
+            title: 'Yêu cầu Toàn công ty',
+            badge: 'Chưa xong',
+            metric: String(this.requestsPendingCount()),
+            sublabel: `${this.requestsPendingCount()} chưa xong · ${this.requestsTotalCount()} tổng số`,
+            link: '/requests',
+            label: 'Xem danh sách yêu cầu',
+          },
+          box3: {
+            title: 'Tuân thủ SLA Doanh nghiệp',
+            badge: this.slaRate(),
+            metric: this.slaStatus(),
+            sublabel: 'Cam kết chất lượng vận hành',
+            link: '/reports',
+            label: 'Báo cáo & Dashboard',
+          },
+          box4: {
+            title: 'Hộp thư Cập nhật',
+            badge: 'Chưa đọc',
+            metric: String(this.unreadNotificationsCount()),
+            sublabel: `${this.unreadNotificationsCount()} chưa đọc · ${this.totalNotificationsCount()} tổng số`,
+            link: '/notifications',
+            label: 'Xem thông báo',
+          },
         };
       case 'MANAGER':
         return {
-          box1: { title: 'Nhiệm vụ Phòng ban', badge: 'Phụ trách', metric: '4', link: '/tasks', label: 'Xem danh sách công việc' },
-          box2: { title: 'Yêu cầu Phòng ban', badge: 'Cần duyệt', metric: '2', link: '/requests', label: 'Xem danh sách yêu cầu' },
-          box3: { title: 'Tuân thủ SLA Phòng ban', badge: '97.2%', metric: 'Tốt', link: '/sla-monitor', label: 'Giám sát SLA' },
-          box4: { title: 'Hộp thư Cập nhật', badge: 'Chưa đọc', metric: '2', link: '/notifications', label: 'Xem thông báo' },
+          box1: {
+            title: 'Nhiệm vụ Phòng ban',
+            badge: 'Phụ trách',
+            metric: String(this.tasksActiveCount()),
+            sublabel: `${this.tasksActiveCount()} đang làm · ${this.tasksTotalCount()} tổng số`,
+            link: '/tasks',
+            label: 'Xem danh sách công việc',
+          },
+          box2: {
+            title: 'Yêu cầu Phòng ban',
+            badge: 'Cần duyệt',
+            metric: String(this.requestsPendingCount()),
+            sublabel: `${this.requestsPendingCount()} chưa xong · ${this.requestsTotalCount()} tổng số`,
+            link: '/requests',
+            label: 'Xem danh sách yêu cầu',
+          },
+          box3: {
+            title: 'Tuân thủ SLA Phòng ban',
+            badge: this.slaRate(),
+            metric: this.slaStatus(),
+            sublabel: 'Tiến độ xử lý phòng ban',
+            link: '/sla-monitor',
+            label: 'Giám sát SLA',
+          },
+          box4: {
+            title: 'Hộp thư Cập nhật',
+            badge: 'Chưa đọc',
+            metric: String(this.unreadNotificationsCount()),
+            sublabel: `${this.unreadNotificationsCount()} chưa đọc · ${this.totalNotificationsCount()} tổng số`,
+            link: '/notifications',
+            label: 'Xem thông báo',
+          },
         };
-      default: // EMPLOYEE
+      default: { // EMPLOYEE
+        const total = this.tasksTotalCount();
+        const active = this.tasksActiveCount();
+        const empRate = total > 0 ? `${Math.round(((total - active) / total) * 100)}%` : '100%';
         return {
-          box1: { title: 'Nhiệm vụ của tôi', badge: 'Được giao', metric: '1', link: '/tasks', label: 'Xem nhiệm vụ cá nhân' },
-          box2: { title: 'Yêu cầu của tôi', badge: 'Đã gửi', metric: '1', link: '/requests', label: 'Xem yêu cầu của tôi' },
-          box3: { title: 'Tiến độ Đúng hạn', badge: '100%', metric: 'Đạt chuẩn', link: '/tasks', label: 'Chi tiết tiến độ' },
-          box4: { title: 'Hộp thư Cập nhật', badge: 'Chưa đọc', metric: '1', link: '/notifications', label: 'Xem thông báo' },
+          box1: {
+            title: 'Nhiệm vụ của tôi',
+            badge: 'Được giao',
+            metric: String(this.tasksActiveCount()),
+            sublabel: `${this.tasksActiveCount()} đang làm · ${this.tasksTotalCount()} tổng số`,
+            link: '/tasks',
+            label: 'Xem nhiệm vụ cá nhân',
+          },
+          box2: {
+            title: 'Yêu cầu của tôi',
+            badge: 'Đã gửi',
+            metric: String(this.requestsPendingCount()),
+            sublabel: `${this.requestsPendingCount()} chưa xong · ${this.requestsTotalCount()} tổng số`,
+            link: '/requests',
+            label: 'Xem yêu cầu của tôi',
+          },
+          box3: {
+            title: 'Tiến độ Hoàn thành',
+            badge: empRate,
+            metric: 'Đạt chuẩn',
+            sublabel: 'Chỉ số năng suất cá nhân',
+            link: '/tasks',
+            label: 'Chi tiết tiến độ',
+          },
+          box4: {
+            title: 'Hộp thư Cập nhật',
+            badge: 'Chưa đọc',
+            metric: String(this.unreadNotificationsCount()),
+            sublabel: `${this.unreadNotificationsCount()} chưa đọc · ${this.totalNotificationsCount()} tổng số`,
+            link: '/notifications',
+            label: 'Xem thông báo',
+          },
         };
+      }
     }
   });
 

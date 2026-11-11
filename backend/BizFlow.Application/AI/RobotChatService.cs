@@ -24,9 +24,72 @@ public sealed class RobotChatService(
     AiAssistanceService? assistanceService = null,
     IAiVectorMemoryStore? vectorMemoryStore = null,
     IProactiveAgentScanner? proactiveScanner = null,
-    IAgentMeetingCoordinator? meetingCoordinator = null) : IRobotChatService
+    IAgentMeetingCoordinator? meetingCoordinator = null,
+    IAiContextReader? contextReader = null,
+    IAiLearnedChoiceStore? learnedChoiceStore = null,
+    IConversationStateManager? conversationStateManager = null) : IRobotChatService
 {
     public async Task<RobotChatResponse> ProcessMessageAsync(
+        RobotChatCommand command,
+        CancellationToken cancellationToken = default)
+    {
+        var rawResponse = await ExecuteInternalProcessAsync(command, cancellationToken);
+        return SanitizeResponse(rawResponse);
+    }
+
+    private static string CleanOutputText(string? text)
+    {
+        if (string.IsNullOrWhiteSpace(text)) return "";
+        // Remove markdown bold / italic asterisks
+        var cleaned = Regex.Replace(text, @"\*{1,3}", "");
+        // Remove markdown blockquote angle bracket at line start
+        cleaned = Regex.Replace(cleaned, @"(?m)^>\s*", "");
+        // Remove all unicode emojis (emoticons, pictographs, transport, misc symbols, dingbats)
+        cleaned = Regex.Replace(cleaned, @"[\uD83C-\uDBFF\uDC00-\uDFFF\u2600-\u26FF\u2700-\u27BF\uFE00-\uFE0F]", "");
+        // Clean excessive spaces while preserving line breaks
+        cleaned = Regex.Replace(cleaned, @"[ \t]{2,}", " ");
+        return cleaned.Trim();
+    }
+
+    private static RobotChatResponse SanitizeResponse(RobotChatResponse resp)
+    {
+        var cleanedResponse = CleanOutputText(resp.Response);
+        var cleanedThought = resp.AgentThought != null ? CleanOutputText(resp.AgentThought) : null;
+        var cleanedCards = resp.ActionCards?
+            .Select(c => c with { Title = CleanOutputText(c.Title) })
+            .ToList();
+
+        AgentClarificationFormDto? cleanedForm = null;
+        if (resp.Questionnaire != null)
+        {
+            var qForm = resp.Questionnaire;
+            cleanedForm = new AgentClarificationFormDto(
+                qForm.FormId,
+                CleanOutputText(qForm.Topic),
+                CleanOutputText(qForm.ContextExplanation),
+                qForm.RiskAnalysis != null ? CleanOutputText(qForm.RiskAnalysis) : null,
+                qForm.Questions.Select(q => new AgentQuestionDto(
+                    q.Id,
+                    CleanOutputText(q.Title),
+                    q.Type,
+                    q.Options?.Select(o => new AgentQuestionOptionDto(o.Id, CleanOutputText(o.Label), o.IsDefault)).ToList(),
+                    q.Required,
+                    q.Placeholder != null ? CleanOutputText(q.Placeholder) : null,
+                    q.HelpText != null ? CleanOutputText(q.HelpText) : null,
+                    q.AllowCustomInput)).ToList(),
+                CleanOutputText(qForm.SubmitButtonText),
+                qForm.SkipButtonText != null ? CleanOutputText(qForm.SkipButtonText) : null);
+        }
+
+        return new RobotChatResponse(
+            cleanedResponse,
+            resp.RecognizedCommand,
+            cleanedCards,
+            cleanedForm,
+            cleanedThought);
+    }
+
+    private async Task<RobotChatResponse> ExecuteInternalProcessAsync(
         RobotChatCommand command,
         CancellationToken cancellationToken = default)
     {
@@ -105,26 +168,26 @@ public sealed class RobotChatService(
             cancellationToken);
 
         var sb = new StringBuilder();
-        sb.AppendLine($"🤖 Trợ lý Robot đã phân rã yêu cầu thành {preview.Proposals.Count} đề xuất công việc (Bản xem trước - Chưa lưu vào DB theo BR-028):");
+        sb.AppendLine($"Trợ lý Robot đã phân rã yêu cầu thành {preview.Proposals.Count} đề xuất công việc (Bản xem trước - Chưa lưu vào DB theo BR-028):");
         sb.AppendLine();
 
         for (var i = 0; i < preview.Proposals.Count; i++)
         {
             var p = preview.Proposals[i];
             var typeLabel = p.Type == "SupportRequest" ? "Yêu cầu hỗ trợ" : "Giao việc";
-            sb.AppendLine($"{i + 1}. **{p.Title}** [{typeLabel}] - Mức ưu tiên: {p.Priority}");
+            sb.AppendLine($"{i + 1}. {p.Title} [{typeLabel}] - Mức ưu tiên: {p.Priority}");
             if (!string.IsNullOrWhiteSpace(p.DepartmentName))
             {
-                sb.AppendLine($"   • Phòng ban: {p.DepartmentName}");
+                sb.AppendLine($"   - Phòng ban: {p.DepartmentName}");
             }
             if (p.ChecklistItems is { Count: > 0 })
             {
-                sb.AppendLine($"   • Các bước: {string.Join(", ", p.ChecklistItems)}");
+                sb.AppendLine($"   - Các bước: {string.Join(", ", p.ChecklistItems)}");
             }
         }
 
         sb.AppendLine();
-        sb.AppendLine("👉 Vui lòng mở giao diện Phân rã AI để kiểm tra, chỉnh sửa inline và xác nhận tạo việc.");
+        sb.AppendLine("Vui lòng mở giao diện Phân rã AI để kiểm tra, chỉnh sửa inline và xác nhận tạo việc.");
 
         return new RobotChatResponse(
             sb.ToString().TrimEnd(),
@@ -146,11 +209,11 @@ public sealed class RobotChatService(
         }
 
         var sb = new StringBuilder();
-        sb.AppendLine("🔔 **Quản lý Thông báo và Nhắc hẹn (Deadline Reminders)**");
+        sb.AppendLine("Quản lý Thông báo và Nhắc hẹn (Deadline Reminders)");
         sb.AppendLine();
-        sb.AppendLine($"• Hiện tại bạn có **{unreadCount}** thông báo chưa đọc trong hòm thư.");
-        sb.AppendLine("• Hệ thống hỗ trợ nhắc hạn đa kênh tự động tại 4 mốc: **24 giờ**, **4 giờ**, **1 giờ trước hạn** và **khi quá hạn**.");
-        sb.AppendLine("• Kênh gửi thông báo: **In-App Toast (SignalR)** khi online, và **Web Push (VAPID)** khi không mở website.");
+        sb.AppendLine($"- Hiện tại bạn có {unreadCount} thông báo chưa đọc trong hòm thư.");
+        sb.AppendLine("- Hệ thống hỗ trợ nhắc hạn đa kênh tự động tại 4 mốc: 24 giờ, 4 giờ, 1 giờ trước hạn và khi quá hạn.");
+        sb.AppendLine("- Kênh gửi thông báo: In-App Toast (SignalR) khi online, và Web Push (VAPID) khi không mở website.");
         sb.AppendLine();
         sb.AppendLine("Bạn có thể xem chi tiết hoặc cài đặt nhắc nhở bằng cách mở trang Thông báo bên dưới.");
 
@@ -178,10 +241,10 @@ public sealed class RobotChatService(
                 cancellationToken);
 
             var sb = new StringBuilder();
-            sb.AppendLine("🤖 **Đề xuất tạo công việc mới:**");
-            sb.AppendLine($"• Tiêu đề: **{title}**");
+            sb.AppendLine("Đề xuất tạo công việc mới:");
+            sb.AppendLine($"- Tiêu đề: {title}");
             sb.AppendLine();
-            sb.AppendLine("⚠️ Hành động này cần sự xác nhận của bạn trước khi lưu vào hệ thống.");
+            sb.AppendLine("Hành động này cần sự xác nhận của bạn trước khi lưu vào hệ thống.");
 
             return new RobotChatResponse(
                 sb.ToString().TrimEnd(),
@@ -196,7 +259,7 @@ public sealed class RobotChatService(
         }
         catch (ApplicationFault af)
         {
-            return new RobotChatResponse($"❌ Không thể đề xuất tạo việc: {af.Message}", "ACTION_REJECTED");
+            return new RobotChatResponse($"Không thể đề xuất tạo việc: {af.Message}", "ACTION_REJECTED");
         }
     }
 
@@ -209,17 +272,17 @@ public sealed class RobotChatService(
             if (recent.Count == 0)
             {
                 return new RobotChatResponse(
-                    "🧠 **Bộ nhớ dài hạn & Tri thức doanh nghiệp (Vector Memory):**\n" +
+                    "Bộ nhớ dài hạn & Tri thức doanh nghiệp (Vector Memory):\n" +
                     "Chưa có tài liệu chính sách hoặc tiền lệ công việc nào được lập chỉ mục.\n" +
                     "Bạn có thể tra cứu theo cú pháp: `/memory <nội dung cần tìm>`.",
                     "/memory");
             }
 
             var sb = new StringBuilder();
-            sb.AppendLine("🧠 **Bộ nhớ dài hạn & Quy định nội bộ gần nhất:**");
+            sb.AppendLine("Bộ nhớ dài hạn & Quy định nội bộ gần nhất:");
             foreach (var m in recent)
             {
-                sb.AppendLine($"• [{m.MemoryScope}] **{m.Title}**: {Truncate(m.Content, 100)}");
+                sb.AppendLine($"- [{m.MemoryScope}] {m.Title}: {Truncate(m.Content, 100)}");
             }
             sb.AppendLine("\nGõ `/memory <từ khóa>` để tìm kiếm tương đồng ngữ nghĩa (Cosine RAG).");
             return new RobotChatResponse(sb.ToString().TrimEnd(), "/memory");
@@ -229,16 +292,16 @@ public sealed class RobotChatService(
         if (results.Count == 0)
         {
             return new RobotChatResponse(
-                $"🔍 Không tìm thấy chính sách hoặc tiền lệ nào khớp với nội dung '{query}' trong bộ nhớ doanh nghiệp.",
+                $"Không tìm thấy chính sách hoặc tiền lệ nào khớp với nội dung '{query}' trong bộ nhớ doanh nghiệp.",
                 "/memory");
         }
 
         var rsb = new StringBuilder();
-        rsb.AppendLine($"🔍 **Kết quả tra cứu Bộ nhớ Vector (Khớp ngữ nghĩa cao nhất):**");
+        rsb.AppendLine("Kết quả tra cứu Bộ nhớ Vector (Khớp ngữ nghĩa cao nhất):");
         foreach (var r in results)
         {
             var matchPercent = Math.Round(r.SimilarityScore * 100, 1);
-            rsb.AppendLine($"\n📌 **{r.Title}** (Phạm vi: {r.MemoryScope} | Độ khớp: {matchPercent}%)");
+            rsb.AppendLine($"\n{r.Title} (Phạm vi: {r.MemoryScope} | Độ khớp: {matchPercent}%)");
             rsb.AppendLine(r.Content);
         }
 
@@ -251,18 +314,18 @@ public sealed class RobotChatService(
         if (insights.Count == 0)
         {
             return new RobotChatResponse(
-                "⚡ **Agent Giám sát Chủ động (Autonomous Daemon):**\n" +
+                "Agent Giám sát Chủ động (Autonomous Daemon):\n" +
                 "Hiện tại không có rủi ro trễ hạn SLA hoặc tình trạng quá tải nhân sự nào được phát hiện trong hệ thống. Mọi thứ đang vận hành ổn định!",
                 "/proactive");
         }
 
         var sb = new StringBuilder();
-        sb.AppendLine($"⚡ **Phát hiện {insights.Count} khuyến nghị từ Agent Giám sát Chủ động:**\n");
+        sb.AppendLine($"Phát hiện {insights.Count} khuyến nghị từ Agent Giám sát Chủ động:\n");
         var cards = new List<RobotActionCard>();
 
         foreach (var insight in insights)
         {
-            sb.AppendLine($"• **{insight.Title}** (Độ tin cậy: {Math.Round(insight.Confidence * 100)}%)");
+            sb.AppendLine($"- {insight.Title} (Độ tin cậy: {Math.Round(insight.Confidence * 100)}%)");
             sb.AppendLine($"  {insight.Description}");
             if (insight.ObjectId.HasValue)
             {
@@ -300,7 +363,7 @@ public sealed class RobotChatService(
             cancellationToken);
 
         return new RobotChatResponse(
-            $"🧠 **Đã ghi nhớ vào hồ sơ cá nhân của bạn:**\n\"{content}\"\n\nTôi sẽ tối ưu hóa các câu trả lời và đề xuất tiếp theo phù hợp với vai trò và thói quen của bạn.",
+            $"Đã ghi nhớ vào hồ sơ cá nhân của bạn:\n\"{content}\"\n\nTôi sẽ tối ưu hóa các câu trả lời và đề xuất tiếp theo phù hợp với vai trò và thói quen của bạn.",
             "/remember");
     }
 
@@ -318,6 +381,60 @@ public sealed class RobotChatService(
         if (command.FormAnswers is { Count: > 0 } || !string.IsNullOrWhiteSpace(command.FormId))
         {
             return await HandleFormSubmissionAsync(command, cancellationToken);
+        }
+
+        // 0.1 Check active multi-turn conversation session from ConversationStateManager
+        if (conversationStateManager != null && tenantContext.TenantId.HasValue && tenantContext.UserId.HasValue)
+        {
+            var convId = command.ConversationId ?? "default";
+            var session = await conversationStateManager.GetStateAsync(tenantContext.TenantId.Value, tenantContext.UserId.Value, convId, cancellationToken);
+            if (session?.PendingClarification != null && !lowerMsg.StartsWith("/") && !lowerMsg.Contains("deadline") && !lowerMsg.Contains("quá hạn"))
+            {
+                var originalUserMsg = session.ActiveIntent ?? "Kế hoạch công việc";
+                var synthesizedPrompt = $"{originalUserMsg}: {message}";
+                var thought = "Quá trình Suy nghĩ & Ra Quyết định của AI Agent (Hội thoại Đa lượt):\n" +
+                    $"- Tiếp nhận thông tin bổ sung: \"{message}\"\n" +
+                    "- Đánh giá: Dữ liệu đã đủ chi tiết để xác định mục tiêu và phân định trách nhiệm.\n" +
+                    "- Quyết định: Phân rã tự động thành các nhánh nhiệm vụ gửi tới các phòng ban phụ trách.";
+
+                // Learn custom input from user follow-up
+                if (learnedChoiceStore != null)
+                {
+                    try
+                    {
+                        await learnedChoiceStore.RecordChoiceAsync(
+                            tenantContext.TenantId.Value,
+                            tenantContext.UserId,
+                            "general_input",
+                            message,
+                            message,
+                            "PERSONAL",
+                            clock.GetUtcNow(),
+                            cancellationToken);
+                    }
+                    catch { }
+                }
+
+                await conversationStateManager.ClearStateAsync(tenantContext.TenantId.Value, tenantContext.UserId.Value, convId, cancellationToken);
+                return await ExecuteAgentDecompositionAsync(synthesizedPrompt, originalTitle: originalUserMsg, userClarifiedDetails: message, agentThought: thought, cancellationToken: cancellationToken);
+            }
+        }
+
+        AiTenantContextData? tenantContextData = null;
+        if (contextReader != null && tenantContext.TenantId.HasValue)
+        {
+            try
+            {
+                tenantContextData = await contextReader.GetTenantContextAsync(tenantContext.TenantId.Value, cancellationToken);
+            }
+            catch { }
+        }
+
+        // 0.2 Try LLM-first agent orchestration with structured JSON reasoning
+        var llmResponse = await TryHandleLlmAgentOrchestrationAsync(command, tenantContextData, cancellationToken);
+        if (llmResponse != null)
+        {
+            return llmResponse;
         }
 
         // Check if message is a new operational initiative or command
@@ -348,10 +465,10 @@ public sealed class RobotChatService(
                     .LastOrDefault(h => h.Sender.Equals("user", StringComparison.OrdinalIgnoreCase))?.Text ?? "Kế hoạch công việc";
 
                 var synthesizedPrompt = $"{originalUserMsg}: {message}";
-                var thought = "🧠 **Quá trình Suy nghĩ & Ra Quyết định của AI Agent:**\n" +
-                    $"• Tiếp nhận thông tin bổ sung: \"{message}\"\n" +
-                    "• Đánh giá: Dữ liệu đã đủ chi tiết để xác định mục tiêu và phân định trách nhiệm.\n" +
-                    "• Quyết định: Phân rã tự động thành các nhánh nhiệm vụ gửi tới các phòng ban phụ trách.";
+                var thought = "Quá trình Suy nghĩ & Ra Quyết định của AI Agent:\n" +
+                    $"- Tiếp nhận thông tin bổ sung: \"{message}\"\n" +
+                    "- Đánh giá: Dữ liệu đã đủ chi tiết để xác định mục tiêu và phân định trách nhiệm.\n" +
+                    "- Quyết định: Phân rã tự động thành các nhánh nhiệm vụ gửi tới các phòng ban phụ trách.";
                 return await ExecuteAgentDecompositionAsync(synthesizedPrompt, originalTitle: originalUserMsg, userClarifiedDetails: message, agentThought: thought, cancellationToken: cancellationToken);
             }
         }
@@ -429,13 +546,22 @@ public sealed class RobotChatService(
 
         if (!isSufficientlyDetailed)
         {
-            return BuildAgentClarificationResponse(message, isMeeting, isMarketing, isRecruitment, isTech, isIncident);
+            return await BuildAgentClarificationResponseAsync(
+                message,
+                isMeeting,
+                isMarketing,
+                isRecruitment,
+                isTech,
+                isIncident,
+                tenantContextData,
+                command.ConversationId,
+                cancellationToken);
         }
 
         // If request is sufficiently detailed upfront, execute decomposition immediately!
-        var upfrontThought = "🧠 **Quá trình Suy nghĩ & Ra Quyết định của AI Agent:**\n" +
-            "• Phân tích yêu cầu ban đầu: Đã cung cấp đầy đủ các biến số vận hành then chốt (thời gian, địa điểm, thành phần).\n" +
-            "• Quyết định: Kích hoạt quy trình phân rã tự động và giao việc trực tiếp tới các phòng ban.";
+        var upfrontThought = "Quá trình Suy nghĩ & Ra Quyết định của AI Agent:\n" +
+            "- Phân tích yêu cầu ban đầu: Đã cung cấp đầy đủ các biến số vận hành then chốt (thời gian, địa điểm, thành phần).\n" +
+            "- Quyết định: Kích hoạt quy trình phân rã tự động và giao việc trực tiếp tới các phòng ban.";
         return await ExecuteAgentDecompositionAsync(message, originalTitle: message, userClarifiedDetails: null, agentThought: upfrontThought, cancellationToken: cancellationToken);
     }
 
@@ -443,9 +569,54 @@ public sealed class RobotChatService(
         RobotChatCommand command,
         CancellationToken cancellationToken)
     {
+        AiTenantContextData? tenantContextData = null;
+        if (contextReader != null && tenantContext.TenantId.HasValue)
+        {
+            try
+            {
+                tenantContextData = await contextReader.GetTenantContextAsync(tenantContext.TenantId.Value, cancellationToken);
+            }
+            catch { }
+        }
+
         var formId = command.FormId ?? "form_general";
         var answers = command.FormAnswers ?? [];
-        var baseForm = GetFormDefinition(formId, command.Message);
+        var baseForm = GetFormDefinition(formId, command.Message, tenantContextData);
+
+        // Record answered choices into adaptive choice memory
+        if (learnedChoiceStore != null && tenantContext.TenantId.HasValue)
+        {
+            var tId = tenantContext.TenantId.Value;
+            var uId = tenantContext.UserId;
+            var now = clock.GetUtcNow();
+            foreach (var ans in answers)
+            {
+                var q = baseForm.Questions.FirstOrDefault(x => x.Id.Equals(ans.QuestionId, StringComparison.OrdinalIgnoreCase));
+                var semanticKey = ans.QuestionId.ToLowerInvariant().Replace("q_", "");
+
+                if (ans.SelectedOptionIds is { Count: > 0 })
+                {
+                    foreach (var optId in ans.SelectedOptionIds)
+                    {
+                        var optLabel = q?.Options?.FirstOrDefault(o => o.Id == optId)?.Label ?? optId;
+                        try
+                        {
+                            await learnedChoiceStore.RecordChoiceAsync(tId, uId, semanticKey, optId, optLabel, "PERSONAL", now, cancellationToken);
+                        }
+                        catch { }
+                    }
+                }
+
+                if (!string.IsNullOrWhiteSpace(ans.CustomText))
+                {
+                    try
+                    {
+                        await learnedChoiceStore.RecordChoiceAsync(tId, uId, semanticKey, ans.CustomText.Trim(), ans.CustomText.Trim(), "PERSONAL", now, cancellationToken);
+                    }
+                    catch { }
+                }
+            }
+        }
 
         var missingQuestions = new List<AgentQuestionDto>();
         var answeredMap = new Dictionary<string, string>();
@@ -487,12 +658,12 @@ public sealed class RobotChatService(
         // If any required question was not answered, generate a targeted follow-up questionnaire!
         if (missingQuestions.Count > 0)
         {
-            var missingTitles = string.Join(", ", missingQuestions.Select(m => $"**{m.Title}**"));
+            var missingTitles = string.Join(", ", missingQuestions.Select(m => m.Title));
             var partialSummary = answeredMap.Count > 0
-                ? string.Join("\n", answeredMap.Values.Select(v => $"• {v}"))
+                ? string.Join("\n", answeredMap.Values.Select(v => $"- {v}"))
                 : "Chưa có thông tin hợp lệ";
 
-            var followUpThought = $"🤔 **Suy nghĩ của AI Agent:** Tiếp nhận phản hồi biểu mẫu nhưng phát hiện vẫn còn thiếu {missingQuestions.Count} thông tin bắt buộc ({missingTitles}). Agent từ chối tạo việc ngay để ngăn chặn rủi ro thiếu sót và gửi lại các câu hỏi còn thiếu.";
+            var followUpThought = $"Suy nghĩ của AI Agent: Tiếp nhận phản hồi biểu mẫu nhưng phát hiện vẫn còn thiếu {missingQuestions.Count} thông tin bắt buộc ({missingTitles}). Agent từ chối tạo việc ngay để ngăn chặn rủi ro thiếu sót và gửi lại các câu hỏi còn thiếu.";
 
             var followUpForm = new AgentClarificationFormDto(
                 formId,
@@ -503,7 +674,23 @@ public sealed class RobotChatService(
                 "Hoàn tất & Tiếp tục phân tích",
                 "Sử dụng thiết lập khuyến nghị");
 
-            var followUpText = $"Cảm ơn bạn! Tôi đã ghi nhận một phần thông tin:\n{partialSummary}\n\n👉 Để đảm bảo phân công chính xác và không tạo việc thừa, bạn vui lòng chọn nốt các thông tin còn thiếu bên dưới:";
+            if (conversationStateManager != null && tenantContext.TenantId.HasValue && tenantContext.UserId.HasValue)
+            {
+                var convId = command.ConversationId ?? "default";
+                var state = new ConversationState(
+                    convId,
+                    tenantContext.TenantId.Value,
+                    tenantContext.UserId.Value,
+                    baseForm.Topic,
+                    answeredMap,
+                    missingQuestions.Select(m => m.Id).ToList(),
+                    followUpForm,
+                    command.History != null ? new List<RobotChatMessageDto>(command.History) : [],
+                    clock.GetUtcNow());
+                _ = conversationStateManager.SaveStateAsync(state, cancellationToken);
+            }
+
+            var followUpText = $"Cảm ơn bạn! Tôi đã ghi nhận một phần thông tin:\n{partialSummary}\n\nĐể đảm bảo phân công chính xác và không tạo việc thừa, bạn vui lòng chọn nốt các thông tin còn thiếu bên dưới:";
 
             return new RobotChatResponse(
                 followUpText,
@@ -514,7 +701,13 @@ public sealed class RobotChatService(
         }
 
         // All required questions are answered! Agent makes the definitive plan.
-        var detailsSummary = string.Join("\n", answeredMap.Values.Select(v => $"• {v}"));
+        if (conversationStateManager != null && tenantContext.TenantId.HasValue && tenantContext.UserId.HasValue)
+        {
+            var convId = command.ConversationId ?? "default";
+            _ = conversationStateManager.ClearStateAsync(tenantContext.TenantId.Value, tenantContext.UserId.Value, convId, cancellationToken);
+        }
+
+        var detailsSummary = string.Join("\n", answeredMap.Values.Select(v => $"- {v}"));
         var synthesizedPrompt = $"{baseForm.Topic}: {string.Join("; ", answeredMap.Values)}";
 
         // Special handling for Enterprise Meeting & Notification Coordination
@@ -592,6 +785,17 @@ public sealed class RobotChatService(
                 }
             }
 
+            // Grounding with real departments in DB if available
+            var depts = tenantContextData?.Departments;
+            var adminDept = depts?.FirstOrDefault(d => d.Name.Contains("Hành chính", StringComparison.OrdinalIgnoreCase) || d.Name.Contains("Nhân sự", StringComparison.OrdinalIgnoreCase) || d.Code.Equals("HR", StringComparison.OrdinalIgnoreCase));
+            var techDept = depts?.FirstOrDefault(d => d.Name.Contains("Công nghệ", StringComparison.OrdinalIgnoreCase) || d.Name.Contains("Chuyển đổi số", StringComparison.OrdinalIgnoreCase) || d.Name.Contains("Kỹ thuật", StringComparison.OrdinalIgnoreCase) || d.Code.Equals("TECH", StringComparison.OrdinalIgnoreCase) || d.Code.Equals("IT", StringComparison.OrdinalIgnoreCase));
+            var execDept = depts?.FirstOrDefault(d => d.Name.Contains("Giám đốc", StringComparison.OrdinalIgnoreCase) || d.Name.Contains("Điều hành", StringComparison.OrdinalIgnoreCase) || d.Code.Equals("BOD", StringComparison.OrdinalIgnoreCase));
+
+            // SLA Decision: Calculate urgency based on timeframe (e.g. tomorrow morning / within 24h = HIGH)
+            var lowerTime = meetingTime.ToLowerInvariant();
+            bool isWithin24h = lowerTime.Contains("sáng mai") || lowerTime.Contains("chiều mai") || lowerTime.Contains("hôm nay") || lowerTime.Contains("gấp");
+            var meetingPriority = isWithin24h ? "HIGH" : "MEDIUM";
+
             // 2. Generate multi-branch task proposals tailored for the assigned units
             var proposals = new List<TaskDecompositionProposalDto>
             {
@@ -599,9 +803,9 @@ public sealed class RobotChatService(
                     Title: "Chuẩn bị phòng họp, nước uống và in ấn tài liệu",
                     Description: $"Tiếp nhận yêu cầu chuẩn bị cơ sở vật chất, hậu cần cho cuộc họp '{meetingContent}' diễn ra vào lúc {meetingTime} tại {meetingLocation}.",
                     Type: "Assignment",
-                    DepartmentId: null,
-                    DepartmentName: "Phòng Hành chính - Nhân sự",
-                    Priority: "HIGH",
+                    DepartmentId: adminDept?.DepartmentId,
+                    DepartmentName: adminDept?.Name ?? "Phòng Hành chính - Nhân sự",
+                    Priority: meetingPriority,
                     ChecklistItems:
                     [
                         $"Xác nhận đặt {meetingLocation}",
@@ -610,14 +814,14 @@ public sealed class RobotChatService(
                         $"In ấn tài liệu cuộc họp ({meetingContent})",
                         "Bàn giao phòng họp trước giờ bắt đầu 15 phút"
                     ],
-                    Reasoning: "Bộ phận Hành chính chịu trách nhiệm hậu cần, chuẩn bị phòng họp và tiếp đón đại biểu theo chỉ đạo của ban lãnh đạo."),
+                    Reasoning: $"Bộ phận Hành chính chịu trách nhiệm hậu cần, chuẩn bị phòng họp và tiếp đón đại biểu. Căn cứ theo cam kết SLA và thời gian diễn ra trong vòng 24 giờ, mức độ ưu tiên được xác định là {meetingPriority}."),
                 new(
                     Title: "Kiểm tra máy chiếu, thiết bị âm thanh và kết nối mạng",
                     Description: $"Cấu hình trang thiết bị công nghệ thông tin, màn hình LED/máy chiếu, micro và đường truyền họp trực tuyến phục vụ cuộc họp '{meetingContent}'.",
                     Type: "SupportRequest",
-                    DepartmentId: null,
-                    DepartmentName: "Phòng Công nghệ & Chuyển đổi số",
-                    Priority: "HIGH",
+                    DepartmentId: techDept?.DepartmentId,
+                    DepartmentName: techDept?.Name ?? "Phòng Công nghệ & Chuyển đổi số",
+                    Priority: meetingPriority,
                     ChecklistItems:
                     [
                         $"Bật máy chiếu và kết nối dây cáp HDMI/trình chiếu tại {meetingLocation}",
@@ -625,13 +829,13 @@ public sealed class RobotChatService(
                         "Kiểm tra ổn định mạng internet và link họp trực tuyến (Google Meet/Zoom)",
                         "Hỗ trợ kỹ thuật trực tiếp trong suốt thời gian diễn ra cuộc họp"
                     ],
-                    Reasoning: "Bộ phận IT phụ trách hạ tầng kỹ thuật, âm thanh, trình chiếu và đường truyền họp trực tuyến."),
+                    Reasoning: $"Bộ phận IT phụ trách hạ tầng kỹ thuật, âm thanh, trình chiếu và đường truyền họp trực tuyến theo SLA hỗ trợ kỹ thuật {meetingPriority}."),
                 new(
                     Title: "Gửi thông báo lịch họp và tổng hợp danh sách đại biểu tham dự",
                     Description: $"Điều phối lịch trình, gửi thư mời và tài liệu nghị sự tới các đơn vị dưới quyền tham gia cuộc họp ({string.Join(", ", attLabels)}).",
                     Type: "Assignment",
-                    DepartmentId: null,
-                    DepartmentName: "Ban Giám đốc & Điều hành",
+                    DepartmentId: execDept?.DepartmentId,
+                    DepartmentName: execDept?.Name ?? "Ban Giám đốc & Điều hành",
                     Priority: "MEDIUM",
                     ChecklistItems:
                     [
@@ -647,43 +851,44 @@ public sealed class RobotChatService(
             var emailCount = dispatchResult?.EmailsSent ?? attLabels.Count;
 
             var sb = new StringBuilder();
-            sb.AppendLine("🤖 **Trợ lý AI Agent đã xử lý thông tin cuộc họp và tự động thực thi các tác vụ vận hành:**\n");
-            sb.AppendLine("📌 **Thông tin cuộc họp đã thống nhất:**");
-            sb.AppendLine($"• 📅 **Thời gian:** {meetingTime}");
-            sb.AppendLine($"• 📍 **Địa điểm:** {meetingLocation}");
-            sb.AppendLine($"• 📝 **Nội dung cuộc họp:** {meetingContent}");
-            sb.AppendLine($"• 🏢 **Đơn vị dưới quyền tham gia:** {string.Join(", ", attLabels)}");
+            sb.AppendLine("Trợ lý AI Agent đã xử lý thông tin cuộc họp và tự động thực thi các tác vụ vận hành:\n");
+            sb.AppendLine("Thông tin cuộc họp đã thống nhất:");
+            sb.AppendLine($"- Thời gian: {meetingTime}");
+            sb.AppendLine($"- Địa điểm: {meetingLocation}");
+            sb.AppendLine($"- Nội dung cuộc họp: {meetingContent}");
+            sb.AppendLine($"- Đơn vị dưới quyền tham gia: {string.Join(", ", attLabels)}");
             if (eqLabels.Count > 0)
             {
-                sb.AppendLine($"• 🛠️ **Hậu cần & Trang thiết bị:** {string.Join(", ", eqLabels)}");
+                sb.AppendLine($"- Hậu cần & Trang thiết bị: {string.Join(", ", eqLabels)}");
             }
             sb.AppendLine();
-            sb.AppendLine($"✅ **Đã tự động gửi thông báo In-App:** Gửi thành công thông báo họp tới **{notifCount}** Quản lý đơn vị dưới quyền qua Hộp thông báo trong ứng dụng.");
-            sb.AppendLine($"✅ **Đã tự động phát thông báo Email:** Gửi thành công thư mời họp tới **{emailCount}** email Quản lý phụ trách các phòng ban.");
+            sb.AppendLine($"Đã tự động gửi thông báo In-App: Gửi thành công thông báo họp tới {notifCount} Quản lý đơn vị dưới quyền qua Hộp thông báo trong ứng dụng.");
+            sb.AppendLine($"Đã tự động phát thông báo Email: Gửi thành công thư mời họp tới {emailCount} email Quản lý phụ trách các phòng ban.");
             sb.AppendLine();
-            sb.AppendLine($"🌿 **Đề xuất phân công tới các phòng ban chuyên trách ({proposals.Count} nhánh nhiệm vụ):**");
+            sb.AppendLine($"Đề xuất phân công tới các phòng ban chuyên trách ({proposals.Count} nhánh nhiệm vụ):");
             for (var i = 0; i < proposals.Count; i++)
             {
                 var p = proposals[i];
                 var typeLabel = p.Type == "SupportRequest" ? "Yêu cầu hỗ trợ" : "Giao việc";
-                sb.AppendLine($"{i + 1}. **{p.Title}** [{typeLabel}] - Mức ưu tiên: {p.Priority}");
-                sb.AppendLine($"   • Phòng ban: {p.DepartmentName}");
+                sb.AppendLine($"{i + 1}. {p.Title} [{typeLabel}] - Mức ưu tiên: {p.Priority}");
+                sb.AppendLine($"   - Phòng ban: {p.DepartmentName}");
                 if (p.ChecklistItems is { Count: > 0 })
                 {
-                    sb.AppendLine($"   • Các bước: {string.Join(", ", p.ChecklistItems)}");
+                    sb.AppendLine($"   - Các bước: {string.Join(", ", p.ChecklistItems)}");
                 }
             }
             sb.AppendLine();
-            sb.AppendLine("👉 Vui lòng mở tab **Nhánh tác vụ** hoặc bấm nút bên dưới để xem chi tiết, chỉnh sửa inline và xác nhận tạo việc.");
+            sb.AppendLine("Vui lòng mở tab Nhánh tác vụ hoặc bấm nút bên dưới để xem chi tiết, chỉnh sửa inline và xác nhận tạo việc.");
 
-            var agentThought = "🧠 **Quá trình Suy nghĩ & Ra Quyết định của AI Agent:**\n" +
+            var agentThought = "Quá trình Suy nghĩ & Ra Quyết định của AI Agent:\n" +
                 "1. Thẩm định thông tin cuộc họp: Đã thu thập đầy đủ 4 thông số bắt buộc (Thời gian, Địa điểm, Nội dung họp, Đơn vị dưới quyền tham gia).\n" +
-                $"2. Tự động thực thi tác vụ: Đã phát thông báo In-App tới {notifCount} Quản lý đơn vị dưới quyền và gửi Email thư mời họp tới các địa chỉ liên hệ.\n" +
-                $"3. Phân rã nhiệm vụ: Khởi tạo {proposals.Count} nhánh công việc đề xuất giao cho các bộ phận chuyên trách (Hành chính chuẩn bị phòng họp & hậu cần, IT phụ trách máy chiếu & âm thanh, Ban Giám đốc điều phối lịch trình & biên bản).";
+                $"2. Đối chiếu quy trình và cam kết SLA: Sự kiện diễn ra trong vòng 24 giờ, hệ thống áp dụng mức ưu tiên {meetingPriority} cho các công tác chuẩn bị khẩn theo quy định của tổ chức.\n" +
+                $"3. Tự động thực thi tác vụ: Đã phát thông báo In-App tới {notifCount} Quản lý đơn vị dưới quyền và gửi Email thư mời họp tới các địa chỉ liên hệ.\n" +
+                $"4. Phân rã nhiệm vụ: Khởi tạo {proposals.Count} nhánh công việc đề xuất giao cho các bộ phận chuyên trách trong hệ thống (Hành chính chuẩn bị phòng họp & hậu cần, IT phụ trách máy chiếu & âm thanh, Ban Giám đốc điều phối lịch trình & biên bản).";
 
             var cards = new List<RobotActionCard>
             {
-                new("VIEW_BRANCHES", $"🌿 Xem các nhánh tác vụ ({proposals.Count} nhánh)", null, new { prompt = synthesizedPrompt, proposals }),
+                new("VIEW_BRANCHES", $"Xem các nhánh tác vụ ({proposals.Count} nhánh)", null, new { prompt = synthesizedPrompt, proposals }),
                 new("OPEN_DECOMPOSITION", "Mở công cụ Phân rã AI", "/tasks/ai-decomposition", new { prompt = synthesizedPrompt, proposals }),
                 new("OPEN_NOTIFICATIONS", "Xem hòm thư thông báo", "/notifications")
             };
@@ -695,7 +900,7 @@ public sealed class RobotChatService(
                 AgentThought: agentThought);
         }
 
-        var defaultThought = "🧠 **Quá trình Suy nghĩ & Ra Quyết định của AI Agent:**\n" +
+        var defaultThought = "Quá trình Suy nghĩ & Ra Quyết định của AI Agent:\n" +
             $"1. Tiếp nhận và kiểm tra thông tin: Đã thu thập đầy đủ {answeredMap.Count} thông số vận hành then chốt.\n" +
             "2. Đánh giá rủi ro: Thông tin rõ ràng, không còn điểm mơ hồ, đảm bảo việc giao đúng phòng ban.\n" +
             "3. Quyết định phân công: Tiến hành phân rã yêu cầu thành các nhánh nhiệm vụ cụ thể gửi đến các bộ phận chuyên trách.";
@@ -708,11 +913,39 @@ public sealed class RobotChatService(
             cancellationToken: cancellationToken);
     }
 
-    private static AgentClarificationFormDto GetFormDefinition(string formId, string topic)
+    private static AgentClarificationFormDto GetFormDefinition(string formId, string topic, AiTenantContextData? tenantContextData = null)
     {
         var lower = (formId + " " + topic).ToLowerInvariant();
+        var depts = tenantContextData?.Departments;
+
         if (lower.Contains("meeting") || lower.Contains("họp") || lower.Contains("thông báo"))
         {
+            List<AgentQuestionOptionDto> attendeeOptions;
+            if (depts is { Count: > 0 })
+            {
+                attendeeOptions = depts.Select(d => new AgentQuestionOptionDto(
+                    $"att_{d.Code.ToLowerInvariant()}",
+                    $"{d.Name} ({d.Code})",
+                    IsDefault: d.Code.Equals("BOD", StringComparison.OrdinalIgnoreCase) ||
+                               d.Code.Equals("TECH", StringComparison.OrdinalIgnoreCase) ||
+                               d.Code.Equals("IT", StringComparison.OrdinalIgnoreCase) ||
+                               d.Code.Equals("HR", StringComparison.OrdinalIgnoreCase)
+                )).ToList();
+            }
+            else
+            {
+                attendeeOptions =
+                [
+                    new AgentQuestionOptionDto("att_bgd", "Ban Giám đốc (BGĐ)", true),
+                    new AgentQuestionOptionDto("att_it", "Phòng Công nghệ & Chuyển đổi số (TECH)", true),
+                    new AgentQuestionOptionDto("att_hr", "Phòng Hành chính - Nhân sự (HR)", true),
+                    new AgentQuestionOptionDto("att_biz", "Phòng Kinh doanh B2B & Đối tác (BIZ)"),
+                    new AgentQuestionOptionDto("att_fin", "Phòng Tài chính - Kế toán (FIN)"),
+                    new AgentQuestionOptionDto("att_mkt", "Phòng Tiếp thị & Truyền thông Thương hiệu (MKT)"),
+                    new AgentQuestionOptionDto("att_ops", "Phòng Dịch vụ Khách hàng & Vận hành (OPS)")
+                ];
+            }
+
             return new AgentClarificationFormDto(
                 "form_meeting",
                 "Chuẩn bị & Điều phối cuộc họp",
@@ -757,15 +990,7 @@ public sealed class RobotChatService(
                         "q_meeting_attendees",
                         "Các đơn vị dưới quyền tham gia cuộc họp",
                         "multiple_choice",
-                        [
-                            new AgentQuestionOptionDto("att_bgd", "Ban Giám đốc (BGĐ)", true),
-                            new AgentQuestionOptionDto("att_it", "Phòng Công nghệ & Chuyển đổi số (TECH)", true),
-                            new AgentQuestionOptionDto("att_hr", "Phòng Hành chính - Nhân sự (HR)", true),
-                            new AgentQuestionOptionDto("att_biz", "Phòng Kinh doanh B2B & Đối tác (BIZ)"),
-                            new AgentQuestionOptionDto("att_fin", "Phòng Tài chính - Kế toán (FIN)"),
-                            new AgentQuestionOptionDto("att_mkt", "Phòng Tiếp thị & Truyền thông Thương hiệu (MKT)"),
-                            new AgentQuestionOptionDto("att_ops", "Phòng Dịch vụ Khách hàng & Vận hành (OPS)")
-                        ],
+                        attendeeOptions,
                         Required: true,
                         Placeholder: "Nhập thêm đại biểu / đơn vị khác..."),
                     new AgentQuestionDto(
@@ -827,6 +1052,26 @@ public sealed class RobotChatService(
 
         if (lower.Contains("tuyển") || lower.Contains("nhân sự") || lower.Contains("hiring"))
         {
+            List<AgentQuestionOptionDto> recDeptOptions;
+            if (depts is { Count: > 0 })
+            {
+                recDeptOptions = depts.Select(d => new AgentQuestionOptionDto(
+                    $"d_{d.Code.ToLowerInvariant()}",
+                    d.Name,
+                    IsDefault: d.Code.Equals("TECH", StringComparison.OrdinalIgnoreCase) || d.Code.Equals("IT", StringComparison.OrdinalIgnoreCase)
+                )).ToList();
+            }
+            else
+            {
+                recDeptOptions =
+                [
+                    new AgentQuestionOptionDto("d_it", "Phòng Công nghệ Thông tin (IT)", true),
+                    new AgentQuestionOptionDto("d_mkt", "Phòng Marketing & Kinh doanh"),
+                    new AgentQuestionOptionDto("d_hr", "Phòng Hành chính - Nhân sự"),
+                    new AgentQuestionOptionDto("d_fin", "Phòng Kế toán - Tài chính")
+                ];
+            }
+
             return new AgentClarificationFormDto(
                 "form_recruitment",
                 "Tuyển dụng & Đào tạo nhân sự",
@@ -849,12 +1094,7 @@ public sealed class RobotChatService(
                         "q_rec_dept",
                         "Phòng ban tiếp nhận nhân sự",
                         "single_choice",
-                        [
-                            new AgentQuestionOptionDto("d_it", "Phòng Công nghệ Thông tin (IT)", true),
-                            new AgentQuestionOptionDto("d_mkt", "Phòng Marketing & Kinh doanh"),
-                            new AgentQuestionOptionDto("d_hr", "Phòng Hành chính - Nhân sự"),
-                            new AgentQuestionOptionDto("d_fin", "Phòng Kế toán - Tài chính")
-                        ],
+                        recDeptOptions,
                         Required: true),
                     new AgentQuestionDto(
                         "q_rec_deadline",
@@ -911,6 +1151,26 @@ public sealed class RobotChatService(
                 ]);
         }
 
+        List<AgentQuestionOptionDto> genDeptOptions;
+        if (depts is { Count: > 0 })
+        {
+            genDeptOptions = depts.Select(d => new AgentQuestionOptionDto(
+                $"dep_{d.Code.ToLowerInvariant()}",
+                d.Name,
+                IsDefault: d.Code.Equals("OPS", StringComparison.OrdinalIgnoreCase) || d.Code.Equals("ADMIN", StringComparison.OrdinalIgnoreCase)
+            )).ToList();
+        }
+        else
+        {
+            genDeptOptions =
+            [
+                new AgentQuestionOptionDto("dep_ops", "Phòng Kế hoạch & Điều hành", true),
+                new AgentQuestionOptionDto("dep_hr", "Phòng Hành chính - Nhân sự"),
+                new AgentQuestionOptionDto("dep_it", "Phòng Công nghệ Thông tin"),
+                new AgentQuestionOptionDto("dep_fin", "Phòng Tài chính - Kế toán")
+            ];
+        }
+
         return new AgentClarificationFormDto(
             "form_general",
             "Lập kế hoạch vận hành & Giải quyết công việc",
@@ -931,12 +1191,7 @@ public sealed class RobotChatService(
                     "q_gen_dept",
                     "Phòng ban chủ trì thực hiện",
                     "single_choice",
-                    [
-                        new AgentQuestionOptionDto("dep_ops", "Phòng Kế hoạch & Điều hành", true),
-                        new AgentQuestionOptionDto("dep_hr", "Phòng Hành chính - Nhân sự"),
-                        new AgentQuestionOptionDto("dep_it", "Phòng Công nghệ Thông tin"),
-                        new AgentQuestionOptionDto("dep_fin", "Phòng Tài chính - Kế toán")
-                    ],
+                    genDeptOptions,
                     Required: true),
                 new AgentQuestionDto(
                     "q_gen_timeline",
@@ -957,10 +1212,11 @@ public sealed class RobotChatService(
         bool isMarketing,
         bool isRecruitment,
         bool isTech,
-        bool isIncident)
+        bool isIncident,
+        AiTenantContextData? tenantContextData = null)
     {
         var csb = new StringBuilder();
-        csb.AppendLine("🤖 **Chào bạn! Tôi là Trợ lý Doanh nghiệp AI Agent BizFlow.**\n");
+        csb.AppendLine("Chào bạn! Tôi là Trợ lý Doanh nghiệp AI Agent BizFlow.\n");
 
         string topicTitle;
         string riskPerspective;
@@ -974,66 +1230,66 @@ public sealed class RobotChatService(
         {
             topicTitle = "chuẩn bị và điều phối cuộc họp / sự kiện";
             riskPerspective = "Nếu tổ chức họp mà chưa rõ thời gian chính xác, phòng họp, thành phần tham dự hoặc tài liệu cần thiết, cuộc họp dễ bị trễ giờ, thiếu thiết bị hỗ trợ hoặc không đạt mục tiêu thảo luận.";
-            questions.Add("1. ⏰ **Thời gian & Thời lượng**: Cuộc họp bắt đầu lúc mấy giờ và dự kiến kéo dài bao lâu?");
-            questions.Add("2. 📍 **Địa điểm / Hình thức**: Họp trực tiếp tại văn phòng (phòng họp nào) hay họp trực tuyến (Zoom / Google Meet / Teams)?");
-            questions.Add("3. 👥 **Thành phần tham dự**: Cuộc họp gồm những ai (Ban Giám đốc, các Trưởng phòng nào, hoặc có đối tác bên ngoài)?");
-            questions.Add("4. 📋 **Nội dung & Thiết bị**: Chủ đề cuộc họp là gì? Cần chuẩn bị máy chiếu, micro, nước uống, teabreak hoặc in ấn tài liệu trước không?");
+            questions.Add("1. Thời gian & Thời lượng: Cuộc họp bắt đầu lúc mấy giờ và dự kiến kéo dài bao lâu?");
+            questions.Add("2. Địa điểm / Hình thức: Họp trực tiếp tại văn phòng (phòng họp nào) hay họp trực tuyến (Zoom / Google Meet / Teams)?");
+            questions.Add("3. Thành phần tham dự: Cuộc họp gồm những ai (Ban Giám đốc, các Trưởng phòng nào, hoặc có đối tác bên ngoài)?");
+            questions.Add("4. Nội dung & Thiết bị: Chủ đề cuộc họp là gì? Cần chuẩn bị máy chiếu, micro, nước uống, teabreak hoặc in ấn tài liệu trước không?");
             sampleResponse = "Họp lúc 9h sáng mai tại phòng họp lớn, gồm Ban Giám đốc và IT, HR, cần chuẩn bị máy chiếu và tài liệu in";
             actionCardTitle = "Mẫu: Họp 9h sáng mai tại phòng họp Lớn (BGĐ, IT, HR)";
             actionType = "QUICK_FILL_MEETING";
-            form = GetFormDefinition("form_meeting", message);
+            form = GetFormDefinition("form_meeting", message, tenantContextData);
         }
         else if (isMarketing)
         {
             topicTitle = "chiến dịch Marketing & Phát triển kinh doanh";
             riskPerspective = "Nếu triển khai chiến dịch mà chưa rõ mục tiêu KPI, đối tượng khách hàng mục tiêu và ngân sách dự kiến, các phòng ban (Marketing, Design, Sales) sẽ thiếu đồng bộ, dẫn đến lãng phí chi phí quảng cáo và hiệu quả tiếp cận thấp.";
-            questions.Add("1. 🎯 **Mục tiêu & KPI cụ thể**: Mục tiêu chính là gì (tăng nhận diện thương hiệu, thu về số lượng khách hàng tiềm năng hay doanh số bán lẻ)?");
-            questions.Add("2. 👥 **Đối tượng khách hàng & Kênh tiếp cận**: Phân khúc khách hàng mục tiêu là ai và triển khai trên kênh nào (Facebook/Google Ads, TikTok, Email, Hội thảo)?");
-            questions.Add("3. 💰 **Ngân sách & Nguồn lực**: Ngân sách dự kiến là bao nhiêu? Cần các phòng ban nào phối hợp (Design làm visual, Kỹ thuật làm landing page, Sales tư vấn)?");
-            questions.Add("4. ⏰ **Tiến độ & Hạn chót ra mắt**: Chiến dịch bắt đầu khi nào và dự kiến chạy trong thời gian bao lâu?");
+            questions.Add("1. Mục tiêu & KPI cụ thể: Mục tiêu chính là gì (tăng nhận diện thương hiệu, thu về số lượng khách hàng tiềm năng hay doanh số bán lẻ)?");
+            questions.Add("2. Đối tượng khách hàng & Kênh tiếp cận: Phân khúc khách hàng mục tiêu là ai và triển khai trên kênh nào (Facebook/Google Ads, TikTok, Email, Hội thảo)?");
+            questions.Add("3. Ngân sách & Nguồn lực: Ngân sách dự kiến là bao nhiêu? Cần các phòng ban nào phối hợp (Design làm visual, Kỹ thuật làm landing page, Sales tư vấn)?");
+            questions.Add("4. Tiến độ & Hạn chót ra mắt: Chiến dịch bắt đầu khi nào và dự kiến chạy trong thời gian bao lâu?");
             sampleResponse = "Chiến dịch ra mắt sản phẩm mới vào đầu tháng tới, mục tiêu đạt 500 khách hàng tiềm năng, ngân sách 30 triệu, phối hợp giữa Marketing, Design và Sales";
             actionCardTitle = "Mẫu: Chiến dịch ra mắt sản phẩm mới (500 lead, 30tr, MKT + Sales)";
-            form = GetFormDefinition("form_marketing", message);
+            form = GetFormDefinition("form_marketing", message, tenantContextData);
         }
         else if (isRecruitment)
         {
             topicTitle = "tuyển dụng & Đào tạo phát triển nhân sự";
             riskPerspective = "Nếu bắt đầu tuyển dụng mà chưa có bản mô tả công việc (JD), số lượng chỉ tiêu và thời hạn onboarding rõ ràng, quy trình tuyển chọn sẽ bị kéo dài, gây quá tải cho bộ phận nhân sự và không đáp ứng kịp tiến độ kinh doanh.";
-            questions.Add("1. 💼 **Vị trí công việc & Số lượng chỉ tiêu**: Cần tuyển / đào tạo những vị trí nào, cấp bậc gì (Junior, Senior, Lead) và số lượng bao nhiêu người?");
-            questions.Add("2. 🎓 **Yêu cầu kỹ năng cốt lõi & Mức lương**: Các tiêu chuẩn bắt buộc về kinh nghiệm, kỹ năng chuyên môn và dải ngân sách lương dự kiến?");
-            questions.Add("3. ⏰ **Thời hạn nhân sự đi làm (Onboarding Deadline)**: Khi nào nhân sự cần chính thức bắt đầu công việc tại công ty?");
-            questions.Add("4. 🏢 **Phòng ban tiếp nhận & Người phỏng vấn**: Bộ phận nào trực tiếp sử dụng nhân sự và phụ trách đánh giá chuyên môn?");
+            questions.Add("1. Vị trí công việc & Số lượng chỉ tiêu: Cần tuyển / đào tạo những vị trí nào, cấp bậc gì (Junior, Senior, Lead) và số lượng bao nhiêu người?");
+            questions.Add("2. Yêu cầu kỹ năng cốt lõi & Mức lương: Các tiêu chuẩn bắt buộc về kinh nghiệm, kỹ năng chuyên môn và dải ngân sách lương dự kiến?");
+            questions.Add("3. Thời hạn nhân sự đi làm (Onboarding Deadline): Khi nào nhân sự cần chính thức bắt đầu công việc tại công ty?");
+            questions.Add("4. Phòng ban tiếp nhận & Người phỏng vấn: Bộ phận nào trực tiếp sử dụng nhân sự và phụ trách đánh giá chuyên môn?");
             sampleResponse = "Tuyển 2 Senior Developer cho phòng Kỹ thuật trước ngày 15 tháng tới, yêu cầu 3 năm kinh nghiệm, ngân sách lương 25-30 triệu";
             actionCardTitle = "Mẫu: Tuyển 2 Senior Developer (Phòng Kỹ thuật, hạn 15 tháng sau)";
-            form = GetFormDefinition("form_recruitment", message);
+            form = GetFormDefinition("form_recruitment", message, tenantContextData);
         }
         else if (isTech)
         {
             topicTitle = "triển khai Kỹ thuật & Hạ tầng CNTT";
             riskPerspective = "Nếu nâng cấp hệ thống kỹ thuật mà chưa có kế hoạch thời gian gián đoạn (Downtime) và phương án dự phòng Rollback, hệ thống có nguy cơ gián đoạn hoạt động, ảnh hưởng đến dữ liệu và vận hành của toàn công ty.";
-            questions.Add("1. 💻 **Phạm vi kỹ thuật & Mục tiêu nâng cấp**: Những hệ thống/máy chủ/module nào cần triển khai hoặc nâng cấp? Mục tiêu kỹ thuật cụ thể là gì?");
-            questions.Add("2. ⚠️ **Khung giờ bảo trì & Dự kiến Downtime**: Sẽ thực hiện vào thời gian nào (ngoài giờ hành chính, cuối tuần)? Dự kiến gián đoạn bao lâu?");
-            questions.Add("3. 🔄 **Phương án sao lưu & Kế hoạch Rollback**: Đã có bản backup dữ liệu an toàn chưa và quy trình phục hồi khẩn cấp nếu gặp sự cố ra sao?");
-            questions.Add("4. 👥 **Bộ phận chịu trách nhiệm & Kiểm thử (QA)**: Đội ngũ nào triển khai chính và ai phụ trách kiểm thử nghiệm thu trước khi đưa vào vận hành?");
+            questions.Add("1. Phạm vi kỹ thuật & Mục tiêu nâng cấp: Những hệ thống/máy chủ/module nào cần triển khai hoặc nâng cấp? Mục tiêu kỹ thuật cụ thể là gì?");
+            questions.Add("2. Khung giờ bảo trì & Dự kiến Downtime: Sẽ thực hiện vào thời gian nào (ngoài giờ hành chính, cuối tuần)? Dự kiến gián đoạn bao lâu?");
+            questions.Add("3. Phương án sao lưu & Kế hoạch Rollback: Đã có bản backup dữ liệu an toàn chưa và quy trình phục hồi khẩn cấp nếu gặp sự cố ra sao?");
+            questions.Add("4. Bộ phận chịu trách nhiệm & Kiểm thử (QA): Đội ngũ nào triển khai chính và ai phụ trách kiểm thử nghiệm thu trước khi đưa vào vận hành?");
             sampleResponse = "Nâng cấp máy chủ vào 22h tối thứ 7, dự kiến downtime 1 tiếng, đội Kỹ thuật phụ trách, đã có bản backup toàn bộ cơ sở dữ liệu";
             actionCardTitle = "Mẫu: Nâng cấp máy chủ 22h tối thứ 7 (Downtime 1h, có backup)";
-            form = GetFormDefinition("form_tech", message);
+            form = GetFormDefinition("form_tech", message, tenantContextData);
         }
         else
         {
             topicTitle = "lập kế hoạch vận hành & Giải quyết công việc";
             riskPerspective = "Để một kế hoạch chuyển hóa thành các đầu việc khả thi cho các phòng ban, cần xác định rõ đầu ra mong đợi, tiến độ hoàn thành và nguồn lực phụ trách chính, tránh tình trạng đùn đẩy trách nhiệm.";
-            questions.Add("1. 🎯 **Mục tiêu cốt lõi & Kết quả đầu ra (Deliverables)**: Sau khi thực hiện xong, kết quả cụ thể đo lường được là gì?");
-            questions.Add("2. ⏰ **Tiến độ hoàn thành & Các mốc quan trọng (Milestones)**: Hạn chót hoàn thành là khi nào? Có các giai đoạn trung gian nào cần bàn giao?");
-            questions.Add("3. 👥 **Phòng ban chủ trì & Bộ phận phối hợp**: Ai/Phòng ban nào chịu trách nhiệm chính và cần những bộ phận nào phối hợp hỗ trợ?");
-            questions.Add("4. 📊 **Nguồn lực, Ngân sách & Ràng buộc đặc biệt**: Dự kiến cần nguồn lực hoặc chi phí bao nhiêu? Có quy định hoặc tiêu chuẩn bắt buộc nào cần tuân thủ?");
+            questions.Add("1. Mục tiêu cốt lõi & Kết quả đầu ra (Deliverables): Sau khi thực hiện xong, kết quả cụ thể đo lường được là gì?");
+            questions.Add("2. Tiến độ hoàn thành & Các mốc quan trọng (Milestones): Hạn chót hoàn thành là khi nào? Có các giai đoạn trung gian nào cần bàn giao?");
+            questions.Add("3. Phòng ban chủ trì & Bộ phận phối hợp: Ai/Phòng ban nào chịu trách nhiệm chính và cần những bộ phận nào phối hợp hỗ trợ?");
+            questions.Add("4. Nguồn lực, Ngân sách & Ràng buộc đặc biệt: Dự kiến cần nguồn lực hoặc chi phí bao nhiêu? Có quy định hoặc tiêu chuẩn bắt buộc nào cần tuân thủ?");
             sampleResponse = "Kế hoạch tối ưu chi phí vận hành văn phòng trong quý tới, mục tiêu giảm 15%, do phòng Hành chính chủ trì phối hợp cùng Kế toán";
             actionCardTitle = "Mẫu: Kế hoạch tối ưu chi phí quý tới (giảm 15%, Hành chính + Kế toán)";
-            form = GetFormDefinition("form_general", message);
+            form = GetFormDefinition("form_general", message, tenantContextData);
         }
 
-        csb.AppendLine($"Tôi đã tiếp nhận yêu cầu về **{topicTitle}** của bạn.\n");
-        csb.AppendLine($"⚖️ **Góc nhìn Phản biện & Đánh giá Rủi ro:**\n> *{riskPerspective}*\n");
+        csb.AppendLine($"Tôi đã tiếp nhận yêu cầu về {topicTitle} của bạn.\n");
+        csb.AppendLine($"Góc nhìn Phản biện & Đánh giá Rủi ro:\n{riskPerspective}\n");
         csb.AppendLine("Để phân rã công việc chính xác và giao đúng phòng ban chuyên trách mà không tạo nhầm các đầu việc thừa, bạn vui lòng làm rõ giúp tôi các thông tin sau:\n");
 
         foreach (var q in questions)
@@ -1042,11 +1298,11 @@ public sealed class RobotChatService(
         }
 
         csb.AppendLine();
-        csb.AppendLine("💡 *Gợi ý trả lời nhanh:*");
-        csb.AppendLine($"> *\"{sampleResponse}\"*\n");
-        csb.AppendLine("👉 Bạn có thể tương tác trực tiếp với Bảng câu hỏi khảo sát bên dưới hoặc phản hồi bằng tin nhắn để tôi phân tích và bóc tách nhiệm vụ ngay!");
+        csb.AppendLine("Gợi ý trả lời nhanh:");
+        csb.AppendLine($"\"{sampleResponse}\"\n");
+        csb.AppendLine("Bạn có thể tương tác trực tiếp với Bảng câu hỏi khảo sát bên dưới hoặc phản hồi bằng tin nhắn để tôi phân tích và bóc tách nhiệm vụ ngay.");
 
-        var thought = $"🤔 **Suy nghĩ của Trợ lý AI Agent:** Yêu cầu \"{message}\" mang tính chất khởi đầu nhưng chưa xác định các biến số vận hành quan trọng (thời gian, địa điểm, thành phần, trang thiết bị). Cần hiển thị bảng câu hỏi tương tác để người dùng làm rõ trước khi quyết định phân rã nhiệm vụ.";
+        var thought = $"Suy nghĩ của Trợ lý AI Agent: Yêu cầu \"{message}\" mang tính chất khởi đầu nhưng chưa xác định các biến số vận hành quan trọng (thời gian, địa điểm, thành phần, trang thiết bị). Cần hiển thị bảng câu hỏi tương tác để người dùng làm rõ trước khi quyết định phân rã nhiệm vụ.";
 
         return new RobotChatResponse(
             csb.ToString().TrimEnd(),
@@ -1062,6 +1318,315 @@ public sealed class RobotChatService(
             AgentThought: thought);
     }
 
+    private async Task<IReadOnlyList<AgentQuestionOptionDto>> EnrichOptionsWithLearnedChoicesAsync(
+        string semanticKey,
+        IReadOnlyList<AgentQuestionOptionDto>? baseOptions,
+        CancellationToken cancellationToken)
+    {
+        var result = new List<AgentQuestionOptionDto>();
+        if (learnedChoiceStore != null && tenantContext.TenantId.HasValue)
+        {
+            try
+            {
+                var learned = await learnedChoiceStore.GetRelevantChoicesAsync(
+                    tenantContext.TenantId.Value,
+                    tenantContext.UserId,
+                    semanticKey,
+                    limit: 3,
+                    cancellationToken);
+
+                foreach (var l in learned)
+                {
+                    var exists = baseOptions?.Any(b => b.Label.Contains(l.ChoiceLabel, StringComparison.OrdinalIgnoreCase)) ?? false;
+                    if (!exists)
+                    {
+                        result.Add(new AgentQuestionOptionDto("learned_" + l.Id.ToString("N")[..8], $"{l.ChoiceLabel} (Thường dùng)", IsDefault: true));
+                    }
+                }
+            }
+            catch { }
+        }
+
+        if (baseOptions != null)
+        {
+            bool hasLearnedDefault = result.Any(r => r.IsDefault);
+            foreach (var opt in baseOptions)
+            {
+                if (hasLearnedDefault && opt.IsDefault)
+                {
+                    result.Add(opt with { IsDefault = false });
+                }
+                else
+                {
+                    result.Add(opt);
+                }
+            }
+        }
+
+        return result;
+    }
+
+    private async Task<AgentClarificationFormDto> GetEnrichedFormDefinitionAsync(
+        string formId,
+        string topic,
+        AiTenantContextData? tenantContextData = null,
+        CancellationToken cancellationToken = default)
+    {
+        var baseForm = GetFormDefinition(formId, topic, tenantContextData);
+        if (learnedChoiceStore == null || !tenantContext.TenantId.HasValue)
+        {
+            return baseForm;
+        }
+
+        var enrichedQuestions = new List<AgentQuestionDto>();
+        foreach (var q in baseForm.Questions)
+        {
+            var semanticKey = q.Id.ToLowerInvariant().Replace("q_", "");
+            var enrichedOptions = await EnrichOptionsWithLearnedChoicesAsync(semanticKey, q.Options, cancellationToken);
+            enrichedQuestions.Add(q with { Options = enrichedOptions, AllowCustomInput = true });
+        }
+
+        return baseForm with { Questions = enrichedQuestions };
+    }
+
+    private async Task<RobotChatResponse> BuildAgentClarificationResponseAsync(
+        string message,
+        bool isMeeting,
+        bool isMarketing,
+        bool isRecruitment,
+        bool isTech,
+        bool isIncident,
+        AiTenantContextData? tenantContextData = null,
+        string? conversationId = null,
+        CancellationToken cancellationToken = default)
+    {
+        var baseResp = BuildAgentClarificationResponse(message, isMeeting, isMarketing, isRecruitment, isTech, isIncident, tenantContextData);
+        if (baseResp.Questionnaire == null) return baseResp;
+
+        var enrichedForm = await GetEnrichedFormDefinitionAsync(
+            baseResp.Questionnaire.FormId,
+            message,
+            tenantContextData,
+            cancellationToken);
+
+        if (conversationStateManager != null && tenantContext.TenantId.HasValue && tenantContext.UserId.HasValue)
+        {
+            var convId = conversationId ?? "default";
+            var state = new ConversationState(
+                convId,
+                tenantContext.TenantId.Value,
+                tenantContext.UserId.Value,
+                enrichedForm.Topic,
+                new(StringComparer.OrdinalIgnoreCase),
+                enrichedForm.Questions.Select(q => q.Id).ToList(),
+                enrichedForm,
+                [],
+                clock.GetUtcNow());
+            _ = conversationStateManager.SaveStateAsync(state, cancellationToken);
+        }
+
+        return baseResp with { Questionnaire = enrichedForm };
+    }
+
+    private async Task<RobotChatResponse?> TryHandleLlmAgentOrchestrationAsync(
+        RobotChatCommand command,
+        AiTenantContextData? tenantContextData,
+        CancellationToken cancellationToken)
+    {
+        if (modelClient == null || !modelClient.IsConfigured) return null;
+
+        var message = command.Message?.Trim() ?? "";
+        if (string.IsNullOrWhiteSpace(message)) return null;
+
+        var systemInstructions = """
+        Bạn là Trợ lý Doanh nghiệp AI Agent BizFlow (Enterprise Multi-Agent Orchestrator).
+        Nhiệm vụ của bạn là phân tích thông điệp của người dùng về kế hoạch công việc, cuộc họp, dự án, hoặc các sáng kiến vận hành liên phòng ban.
+        1. Phân loại ý định (intent):
+           - "STATUS_QUERY": người dùng chỉ tra cứu dữ liệu (deadline hôm nay, quá hạn, việc của tôi). Khi đó trả về intent: "STATUS_QUERY", isComplete: true.
+           - "WORK_PLAN": lập kế hoạch công việc, dự án, chiến dịch, tuyển dụng, nâng cấp hệ thống, sự kiện.
+           - "MEETING": tổ chức hoặc chuẩn bị cuộc họp.
+           - "GENERAL": hội thoại chung hoặc thắc mắc hướng dẫn.
+        2. Trích xuất thông tin (extractedSlots):
+           - topic, timeline, department, deliverables, attendees, budget, priority, v.v.
+        3. Đánh giá tính đầy đủ (isComplete):
+           - Đầy đủ nếu các yếu tố quan trọng để giao việc hoặc điều phối đã rõ ràng.
+           - Thiếu (isComplete: false) nếu còn mơ hồ, thiếu thời gian, thiếu phòng ban chủ trì, hoặc thiếu phạm vi.
+        4. Nếu thiếu thông tin (isComplete: false):
+           - Tạo bảng câu hỏi làm rõ (dynamicQuestions) với 2-4 câu hỏi trọng tâm.
+           - Hỗ trợ các kiểu: "single_choice", "multiple_choice", "text".
+           - Mỗi câu hỏi có các lựa chọn gợi ý thực tế và allowCustomInput: true.
+           - Nêu rõ rủi ro nếu không làm rõ (riskAnalysis) và suy nghĩ của Agent (agentThought).
+
+        Định dạng JSON bắt buộc:
+        {
+          "intent": "WORK_PLAN | MEETING | STATUS_QUERY | GENERAL",
+          "isComplete": boolean,
+          "topic": "string",
+          "extractedSlots": { "key": "value" },
+          "missingSlots": ["string"],
+          "riskAnalysis": "string",
+          "agentThought": "string",
+          "dynamicQuestions": [
+            {
+              "id": "string",
+              "title": "string",
+              "type": "single_choice | multiple_choice | text",
+              "options": [ { "id": "string", "label": "string", "isDefault": boolean } ],
+              "required": boolean,
+              "placeholder": "string",
+              "allowCustomInput": boolean
+            }
+          ]
+        }
+        """;
+
+        var promptBuilder = new StringBuilder();
+        promptBuilder.AppendLine($"Yêu cầu của người dùng: \"{message}\"");
+
+        if (command.History is { Count: > 0 })
+        {
+            promptBuilder.AppendLine("Lịch sử hội thoại gần nhất:");
+            foreach (var h in command.History.TakeLast(4))
+            {
+                promptBuilder.AppendLine($"- {h.Sender}: {h.Text}");
+            }
+        }
+
+        if (tenantContextData?.Departments is { Count: > 0 })
+        {
+            promptBuilder.AppendLine($"Các phòng ban hiện có trong công ty: {string.Join(", ", tenantContextData.Departments.Select(d => $"{d.Name} ({d.Code})"))}");
+        }
+
+        try
+        {
+            var llmResponse = await modelClient.CompleteAsync(promptBuilder.ToString(), systemInstructions, cancellationToken);
+            var content = llmResponse.Content?.Trim();
+            if (string.IsNullOrWhiteSpace(content)) return null;
+
+            if (content.StartsWith("```json", StringComparison.OrdinalIgnoreCase))
+            {
+                content = content[7..];
+                if (content.EndsWith("```")) content = content[..^3];
+            }
+            else if (content.StartsWith("```"))
+            {
+                content = content[3..];
+                if (content.EndsWith("```")) content = content[..^3];
+            }
+
+            using var doc = JsonDocument.Parse(content.Trim());
+            var root = doc.RootElement;
+
+            var intent = root.TryGetProperty("intent", out var ip) ? ip.GetString() : "WORK_PLAN";
+            if (string.Equals(intent, "STATUS_QUERY", StringComparison.OrdinalIgnoreCase))
+            {
+                return null;
+            }
+
+            var isComplete = root.TryGetProperty("isComplete", out var cp) && cp.GetBoolean();
+            var topic = root.TryGetProperty("topic", out var tp) ? tp.GetString() ?? message : message;
+            var riskAnalysis = root.TryGetProperty("riskAnalysis", out var rp) ? rp.GetString() : null;
+            var agentThought = root.TryGetProperty("agentThought", out var atp) ? atp.GetString() : null;
+
+            if (!isComplete && root.TryGetProperty("dynamicQuestions", out var qArray) && qArray.ValueKind == JsonValueKind.Array)
+            {
+                var questions = new List<AgentQuestionDto>();
+                foreach (var qElem in qArray.EnumerateArray())
+                {
+                    var qId = qElem.TryGetProperty("id", out var idProp) ? idProp.GetString() ?? "q_" + Guid.NewGuid().ToString("N")[..6] : "q_" + Guid.NewGuid().ToString("N")[..6];
+                    var qTitle = qElem.TryGetProperty("title", out var titleProp) ? titleProp.GetString() ?? "" : "";
+                    var qType = qElem.TryGetProperty("type", out var typeProp) ? typeProp.GetString() ?? "single_choice" : "single_choice";
+                    var qRequired = !qElem.TryGetProperty("required", out var reqProp) || reqProp.GetBoolean();
+                    var qPlaceholder = qElem.TryGetProperty("placeholder", out var plProp) ? plProp.GetString() : null;
+                    var qCustom = !qElem.TryGetProperty("allowCustomInput", out var custProp) || custProp.GetBoolean();
+
+                    var options = new List<AgentQuestionOptionDto>();
+                    if (qElem.TryGetProperty("options", out var optArray) && optArray.ValueKind == JsonValueKind.Array)
+                    {
+                        foreach (var optElem in optArray.EnumerateArray())
+                        {
+                            var optId = optElem.TryGetProperty("id", out var oid) ? oid.GetString() ?? Guid.NewGuid().ToString("N")[..4] : Guid.NewGuid().ToString("N")[..4];
+                            var optLabel = optElem.TryGetProperty("label", out var olbl) ? olbl.GetString() ?? "" : "";
+                            var optDef = optElem.TryGetProperty("isDefault", out var odef) && odef.GetBoolean();
+                            if (!string.IsNullOrWhiteSpace(optLabel))
+                            {
+                                options.Add(new AgentQuestionOptionDto(optId, optLabel, optDef));
+                            }
+                        }
+                    }
+
+                    var semanticKey = qId.ToLowerInvariant().Replace("q_", "");
+                    options = (await EnrichOptionsWithLearnedChoicesAsync(semanticKey, options, cancellationToken)).ToList();
+
+                    questions.Add(new AgentQuestionDto(
+                        qId,
+                        qTitle,
+                        qType,
+                        options,
+                        qRequired,
+                        qPlaceholder,
+                        null,
+                        qCustom));
+                }
+
+                if (questions.Count > 0)
+                {
+                    var formId = "dynamic_" + Guid.NewGuid().ToString("N")[..8];
+                    var clarificationForm = new AgentClarificationFormDto(
+                        formId,
+                        topic,
+                        "Để phân định trách nhiệm rõ ràng và giao đúng phòng ban chuyên trách, vui lòng làm rõ các điểm sau:",
+                        riskAnalysis,
+                        questions,
+                        "Xác nhận & Tiếp tục phân tích",
+                        "Sử dụng thiết lập khuyến nghị");
+
+                    if (conversationStateManager != null && tenantContext.TenantId.HasValue && tenantContext.UserId.HasValue)
+                    {
+                        var convId = command.ConversationId ?? "default";
+                        var state = new ConversationState(
+                            convId,
+                            tenantContext.TenantId.Value,
+                            tenantContext.UserId.Value,
+                            topic,
+                            new(StringComparer.OrdinalIgnoreCase),
+                            questions.Select(q => q.Id).ToList(),
+                            clarificationForm,
+                            command.History != null ? new List<RobotChatMessageDto>(command.History) : [],
+                            clock.GetUtcNow());
+                        _ = conversationStateManager.SaveStateAsync(state, cancellationToken);
+                    }
+
+                    var textSummary = $"Chào bạn! Tôi đã phân tích yêu cầu \"{message}\".\n" +
+                        "Để đảm bảo kế hoạch vận hành chính xác và tránh rủi ro thiếu sót, vui lòng trả lời một số câu hỏi làm rõ bên dưới:";
+
+                    return new RobotChatResponse(
+                        textSummary,
+                        "AGENT_CLARIFICATION_REQUIRED",
+                        [new RobotActionCard("PREFILL_PROMPT", "Làm rõ yêu cầu", null, new { template = "Hoàn tất thông tin cần làm rõ" })],
+                        Questionnaire: clarificationForm,
+                        AgentThought: agentThought);
+                }
+            }
+
+            if (isComplete)
+            {
+                return await ExecuteAgentDecompositionAsync(
+                    message,
+                    originalTitle: topic,
+                    userClarifiedDetails: null,
+                    agentThought: agentThought,
+                    cancellationToken: cancellationToken);
+            }
+        }
+        catch
+        {
+            // Fall back to deterministic rule-based dynamic synthesis
+        }
+
+        return null;
+    }
+
     private async Task<RobotChatResponse> ExecuteAgentDecompositionAsync(
         string prompt,
         string originalTitle,
@@ -1074,43 +1639,42 @@ public sealed class RobotChatService(
             cancellationToken);
 
         var sb = new StringBuilder();
-        sb.AppendLine("🤖 **Trợ lý AI Agent đã tổng hợp đầy đủ thông tin và lập kế hoạch phân rã công việc đa phòng ban:**\n");
+        sb.AppendLine("Trợ lý AI Agent đã tổng hợp đầy đủ thông tin và lập kế hoạch phân rã công việc đa phòng ban:\n");
         if (!string.IsNullOrWhiteSpace(userClarifiedDetails))
         {
-            sb.AppendLine($"📌 **Thông tin đã làm rõ:** {userClarifiedDetails}\n");
+            sb.AppendLine($"Thông tin đã làm rõ: {userClarifiedDetails}\n");
         }
 
-        sb.AppendLine($"🌿 **Đề xuất phân công tới các phòng ban chuyên trách ({preview.Proposals.Count} nhánh nhiệm vụ):**");
+        sb.AppendLine($"Đề xuất phân công tới các phòng ban chuyên trách ({preview.Proposals.Count} nhánh nhiệm vụ):");
         for (var i = 0; i < preview.Proposals.Count; i++)
         {
             var p = preview.Proposals[i];
             var typeLabel = p.Type == "SupportRequest" ? "Yêu cầu hỗ trợ" : "Giao việc";
-            sb.AppendLine($"{i + 1}. **{p.Title}** [{typeLabel}] - Mức ưu tiên: {p.Priority}");
+            sb.AppendLine($"{i + 1}. {p.Title} [{typeLabel}] - Mức ưu tiên: {p.Priority}");
             if (!string.IsNullOrWhiteSpace(p.DepartmentName))
             {
-                sb.AppendLine($"   • Phòng ban: {p.DepartmentName}");
+                sb.AppendLine($"   - Phòng ban: {p.DepartmentName}");
             }
             if (p.ChecklistItems is { Count: > 0 })
             {
-                sb.AppendLine($"   • Các bước: {string.Join(", ", p.ChecklistItems)}");
+                sb.AppendLine($"   - Các bước: {string.Join(", ", p.ChecklistItems)}");
             }
         }
 
         sb.AppendLine();
-        sb.AppendLine("👉 Vui lòng mở giao diện Phân rã AI hoặc chuyển sang tab Nhánh tác vụ để kiểm tra, chỉnh sửa inline và xác nhận tạo việc.");
+        sb.AppendLine("Vui lòng mở giao diện Phân rã AI hoặc chuyển sang tab Nhánh tác vụ để kiểm tra, chỉnh sửa inline và xác nhận tạo việc.");
 
-        var finalThought = agentThought ?? "🧠 **Phân tích của AI Agent:** Đã tổng hợp đầy đủ thông tin xác thực từ người dùng và phân rã các nhánh nhiệm vụ theo đúng thẩm quyền và chuyên môn từng bộ phận.";
+        var finalThought = agentThought ?? "Phân tích của AI Agent: Đã tổng hợp đầy đủ thông tin xác thực từ người dùng và phân rã các nhánh nhiệm vụ theo đúng thẩm quyền và chuyên môn từng bộ phận.";
 
         return new RobotChatResponse(
             sb.ToString().TrimEnd(),
             "/task",
             [
                 new RobotActionCard("OPEN_DECOMPOSITION", "Xem & Xác nhận tạo việc", "/tasks/ai-decomposition", new { prompt, proposals = preview.Proposals }),
-                new RobotActionCard("VIEW_BRANCHES", $"🌿 Xem các nhánh phân rã ({preview.Proposals.Count} nhánh)", null, new { proposals = preview.Proposals })
+                new RobotActionCard("VIEW_BRANCHES", $"Xem các nhánh phân rã ({preview.Proposals.Count} nhánh)", null, new { proposals = preview.Proposals })
             ],
             AgentThought: finalThought);
     }
-
     private async Task<RobotChatResponse> HandleNaturalLanguageQueryAsync(RobotChatCommand command, CancellationToken cancellationToken)
     {
         var message = command.Message;
@@ -1159,15 +1723,15 @@ public sealed class RobotChatService(
         {
             if (dueTodayTasks.Count == 0)
             {
-                return new RobotChatResponse("📅 Hôm nay bạn không có deadline nào cần hoàn thành. Chúc bạn một ngày làm việc hiệu quả!", "QUERY_DEADLINE");
+                return new RobotChatResponse("Hôm nay bạn không có deadline nào cần hoàn thành. Chúc bạn một ngày làm việc hiệu quả!", "QUERY_DEADLINE");
             }
 
             var sb = new StringBuilder();
-            sb.AppendLine($"📅 Hôm nay bạn có **{dueTodayTasks.Count}** công việc đến hạn:");
+            sb.AppendLine($"Hôm nay bạn có {dueTodayTasks.Count} công việc đến hạn:");
             foreach (var t in dueTodayTasks)
             {
                 var timeStr = t.Deadline?.ToLocalTime().ToString("HH:mm") ?? "";
-                sb.AppendLine($"• **{t.Title}** (Hạn: {timeStr}, Trạng thái: {t.Status}, Ưu tiên: {t.Priority})");
+                sb.AppendLine($"- {t.Title} (Hạn: {timeStr}, Trạng thái: {t.Status}, Ưu tiên: {t.Priority})");
             }
             return new RobotChatResponse(sb.ToString().TrimEnd(), "QUERY_DEADLINE");
         }
@@ -1176,15 +1740,15 @@ public sealed class RobotChatService(
         {
             if (overdueTasks.Count == 0)
             {
-                return new RobotChatResponse("🎉 Tuyệt vời! Hiện tại bạn không có công việc nào bị quá hạn.", "QUERY_OVERDUE");
+                return new RobotChatResponse("Tuyệt vời! Hiện tại bạn không có công việc nào bị quá hạn.", "QUERY_OVERDUE");
             }
 
             var sb = new StringBuilder();
-            sb.AppendLine($"⚠️ Bạn có **{overdueTasks.Count}** công việc đang bị quá hạn:");
+            sb.AppendLine($"Bạn có {overdueTasks.Count} công việc đang bị quá hạn:");
             foreach (var t in overdueTasks)
             {
                 var dateStr = t.Deadline?.ToLocalTime().ToString("dd/MM/yyyy HH:mm") ?? "";
-                sb.AppendLine($"• **{t.Title}** (Hạn chót: {dateStr}, Trạng thái: {t.Status})");
+                sb.AppendLine($"- {t.Title} (Hạn chót: {dateStr}, Trạng thái: {t.Status})");
             }
             return new RobotChatResponse(sb.ToString().TrimEnd(), "QUERY_OVERDUE");
         }
@@ -1193,15 +1757,15 @@ public sealed class RobotChatService(
         {
             if (pendingTasks.Count == 0)
             {
-                return new RobotChatResponse("📋 Hiện tại bạn không có nhiệm vụ nào đang chờ xử lý.", "QUERY_PENDING");
+                return new RobotChatResponse("Hiện tại bạn không có nhiệm vụ nào đang chờ xử lý.", "QUERY_PENDING");
             }
 
             var sb = new StringBuilder();
-            sb.AppendLine($"📋 Bạn đang có **{pendingTasks.Count}** nhiệm vụ đang tiến hành:");
+            sb.AppendLine($"Bạn đang có {pendingTasks.Count} nhiệm vụ đang tiến hành:");
             foreach (var t in pendingTasks.Take(5))
             {
                 var dlStr = t.Deadline.HasValue ? $" - Hạn: {t.Deadline.Value.ToLocalTime():dd/MM/yyyy}" : "";
-                sb.AppendLine($"• **{t.Title}** [{t.Priority}] (Trạng thái: {t.Status}{dlStr})");
+                sb.AppendLine($"- {t.Title} [{t.Priority}] (Trạng thái: {t.Status}{dlStr})");
             }
             if (pendingTasks.Count > 5)
             {
@@ -1237,12 +1801,12 @@ public sealed class RobotChatService(
                 var target = taskPool[targetTaskIndex.Value];
                 var dlText = target.Deadline.HasValue ? target.Deadline.Value.ToLocalTime().ToString("dd/MM/yyyy HH:mm") : "Không có hạn chót cụ thể";
                 var rsb = new StringBuilder();
-                rsb.AppendLine($"🔍 **Chi tiết nhiệm vụ #{targetTaskIndex.Value + 1} (Theo chuỗi hội thoại):**");
-                rsb.AppendLine($"• **Tiêu đề:** {target.Title}");
-                rsb.AppendLine($"• **Mức ưu tiên:** {target.Priority}");
-                rsb.AppendLine($"• **Trạng thái:** {target.Status}");
-                rsb.AppendLine($"• **Hạn hoàn thành:** {dlText}");
-                rsb.AppendLine($"• **Mã định danh:** `{target.TaskId}`");
+                rsb.AppendLine($"Chi tiết nhiệm vụ #{targetTaskIndex.Value + 1} (Theo chuỗi hội thoại):");
+                rsb.AppendLine($"- Tiêu đề: {target.Title}");
+                rsb.AppendLine($"- Mức ưu tiên: {target.Priority}");
+                rsb.AppendLine($"- Trạng thái: {target.Status}");
+                rsb.AppendLine($"- Hạn hoàn thành: {dlText}");
+                rsb.AppendLine($"- Mã định danh: {target.TaskId}");
                 rsb.AppendLine();
                 rsb.AppendLine("Bạn có thể bấm vào thẻ bên dưới để xem toàn bộ chi tiết và theo dõi tiến độ.");
                 return new RobotChatResponse(
@@ -1266,10 +1830,10 @@ public sealed class RobotChatService(
             if (userMemories.Count > 0)
             {
                 var psb = new StringBuilder();
-                psb.AppendLine("🧠 **Hồ sơ & Thói quen cá nhân tôi đã ghi nhớ về bạn:**");
+                psb.AppendLine("Hồ sơ & Thói quen cá nhân tôi đã ghi nhớ về bạn:");
                 foreach (var mem in userMemories)
                 {
-                    psb.AppendLine($"• **{mem.Title}**: {mem.Content}");
+                    psb.AppendLine($"- {mem.Title}: {mem.Content}");
                 }
                 psb.AppendLine("\nBạn có thể thêm ghi nhớ mới bằng cú pháp: `/remember <nội dung>`.");
                 return new RobotChatResponse(psb.ToString().TrimEnd(), "USER_MEMORY");
@@ -1283,10 +1847,10 @@ public sealed class RobotChatService(
             if (memoryMatches.Count > 0)
             {
                 var msb = new StringBuilder();
-                msb.AppendLine("📖 **Căn cứ theo Tri thức & Quy định doanh nghiệp (RAG):**");
+                msb.AppendLine("Căn cứ theo Tri thức & Quy định doanh nghiệp (RAG):");
                 foreach (var match in memoryMatches)
                 {
-                    msb.AppendLine($"\n📌 **{match.Title}** [{match.MemoryScope}]:\n{match.Content}");
+                    msb.AppendLine($"\n{match.Title} [{match.MemoryScope}]:\n{match.Content}");
                 }
                 return new RobotChatResponse(msb.ToString().TrimEnd(), "ENTERPRISE_MEMORY");
             }
@@ -1330,6 +1894,7 @@ public sealed class RobotChatService(
                 var sysPrompt = $$"""
                     Bạn là Trợ lý Doanh nghiệp AI Agent thông minh của nền tảng BizFlow Platform.
                     Trả lời người dùng hoàn toàn bằng tiếng Việt, ngắn gọn, thân thiện, chuyên nghiệp, lịch sự và súc tích.
+                    TUYỆT ĐỐI KHÔNG dùng bất kỳ icon emoji nào và KHÔNG dùng dấu sao * hoặc ** trong câu trả lời để tránh rối mắt người dùng.
 
                     NGUYÊN TẮC HOẠT ĐỘNG (AUTONOMOUS AGENT REASONING, CRITIQUE & ANTI-HALLUCINATION):
                     1. ĐỐI VỚI CÂU HỎI TRA CỨU DỮ LIỆU HIỆN CÓ TRONG HỆ THỐNG (deadline, việc quá hạn, việc của tôi, số lượng task...):
@@ -1343,13 +1908,13 @@ public sealed class RobotChatService(
                        - ĐÂY LÀ KẾ HOẠCH HÀNH ĐỘNG MỚI, KHÔNG PHẢI tra cứu task cũ trong database. TUYỆT ĐỐI KHÔNG từ chối bằng câu "không tìm thấy trong dữ liệu hiện tại".
                        - HÃY ĐÓNG VAI TRÒ LÀ MỘT AI AGENT THỰC THỤ: CÓ KHẢ NĂNG SUY NGHĨ, PHẢN BIỆN VÀ ĐẶT CÂU HỎI VỀ NHỮNG ĐIỀU CHƯA CHẮC CHẮN:
                          + Khi yêu cầu còn chung chung, mơ hồ hoặc thiếu các tham số then chốt (chưa rõ Mục tiêu/KPI cụ thể, Thời gian/Hạn chót, Ngân sách/Nguồn lực, Phòng ban chủ trì, Tiêu chí hoàn thành):
-                           * Nhận định mục tiêu của người dùng.
-                           * Nêu góc nhìn phản biện và rủi ro: chỉ ra các rủi ro tiềm ẩn (lãng phí ngân sách, trễ hạn, giao nhầm phòng ban) nếu vội vàng triển khai khi chưa chắc chắn thông tin.
-                           * Đặt bộ câu hỏi làm rõ có cấu trúc logic (theo 4 trụ cột: 1. Mục tiêu/Phạm vi, 2. Thời gian/Milestone, 3. Nguồn lực/Phòng ban phụ trách, 4. Tiêu chuẩn đầu ra/Rủi ro cần phòng tránh).
-                           * Cung cấp một phương án trả lời mẫu ngắn gọn để người dùng tham khảo.
+                           - Nhận định mục tiêu của người dùng.
+                           - Nêu góc nhìn phản biện và rủi ro: chỉ ra các rủi ro tiềm ẩn (lãng phí ngân sách, trễ hạn, giao nhầm phòng ban) nếu vội vàng triển khai khi chưa chắc chắn thông tin.
+                           - Đặt bộ câu hỏi làm rõ có cấu trúc logic (theo 4 trụ cột: 1. Mục tiêu/Phạm vi, 2. Thời gian/Milestone, 3. Nguồn lực/Phòng ban phụ trách, 4. Tiêu chuẩn đầu ra/Rủi ro cần phòng tránh).
+                           - Cung cấp một phương án trả lời mẫu ngắn gọn để người dùng tham khảo.
                          + Khi yêu cầu đã rõ ràng hoặc người dùng đã phản hồi các câu hỏi làm rõ trong lịch sử hội thoại:
-                           * Tổng hợp bức tranh chiến lược hành động.
-                           * Đề xuất phân bổ các nhánh nhiệm vụ cụ thể cho từng phòng ban chuyên trách (Marketing, Thiết kế, Kỹ thuật/IT, Nhân sự, Tài chính, Điều hành...).
+                           - Tổng hợp bức tranh chiến lược hành động.
+                           - Đề xuất phân bổ các nhánh nhiệm vụ cụ thể cho từng phòng ban chuyên trách (Marketing, Thiết kế, Kỹ thuật/IT, Nhân sự, Tài chính, Điều hành...).
 
                     Danh sách công cụ được cấp phép:
                     {{toolsSummary}}
@@ -1384,7 +1949,7 @@ public sealed class RobotChatService(
                     if (toolRegistry != null && toolRegistry.GetTool(toolName) is null)
                     {
                         return new RobotChatResponse(
-                            $"⚠️ Công cụ '{toolName}' không nằm trong danh mục công cụ được cấp phép.",
+                            $"Công cụ '{toolName}' không nằm trong danh mục công cụ được cấp phép.",
                             "TOOL_NOT_ALLOWED");
                     }
 
@@ -1397,7 +1962,7 @@ public sealed class RobotChatService(
                         if (actionResult.ExecutionStatus == "NOT_EXECUTED")
                         {
                             return new RobotChatResponse(
-                                $"{reply}\n\n⚠️ Đề xuất hành động '{toolName}' cần sự xác nhận của bạn trước khi thực hiện.",
+                                $"{reply}\n\nĐề xuất hành động '{toolName}' cần sự xác nhận của bạn trước khi thực hiện.",
                                 "PROPOSE_ACTION",
                                 [
                                     new RobotActionCard(
@@ -1408,11 +1973,11 @@ public sealed class RobotChatService(
                                 ]);
                         }
 
-                        return new RobotChatResponse($"{reply}\n\n✅ Đã thực hiện thành công.", "EXECUTE_ACTION");
+                        return new RobotChatResponse($"{reply}\n\nĐã thực hiện thành công.", "EXECUTE_ACTION");
                     }
                     catch (ApplicationFault af)
                     {
-                        return new RobotChatResponse($"❌ Không thể thực hiện hành động: {af.Message}", "ACTION_REJECTED");
+                        return new RobotChatResponse($"Không thể thực hiện hành động: {af.Message}", "ACTION_REJECTED");
                     }
                 }
 
@@ -1431,17 +1996,17 @@ public sealed class RobotChatService(
 
         // Deterministic General Assistance in Vietnamese
         var genSb = new StringBuilder();
-        genSb.AppendLine("Chào bạn! Tôi là Trợ lý Robot BizFlow 🤖.");
+        genSb.AppendLine("Chào bạn! Tôi là Trợ lý Robot BizFlow.");
         genSb.AppendLine();
-        genSb.AppendLine($"Tổng quan hiện tại của bạn: **{pendingTasks.Count}** việc đang tiến hành, **{dueTodayTasks.Count}** việc đến hạn hôm nay, **{overdueTasks.Count}** việc quá hạn.");
+        genSb.AppendLine($"Tổng quan hiện tại của bạn: {pendingTasks.Count} việc đang tiến hành, {dueTodayTasks.Count} việc đến hạn hôm nay, {overdueTasks.Count} việc quá hạn.");
         genSb.AppendLine();
         genSb.AppendLine("Bạn có thể hỏi tôi:");
-        genSb.AppendLine("• *\"Hôm nay tôi có deadline nào?\"*");
-        genSb.AppendLine("• *\"Kiểm tra các việc bị quá hạn\"*");
-        genSb.AppendLine("• *\"Liệt kê các việc chờ xử lý của tôi\"*");
-        genSb.AppendLine("• Hoặc dùng lệnh `/task <nội dung>` để phân rã công việc thông minh.");
-        genSb.AppendLine("• Dùng lệnh `/create-task <tiêu đề>` để đề xuất tạo công việc mới.");
-        genSb.AppendLine("• Dùng lệnh `/notifications` để xem thông báo và nhắc hạn.");
+        genSb.AppendLine("- Hôm nay tôi có deadline nào?");
+        genSb.AppendLine("- Kiểm tra các việc bị quá hạn");
+        genSb.AppendLine("- Liệt kê các việc chờ xử lý của tôi");
+        genSb.AppendLine("- Hoặc dùng lệnh /task <nội dung> để phân rã công việc thông minh.");
+        genSb.AppendLine("- Dùng lệnh /create-task <tiêu đề> để đề xuất tạo công việc mới.");
+        genSb.AppendLine("- Dùng lệnh /notifications để xem thông báo và nhắc hạn.");
 
         return new RobotChatResponse(genSb.ToString(), "GENERAL");
     }

@@ -239,12 +239,7 @@ export class Login implements OnInit, OnDestroy {
       const passCtrl = this.form.controls.password;
       const tenantCtrl = this.form.controls.tenantKey;
 
-      if (idCtrl.invalid && passCtrl.invalid) {
-        this.showToast(
-          'Thiếu thông tin đăng nhập',
-          'Vui lòng nhập đầy đủ tài khoản và mật khẩu của bạn để tiếp tục.',
-        );
-      } else if (idCtrl.invalid) {
+      if (idCtrl.invalid) {
         if (idCtrl.errors?.['required']) {
           this.showToast(
             this.mode() === 'email' ? 'Thiếu email công ty' : 'Thiếu mã nhân viên',
@@ -304,7 +299,7 @@ export class Login implements OnInit, OnDestroy {
             failure.status === 503 ||
             failure.status === 504;
 
-          // Seamless offline fallback for dev accounts
+          // Seamless offline fallback for dev accounts in automated test harness / dev sandbox
           if (isOfflineOrUnavailable && values.password === 'Password123!') {
             if (upperId === 'SUPERADMIN' || lowerId === 'platform@bizflow.local') {
               this.signInAsAccount('SUPERADMIN');
