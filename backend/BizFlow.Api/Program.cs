@@ -143,7 +143,10 @@ builder.Services.AddScoped<BizFlow.Application.AI.IAiBranchingService, BizFlow.I
 builder.Services.AddScoped<BizFlow.Application.AI.IAiDocumentSummarizerStore, BizFlow.Infrastructure.AI.AiDocumentSummarizerStore>();
 builder.Services.AddScoped<BizFlow.Application.AI.IAiDocumentSummarizerService, BizFlow.Infrastructure.AI.AiDocumentSummarizerService>();
 builder.Services.AddScoped<BizFlow.Application.AI.IAgentMeetingCoordinator, BizFlow.Infrastructure.AI.AgentMeetingCoordinator>();
+builder.Services.AddScoped<BizFlow.Application.AI.IAiLearnedChoiceStore, BizFlow.Infrastructure.AI.AiLearnedChoiceStore>();
+builder.Services.AddScoped<BizFlow.Application.AI.IConversationStateManager, BizFlow.Infrastructure.AI.ConversationStateManager>();
 builder.Services.AddScoped<BizFlow.Application.AI.IRobotChatService, BizFlow.Application.AI.RobotChatService>();
+builder.Services.AddScoped<BizFlow.Application.Workflows.IWorkflowDocumentAnalysisService, BizFlow.Application.Workflows.WorkflowDocumentAnalysisService>();
 builder.Services.AddScoped<BizFlow.Application.Audit.IAuditReader, BizFlow.Infrastructure.Audit.AuditReader>();
 builder.Services.AddExceptionHandler<ApiExceptionHandler>();
 builder.Services.AddProblemDetails();

@@ -1,5 +1,6 @@
-import { Component, inject } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
 import { SessionService } from '../../core/auth/session';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
 
@@ -51,18 +52,15 @@ import { TranslatePipe } from '../../core/i18n/translate.pipe';
               }}
             </h3>
             <p>
-              {{
-                'settings.onboardingDesc'
-                  | translate: '4/5 mô-đun vận hành cốt lõi đã được cấu hình cho doanh nghiệp.'
-              }}
+              {{ configuredModulesCount() }}/5 mô-đun vận hành cốt lõi đã được cấu hình cho doanh nghiệp.
             </p>
           </div>
           <div class="progress-bar-container">
             <div class="progress-bar-wrap">
-              <div class="progress-fill" style="width: 80%;"></div>
+              <div class="progress-fill" [style.width.%]="readinessPercent()"></div>
             </div>
             <div class="progress-percent-badge">
-              {{ 'settings.readyBadge' | translate: '80% Sẵn sàng' }}
+              {{ readinessPercent() }}% Sẵn sàng
             </div>
           </div>
         </section>
@@ -70,44 +68,50 @@ import { TranslatePipe } from '../../core/i18n/translate.pipe';
         <!-- Compact Settings Hub Grid -->
         <div class="settings-grid">
           <!-- Module 1: Internal Services -->
-          <article class="setting-card">
-            <div class="card-header-row">
-              <div class="card-icon icon-services" aria-hidden="true">
-                <svg
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                >
-                  <path
-                    d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"
-                  />
-                  <circle cx="12" cy="12" r="3" />
-                </svg>
+          @if (
+            session.hasPermission('service.create') ||
+            session.hasPermission('service.update') ||
+            session.hasPermission('service.manage')
+          ) {
+            <article class="setting-card">
+              <div class="card-header-row">
+                <div class="card-icon icon-services" aria-hidden="true">
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path
+                      d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"
+                    />
+                    <circle cx="12" cy="12" r="3" />
+                  </svg>
+                </div>
               </div>
-            </div>
-            <h2>{{ 'settings.servicesTitle' | translate: 'Internal services' }}</h2>
-            <p class="card-desc">
-              {{
-                'settings.servicesDesc'
-                  | translate
-                    : 'Define internal service categories, requester fields, SLAs, and assignment routing.'
-              }}
-            </p>
-            <div class="card-links">
-              <div class="link-item">
-                <a routerLink="/settings/services" class="action-link">
-                  {{ 'settings.serviceCatalog' | translate: 'Service catalog' }}
-                  <span class="link-arrow" aria-hidden="true">→</span>
-                </a>
-                <span class="link-desc">{{
-                  'settings.serviceCatalogDesc' | translate: ' — browse services and categories.'
-                }}</span>
+              <h2>{{ 'settings.servicesTitle' | translate: 'Internal services' }}</h2>
+              <p class="card-desc">
+                {{
+                  'settings.servicesDesc'
+                    | translate
+                      : 'Define internal service categories, requester fields, SLAs, and assignment routing.'
+                }}
+              </p>
+              <div class="card-links">
+                <div class="link-item">
+                  <a routerLink="/settings/services" class="action-link">
+                    {{ 'settings.serviceCatalog' | translate: 'Service catalog' }}
+                    <span class="link-arrow" aria-hidden="true">→</span>
+                  </a>
+                  <span class="link-desc">{{
+                    'settings.serviceCatalogDesc' | translate: ' — browse services and categories.'
+                  }}</span>
+                </div>
               </div>
-            </div>
-          </article>
+            </article>
+          }
 
           <!-- Module 2: Organization -->
           <article class="setting-card">
@@ -137,15 +141,21 @@ import { TranslatePipe } from '../../core/i18n/translate.pipe';
               }}
             </p>
             <div class="card-links">
-              <div class="link-item">
-                <a routerLink="/settings/organization/departments" class="action-link">
-                  {{ 'settings.deptDirectory' | translate: 'Department directory' }}
-                  <span class="link-arrow" aria-hidden="true">→</span>
-                </a>
-                <span class="link-desc">{{
-                  'settings.deptDirectoryDesc' | translate: ' — browse existing departments.'
-                }}</span>
-              </div>
+              @if (
+                session.hasPermission('roles.configure') ||
+                session.hasPermission('departments.read') ||
+                session.hasPermission('departments.manage')
+              ) {
+                <div class="link-item">
+                  <a routerLink="/settings/organization/departments" class="action-link">
+                    {{ 'settings.deptDirectory' | translate: 'Department directory' }}
+                    <span class="link-arrow" aria-hidden="true">→</span>
+                  </a>
+                  <span class="link-desc">{{
+                    'settings.deptDirectoryDesc' | translate: ' — browse existing departments.'
+                  }}</span>
+                </div>
+              }
               @if (session.hasPermission('users.read')) {
                 <div class="link-item">
                   <a routerLink="/settings/organization/users" class="action-link">
@@ -260,6 +270,64 @@ import { TranslatePipe } from '../../core/i18n/translate.pipe';
     </div>
   `,
 })
-export class Settings {
+export class Settings implements OnInit {
+  private readonly http = inject(HttpClient);
   readonly session = inject(SessionService);
+
+  readonly configuredModulesCount = signal<number>(0);
+  readonly readinessPercent = computed(() => Math.round((this.configuredModulesCount() / 5) * 100));
+
+  ngOnInit(): void {
+    let count = 0;
+    // 1. Services
+    this.http.get<any>('/api/v1/services?pageSize=1').subscribe({
+      next: (res) => {
+        if ((res?.items?.length || res?.total || 0) > 0) {
+          count++;
+          this.configuredModulesCount.set(count);
+        }
+      },
+      error: () => {},
+    });
+    // 2. Departments
+    this.http.get<any>('/api/v1/departments?pageSize=1').subscribe({
+      next: (res) => {
+        if ((res?.items?.length || res?.total || 0) > 0) {
+          count++;
+          this.configuredModulesCount.set(count);
+        }
+      },
+      error: () => {},
+    });
+    // 3. Users / Directory
+    this.http.get<any>('/api/v1/users?pageSize=1').subscribe({
+      next: (res) => {
+        if ((res?.items?.length || res?.total || 0) > 0) {
+          count++;
+          this.configuredModulesCount.set(count);
+        }
+      },
+      error: () => {},
+    });
+    // 4. Workflows
+    this.http.get<any>('/api/v1/workflows?pageSize=1').subscribe({
+      next: (res) => {
+        if ((res?.items?.length || res?.total || 0) > 0) {
+          count++;
+          this.configuredModulesCount.set(count);
+        }
+      },
+      error: () => {},
+    });
+    // 5. SLA Profiles
+    this.http.get<any>('/api/v1/sla/profiles?pageSize=1').subscribe({
+      next: (res) => {
+        if ((res?.items?.length || res?.total || 0) > 0) {
+          count++;
+          this.configuredModulesCount.set(count);
+        }
+      },
+      error: () => {},
+    });
+  }
 }

@@ -65,6 +65,12 @@ public sealed class RobotChatServiceTests
 
         public Task<INotificationReceiptTransaction?> BeginReadAsync(Guid tenantId, Guid recipientId, Guid id, CancellationToken cancellationToken) =>
             Task.FromResult<INotificationReceiptTransaction?>(null);
+
+        public Task SubscribePushAsync(Guid tenantId, Guid userId, string endpoint, string p256dh, string auth, CancellationToken cancellationToken) =>
+            Task.CompletedTask;
+
+        public Task UnsubscribePushAsync(Guid tenantId, Guid userId, string endpoint, CancellationToken cancellationToken) =>
+            Task.CompletedTask;
     }
 
     private sealed class FakeNotificationUpdates : INotificationUpdates

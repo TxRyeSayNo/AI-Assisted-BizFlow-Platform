@@ -898,6 +898,19 @@ public sealed class AuditLog
         CreatedAt = now.ToUniversalTime()
     };
 
+    public static AuditLog OwnershipTransferred(Guid tenantId, Guid actorId, Guid newOwnerId, DateTimeOffset now) => new()
+    {
+        Id = Guid.CreateVersion7(),
+        TenantId = EntityRules.Id(tenantId, nameof(tenantId)),
+        ActorType = AuditActorType.User,
+        ActorId = EntityRules.Id(actorId, nameof(actorId)),
+        ObjectType = "User",
+        ObjectId = newOwnerId,
+        Action = "ADMIN.OWNERSHIP_TRANSFERRED",
+        AfterJson = JsonSerializer.Serialize(new { formerOwnerId = actorId, newOwnerId, transferredAt = now }),
+        CreatedAt = now.ToUniversalTime()
+    };
+
     public static AuditLog DepartmentCreated(Guid tenantId, Guid actorId, Guid departmentId, string code, string name, DateTimeOffset now) => new()
     {
         Id = Guid.CreateVersion7(),

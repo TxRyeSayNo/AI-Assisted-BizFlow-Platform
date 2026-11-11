@@ -14,6 +14,8 @@ public interface INotificationInboxStore
 {
     Task<NotificationPage> ListAsync(Guid tenantId, Guid recipientId, NotificationFilter filter, CancellationToken cancellationToken);
     Task<INotificationReceiptTransaction?> BeginReadAsync(Guid tenantId, Guid recipientId, Guid id, CancellationToken cancellationToken);
+    Task SubscribePushAsync(Guid tenantId, Guid userId, string endpoint, string p256dh, string auth, CancellationToken cancellationToken);
+    Task UnsubscribePushAsync(Guid tenantId, Guid userId, string endpoint, CancellationToken cancellationToken);
 }
 public interface INotificationReceiptTransaction : IAsyncDisposable
 {
@@ -48,5 +50,23 @@ public sealed class NotificationInbox(ITenantContext context, TenantMembershipAu
         var result = await transaction.CommitAsync(audit, cancellationToken);
         if (changed) await updates.PublishAsync(tenantId, [recipientId], cancellationToken);
         return result;
+    }
+
+    public async Task SubscribePushAsync(string endpoint, string p256dh, string auth, CancellationToken cancellationToken)
+    {
+        var tenantId = await membership.RequireAsync("notifications.read", cancellationToken);
+        var userId = context.UserId!.Value;
+        if (string.IsNullOrWhiteSpace(endpoint))
+            throw new ApplicationFault(FaultKind.Validation, "VALIDATION.FAILED", "Endpoint is required.");
+        await store.SubscribePushAsync(tenantId, userId, endpoint, p256dh, auth, cancellationToken);
+    }
+
+    public async Task UnsubscribePushAsync(string endpoint, CancellationToken cancellationToken)
+    {
+        var tenantId = await membership.RequireAsync("notifications.read", cancellationToken);
+        var userId = context.UserId!.Value;
+        if (string.IsNullOrWhiteSpace(endpoint))
+            throw new ApplicationFault(FaultKind.Validation, "VALIDATION.FAILED", "Endpoint is required.");
+        await store.UnsubscribePushAsync(tenantId, userId, endpoint, cancellationToken);
     }
 }

@@ -44,7 +44,13 @@ public sealed class PasswordResetJobServer(IServiceProvider services, ResetEmail
     }
     public Task StopAsync(CancellationToken cancellationToken)
     {
-        server?.SendStop();
+        try
+        {
+            server?.SendStop();
+        }
+        catch (ObjectDisposedException)
+        {
+        }
         return Task.CompletedTask;
     }
     public void Dispose() => server?.Dispose();

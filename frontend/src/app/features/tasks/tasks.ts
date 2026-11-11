@@ -102,71 +102,14 @@ export class Tasks {
       .pipe(takeUntilDestroyed(this.destroy))
       .subscribe({
         next: (data) => {
-          const localTasks = this.getLocalMockTasks();
-          if (localTasks.length > 0) {
-            data = {
-              ...data,
-              items: [...localTasks, ...(data?.items || [])],
-              total: (data?.total || 0) + localTasks.length,
-            };
-          }
           this.result.set(data);
           this.busy.set(false);
         },
         error: (failure: HttpErrorResponse) => {
-          const localTasks = this.getLocalMockTasks();
-          if (localTasks.length > 0 || this.session.accessToken()?.startsWith('dev-')) {
-            const fallbackList: TaskRow[] = localTasks.length > 0 ? localTasks : [
-              {
-                taskId: '00000000-0000-0000-0000-000000000010',
-                title: 'Báo cáo tuần & Đánh giá tiến độ dịch vụ',
-                status: 'IN_PROGRESS',
-                priority: 'HIGH',
-                deadline: new Date(Date.now() + 3600000 * 5).toISOString(),
-                assignedUserId: null,
-                assignedUserName: 'Platform Administrator',
-                assignedDepartmentId: null,
-                assignedDepartmentName: 'Phòng Kỹ thuật & CNTT',
-                requestId: null,
-              },
-              {
-                taskId: '00000000-0000-0000-0000-000000000011',
-                title: 'Kiểm tra hạ tầng mạng và máy chủ nội bộ',
-                status: 'ASSIGNED',
-                priority: 'MEDIUM',
-                deadline: new Date(Date.now() + 86400000).toISOString(),
-                assignedUserId: null,
-                assignedUserName: 'Nguyễn Văn Quản trị',
-                assignedDepartmentId: null,
-                assignedDepartmentName: 'Phòng Hạ tầng IT',
-                requestId: null,
-              },
-            ];
-            this.result.set({
-              items: fallbackList,
-              page: 1,
-              pageSize: 25,
-              total: fallbackList.length,
-            });
-            this.busy.set(false);
-            return;
-          }
           this.denied.set(failure.status === 403);
           this.error.set(failure.status !== 403);
           this.busy.set(false);
         },
       });
-  }
-
-  private getLocalMockTasks(): TaskRow[] {
-    try {
-      if (typeof window !== 'undefined') {
-        const stored = sessionStorage.getItem('bizflow_mock_tasks');
-        if (stored) {
-          return JSON.parse(stored) as TaskRow[];
-        }
-      }
-    } catch {}
-    return [];
   }
 }

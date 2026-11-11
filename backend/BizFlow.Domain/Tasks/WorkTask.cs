@@ -135,4 +135,18 @@ public sealed class TaskChecklistItem
         if (sortOrder < 1) throw new ArgumentOutOfRangeException(nameof(sortOrder));
         return new() { Id = Guid.CreateVersion7(), TaskId = EntityRules.Id(taskId, nameof(taskId)), Title = text, SortOrder = sortOrder };
     }
+
+    public void Complete(Guid userId, DateTimeOffset now)
+    {
+        IsCompleted = true;
+        CompletedBy = EntityRules.Id(userId, nameof(userId));
+        CompletedAt = now.ToUniversalTime();
+    }
+
+    public void Uncomplete()
+    {
+        IsCompleted = false;
+        CompletedBy = null;
+        CompletedAt = null;
+    }
 }

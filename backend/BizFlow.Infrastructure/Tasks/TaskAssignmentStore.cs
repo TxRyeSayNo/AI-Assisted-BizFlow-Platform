@@ -58,26 +58,20 @@ public sealed class TaskAssignmentStore(BizFlowDbContext db, ITenantContext cont
                 """).AsNoTracking().SingleOrDefaultAsync(cancellationToken);
             if (target is null) return null;
             if (!requireActive) return new(null, id, id, [], true);
-            // In accordance with Requirement A & G: Do NOT broadcast to all employees in the department!
-            // Instead, resolve the responsible Manager(s) of that department.
-            var managerUsers = await (from u in db.Users
-                                      join ur in db.UserRoles on u.Id equals ur.UserId
-                                      join r in db.Roles on ur.RoleId equals r.Id
-                                      where u.TenantId == tenantId && u.DepartmentId == id
-                                        && (!requireActive || u.Status == UserStatus.Active) && u.DeletedAt == null
-                                        && r.Name == "MANAGER"
-                                      select u.Id).Distinct().ToArrayAsync(cancellationToken);
-            if (managerUsers.Length == 0)
-            {
-                // Fallback to checking ManagementScope
-                managerUsers = await (from ms in db.ManagementScopes
-                                      join u in db.Users on ms.UserId equals u.Id
-                                      where ms.TenantId == tenantId && ms.DepartmentId == id
-                                        && (!requireActive || u.Status == UserStatus.Active) && u.DeletedAt == null
-                                      select u.Id).Distinct().ToArrayAsync(cancellationToken);
-            }
-            var recipients = managerUsers.Length > 0 ? managerUsers : [];
-            return new(null, id, id, recipients, true);
+            var memberUsers = await db.Users
+                .Where(u => u.TenantId == tenantId && u.DepartmentId == id && (!requireActive || u.Status == UserStatus.Active) && u.DeletedAt == null)
+                .Select(u => u.Id)
+                .Distinct()
+                .ToArrayAsync(cancellationToken);
+            var hasManager = await (from u in db.Users
+                                    join ur in db.UserRoles on u.Id equals ur.UserId
+                                    join r in db.Roles on ur.RoleId equals r.Id
+                                    where u.TenantId == tenantId && u.DepartmentId == id
+                                      && u.Status == UserStatus.Active && u.DeletedAt == null
+                                      && (r.Name == "MANAGER" || r.Name == "COMPANY_ADMIN")
+                                    select u.Id).AnyAsync(cancellationToken) ||
+                             await db.ManagementScopes.AnyAsync(ms => ms.TenantId == tenantId && ms.DepartmentId == id, cancellationToken);
+            return new(null, id, id, memberUsers, hasManager);
         }
         public async Task<StoredTaskAssignment?> FindReplayAsync(CancellationToken cancellationToken)
         {

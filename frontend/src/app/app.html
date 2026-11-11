@@ -207,6 +207,9 @@
             <!-- 8. Settings -->
             @if (
               hasPermission('roles.configure') ||
+              hasPermission('users.read') ||
+              hasPermission('departments.read') ||
+              hasPermission('workflows.configure') ||
               hasPermission('sla.configure') ||
               hasPermission('service.create')
             ) {

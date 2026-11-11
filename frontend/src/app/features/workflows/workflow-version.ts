@@ -49,6 +49,33 @@ export interface VersionSummaryItem {
   publishedAt: string | null;
 }
 
+export interface WorkflowDraftGraphDto {
+  workflowName: string;
+  businessType: 'REQUEST' | 'TASK';
+  summaryExplanation: string;
+  nodes: {
+    id: string;
+    type: 'START' | 'DEPARTMENT' | 'APPROVAL' | 'DECISION' | 'CONFIRMATION' | 'END';
+    name: string;
+    x: number;
+    y: number;
+    departmentId?: string;
+    departmentName?: string;
+    roleId?: string;
+    roleName?: string;
+    slaHours?: number;
+    description?: string;
+    trigger?: string;
+    completionState?: string;
+  }[];
+  edges: {
+    id: string;
+    source: string;
+    target: string;
+    label?: string;
+  }[];
+}
+
 @Component({
   selector: 'bf-workflow-version',
   standalone: true,
@@ -103,6 +130,101 @@ export class WorkflowVersion {
 
   // Editable workflow name for draft
   readonly workflowNameEdit = signal<string>('');
+
+  // AI Workflow Document Analysis
+  readonly showAiModal = signal(false);
+  readonly aiDocText = signal('');
+  readonly aiDocFile = signal<File | null>(null);
+  readonly aiAnalyzing = signal(false);
+  readonly aiAnalysisResult = signal<WorkflowDraftGraphDto | null>(null);
+
+  openAiModal() {
+    this.showAiModal.set(true);
+    this.aiAnalysisResult.set(null);
+    this.aiDocFile.set(null);
+    this.aiDocText.set('');
+  }
+
+  closeAiModal() {
+    this.showAiModal.set(false);
+    this.aiAnalysisResult.set(null);
+  }
+
+  onAiFileSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    if (!input.files || input.files.length === 0) return;
+    const file = input.files[0];
+    this.aiDocFile.set(file);
+
+    if (file.name.endsWith('.docx')) {
+      this.aiDocText.set(`[Tệp tin Word: ${file.name} (${(file.size / 1024).toFixed(1)} KB)]\nNhấn "Phân tích tài liệu" để hệ thống trích xuất và thiết kế quy trình.`);
+    } else {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        this.aiDocText.set((e.target?.result as string) || '');
+      };
+      reader.readAsText(file);
+    }
+  }
+
+  runAiDocumentAnalysis() {
+    const v = this.version();
+    const bType = v?.businessType || 'REQUEST';
+    const file = this.aiDocFile();
+
+    this.aiAnalyzing.set(true);
+
+    if (file && file.name.endsWith('.docx')) {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('businessType', bType);
+
+      this.http.post<WorkflowDraftGraphDto>('/api/v1/workflows/analyze-document', formData).subscribe({
+        next: (res) => {
+          this.aiAnalyzing.set(false);
+          this.aiAnalysisResult.set(res);
+          this.showToast('Phân tích tài liệu thành công! Hãy xem trước sơ đồ trước khi nạp vào Canvas.', 'success');
+        },
+        error: (err) => {
+          this.aiAnalyzing.set(false);
+          this.showToast(err?.error?.message || 'Không thể phân tích tệp tin Word.', 'error');
+        }
+      });
+      return;
+    }
+
+    const text = this.aiDocText().trim();
+    if (!text) {
+      this.aiAnalyzing.set(false);
+      this.showToast('Vui lòng nhập hoặc chọn tài liệu mô tả quy trình.', 'error');
+      return;
+    }
+
+    this.http.post<WorkflowDraftGraphDto>('/api/v1/workflows/analyze-text', {
+      textContent: text,
+      businessType: bType
+    }).subscribe({
+      next: (res) => {
+        this.aiAnalyzing.set(false);
+        this.aiAnalysisResult.set(res);
+        this.showToast('Phân tích tài liệu thành công! Hãy xem trước sơ đồ trước khi nạp vào Canvas.', 'success');
+      },
+      error: (err) => {
+        this.aiAnalyzing.set(false);
+        this.showToast(err?.error?.message || 'Không thể phân tích quy trình từ văn bản.', 'error');
+      }
+    });
+  }
+
+  applyAiWorkflowToCanvas() {
+    const res = this.aiAnalysisResult();
+    if (!res || !this.designer) return;
+
+    this.designer.nodes.set(res.nodes as any);
+    this.designer.edges.set(res.edges as any);
+    this.closeAiModal();
+    this.showToast('Đã nạp sơ đồ quy trình AI vào Canvas! Bạn có thể chỉnh sửa inline và bấm "Lưu bản nháp".', 'success');
+  }
 
   constructor() {
     this.route.paramMap.pipe(takeUntilDestroyed(this.destroy)).subscribe(() => {

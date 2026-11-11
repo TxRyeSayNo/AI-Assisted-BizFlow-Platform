@@ -286,132 +286,22 @@ export class RobotWidgetComponent implements OnInit {
           this.agent.persistCurrentSession();
           this.scrollToBottom();
         },
-        error: () => {
+        error: (err) => {
           this.agent.busy.set(false);
-          const localFallback = this.generateLocalRobotResponse(text);
+          const errorText = err?.status === 403
+            ? '🔒 Bạn không có quyền sử dụng tính năng AI Agent này.'
+            : '⚠️ Không thể kết nối với máy chủ AI Agent vào lúc này. Vui lòng kiểm tra kết nối mạng hoặc thử lại sau.';
           const robotMsg: ChatMessage = {
             id: crypto.randomUUID(),
             sender: 'robot',
-            text: localFallback.text,
+            text: errorText,
             time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-            actionCards: localFallback.actionCards,
           };
           this.agent.messages.update((list) => [...list, robotMsg]);
           this.agent.persistCurrentSession();
           this.scrollToBottom();
         },
       });
-  }
-
-  generateLocalRobotResponse(text: string): { text: string; actionCards?: any[] } {
-    const trimmed = text.trim();
-    const lower = trimmed.toLowerCase();
-
-    if (lower.startsWith('/task') || lower.startsWith('phân rã') || lower.startsWith('lên kế hoạch')) {
-      if (!this.canCreateTasks()) {
-        return {
-          text: '🔒 **Thông báo phân cấp quyền hạn**: Tài khoản của bạn đang có vai trò **Nhân viên**.\n' +
-            'Theo mô hình phân cấp quản lý BizFlow, Nhân viên không thể phân rã hoặc tạo nhiệm vụ cho cấp dưới.\n\n' +
-            '👉 Nếu bạn cần đề xuất phương án làm việc hoặc xin nguồn lực, vui lòng tạo **Yêu cầu (Request)** gửi lên Quản lý phòng ban xem xét.',
-          actionCards: [
-            {
-              actionType: 'NAVIGATE',
-              title: '➕ Tạo Yêu cầu mới (Request)',
-              linkUrl: '/requests/new',
-            },
-          ],
-        };
-      }
-      const prompt = trimmed.replace(/^\/task/i, '').trim();
-      const demoProposals = [
-        {
-          title: 'Khảo sát và lập kế hoạch chi tiết',
-          description: `Thu thập yêu cầu thực tế và phân tích giải pháp cho: ${prompt || 'Dự án mới'}.`,
-          type: 'Assignment',
-          departmentName: 'Phòng Kế hoạch & Điều hành',
-          priority: 'HIGH',
-          suggestedDurationDays: 2,
-          checklistItems: ['Xác định phạm vi công việc', 'Phân bổ nhân sự', 'Xác nhận mốc thời gian'],
-          reasoning: 'Bước khởi động đảm bảo định hướng chính xác trước khi triển khai.',
-        },
-        {
-          title: 'Chuẩn bị hạ tầng & phân bổ tài nguyên',
-          description: 'Cấp phát tài nguyên hệ thống, môi trường làm việc và tài khoản liên quan.',
-          type: 'SupportRequest',
-          departmentName: 'Phòng Công nghệ Thông tin',
-          priority: 'MEDIUM',
-          suggestedDurationDays: 3,
-          checklistItems: ['Cấp quyền truy cập hệ thống', 'Cấu hình phân quyền', 'Kiểm thử kết nối'],
-          reasoning: 'Đảm bảo môi trường làm việc sẵn sàng không gây gián đoạn.',
-        },
-        {
-          title: 'Đào tạo nội bộ và bàn giao nghiệp vụ',
-          description: 'Hướng dẫn quy trình vận hành và ký kết biên bản bàn giao công việc.',
-          type: 'Assignment',
-          departmentName: 'Phòng Hành chính - Nhân sự',
-          priority: 'MEDIUM',
-          suggestedDurationDays: 4,
-          checklistItems: ['Tài liệu hóa quy trình', 'Tổ chức buổi hướng dẫn', 'Nghiệm thu kết quả'],
-          reasoning: 'Giai đoạn nghiệm thu và đảm bảo tính tuần thủ quy định.',
-        },
-      ];
-
-      this.agent.setProposals(demoProposals);
-
-      return {
-        text: `Trợ lý AI Agent đã phân rã yêu cầu thành ${demoProposals.length} nhánh nhiệm vụ.\n` +
-          `Bạn có thể bấm nút bên dưới để mở giao diện các nhánh, xem chi tiết và tạo việc ngay.`,
-        actionCards: [
-          {
-            actionType: 'VIEW_BRANCHES',
-            title: `Xem các nhánh phân rã (${demoProposals.length} nhánh)`,
-          },
-        ],
-      };
-    }
-
-    if (lower.startsWith('/notifications') || lower.includes('thông báo') || lower.includes('notification')) {
-      return {
-        text: 'Bạn có 2 thông báo công việc mới trong hôm nay:\n' +
-          '1. [Yêu cầu] Bàn giao thiết bị làm việc cho nhân viên mới — Cần duyệt.\n' +
-          '2. [Cảnh báo SLA] Nhiệm vụ "Cập nhật tài liệu kỹ thuật" còn 4 giờ trước hạn.\n' +
-          'Bấm bên dưới để xem toàn bộ thông báo:',
-        actionCards: [
-          {
-            actionType: 'NAVIGATE',
-            title: 'Xem hộp thư thông báo',
-            linkUrl: '/notifications',
-          },
-        ],
-      };
-    }
-
-    if (lower.includes('deadline') || lower.includes('hôm nay') || lower.includes('today')) {
-      return {
-        text: 'Hôm nay bạn có 1 công việc đến hạn hoàn thành:\n' +
-          '• **Báo cáo tuần & Đánh giá tiến độ dịch vụ** (Hạn chót: 17:00 hôm nay).\n' +
-          'Tất cả các công việc khác vẫn đang ở trạng thái an toàn (Healthy SLA).',
-        actionCards: [
-          {
-            actionType: 'NAVIGATE',
-            title: 'Xem danh sách công việc',
-            linkUrl: '/tasks',
-          },
-        ],
-      };
-    }
-
-    return {
-      text: `Xin chào! Tôi là Trợ lý AI Agent của BizFlow.\n` +
-        `Tôi luôn sẵn sàng hỗ trợ bạn quản lý công việc, theo dõi tiến độ, kiểm tra deadline và phân rã nhiệm vụ.\n` +
-        `Bạn có thể thử các câu hỏi nhanh bên dưới hoặc gõ lệnh \`/task <mô tả>\` để bóc tách quy trình làm việc!`,
-      actionCards: [
-        {
-          actionType: 'VIEW_BRANCHES',
-          title: 'Phân nhánh công việc với AI',
-        },
-      ],
-    };
   }
 
   executeAction(card: { actionType: string; title: string; linkUrl?: string; payload?: any }) {

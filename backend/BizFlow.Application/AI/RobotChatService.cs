@@ -25,7 +25,9 @@ public sealed class RobotChatService(
     IAiVectorMemoryStore? vectorMemoryStore = null,
     IProactiveAgentScanner? proactiveScanner = null,
     IAgentMeetingCoordinator? meetingCoordinator = null,
-    IAiContextReader? contextReader = null) : IRobotChatService
+    IAiContextReader? contextReader = null,
+    IAiLearnedChoiceStore? learnedChoiceStore = null,
+    IConversationStateManager? conversationStateManager = null) : IRobotChatService
 {
     public async Task<RobotChatResponse> ProcessMessageAsync(
         RobotChatCommand command,
@@ -381,6 +383,60 @@ public sealed class RobotChatService(
             return await HandleFormSubmissionAsync(command, cancellationToken);
         }
 
+        // 0.1 Check active multi-turn conversation session from ConversationStateManager
+        if (conversationStateManager != null && tenantContext.TenantId.HasValue && tenantContext.UserId.HasValue)
+        {
+            var convId = command.ConversationId ?? "default";
+            var session = await conversationStateManager.GetStateAsync(tenantContext.TenantId.Value, tenantContext.UserId.Value, convId, cancellationToken);
+            if (session?.PendingClarification != null && !lowerMsg.StartsWith("/") && !lowerMsg.Contains("deadline") && !lowerMsg.Contains("quá hạn"))
+            {
+                var originalUserMsg = session.ActiveIntent ?? "Kế hoạch công việc";
+                var synthesizedPrompt = $"{originalUserMsg}: {message}";
+                var thought = "Quá trình Suy nghĩ & Ra Quyết định của AI Agent (Hội thoại Đa lượt):\n" +
+                    $"- Tiếp nhận thông tin bổ sung: \"{message}\"\n" +
+                    "- Đánh giá: Dữ liệu đã đủ chi tiết để xác định mục tiêu và phân định trách nhiệm.\n" +
+                    "- Quyết định: Phân rã tự động thành các nhánh nhiệm vụ gửi tới các phòng ban phụ trách.";
+
+                // Learn custom input from user follow-up
+                if (learnedChoiceStore != null)
+                {
+                    try
+                    {
+                        await learnedChoiceStore.RecordChoiceAsync(
+                            tenantContext.TenantId.Value,
+                            tenantContext.UserId,
+                            "general_input",
+                            message,
+                            message,
+                            "PERSONAL",
+                            clock.GetUtcNow(),
+                            cancellationToken);
+                    }
+                    catch { }
+                }
+
+                await conversationStateManager.ClearStateAsync(tenantContext.TenantId.Value, tenantContext.UserId.Value, convId, cancellationToken);
+                return await ExecuteAgentDecompositionAsync(synthesizedPrompt, originalTitle: originalUserMsg, userClarifiedDetails: message, agentThought: thought, cancellationToken: cancellationToken);
+            }
+        }
+
+        AiTenantContextData? tenantContextData = null;
+        if (contextReader != null && tenantContext.TenantId.HasValue)
+        {
+            try
+            {
+                tenantContextData = await contextReader.GetTenantContextAsync(tenantContext.TenantId.Value, cancellationToken);
+            }
+            catch { }
+        }
+
+        // 0.2 Try LLM-first agent orchestration with structured JSON reasoning
+        var llmResponse = await TryHandleLlmAgentOrchestrationAsync(command, tenantContextData, cancellationToken);
+        if (llmResponse != null)
+        {
+            return llmResponse;
+        }
+
         // Check if message is a new operational initiative or command
         bool isInitiativeKeyword =
             lowerMsg.Contains("cuộc họp") || lowerMsg.Contains("họp") || lowerMsg.Contains("meeting") ||
@@ -490,7 +546,16 @@ public sealed class RobotChatService(
 
         if (!isSufficientlyDetailed)
         {
-            return BuildAgentClarificationResponse(message, isMeeting, isMarketing, isRecruitment, isTech, isIncident);
+            return await BuildAgentClarificationResponseAsync(
+                message,
+                isMeeting,
+                isMarketing,
+                isRecruitment,
+                isTech,
+                isIncident,
+                tenantContextData,
+                command.ConversationId,
+                cancellationToken);
         }
 
         // If request is sufficiently detailed upfront, execute decomposition immediately!
@@ -517,6 +582,41 @@ public sealed class RobotChatService(
         var formId = command.FormId ?? "form_general";
         var answers = command.FormAnswers ?? [];
         var baseForm = GetFormDefinition(formId, command.Message, tenantContextData);
+
+        // Record answered choices into adaptive choice memory
+        if (learnedChoiceStore != null && tenantContext.TenantId.HasValue)
+        {
+            var tId = tenantContext.TenantId.Value;
+            var uId = tenantContext.UserId;
+            var now = clock.GetUtcNow();
+            foreach (var ans in answers)
+            {
+                var q = baseForm.Questions.FirstOrDefault(x => x.Id.Equals(ans.QuestionId, StringComparison.OrdinalIgnoreCase));
+                var semanticKey = ans.QuestionId.ToLowerInvariant().Replace("q_", "");
+
+                if (ans.SelectedOptionIds is { Count: > 0 })
+                {
+                    foreach (var optId in ans.SelectedOptionIds)
+                    {
+                        var optLabel = q?.Options?.FirstOrDefault(o => o.Id == optId)?.Label ?? optId;
+                        try
+                        {
+                            await learnedChoiceStore.RecordChoiceAsync(tId, uId, semanticKey, optId, optLabel, "PERSONAL", now, cancellationToken);
+                        }
+                        catch { }
+                    }
+                }
+
+                if (!string.IsNullOrWhiteSpace(ans.CustomText))
+                {
+                    try
+                    {
+                        await learnedChoiceStore.RecordChoiceAsync(tId, uId, semanticKey, ans.CustomText.Trim(), ans.CustomText.Trim(), "PERSONAL", now, cancellationToken);
+                    }
+                    catch { }
+                }
+            }
+        }
 
         var missingQuestions = new List<AgentQuestionDto>();
         var answeredMap = new Dictionary<string, string>();
@@ -574,6 +674,22 @@ public sealed class RobotChatService(
                 "Hoàn tất & Tiếp tục phân tích",
                 "Sử dụng thiết lập khuyến nghị");
 
+            if (conversationStateManager != null && tenantContext.TenantId.HasValue && tenantContext.UserId.HasValue)
+            {
+                var convId = command.ConversationId ?? "default";
+                var state = new ConversationState(
+                    convId,
+                    tenantContext.TenantId.Value,
+                    tenantContext.UserId.Value,
+                    baseForm.Topic,
+                    answeredMap,
+                    missingQuestions.Select(m => m.Id).ToList(),
+                    followUpForm,
+                    command.History != null ? new List<RobotChatMessageDto>(command.History) : [],
+                    clock.GetUtcNow());
+                _ = conversationStateManager.SaveStateAsync(state, cancellationToken);
+            }
+
             var followUpText = $"Cảm ơn bạn! Tôi đã ghi nhận một phần thông tin:\n{partialSummary}\n\nĐể đảm bảo phân công chính xác và không tạo việc thừa, bạn vui lòng chọn nốt các thông tin còn thiếu bên dưới:";
 
             return new RobotChatResponse(
@@ -585,6 +701,12 @@ public sealed class RobotChatService(
         }
 
         // All required questions are answered! Agent makes the definitive plan.
+        if (conversationStateManager != null && tenantContext.TenantId.HasValue && tenantContext.UserId.HasValue)
+        {
+            var convId = command.ConversationId ?? "default";
+            _ = conversationStateManager.ClearStateAsync(tenantContext.TenantId.Value, tenantContext.UserId.Value, convId, cancellationToken);
+        }
+
         var detailsSummary = string.Join("\n", answeredMap.Values.Select(v => $"- {v}"));
         var synthesizedPrompt = $"{baseForm.Topic}: {string.Join("; ", answeredMap.Values)}";
 
@@ -1194,6 +1316,315 @@ public sealed class RobotChatService(
             ],
             Questionnaire: form,
             AgentThought: thought);
+    }
+
+    private async Task<IReadOnlyList<AgentQuestionOptionDto>> EnrichOptionsWithLearnedChoicesAsync(
+        string semanticKey,
+        IReadOnlyList<AgentQuestionOptionDto>? baseOptions,
+        CancellationToken cancellationToken)
+    {
+        var result = new List<AgentQuestionOptionDto>();
+        if (learnedChoiceStore != null && tenantContext.TenantId.HasValue)
+        {
+            try
+            {
+                var learned = await learnedChoiceStore.GetRelevantChoicesAsync(
+                    tenantContext.TenantId.Value,
+                    tenantContext.UserId,
+                    semanticKey,
+                    limit: 3,
+                    cancellationToken);
+
+                foreach (var l in learned)
+                {
+                    var exists = baseOptions?.Any(b => b.Label.Contains(l.ChoiceLabel, StringComparison.OrdinalIgnoreCase)) ?? false;
+                    if (!exists)
+                    {
+                        result.Add(new AgentQuestionOptionDto("learned_" + l.Id.ToString("N")[..8], $"{l.ChoiceLabel} (Thường dùng)", IsDefault: true));
+                    }
+                }
+            }
+            catch { }
+        }
+
+        if (baseOptions != null)
+        {
+            bool hasLearnedDefault = result.Any(r => r.IsDefault);
+            foreach (var opt in baseOptions)
+            {
+                if (hasLearnedDefault && opt.IsDefault)
+                {
+                    result.Add(opt with { IsDefault = false });
+                }
+                else
+                {
+                    result.Add(opt);
+                }
+            }
+        }
+
+        return result;
+    }
+
+    private async Task<AgentClarificationFormDto> GetEnrichedFormDefinitionAsync(
+        string formId,
+        string topic,
+        AiTenantContextData? tenantContextData = null,
+        CancellationToken cancellationToken = default)
+    {
+        var baseForm = GetFormDefinition(formId, topic, tenantContextData);
+        if (learnedChoiceStore == null || !tenantContext.TenantId.HasValue)
+        {
+            return baseForm;
+        }
+
+        var enrichedQuestions = new List<AgentQuestionDto>();
+        foreach (var q in baseForm.Questions)
+        {
+            var semanticKey = q.Id.ToLowerInvariant().Replace("q_", "");
+            var enrichedOptions = await EnrichOptionsWithLearnedChoicesAsync(semanticKey, q.Options, cancellationToken);
+            enrichedQuestions.Add(q with { Options = enrichedOptions, AllowCustomInput = true });
+        }
+
+        return baseForm with { Questions = enrichedQuestions };
+    }
+
+    private async Task<RobotChatResponse> BuildAgentClarificationResponseAsync(
+        string message,
+        bool isMeeting,
+        bool isMarketing,
+        bool isRecruitment,
+        bool isTech,
+        bool isIncident,
+        AiTenantContextData? tenantContextData = null,
+        string? conversationId = null,
+        CancellationToken cancellationToken = default)
+    {
+        var baseResp = BuildAgentClarificationResponse(message, isMeeting, isMarketing, isRecruitment, isTech, isIncident, tenantContextData);
+        if (baseResp.Questionnaire == null) return baseResp;
+
+        var enrichedForm = await GetEnrichedFormDefinitionAsync(
+            baseResp.Questionnaire.FormId,
+            message,
+            tenantContextData,
+            cancellationToken);
+
+        if (conversationStateManager != null && tenantContext.TenantId.HasValue && tenantContext.UserId.HasValue)
+        {
+            var convId = conversationId ?? "default";
+            var state = new ConversationState(
+                convId,
+                tenantContext.TenantId.Value,
+                tenantContext.UserId.Value,
+                enrichedForm.Topic,
+                new(StringComparer.OrdinalIgnoreCase),
+                enrichedForm.Questions.Select(q => q.Id).ToList(),
+                enrichedForm,
+                [],
+                clock.GetUtcNow());
+            _ = conversationStateManager.SaveStateAsync(state, cancellationToken);
+        }
+
+        return baseResp with { Questionnaire = enrichedForm };
+    }
+
+    private async Task<RobotChatResponse?> TryHandleLlmAgentOrchestrationAsync(
+        RobotChatCommand command,
+        AiTenantContextData? tenantContextData,
+        CancellationToken cancellationToken)
+    {
+        if (modelClient == null || !modelClient.IsConfigured) return null;
+
+        var message = command.Message?.Trim() ?? "";
+        if (string.IsNullOrWhiteSpace(message)) return null;
+
+        var systemInstructions = """
+        Bạn là Trợ lý Doanh nghiệp AI Agent BizFlow (Enterprise Multi-Agent Orchestrator).
+        Nhiệm vụ của bạn là phân tích thông điệp của người dùng về kế hoạch công việc, cuộc họp, dự án, hoặc các sáng kiến vận hành liên phòng ban.
+        1. Phân loại ý định (intent):
+           - "STATUS_QUERY": người dùng chỉ tra cứu dữ liệu (deadline hôm nay, quá hạn, việc của tôi). Khi đó trả về intent: "STATUS_QUERY", isComplete: true.
+           - "WORK_PLAN": lập kế hoạch công việc, dự án, chiến dịch, tuyển dụng, nâng cấp hệ thống, sự kiện.
+           - "MEETING": tổ chức hoặc chuẩn bị cuộc họp.
+           - "GENERAL": hội thoại chung hoặc thắc mắc hướng dẫn.
+        2. Trích xuất thông tin (extractedSlots):
+           - topic, timeline, department, deliverables, attendees, budget, priority, v.v.
+        3. Đánh giá tính đầy đủ (isComplete):
+           - Đầy đủ nếu các yếu tố quan trọng để giao việc hoặc điều phối đã rõ ràng.
+           - Thiếu (isComplete: false) nếu còn mơ hồ, thiếu thời gian, thiếu phòng ban chủ trì, hoặc thiếu phạm vi.
+        4. Nếu thiếu thông tin (isComplete: false):
+           - Tạo bảng câu hỏi làm rõ (dynamicQuestions) với 2-4 câu hỏi trọng tâm.
+           - Hỗ trợ các kiểu: "single_choice", "multiple_choice", "text".
+           - Mỗi câu hỏi có các lựa chọn gợi ý thực tế và allowCustomInput: true.
+           - Nêu rõ rủi ro nếu không làm rõ (riskAnalysis) và suy nghĩ của Agent (agentThought).
+
+        Định dạng JSON bắt buộc:
+        {
+          "intent": "WORK_PLAN | MEETING | STATUS_QUERY | GENERAL",
+          "isComplete": boolean,
+          "topic": "string",
+          "extractedSlots": { "key": "value" },
+          "missingSlots": ["string"],
+          "riskAnalysis": "string",
+          "agentThought": "string",
+          "dynamicQuestions": [
+            {
+              "id": "string",
+              "title": "string",
+              "type": "single_choice | multiple_choice | text",
+              "options": [ { "id": "string", "label": "string", "isDefault": boolean } ],
+              "required": boolean,
+              "placeholder": "string",
+              "allowCustomInput": boolean
+            }
+          ]
+        }
+        """;
+
+        var promptBuilder = new StringBuilder();
+        promptBuilder.AppendLine($"Yêu cầu của người dùng: \"{message}\"");
+
+        if (command.History is { Count: > 0 })
+        {
+            promptBuilder.AppendLine("Lịch sử hội thoại gần nhất:");
+            foreach (var h in command.History.TakeLast(4))
+            {
+                promptBuilder.AppendLine($"- {h.Sender}: {h.Text}");
+            }
+        }
+
+        if (tenantContextData?.Departments is { Count: > 0 })
+        {
+            promptBuilder.AppendLine($"Các phòng ban hiện có trong công ty: {string.Join(", ", tenantContextData.Departments.Select(d => $"{d.Name} ({d.Code})"))}");
+        }
+
+        try
+        {
+            var llmResponse = await modelClient.CompleteAsync(promptBuilder.ToString(), systemInstructions, cancellationToken);
+            var content = llmResponse.Content?.Trim();
+            if (string.IsNullOrWhiteSpace(content)) return null;
+
+            if (content.StartsWith("```json", StringComparison.OrdinalIgnoreCase))
+            {
+                content = content[7..];
+                if (content.EndsWith("```")) content = content[..^3];
+            }
+            else if (content.StartsWith("```"))
+            {
+                content = content[3..];
+                if (content.EndsWith("```")) content = content[..^3];
+            }
+
+            using var doc = JsonDocument.Parse(content.Trim());
+            var root = doc.RootElement;
+
+            var intent = root.TryGetProperty("intent", out var ip) ? ip.GetString() : "WORK_PLAN";
+            if (string.Equals(intent, "STATUS_QUERY", StringComparison.OrdinalIgnoreCase))
+            {
+                return null;
+            }
+
+            var isComplete = root.TryGetProperty("isComplete", out var cp) && cp.GetBoolean();
+            var topic = root.TryGetProperty("topic", out var tp) ? tp.GetString() ?? message : message;
+            var riskAnalysis = root.TryGetProperty("riskAnalysis", out var rp) ? rp.GetString() : null;
+            var agentThought = root.TryGetProperty("agentThought", out var atp) ? atp.GetString() : null;
+
+            if (!isComplete && root.TryGetProperty("dynamicQuestions", out var qArray) && qArray.ValueKind == JsonValueKind.Array)
+            {
+                var questions = new List<AgentQuestionDto>();
+                foreach (var qElem in qArray.EnumerateArray())
+                {
+                    var qId = qElem.TryGetProperty("id", out var idProp) ? idProp.GetString() ?? "q_" + Guid.NewGuid().ToString("N")[..6] : "q_" + Guid.NewGuid().ToString("N")[..6];
+                    var qTitle = qElem.TryGetProperty("title", out var titleProp) ? titleProp.GetString() ?? "" : "";
+                    var qType = qElem.TryGetProperty("type", out var typeProp) ? typeProp.GetString() ?? "single_choice" : "single_choice";
+                    var qRequired = !qElem.TryGetProperty("required", out var reqProp) || reqProp.GetBoolean();
+                    var qPlaceholder = qElem.TryGetProperty("placeholder", out var plProp) ? plProp.GetString() : null;
+                    var qCustom = !qElem.TryGetProperty("allowCustomInput", out var custProp) || custProp.GetBoolean();
+
+                    var options = new List<AgentQuestionOptionDto>();
+                    if (qElem.TryGetProperty("options", out var optArray) && optArray.ValueKind == JsonValueKind.Array)
+                    {
+                        foreach (var optElem in optArray.EnumerateArray())
+                        {
+                            var optId = optElem.TryGetProperty("id", out var oid) ? oid.GetString() ?? Guid.NewGuid().ToString("N")[..4] : Guid.NewGuid().ToString("N")[..4];
+                            var optLabel = optElem.TryGetProperty("label", out var olbl) ? olbl.GetString() ?? "" : "";
+                            var optDef = optElem.TryGetProperty("isDefault", out var odef) && odef.GetBoolean();
+                            if (!string.IsNullOrWhiteSpace(optLabel))
+                            {
+                                options.Add(new AgentQuestionOptionDto(optId, optLabel, optDef));
+                            }
+                        }
+                    }
+
+                    var semanticKey = qId.ToLowerInvariant().Replace("q_", "");
+                    options = (await EnrichOptionsWithLearnedChoicesAsync(semanticKey, options, cancellationToken)).ToList();
+
+                    questions.Add(new AgentQuestionDto(
+                        qId,
+                        qTitle,
+                        qType,
+                        options,
+                        qRequired,
+                        qPlaceholder,
+                        null,
+                        qCustom));
+                }
+
+                if (questions.Count > 0)
+                {
+                    var formId = "dynamic_" + Guid.NewGuid().ToString("N")[..8];
+                    var clarificationForm = new AgentClarificationFormDto(
+                        formId,
+                        topic,
+                        "Để phân định trách nhiệm rõ ràng và giao đúng phòng ban chuyên trách, vui lòng làm rõ các điểm sau:",
+                        riskAnalysis,
+                        questions,
+                        "Xác nhận & Tiếp tục phân tích",
+                        "Sử dụng thiết lập khuyến nghị");
+
+                    if (conversationStateManager != null && tenantContext.TenantId.HasValue && tenantContext.UserId.HasValue)
+                    {
+                        var convId = command.ConversationId ?? "default";
+                        var state = new ConversationState(
+                            convId,
+                            tenantContext.TenantId.Value,
+                            tenantContext.UserId.Value,
+                            topic,
+                            new(StringComparer.OrdinalIgnoreCase),
+                            questions.Select(q => q.Id).ToList(),
+                            clarificationForm,
+                            command.History != null ? new List<RobotChatMessageDto>(command.History) : [],
+                            clock.GetUtcNow());
+                        _ = conversationStateManager.SaveStateAsync(state, cancellationToken);
+                    }
+
+                    var textSummary = $"Chào bạn! Tôi đã phân tích yêu cầu \"{message}\".\n" +
+                        "Để đảm bảo kế hoạch vận hành chính xác và tránh rủi ro thiếu sót, vui lòng trả lời một số câu hỏi làm rõ bên dưới:";
+
+                    return new RobotChatResponse(
+                        textSummary,
+                        "AGENT_CLARIFICATION_REQUIRED",
+                        [new RobotActionCard("PREFILL_PROMPT", "Làm rõ yêu cầu", null, new { template = "Hoàn tất thông tin cần làm rõ" })],
+                        Questionnaire: clarificationForm,
+                        AgentThought: agentThought);
+                }
+            }
+
+            if (isComplete)
+            {
+                return await ExecuteAgentDecompositionAsync(
+                    message,
+                    originalTitle: topic,
+                    userClarifiedDetails: null,
+                    agentThought: agentThought,
+                    cancellationToken: cancellationToken);
+            }
+        }
+        catch
+        {
+            // Fall back to deterministic rule-based dynamic synthesis
+        }
+
+        return null;
     }
 
     private async Task<RobotChatResponse> ExecuteAgentDecompositionAsync(

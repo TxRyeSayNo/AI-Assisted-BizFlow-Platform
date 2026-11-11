@@ -20,6 +20,44 @@ public sealed class UserManagementStore(BizFlowDbContext db) : IUserManagementSt
     public Task<bool> DepartmentExistsAsync(Guid tenantId, Guid departmentId, CancellationToken cancellationToken) =>
         db.Departments.AnyAsync(d => d.TenantId == tenantId && d.Id == departmentId && d.Status == RecordStatus.Active, cancellationToken);
 
+    public async Task<IReadOnlyList<DepartmentLookup>> GetDepartmentsAsync(Guid tenantId, CancellationToken cancellationToken) =>
+        await db.Departments
+            .Where(d => d.TenantId == tenantId && d.Status == RecordStatus.Active)
+            .Select(d => new DepartmentLookup(d.Id, d.Code, d.Name))
+            .ToListAsync(cancellationToken);
+
+    public async Task<IReadOnlyList<RoleLookup>> GetRolesAsync(Guid tenantId, CancellationToken cancellationToken) =>
+        await db.Roles
+            .Where(r => (r.TenantId == tenantId || r.IsSystem) && r.Status == RecordStatus.Active)
+            .Select(r => new RoleLookup(r.Id, r.Name))
+            .ToListAsync(cancellationToken);
+
+    public async Task<int> BatchCreateUsersAsync(IReadOnlyList<(UserAccount user, IReadOnlyList<Guid> roleIds, AuditLog audit)> users, CancellationToken cancellationToken)
+    {
+        var defaultEmployeeRole = await db.Roles.IgnoreQueryFilters()
+            .FirstOrDefaultAsync(r => r.Name == "EMPLOYEE" && r.IsSystem, cancellationToken);
+
+        foreach (var (user, roleIds, audit) in users)
+        {
+            db.Users.Add(user);
+            if (roleIds.Count == 0 && defaultEmployeeRole != null)
+            {
+                db.UserRoles.Add(new UserRole(user.Id, defaultEmployeeRole.Id));
+            }
+            else
+            {
+                foreach (var roleId in roleIds)
+                {
+                    db.UserRoles.Add(new UserRole(user.Id, roleId));
+                }
+            }
+            db.AuditLogs.Add(audit);
+        }
+
+        await db.SaveChangesAsync(cancellationToken);
+        return users.Count;
+    }
+
     public async Task<UserOperationResult> CreateUserAsync(UserAccount user, IReadOnlyList<Guid> roleIds, AuditLog audit, CancellationToken cancellationToken)
     {
         db.Users.Add(user);
@@ -257,5 +295,95 @@ public sealed class UserManagementStore(BizFlowDbContext db) : IUserManagementSt
 
         var assignedRoleIds = await db.UserRoles.Where(ur => ur.UserId == userId).Select(ur => ur.RoleId).ToListAsync(cancellationToken);
         return new(user.Id, user.EmployeeCode, user.Email, user.FullName, user.DepartmentId, user.Status.ToString().ToUpperInvariant(), assignedRoleIds, user.CreatedAt);
+    }
+
+    public async Task<int> CountActiveAdminsAsync(Guid tenantId, CancellationToken cancellationToken)
+    {
+        return await (from u in db.Users
+                      join ur in db.UserRoles on u.Id equals ur.UserId
+                      join r in db.Roles on ur.RoleId equals r.Id
+                      where u.TenantId == tenantId
+                         && u.DeletedAt == null
+                         && u.Status == UserStatus.Active
+                         && (r.Name == "COMPANY_ADMIN" || r.Id == Guid.Parse("019f7f8a-0000-7000-8000-000000000002"))
+                      select u.Id)
+                      .Distinct()
+                      .CountAsync(cancellationToken);
+    }
+
+    public async Task<bool> IsUserAdminAsync(Guid tenantId, Guid userId, CancellationToken cancellationToken)
+    {
+        return await (from ur in db.UserRoles
+                      join r in db.Roles on ur.RoleId equals r.Id
+                      where ur.UserId == userId
+                         && (r.Name == "COMPANY_ADMIN" || r.Id == Guid.Parse("019f7f8a-0000-7000-8000-000000000002"))
+                      select ur.UserId)
+                      .AnyAsync(cancellationToken);
+    }
+
+    public async Task<bool> HasAdminRoleAsync(Guid tenantId, IReadOnlyList<Guid> roleIds, CancellationToken cancellationToken)
+    {
+        if (roleIds == null || roleIds.Count == 0) return false;
+        return await db.Roles
+            .Where(r => roleIds.Contains(r.Id))
+            .AnyAsync(r => r.Name == "COMPANY_ADMIN" || r.Id == Guid.Parse("019f7f8a-0000-7000-8000-000000000002"), cancellationToken);
+    }
+
+    public async Task<UserOperationResult> TransferAdminOwnershipAsync(
+        Guid tenantId,
+        Guid currentOwnerId,
+        Guid targetUserId,
+        Guid? demoteToRoleId,
+        DateTimeOffset now,
+        CancellationToken cancellationToken)
+    {
+        var targetUser = await db.Users.SingleOrDefaultAsync(u => u.Id == targetUserId && u.TenantId == tenantId && u.DeletedAt == null, cancellationToken);
+        if (targetUser is null) throw ApplicationFault.NotFound();
+
+        if (targetUser.Status != UserStatus.Active)
+            throw new ApplicationFault(FaultKind.Validation, "USER.INACTIVE", "Target user must be an active employee in the company.");
+
+        var adminRole = await db.Roles.IgnoreQueryFilters()
+            .SingleOrDefaultAsync(r => r.Name == "COMPANY_ADMIN" && r.IsSystem, cancellationToken)
+            ?? throw new InvalidOperationException("System role COMPANY_ADMIN not found.");
+
+        // 1. Assign admin role to target user if not already present
+        var targetHasAdmin = await db.UserRoles.AnyAsync(ur => ur.UserId == targetUserId && ur.RoleId == adminRole.Id, cancellationToken);
+        if (!targetHasAdmin)
+        {
+            db.UserRoles.Add(new UserRole(targetUserId, adminRole.Id));
+        }
+
+        // 2. Demote current owner if requested or by default
+        if (demoteToRoleId is { } newRoleId)
+        {
+            var adminLink = await db.UserRoles.SingleOrDefaultAsync(ur => ur.UserId == currentOwnerId && ur.RoleId == adminRole.Id, cancellationToken);
+            if (adminLink is not null) db.UserRoles.Remove(adminLink);
+
+            var hasNewRole = await db.UserRoles.AnyAsync(ur => ur.UserId == currentOwnerId && ur.RoleId == newRoleId, cancellationToken);
+            if (!hasNewRole)
+            {
+                db.UserRoles.Add(new UserRole(currentOwnerId, newRoleId));
+            }
+        }
+        else
+        {
+            var adminLink = await db.UserRoles.SingleOrDefaultAsync(ur => ur.UserId == currentOwnerId && ur.RoleId == adminRole.Id, cancellationToken);
+            if (adminLink is not null) db.UserRoles.Remove(adminLink);
+
+            var managerRole = await db.Roles.IgnoreQueryFilters().FirstOrDefaultAsync(r => r.Name == "MANAGER" && r.IsSystem, cancellationToken);
+            var defaultRole = managerRole ?? await db.Roles.IgnoreQueryFilters().FirstOrDefaultAsync(r => r.Name == "EMPLOYEE" && r.IsSystem, cancellationToken);
+            if (defaultRole != null)
+            {
+                var hasRole = await db.UserRoles.AnyAsync(ur => ur.UserId == currentOwnerId && ur.RoleId == defaultRole.Id, cancellationToken);
+                if (!hasRole) db.UserRoles.Add(new UserRole(currentOwnerId, defaultRole.Id));
+            }
+        }
+
+        db.AuditLogs.Add(AuditLog.OwnershipTransferred(tenantId, currentOwnerId, targetUserId, now));
+        await db.SaveChangesAsync(cancellationToken);
+
+        var assignedRoleIds = await db.UserRoles.Where(ur => ur.UserId == targetUserId).Select(ur => ur.RoleId).ToListAsync(cancellationToken);
+        return new(targetUser.Id, targetUser.EmployeeCode, targetUser.Email, targetUser.FullName, targetUser.DepartmentId, targetUser.Status.ToString().ToUpperInvariant(), assignedRoleIds, targetUser.CreatedAt);
     }
 }

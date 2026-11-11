@@ -100,53 +100,16 @@ export class RequestCreate implements OnInit {
               this.form.controls.serviceId.setValue(activeServices[0].serviceId);
             }
           } else {
-            this.applyFallbackServices();
+            this.services.set([]);
+            this.error.set('Chưa có danh mục dịch vụ nào đang hoạt động trong hệ thống.');
           }
         },
         error: () => {
           this.loadingServices.set(false);
-          this.applyFallbackServices();
+          this.services.set([]);
+          this.error.set('Không thể tải danh mục dịch vụ từ hệ thống. Vui lòng thử lại sau.');
         },
       });
-  }
-
-  private applyFallbackServices() {
-    const fallback: ServiceOption[] = [
-      {
-        serviceId: 'srv-it-support',
-        name: 'Dịch vụ Hỗ trợ CNTT & Kỹ thuật',
-        status: 'ACTIVE',
-        categories: [
-          { serviceCategoryId: 'cat-it-hw', name: 'Cấp phát thiết bị phần cứng & Máy tính', status: 'ACTIVE' },
-          { serviceCategoryId: 'cat-it-sw', name: 'Cài đặt phần mềm & Cấp quyền tài khoản', status: 'ACTIVE' },
-          { serviceCategoryId: 'cat-it-net', name: 'Khắc phục sự cố mạng & Đường truyền', status: 'ACTIVE' },
-        ],
-      },
-      {
-        serviceId: 'srv-hr-admin',
-        name: 'Dịch vụ Hành chính & Nhân sự',
-        status: 'ACTIVE',
-        categories: [
-          { serviceCategoryId: 'cat-hr-supplies', name: 'Cấp phát văn phòng phẩm & Công cụ', status: 'ACTIVE' },
-          { serviceCategoryId: 'cat-hr-benefits', name: 'Đề xuất chế độ phúc lợi & Bảo hiểm', status: 'ACTIVE' },
-          { serviceCategoryId: 'cat-hr-access', name: 'Đăng ký thẻ ra vào & Chấm công', status: 'ACTIVE' },
-        ],
-      },
-      {
-        serviceId: 'srv-finance',
-        name: 'Dịch vụ Tài chính & Kế toán',
-        status: 'ACTIVE',
-        categories: [
-          { serviceCategoryId: 'cat-fin-advance', name: 'Tạm ứng chi phí công tác', status: 'ACTIVE' },
-          { serviceCategoryId: 'cat-fin-claim', name: 'Hoàn ứng & Quyết toán công tác phí', status: 'ACTIVE' },
-          { serviceCategoryId: 'cat-fin-invoice', name: 'Đề xuất thanh toán hóa đơn đối tác', status: 'ACTIVE' },
-        ],
-      },
-    ];
-    this.services.set(fallback);
-    if (!this.form.controls.serviceId.value) {
-      this.form.controls.serviceId.setValue(fallback[0].serviceId);
-    }
   }
 
   save() {
@@ -188,41 +151,6 @@ export class RequestCreate implements OnInit {
         },
         error: (failure: HttpErrorResponse) => {
           this.busy.set(false);
-          const isDevMode =
-            typeof this.session?.accessToken === 'function' &&
-            Boolean(this.session.accessToken()?.startsWith('dev-'));
-          const isDevOrOffline =
-            isDevMode &&
-            (failure.status === 401 || failure.status === 500 || failure.status === 0);
-
-          if (isDevOrOffline) {
-            const mockId = crypto.randomUUID();
-            const srv = this.services().find((s) => s.serviceId === payload.serviceId);
-            const cat = this.availableCategories().find((c) => c.serviceCategoryId === payload.categoryId);
-            const mockReq = {
-              requestId: mockId,
-              title: payload.title,
-              description: payload.description || '',
-              priority: payload.priority,
-              status: payload.submitImmediately ? 'SUBMITTED' : 'DRAFT',
-              serviceId: payload.serviceId,
-              serviceName: srv?.name || 'Dịch vụ Kỹ thuật & CNTT',
-              categoryId: payload.categoryId,
-              categoryName: cat?.name || 'Hỗ trợ thiết bị & máy móc',
-              requesterId: this.session.identity()?.userId || '00000000-0000-0000-0000-000000000001',
-              requesterName: this.session.identity()?.fullName || 'Platform Administrator',
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-            };
-            try {
-              const existing = JSON.parse(sessionStorage.getItem('bizflow_mock_requests') || '[]');
-              existing.unshift(mockReq);
-              sessionStorage.setItem('bizflow_mock_requests', JSON.stringify(existing));
-            } catch {}
-            this.done.set(true);
-            void this.router.navigate(['/requests']);
-            return;
-          }
 
           if (failure.status === 422 || failure.status === 400) {
             this.form.enable();

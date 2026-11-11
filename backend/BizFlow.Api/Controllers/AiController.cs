@@ -3,6 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using BizFlow.Application.AI;
 using BizFlow.Application.Common;
+using BizFlow.Application.Security;
 using BizFlow.Domain.AI;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -14,6 +15,7 @@ namespace BizFlow.Api.Controllers;
 public sealed class AiController(
     AiAssistanceService aiService,
     IAiStore aiStore,
+    ITenantContext tenantContext,
     IAiVectorMemoryStore? vectorMemoryStore = null,
     IProactiveAgentScanner? proactiveScanner = null,
     IAiSelfReflectionService? selfReflectionService = null) : ControllerBase
@@ -120,23 +122,18 @@ public sealed class AiController(
         if (!Enum.TryParse<HumanDecision>(dto.Decision, true, out var decision))
             throw new ApplicationFault(FaultKind.Validation, "AI.INVALID_DECISION", "Decision must be ACCEPTED, OVERRIDDEN, or DISMISSED.");
 
-        // Context check
-        var tenantId = HttpContext.User.FindFirst("TenantId")?.Value is { } tidStr && Guid.TryParse(tidStr, out var tid)
-            ? tid
-            : throw new ApplicationFault(FaultKind.Forbidden, "TENANT.REQUIRED", "Active tenant context required.");
-
-        var userId = HttpContext.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value is { } uidStr && Guid.TryParse(uidStr, out var uid)
-            ? uid
-            : throw new ApplicationFault(FaultKind.Forbidden, "USER.REQUIRED", "Active user context required.");
+        var tenantId = GetTenantId();
+        var userId = GetUserId();
 
         await aiStore.RecordDecisionAsync(tenantId, id, decision, userId, cancellationToken);
         return NoContent();
     }
 
     private Guid GetTenantId() =>
-        HttpContext.User.FindFirst("TenantId")?.Value is { } tidStr && Guid.TryParse(tidStr, out var tid)
-            ? tid
-            : throw new ApplicationFault(FaultKind.Forbidden, "TENANT.REQUIRED", "Active tenant context required.");
+        tenantContext.TenantId ?? throw new ApplicationFault(FaultKind.Forbidden, "TENANT.REQUIRED", "Active tenant context required.");
+
+    private Guid GetUserId() =>
+        tenantContext.UserId ?? throw new ApplicationFault(FaultKind.Forbidden, "USER.REQUIRED", "Active user context required.");
 
     // --- Pillar 1: Long-term Vector Memory & RAG ---
     [HttpPost("memory")]

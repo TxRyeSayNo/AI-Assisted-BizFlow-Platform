@@ -1188,7 +1188,6 @@ export class AiAssistantComponent {
             this.taskSuggestion.set(res);
           },
           error: () => {
-            // Graceful fallback to rich local deterministic preview if backend LLM API key not configured
             this.loading.set(false);
             this.taskSuggestion.set(this.generateTaskFallback(this.promptText));
           },
@@ -1204,9 +1203,12 @@ export class AiAssistantComponent {
             this.loading.set(false);
             this.intentResult.set(res);
           },
-          error: () => {
+          error: (err) => {
             this.loading.set(false);
-            this.intentResult.set(this.generateRequestFallback(this.promptText));
+            this.intentResult.set(null);
+            this.errorMsg.set(
+              err?.error?.message || 'Không thể phân tích yêu cầu bằng AI. Vui lòng kiểm tra lại dịch vụ máy chủ.',
+            );
           },
         });
     } else if (this.mode() === 'branching') {
@@ -1222,9 +1224,12 @@ export class AiAssistantComponent {
             this.loading.set(false);
             this.branchingResult.set(res);
           },
-          error: () => {
+          error: (err) => {
             this.loading.set(false);
-            this.branchingResult.set(this.generateBranchingFallback(this.promptText));
+            this.branchingResult.set(null);
+            this.errorMsg.set(
+              err?.error?.message || 'Không thể phân tích phân nhánh đa luồng bằng AI. Vui lòng thử lại.',
+            );
           },
         });
     } else if (this.mode() === 'summarizer') {
@@ -1246,16 +1251,13 @@ export class AiAssistantComponent {
               }
             }
           },
-          error: () => {
+          error: (err) => {
             this.loading.set(false);
-            const fallback = this.generateSummarizerFallback(this.promptText);
-            this.summarizerResult.set(fallback);
+            this.summarizerResult.set(null);
             this.selectedSummarizerActionIndexes.clear();
-            if (fallback.actionItems?.length) {
-              for (const it of fallback.actionItems) {
-                this.selectedSummarizerActionIndexes.add(it.orderIndex);
-              }
-            }
+            this.errorMsg.set(
+              err?.error?.message || 'Không thể tóm tắt văn bản bằng AI. Vui lòng thử lại.',
+            );
           },
         });
     } else {
@@ -1265,15 +1267,15 @@ export class AiAssistantComponent {
           level: 'MEDIUM',
           score: 0.45,
           factors: [
-            'Tight deadline with multiple sub-deliverables',
-            'Dependencies on cross-departmental review',
+            'Thời hạn gấp với nhiều mốc bàn giao',
+            'Phụ thuộc vào đánh giá đối soát giữa các phòng ban',
           ],
           advice: [
-            'Notify assignee 24 hours prior to SLA warning threshold',
-            'Pre-schedule milestone confirmation session',
+            'Thông báo cho nhân sự phụ trách 24 giờ trước ngưỡng cảnh báo SLA',
+            'Lên lịch trước phiên đối soát nghiệm thu từng phần',
           ],
         });
-      }, 500);
+      }, 50);
     }
   }
 
@@ -1297,22 +1299,13 @@ export class AiAssistantComponent {
           this.planExecutedSuccess.set(true);
           this.executedPlanResult.set(res);
         },
-        error: () => {
+        error: (err) => {
           this.executingPlan.set(false);
-          this.planExecutedSuccess.set(true);
-          this.executedPlanResult.set({
-            planId: plan.planId,
-            totalCreated: plan.branches.length,
-            createdRecords: plan.branches.map((b, idx) => ({
-              branchIndex: b.branchIndex,
-              recordType: b.branchType,
-              recordId: 'rec-' + (idx + 1),
-              title: b.title,
-              status: 'CREATED',
-              departmentName: b.departmentName || 'Phòng Công nghệ & Chuyển đổi số',
-            })),
-            executedAt: new Date().toISOString(),
-          });
+          this.planExecutedSuccess.set(false);
+          this.executedPlanResult.set(null);
+          this.errorMsg.set(
+            err?.error?.message || 'Không thể thực thi kế hoạch phân nhánh vào hệ thống. Vui lòng kiểm tra lại dịch vụ máy chủ.',
+          );
         },
       });
   }
@@ -1363,9 +1356,12 @@ export class AiAssistantComponent {
           this.creatingSummarizerTasks.set(false);
           this.summarizerTasksCreatedSuccess.set(true);
         },
-        error: () => {
+        error: (err) => {
           this.creatingSummarizerTasks.set(false);
-          this.summarizerTasksCreatedSuccess.set(true);
+          this.summarizerTasksCreatedSuccess.set(false);
+          this.errorMsg.set(
+            err?.error?.message || 'Không thể tạo nhiệm vụ từ văn bản tóm tắt. Vui lòng thử lại.',
+          );
         },
       });
   }

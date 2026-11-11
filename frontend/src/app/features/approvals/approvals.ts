@@ -503,38 +503,7 @@ export class Approvals implements OnInit {
           list.push(...reqItems);
           this.pendingList.set([...list]);
         },
-        error: () => {
-          // If no items returned or error, fallback to demo items if empty
-          if (this.pendingList().length === 0) {
-            this.pendingList.set([
-              {
-                id: 'demo-1',
-                type: 'TASK_CONFIRMATION',
-                title: 'Đối chiếu Báo cáo Tài chính & Kiểm toán Sổ cái Quý 3',
-                sourceId: 'demo-1',
-                requesterOrPerformer: 'Trưởng nhóm Tài chính',
-                departmentName: 'Tài chính & Kế toán',
-                priority: 'HIGH',
-                submittedAt: new Date(Date.now() - 3600000 * 4).toISOString(),
-                summary:
-                  'Đã tải lên toàn bộ báo cáo đối chiếu và hồ sơ chứng từ đối soát. Cần quản lý phê duyệt nghiệm thu.',
-                status: 'SUBMITTED',
-              },
-              {
-                id: 'demo-2',
-                type: 'REQUEST_RESOLUTION',
-                title: 'Cấp phát & Nâng cấp Máy trạm Hiệu năng cao cho Kỹ sư',
-                sourceId: 'demo-2',
-                requesterOrPerformer: 'Trưởng nhóm Hạ tầng CNTT',
-                departmentName: 'Vận hành CNTT',
-                priority: 'MEDIUM',
-                submittedAt: new Date(Date.now() - 3600000 * 8).toISOString(),
-                summary: 'Thiết bị đã được bàn giao và cài đặt hoàn tất. Đang chờ người tạo yêu cầu xác nhận kết quả.',
-                status: 'RESOLVED',
-              },
-            ]);
-          }
-        },
+        error: () => {},
       });
   }
 

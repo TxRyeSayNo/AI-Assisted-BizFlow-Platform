@@ -8,8 +8,44 @@ namespace BizFlow.Api.Controllers;
 
 [ApiController, Authorize, Route("api/v1/workflows")]
 [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
-public sealed class WorkflowsController(WorkflowLibrary workflows) : ControllerBase
+public sealed class WorkflowsController(
+    WorkflowLibrary workflows,
+    IWorkflowDocumentAnalysisService docAnalysis) : ControllerBase
 {
+    [HttpPost("analyze-document")]
+    public async Task<ActionResult<WorkflowDraftGraphDto>> AnalyzeDocument(
+        [FromForm] IFormFile? file,
+        [FromForm] string? textContent,
+        [FromForm] string businessType = "REQUEST",
+        CancellationToken cancellationToken = default)
+    {
+        if (file != null && file.Length > 0)
+        {
+            using var stream = file.OpenReadStream();
+            var result = await docAnalysis.AnalyzeDocumentAsync(stream, file.FileName, businessType, cancellationToken);
+            return Ok(result);
+        }
+
+        if (!string.IsNullOrWhiteSpace(textContent))
+        {
+            var result = await docAnalysis.AnalyzeTextAsync(textContent, businessType, cancellationToken);
+            return Ok(result);
+        }
+
+        return BadRequest("Vui lòng cung cấp tệp tin (Word, PDF, TXT) hoặc nhập nội dung văn bản mô tả quy trình.");
+    }
+
+    [HttpPost("analyze-text")]
+    public async Task<ActionResult<WorkflowDraftGraphDto>> AnalyzeText(
+        [FromBody] AnalyzeWorkflowDocumentRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(request.TextContent))
+            return BadRequest("Nội dung mô tả quy trình không được để trống.");
+
+        var result = await docAnalysis.AnalyzeTextAsync(request.TextContent, request.BusinessType, cancellationToken);
+        return Ok(result);
+    }
     [HttpGet]
     public Task<WorkflowPage> List([FromQuery] int page = 1, [FromQuery] int pageSize = 25,
         [FromQuery] string? search = null, [FromQuery] string? businessType = null, [FromQuery] string? status = null,
