@@ -158,6 +158,82 @@
   }
 }
 
+.auth-card-header {
+  text-align: center;
+  margin-bottom: 1.35rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  .brand-badge-compact {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    background: linear-gradient(135deg, rgba(244, 249, 255, 0.96) 0%, rgba(235, 245, 255, 0.92) 100%);
+    border: 1px solid rgba(195, 222, 252, 0.85);
+    padding: 0.25rem 0.85rem 0.25rem 0.4rem;
+    border-radius: 999px;
+    margin-bottom: 0.75rem;
+    box-shadow: 0 2px 8px rgba(36, 120, 242, 0.08);
+
+    .brand-mark {
+      display: inline-block;
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: url('/assets/brand/bizflow-logo.png') center/contain no-repeat;
+      color: transparent !important;
+      font-size: 0 !important;
+      line-height: 0 !important;
+      object-fit: contain;
+      vertical-align: middle;
+      flex-shrink: 0;
+      filter: drop-shadow(0 2px 4px rgba(18, 76, 196, 0.25));
+    }
+
+    .brand-text {
+      font-weight: 700;
+      font-size: 0.95rem;
+      letter-spacing: -0.015em;
+      color: #17436f;
+    }
+
+    .brand-dot {
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #00d4ff !important;
+      box-shadow: 0 0 8px #00d4ff !important;
+      animation: pulse-dot 2s ease-in-out infinite alternate !important;
+      position: relative;
+      flex-shrink: 0;
+      vertical-align: middle;
+    }
+  }
+
+  h1 {
+    margin: 0 0 0.4rem;
+    font-size: 1.6rem;
+    font-weight: 800;
+    letter-spacing: -0.025em;
+    color: #17436f;
+    line-height: 1.25;
+  }
+
+  .supporting-copy {
+    font-size: 0.95rem;
+    color: #52657c;
+    margin: 0;
+    line-height: 1.45;
+  }
+}
+
+@keyframes pulse-dot {
+  0% { transform: scale(0.9); opacity: 0.7; }
+  100% { transform: scale(1.15); opacity: 1; }
+}
+
 /* Top Ocean Blue Security Badge */
 .auth-badge-wrapper {
   display: flex;

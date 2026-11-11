@@ -23,3 +23,68 @@
     padding: var(--tp-space-4);
   }
 }
+
+
+/* Spacing and Alignment between Notification Actions (Requirement 3) */
+.notification-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 0.85rem;
+  margin-bottom: 0.35rem;
+  flex-wrap: wrap;
+
+  .action-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 36px;
+    margin: 0 !important;
+    padding: 0 1rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    border-radius: 8px;
+    white-space: nowrap !important;
+    word-break: keep-all !important;
+    text-decoration: none;
+    transition: all 180ms ease;
+
+    &.open-btn {
+      background: #eff6ff;
+      color: #1d4ed8;
+      border: 1px solid #bfdbfe;
+
+      &:hover {
+        background: #dbeafe;
+        border-color: #93c5fd;
+      }
+    }
+
+    &.mark-read-btn {
+      background: #f8fafd;
+      color: #475569;
+      border: 1px solid #cbd5e1;
+
+      &:hover {
+        background: #f1f5f9;
+        color: #1e293b;
+      }
+    }
+  }
+
+  @media (max-width: 600px) {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+
+    .action-btn {
+      width: 100%;
+    }
+  }
+}
+
+.read-timestamp {
+  margin-top: 0.35rem;
+  font-size: 0.78rem;
+  color: #64748b;
+}

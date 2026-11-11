@@ -41,7 +41,7 @@ export interface PendingApprovalItem {
 
       <div class="approval-header-row">
         <div>
-          <h1>{{ 'approvals.title' | translate: 'Trung tâm Phê duyệt & Đánh giá' }}</h1>
+          <h1>{{ 'approvals.title' | translate: 'Trung tâm phê duyệt' }}</h1>
           <p class="subtitle-text">
             {{
               'approvals.subtitle'

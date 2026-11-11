@@ -108,7 +108,7 @@
           {{ 'requests.empty' | translate: 'No requests match your access scope and filters.' }}
         </p>
       } @else {
-        <table>
+        <div class="table-scroll" tabindex="0" role="region" aria-label="Bảng danh sách yêu cầu"><table>
           <caption>
             {{
               'requests.caption'
@@ -119,8 +119,8 @@
             <tr>
               <th scope="col">{{ 'requests.col.request' | translate: 'Request & Service' }}</th>
               <th scope="col">{{ 'requests.col.requester' | translate: 'Requester' }}</th>
-              <th scope="col">
-                {{ 'requests.col.statusPriority' | translate: 'Status & Priority' }}
+              <th scope="col" style="min-width: 220px; white-space: nowrap;">
+                {{ 'requests.col.statusPriority' | translate: 'Trạng thái & Độ ưu tiên' }}
               </th>
             </tr>
           </thead>
@@ -159,7 +159,7 @@
               </tr>
             }
           </tbody>
-        </table>
+        </table></div>
         <div
           style="
             display: flex;

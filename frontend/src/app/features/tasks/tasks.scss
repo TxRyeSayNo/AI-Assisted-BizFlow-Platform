@@ -1,6 +1,16 @@
 .task-title {
   display: block;
+  font-weight: 700;
+  color: #1e293b;
+  font-size: 14px;
+  text-decoration: none;
+
+  &:hover {
+    color: #2563eb;
+    text-decoration: underline;
+  }
 }
+
 .task-meta {
   display: block;
   font-weight: normal;
@@ -8,13 +18,73 @@
   color: var(--tp-mute);
   margin-top: var(--tp-space-2);
 }
+
+.td-task-type {
+  width: 220px;
+  min-width: 190px;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.badge-task-parent {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  font-size: 11.5px;
+  font-weight: 700;
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+  white-space: nowrap;
+}
+
+.badge-task-child {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  font-size: 11.5px;
+  font-weight: 700;
+  background: #eef2ff;
+  color: #4338ca;
+  border: 1px solid #c7d2fe;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+
+  &:hover {
+    background: #e0e7ff;
+    border-color: #a5b4fc;
+    color: #3730a3;
+  }
+}
+
+.badge-task-independent {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  font-size: 11.5px;
+  font-weight: 600;
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid #cbd5e1;
+  white-space: nowrap;
+}
+
 thead th:last-child {
   width: 16rem;
 }
+
 .overdue {
   font-weight: 700;
   border-width: 2px;
 }
+
 @media (max-width: 40rem) {
   thead th:last-child {
     width: 8rem;

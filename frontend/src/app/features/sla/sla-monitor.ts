@@ -59,46 +59,46 @@ export interface SlaBreachItem {
       <section class="sla-kpi-grid">
         <div class="kpi-card highlight-azure">
           <div class="kpi-head">
-            <span class="kpi-label">{{ 'slaMonitor.onTimeCompliance' | translate: 'On-Time Compliance' }}</span>
+            <span class="kpi-label">{{ 'slaMonitor.onTimeCompliance' | translate: 'Tỷ lệ Đúng hạn' }}</span>
             <span class="live-beacon"></span>
           </div>
           <div class="kpi-value text-azure">98.6%</div>
-          <p class="kpi-meta">{{ 'slaMonitor.rollingDays' | translate: 'Last 30 rolling business days' }}</p>
+          <p class="kpi-meta">{{ 'slaMonitor.rollingDays' | translate: '30 ngày làm việc gần nhất' }}</p>
         </div>
 
         <div class="kpi-card highlight-danger">
           <div class="kpi-head">
-            <span class="kpi-label">{{ 'slaMonitor.overdueItems' | translate: 'Overdue Items' }}</span>
+            <span class="kpi-label">{{ 'slaMonitor.overdueItems' | translate: 'Hạng mục Quá hạn' }}</span>
             <span class="pulse-beacon"></span>
           </div>
           <div class="kpi-value text-danger">{{ overdueCount() }}</div>
-          <p class="kpi-meta">{{ 'slaMonitor.immediateIntervention' | translate: 'Immediate intervention required' }}</p>
+          <p class="kpi-meta">{{ 'slaMonitor.immediateIntervention' | translate: 'Cần can thiệp ngay' }}</p>
         </div>
 
         <div class="kpi-card highlight-warning">
           <div class="kpi-head">
-            <span class="kpi-label">{{ 'slaMonitor.atRisk' | translate: 'At-Risk (< 4 Hours)' }}</span>
+            <span class="kpi-label">{{ 'slaMonitor.atRisk' | translate: 'Nguy cơ trễ (< 4 Giờ)' }}</span>
             <span class="warning-icon">⚠</span>
           </div>
           <div class="kpi-value text-warning">{{ warningCount() }}</div>
-          <p class="kpi-meta">{{ 'slaMonitor.approachingThreshold' | translate: 'Approaching SLA threshold' }}</p>
+          <p class="kpi-meta">{{ 'slaMonitor.approachingThreshold' | translate: 'Sắp chạm ngưỡng cảnh báo' }}</p>
         </div>
 
         <div class="kpi-card highlight-neutral">
           <div class="kpi-head">
-            <span class="kpi-label">{{ 'slaMonitor.activeCalendar' | translate: 'Active Working Calendar' }}</span>
+            <span class="kpi-label">{{ 'slaMonitor.activeCalendar' | translate: 'Lịch Làm việc Hiện tại' }}</span>
             <span class="calendar-icon">📅</span>
           </div>
-          <div class="kpi-value text-navy">{{ 'slaMonitor.defaultCalendar' | translate: 'Default 8x5' }}</div>
-          <p class="kpi-meta">{{ 'slaMonitor.calendarHours' | translate: 'Mon–Fri 08:00 – 17:00 (UTC+7)' }}</p>
+          <div class="kpi-value text-navy">{{ 'slaMonitor.defaultCalendar' | translate: 'Mặc định 8x5' }}</div>
+          <p class="kpi-meta">{{ 'slaMonitor.calendarHours' | translate: 'Thứ 2 – Thứ 6 08:00 – 17:00 (UTC+7)' }}</p>
         </div>
       </section>
 
       <!-- Active Escalations & At-Risk Items -->
       <section class="directory-panel">
         <div class="panel-header-row">
-          <h2>{{ 'slaMonitor.monitoredItems' | translate: 'Monitored Items Requiring Attention' }}</h2>
-          <span class="badge-count">{{ monitoredItems().length }} {{ 'slaMonitor.activeWatch' | translate: 'Active Watch' }}</span>
+          <h2>{{ 'slaMonitor.monitoredItems' | translate: 'Hạng mục Theo dõi Cần Chú ý' }}</h2>
+          <span class="badge-count">{{ monitoredItems().length }} {{ 'slaMonitor.activeWatch' | translate: 'Đang giám sát' }}</span>
         </div>
 
         <div class="table-container">

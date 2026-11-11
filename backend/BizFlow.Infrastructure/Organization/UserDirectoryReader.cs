@@ -12,7 +12,14 @@ public sealed class UserDirectoryReader(BizFlowDbContext db) : IUserDirectoryRea
         // Keep the default user/department tenant filters, including soft-delete exclusion.
         var query = db.Users.AsNoTracking().Where(u => u.TenantId == tenantId);
         if (filter.Status is { } status) query = query.Where(u => u.Status == Enum.Parse<UserStatus>(status, true));
-        if (filter.DepartmentId is { } department) query = query.Where(u => u.DepartmentId == department);
+        if (filter.DepartmentId is { } department)
+        {
+            query = query.Where(u => u.DepartmentId == department);
+        }
+        else if (filter.AllowedDepartmentIds is { } allowed)
+        {
+            query = query.Where(u => u.DepartmentId != null && allowed.Contains(u.DepartmentId.Value));
+        }
         if (filter.Search is { } search)
         {
             var normalized = search.ToUpperInvariant();

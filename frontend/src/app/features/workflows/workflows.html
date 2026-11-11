@@ -124,10 +124,10 @@
           <thead>
             <tr>
               <th scope="col" class="th-name" style="min-width: 220px;">Tên quy trình</th>
-              <th scope="col" class="th-type" style="width: 150px; min-width: 150px; white-space: nowrap;">Loại nghiệp vụ</th>
-              <th scope="col" class="th-status" style="width: 200px; min-width: 200px; white-space: nowrap;">Trạng thái</th>
+              <th scope="col" class="th-type" style="width: 140px; min-width: 140px; white-space: nowrap;">Loại nghiệp vụ</th>
+              <th scope="col" class="th-status" style="width: 220px; min-width: 220px; white-space: nowrap;">Trạng thái</th>
               <th scope="col" class="th-version" style="width: 280px; min-width: 280px; white-space: nowrap;">Phiên bản mới nhất</th>
-              <th scope="col" class="th-actions" style="min-width: 320px; text-align: right; white-space: nowrap;">Thao tác</th>
+              <th scope="col" class="th-actions" style="width: 340px; min-width: 340px; text-align: right; white-space: nowrap;">Thao tác</th>
             </tr>
           </thead>
           <tbody>
@@ -327,51 +327,60 @@
           } @else if (versionHistory().length === 0) {
             <p style="text-align: center; color: #64748b; padding: 24px;">Chưa có dữ liệu phiên bản.</p>
           } @else {
-            <table class="history-table">
-              <thead>
-                <tr>
-                  <th scope="col" style="width: 120px; white-space: nowrap;">Phiên bản</th>
-                  <th scope="col" style="width: 130px; white-space: nowrap;">Trạng thái</th>
-                  <th scope="col" style="min-width: 170px; white-space: nowrap;">Thời điểm ban hành</th>
-                  <th scope="col" style="min-width: 150px; white-space: nowrap;">Ngày tạo</th>
-                  <th scope="col" style="width: 120px; text-align: right; white-space: nowrap;">Thao tác</th>
-                </tr>
-              </thead>
-              <tbody>
-                @for (v of versionHistory(); track v.versionId) {
+            <div class="history-table-wrapper" style="overflow-x: auto; width: 100%;">
+              <table class="history-table">
+                <colgroup>
+                  <col style="width: 120px;" />
+                  <col style="width: 130px;" />
+                  <col style="width: 200px;" />
+                  <col style="width: 180px;" />
+                  <col style="width: 120px;" />
+                </colgroup>
+                <thead>
                   <tr>
-                    <td>
-                      <strong>Phiên bản {{ v.versionNo }}</strong>
-                    </td>
-                    <td>
-                      <span
-                        class="badge-status"
-                        [class.draft]="v.status === 'Draft'"
-                        [class.published]="v.status === 'Published'"
-                        [class.retired]="v.status === 'Retired'"
-                      >
-                        {{ labels[v.status] }}
-                      </span>
-                    </td>
-                    <td>
-                      {{ v.publishedAt ? (v.publishedAt | date: 'dd/MM/yyyy HH:mm') : '—' }}
-                    </td>
-                    <td>
-                      {{ v.createdAt | date: 'dd/MM/yyyy HH:mm' }}
-                    </td>
-                    <td style="text-align: right;">
-                      <a
-                        class="tbl-btn primary"
-                        [routerLink]="['/settings/workflows', selectedWorkflowForHistory()?.workflowId, 'versions', v.versionId]"
-                        (click)="closeHistory()"
-                      >
-                        {{ v.status === 'Draft' ? '✏️ Thiết kế' : '👁 Xem sơ đồ' }}
-                      </a>
-                    </td>
+                    <th scope="col" style="width: 120px; white-space: nowrap;">Phiên bản</th>
+                    <th scope="col" style="width: 130px; white-space: nowrap;">Trạng thái</th>
+                    <th scope="col" style="width: 200px; white-space: nowrap;">Thời điểm ban hành</th>
+                    <th scope="col" style="width: 180px; white-space: nowrap;">Ngày tạo</th>
+                    <th scope="col" style="width: 120px; text-align: right; white-space: nowrap;">Thao tác</th>
                   </tr>
-                }
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  @for (v of versionHistory(); track v.versionId) {
+                    <tr>
+                      <td>
+                        <strong>Phiên bản {{ v.versionNo }}</strong>
+                      </td>
+                      <td>
+                        <span
+                          class="badge-status"
+                          [class.draft]="v.status === 'Draft'"
+                          [class.published]="v.status === 'Published'"
+                          [class.retired]="v.status === 'Retired'"
+                        >
+                          {{ labels[v.status] }}
+                        </span>
+                      </td>
+                      <td>
+                        {{ v.publishedAt ? (v.publishedAt | date: 'dd/MM/yyyy HH:mm') : '—' }}
+                      </td>
+                      <td>
+                        {{ v.createdAt | date: 'dd/MM/yyyy HH:mm' }}
+                      </td>
+                      <td style="text-align: right;">
+                        <a
+                          class="tbl-btn primary"
+                          [routerLink]="['/settings/workflows', selectedWorkflowForHistory()?.workflowId, 'versions', v.versionId]"
+                          (click)="closeHistory()"
+                        >
+                          {{ v.status === 'Draft' ? '✏️ Thiết kế' : '👁 Xem sơ đồ' }}
+                        </a>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
           }
         </div>
 

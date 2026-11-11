@@ -47,21 +47,21 @@ import { TranslatePipe } from '../i18n/translate.pipe';
         width: 100% !important;
         min-width: 0 !important;
         box-sizing: border-box;
-        padding: 1rem 1.15rem;
+        padding: 0.95rem 1.15rem;
         background: #ffffff !important;
-        border-radius: 14px !important;
-        border: 1.5px solid #e2e8f0;
+        border-radius: 12px !important;
+        border: 1px solid #e2e8f0;
         box-shadow:
-          0 16px 36px -6px rgba(15, 23, 42, 0.14),
-          0 6px 16px -3px rgba(15, 23, 42, 0.08);
+          0 10px 25px -5px rgba(15, 23, 42, 0.10),
+          0 8px 10px -6px rgba(15, 23, 42, 0.05);
         overflow: hidden;
         animation: toast-slide-in 240ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
         transform-origin: top right;
-        transition: opacity 250ms ease, transform 250ms ease;
+        transition: opacity 180ms ease, transform 180ms ease;
       }
 
       .toast-card.leaving {
-        animation: toast-slide-out 200ms ease-in forwards;
+        animation: toast-slide-out 180ms ease-in forwards;
       }
 
       @keyframes toast-slide-in {
@@ -87,40 +87,39 @@ import { TranslatePipe } from '../i18n/translate.pipe';
       }
 
       .toast-type-error {
-        border: 1.5px solid #fca5a5 !important;
+        border: 1.5px solid #fecaca !important;
         background: #ffffff !important;
         box-shadow:
-          0 20px 40px -8px rgba(239, 68, 68, 0.16),
-          0 10px 20px -4px rgba(15, 23, 42, 0.08),
-          0 0 0 1px rgba(239, 68, 68, 0.06) !important;
+          0 10px 25px -5px rgba(239, 68, 68, 0.12),
+          0 8px 10px -6px rgba(15, 23, 42, 0.04) !important;
       }
       .toast-type-success {
         border: 1.5px solid #a7f3d0 !important;
         background: #ffffff !important;
         box-shadow:
-          0 20px 40px -8px rgba(16, 185, 129, 0.16),
-          0 10px 20px -4px rgba(15, 23, 42, 0.08) !important;
+          0 10px 25px -5px rgba(16, 185, 129, 0.12),
+          0 8px 10px -6px rgba(15, 23, 42, 0.04) !important;
       }
       .toast-type-warning {
         border: 1.5px solid #fde68a !important;
         background: #ffffff !important;
         box-shadow:
-          0 20px 40px -8px rgba(245, 158, 11, 0.16),
-          0 10px 20px -4px rgba(15, 23, 42, 0.08) !important;
+          0 10px 25px -5px rgba(245, 158, 11, 0.12),
+          0 8px 10px -6px rgba(15, 23, 42, 0.04) !important;
       }
       .toast-type-info {
         border: 1.5px solid #bfdbfe !important;
         background: #ffffff !important;
         box-shadow:
-          0 20px 40px -8px rgba(37, 99, 235, 0.16),
-          0 10px 20px -4px rgba(15, 23, 42, 0.08) !important;
+          0 10px 25px -5px rgba(37, 99, 235, 0.12),
+          0 8px 10px -6px rgba(15, 23, 42, 0.04) !important;
       }
 
       .toast-icon {
         flex-shrink: 0;
-        width: 36px;
-        height: 36px;
-        border-radius: 10px;
+        width: 34px;
+        height: 34px;
+        border-radius: 9px;
         margin-top: 1px;
         display: flex;
         align-items: center;
@@ -128,8 +127,9 @@ import { TranslatePipe } from '../i18n/translate.pipe';
       }
 
       .toast-icon svg {
-        width: 20px;
-        height: 20px;
+        width: 18px;
+        height: 18px;
+        pointer-events: none;
       }
 
       .toast-type-error .toast-icon {
@@ -152,20 +152,22 @@ import { TranslatePipe } from '../i18n/translate.pipe';
       .toast-content {
         flex: 1 1 auto;
         min-width: 0;
+        width: 100%;
         display: flex;
         flex-direction: column;
-        gap: 0.25rem;
-        white-space: normal;
-        word-break: normal;
+        gap: 0.2rem;
+        white-space: normal !important;
+        word-break: break-word !important;
         overflow-wrap: break-word;
       }
 
       .toast-header {
-        font-size: 0.88rem;
+        font-size: 0.875rem;
         font-weight: 700;
         letter-spacing: -0.01em;
         margin-bottom: 0;
-        white-space: normal;
+        white-space: normal !important;
+        word-break: break-word !important;
       }
 
       .toast-type-error .toast-header {
@@ -185,23 +187,33 @@ import { TranslatePipe } from '../i18n/translate.pipe';
         font-size: 0.8125rem;
         line-height: 1.45;
         color: #475569;
-        word-break: break-word;
+        white-space: normal !important;
+        word-break: break-word !important;
       }
 
       .toast-close-btn {
         flex-shrink: 0;
+        position: relative;
+        z-index: 20;
         background: transparent;
         border: none;
         color: #94a3b8;
-        cursor: pointer;
+        cursor: pointer !important;
+        pointer-events: auto !important;
         padding: 5px;
-        border-radius: 8px;
+        min-width: 28px;
+        min-height: 28px;
+        border-radius: 6px;
         display: flex;
         align-items: center;
         justify-content: center;
         transition:
           background-color 140ms ease,
           color 140ms ease;
+      }
+
+      .toast-close-btn svg {
+        pointer-events: none;
       }
 
       .toast-close-btn:hover {
@@ -305,8 +317,8 @@ import { TranslatePipe } from '../i18n/translate.pipe';
           <button
             type="button"
             class="toast-close-btn"
-            [attr.aria-label]="'toast.close' | translate: 'Close'"
-            (click)="toastService.dismiss(toast.id)"
+            [attr.aria-label]="'toast.close' | translate: 'Đóng thông báo'"
+            (click)="$event.stopPropagation(); toastService.dismiss(toast.id)"
           >
             <svg
               viewBox="0 0 24 24"

@@ -84,13 +84,6 @@ export class Login implements OnInit, OnDestroy {
     });
 
     effect(() => {
-      const err = this.error();
-      if (err) {
-        this.toastService.error(err);
-      }
-    });
-
-    effect(() => {
       const msg = this.emailSentMessage();
       if (msg) {
         this.toastService.success(msg);
@@ -152,13 +145,8 @@ export class Login implements OnInit, OnDestroy {
   updateTenantKeyValidators(isSuper: boolean): void {
     const tenantControl = this.form.controls.tenantKey;
     if (isSuper) {
-      tenantControl.setValidators([
-        Validators.maxLength(80),
-        Validators.pattern(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
-      ]);
-      if (tenantControl.hasError('required')) {
-        tenantControl.setErrors(null);
-      }
+      tenantControl.clearValidators();
+      tenantControl.setErrors(null);
     } else {
       tenantControl.setValidators([
         Validators.required,

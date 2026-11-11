@@ -95,8 +95,12 @@ thead th:last-child {
 }
 
 .priority-indicator {
-  display: inline-block;
-  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  font-weight: 600;
+  white-space: nowrap !important;
+  word-break: keep-all !important;
+  flex-shrink: 0 !important;
 
   &.priority-critical {
     color: #b91c1c;
@@ -118,6 +122,12 @@ thead th:last-child {
 
 @media (max-width: 40rem) {
   thead th:last-child {
-    width: 8rem;
+    width: auto;
   }
+}
+
+.table-scroll {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }

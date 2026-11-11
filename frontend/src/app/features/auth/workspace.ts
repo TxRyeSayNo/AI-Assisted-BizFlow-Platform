@@ -152,7 +152,7 @@ import { TranslatePipe } from '../../core/i18n/translate.pipe';
               session.hasPermission('roles.configure')
             ) {
               <a routerLink="/approvals" class="btn-hero-ghost">
-                {{ 'approvals.title' | translate: 'Trung tâm Phê duyệt' }} →
+                {{ 'approvals.title' | translate: 'Trung tâm phê duyệt' }} →
               </a>
             }
           </div>
@@ -211,9 +211,31 @@ import { TranslatePipe } from '../../core/i18n/translate.pipe';
       <!-- Organized Workspace Modules Grid with Clear Role Separation (Requirement 1 & User Request) -->
       <section class="modules-section">
         <h2 class="section-title">
-          {{ 'workspace.sectionExecution' | translate: 'Phân hệ Chức năng Doanh nghiệp' }}
+          {{ 'workspace.sectionExecution' | translate: 'Phân hệ chức năng doanh nghiệp' }}
         </h2>
         <div class="modules-grid">
+
+          <!-- Platform Admin Modules -->
+          @if (!identity()?.tenantId) {
+            <article class="module-card">
+              <div class="module-icon">🏢</div>
+              <h3>Quản lý doanh nghiệp & Cung cấp workspace</h3>
+              <p>Phê duyệt hồ sơ đăng ký doanh nghiệp, cấp phát tenant key và quản lý trạng thái tài khoản công ty.</p>
+              <div class="module-link-wrap">
+                <p><a routerLink="/platform/companies">Quản lý doanh nghiệp</a></p>
+              </div>
+            </article>
+
+            <article class="module-card">
+              <div class="module-icon">🛡️</div>
+              <h3>Kiểm toán hệ thống nền tảng</h3>
+              <p>Truy vết toàn diện nhật ký bảo mật, định tuyến xác thực và truy cập tài nguyên toàn hệ thống.</p>
+              <div class="module-link-wrap">
+                <p><a routerLink="/platform/audit">Xem nhật ký kiểm toán</a></p>
+              </div>
+            </article>
+          }
+
           <!-- 1. Quản lý Nhiệm vụ -->
           @if (
             session.hasPermission('tasks.read.tenant') ||
@@ -271,7 +293,7 @@ import { TranslatePipe } from '../../core/i18n/translate.pipe';
           @if (identity()?.tenantId) {
             <article class="module-card">
               <div class="module-icon">⚙</div>
-              <h3>{{ 'workspace.cardServicesTitle' | translate: 'Danh mục Dịch vụ' }}</h3>
+              <h3>{{ 'workspace.cardServicesTitle' | translate: 'Danh mục dịch vụ' }}</h3>
               <p>
                 {{
                   'workspace.cardServicesDesc'
@@ -293,7 +315,7 @@ import { TranslatePipe } from '../../core/i18n/translate.pipe';
           @if (identity()?.tenantId) {
             <article class="module-card">
               <div class="module-icon">🏢</div>
-              <h3>{{ 'workspace.cardDeptsTitle' | translate: 'Phòng ban & Bộ phận' }}</h3>
+              <h3>{{ 'workspace.cardDeptsTitle' | translate: 'Phòng ban & bộ phận' }}</h3>
               <p>
                 {{
                   'workspace.cardDeptsDesc'
@@ -343,7 +365,7 @@ import { TranslatePipe } from '../../core/i18n/translate.pipe';
           @if (session.hasPermission('records.search')) {
             <article class="module-card">
               <div class="module-icon">🔍</div>
-              <h3>{{ 'workspace.cardSearchTitle' | translate: 'Tra cứu Hồ sơ Hợp nhất' }}</h3>
+              <h3>{{ 'workspace.cardSearchTitle' | translate: 'Tra cứu hồ sơ hợp nhất' }}</h3>
               <p>
                 {{
                   'workspace.cardSearchDesc'
@@ -365,7 +387,7 @@ import { TranslatePipe } from '../../core/i18n/translate.pipe';
           @if (session.hasPermission('users.read')) {
             <article class="module-card">
               <div class="module-icon">👥</div>
-              <h3>{{ 'workspace.cardUsersTitle' | translate: 'Danh bạ Nhân sự & Tài khoản' }}</h3>
+              <h3>{{ 'workspace.cardUsersTitle' | translate: 'Danh bạ nhân sự & tài khoản' }}</h3>
               <p>
                 {{
                   'workspace.cardUsersDesc'
@@ -391,7 +413,7 @@ import { TranslatePipe } from '../../core/i18n/translate.pipe';
           ) {
             <article class="module-card">
               <div class="module-icon">🛠</div>
-              <h3>{{ 'workspace.cardSettingsTitle' | translate: 'Thiết lập Doanh nghiệp' }}</h3>
+              <h3>{{ 'workspace.cardSettingsTitle' | translate: 'Thiết lập doanh nghiệp' }}</h3>
               <p>
                 {{
                   'workspace.cardSettingsDesc'

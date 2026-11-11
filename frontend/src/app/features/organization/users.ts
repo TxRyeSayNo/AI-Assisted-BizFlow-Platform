@@ -31,6 +31,11 @@ export interface UserPage {
   total: number;
 }
 
+export interface DepartmentOption {
+  id: string;
+  name: string;
+}
+
 export interface ReplacementManagerDto {
   userId: string;
   fullName: string;
@@ -72,7 +77,7 @@ export class Users {
   private readonly destroy = inject(DestroyRef);
   private readonly toast = inject(ToastService);
   private request?: Subscription;
-  private applied = { search: '', status: '' };
+  private applied = { search: '', status: '', departmentId: '' };
   readonly session = inject(SessionService);
   readonly identity = this.session.identity;
   readonly filters = inject(FormBuilder).nonNullable.group(this.applied);
@@ -82,6 +87,7 @@ export class Users {
   readonly denied = signal(false);
   readonly error = signal(false);
   readonly page = signal(1);
+  readonly departments = signal<DepartmentOption[]>([]);
   readonly labels = { ACTIVE: 'Hoạt động', INACTIVE: 'Ngừng hoạt động', LOCKED: 'Tạm khóa' };
 
   // Demotion modal state
@@ -99,7 +105,21 @@ export class Users {
   }
 
   constructor() {
+    this.loadDepartments();
     this.load(1);
+  }
+
+  loadDepartments() {
+    this.http.get<{ items: { departmentId: string; name: string }[] }>('/api/v1/departments?pageSize=100')
+      .pipe(takeUntilDestroyed(this.destroy))
+      .subscribe({
+        next: (res) => {
+          if (res?.items) {
+            this.departments.set(res.items.map(d => ({ id: d.departmentId, name: d.name })));
+          }
+        },
+        error: () => {}
+      });
   }
 
   apply() {
@@ -117,6 +137,7 @@ export class Users {
     let params = new HttpParams().set('page', page).set('pageSize', 25);
     if (this.applied.status) params = params.set('status', this.applied.status);
     if (this.applied.search.trim()) params = params.set('search', this.applied.search.trim());
+    if (this.applied.departmentId) params = params.set('departmentId', this.applied.departmentId);
     this.request = this.http
       .get<UserPage>('/api/v1/users', { params })
       .pipe(takeUntilDestroyed(this.destroy))

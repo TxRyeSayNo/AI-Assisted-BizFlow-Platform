@@ -24,22 +24,27 @@ public sealed class CompanyRegistrationReader(BizFlowDbContext db, ITenantContex
             query = query.Where(c => c.Code.Contains(normalized) || c.Name.ToUpper().Contains(normalized));
         }
         var total = await query.LongCountAsync(cancellationToken);
-        var rows = await query.OrderByDescending(c => c.CreatedAt).ThenByDescending(c => c.Id)
+        var rows = await (from c in query
+                          join t in db.Tenants.IgnoreQueryFilters().AsNoTracking() on c.Id equals t.CompanyId into tenants
+                          from t in tenants.DefaultIfEmpty()
+                          orderby c.CreatedAt descending, c.Id descending
+                          select new
+                          {
+                              c.Id,
+                              c.Code,
+                              c.Name,
+                              c.TaxId,
+                              c.ContactPersonName,
+                              c.ContactEmail,
+                              c.ContactPhone,
+                              c.Status,
+                              c.CreatedAt,
+                              c.EvidenceDocumentKey,
+                              c.EvidenceDocumentFileName,
+                              TenantKey = t != null ? t.TenantKey : null
+                          })
             .Skip(checked((filter.Page - 1) * filter.PageSize)).Take(filter.PageSize)
-            .Select(c => new
-            {
-                c.Id,
-                c.Code,
-                c.Name,
-                c.TaxId,
-                c.ContactPersonName,
-                c.ContactEmail,
-                c.ContactPhone,
-                c.Status,
-                c.CreatedAt,
-                c.EvidenceDocumentKey,
-                c.EvidenceDocumentFileName
-            }).ToListAsync(cancellationToken);
+            .ToListAsync(cancellationToken);
         return new(rows.Select(c => new CompanyRegistrationRow(
             c.Id,
             c.Code,
@@ -52,7 +57,8 @@ public sealed class CompanyRegistrationReader(BizFlowDbContext db, ITenantContex
             c.CreatedAt,
             c.EvidenceDocumentKey,
             c.EvidenceDocumentFileName,
-            c.EvidenceDocumentKey != null ? $"/api/v1/platform/company-registrations/{c.Id}/document" : null)).ToArray(),
+            c.EvidenceDocumentKey != null ? $"/api/v1/platform/company-registrations/{c.Id}/document" : null,
+            c.TenantKey)).ToArray(),
             filter.Page, filter.PageSize, total);
     }
 }

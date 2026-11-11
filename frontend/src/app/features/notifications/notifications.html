@@ -117,30 +117,38 @@
                     }
                   </p>
                 }
-                @if (row.objectType === 'Task' && row.objectId) {
-                  <a mat-stroked-button [routerLink]="['/tasks', row.objectId]">{{
-                    'notifications.openTask' | translate: 'Open task'
-                  }}</a>
-                }
+                <div class="notification-actions">
+                  @if (row.objectType === 'Task' && row.objectId) {
+                    <a mat-stroked-button color="primary" class="action-btn open-btn" [routerLink]="['/tasks', row.objectId]">
+                      {{ 'notifications.openTask' | translate: 'Mở nhiệm vụ' }}
+                    </a>
+                  } @else if (row.objectType === 'Request' && row.objectId) {
+                    <a mat-stroked-button color="primary" class="action-btn open-btn" [routerLink]="['/requests', row.objectId]">
+                      {{ 'notifications.openRequest' | translate: 'Mở yêu cầu' }}
+                    </a>
+                  }
+                  @if (!row.readAt) {
+                    <button
+                      mat-stroked-button
+                      type="button"
+                      class="action-btn mark-read-btn"
+                      [disabled]="reading() !== null"
+                      (click)="markRead(row)"
+                      [attr.aria-label]="'Đánh dấu đã đọc: ' + row.title"
+                    >
+                      {{
+                        reading() === row.notificationId
+                          ? ('notifications.saving' | translate: 'Đang lưu…')
+                          : ('notifications.markRead' | translate: 'Đánh dấu đã đọc')
+                      }}
+                    </button>
+                  }
+                </div>
                 @if (row.readAt) {
-                  <p class="notification-meta">
-                    {{ 'notifications.read' | translate: 'Read' }}
+                  <p class="notification-meta read-timestamp">
+                    {{ 'notifications.read' | translate: 'Đã đọc lúc' }}
                     {{ row.readAt | date: 'yyyy-MM-dd HH:mm:ss' : 'UTC' }} UTC
                   </p>
-                } @else {
-                  <button
-                    mat-stroked-button
-                    type="button"
-                    [disabled]="reading() !== null"
-                    (click)="markRead(row)"
-                    [attr.aria-label]="'Mark read: ' + row.title"
-                  >
-                    {{
-                      reading() === row.notificationId
-                        ? ('notifications.saving' | translate: 'Saving…')
-                        : ('notifications.markRead' | translate: 'Mark read')
-                    }}
-                  </button>
                 }
               </article>
             </li>

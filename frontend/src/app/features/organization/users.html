@@ -9,12 +9,12 @@
   <nav aria-label="Breadcrumb">
     <a routerLink="/workspace">{{ 'common.workspace' | translate: 'Không gian làm việc' }}</a>
     <span aria-hidden="true"> / </span>
-    <span>{{ 'users.breadcrumb' | translate: 'Danh bạ Nhân sự & Phân cấp Vai trò' }}</span>
+    <span>{{ 'users.breadcrumb' | translate: 'Danh bạ nhân sự' }}</span>
   </nav>
 
   <div class="user-header-row">
     <div>
-      <h1>{{ 'users.title' | translate: 'Danh bạ Nhân sự & Quản lý Vai trò' }}</h1>
+      <h1>{{ 'users.title' | translate: 'Danh bạ nhân sự' }}</h1>
       <p class="subtitle-text">
         {{
           'users.subtitle'
@@ -26,11 +26,27 @@
   </div>
 
   <section aria-label="Danh bạ nhân sự" class="directory-panel" [attr.aria-busy]="busy()">
+    @if (!canManageRoles) {
+      <div style="display: inline-flex; align-items: center; gap: 8px; margin-bottom: 1rem; padding: 6px 14px; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; font-size: 0.85rem; color: #1e40af;">
+        <span>🔒 Phạm vi hiển thị: <strong>Nhân sự thuộc phòng ban được ủy quyền của bạn</strong></span>
+      </div>
+    }
     <form [formGroup]="filters" (ngSubmit)="apply()" class="filters">
       <mat-form-field appearance="outline" subscriptSizing="dynamic">
         <mat-label>{{ 'users.searchLabel' | translate: 'Họ tên, mã nhân viên hoặc email' }}</mat-label>
         <input matInput formControlName="search" maxlength="200" [readonly]="busy()" placeholder="Nhập từ khóa tìm kiếm…" />
       </mat-form-field>
+      @if (canManageRoles && departments().length > 0) {
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>{{ 'users.departmentLabel' | translate: 'Phòng ban' }}</mat-label>
+          <mat-select formControlName="departmentId">
+            <mat-option value="">{{ 'departments.allDepartments' | translate: 'Tất cả phòng ban' }}</mat-option>
+            @for (dept of departments(); track dept.id) {
+              <mat-option [value]="dept.id">{{ dept.name }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      }
       <mat-form-field appearance="outline" subscriptSizing="dynamic">
         <mat-label>{{ 'users.statusLabel' | translate: 'Trạng thái tài khoản' }}</mat-label>
         <mat-select formControlName="status">
@@ -78,7 +94,7 @@
               <tr>
                 <th scope="col" style="min-width: 240px;">{{ 'users.col.person' | translate: 'Nhân sự' }}</th>
                 <th scope="col" style="min-width: 170px;">{{ 'users.col.department' | translate: 'Phòng ban' }}</th>
-                <th scope="col" style="width: 150px;">{{ 'users.col.role' | translate: 'Chức danh / Vai trò' }}</th>
+                <th scope="col" style="width: 150px;">{{ 'users.col.role' | translate: 'Chức danh / vai trò' }}</th>
                 <th scope="col" style="width: 130px;">{{ 'common.status' | translate: 'Trạng thái' }}</th>
                 @if (canManageRoles) {
                   <th scope="col" style="width: 180px; text-align: right;">{{ 'common.actions' | translate: 'Thao tác' }}</th>

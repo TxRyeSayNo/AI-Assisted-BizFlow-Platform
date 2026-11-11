@@ -1267,6 +1267,9 @@
             padding: 2px 6px;
             border-radius: 4px;
             text-transform: uppercase;
+            white-space: nowrap !important;
+            word-break: keep-all !important;
+            flex-shrink: 0 !important;
 
             &.prio-high {
               background: #fee2e2;
@@ -1497,6 +1500,9 @@
           padding: 3px 8px;
           border-radius: 6px;
           text-transform: uppercase;
+          white-space: nowrap !important;
+          word-break: keep-all !important;
+          flex-shrink: 0 !important;
 
           &.prio-high {
             background: #fee2e2;

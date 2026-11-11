@@ -771,10 +771,16 @@ body:has(.auth-page) {
       }
 
       .brand-dot {
-        width: 7px;
-        height: 7px;
+        display: inline-block;
+        width: 6px;
+        height: 6px;
         border-radius: 50%;
-        background: #2874d8;
+        background: #00d4ff !important;
+        box-shadow: 0 0 8px #00d4ff !important;
+        animation: pulse-dot 2s ease-in-out infinite alternate !important;
+        position: relative;
+        flex-shrink: 0;
+        vertical-align: middle;
       }
     }
 
@@ -1115,6 +1121,11 @@ body:has(.auth-page) {
 @keyframes rotate-btn-border {
   0% { transform: translate(-50%, -50%) rotate(0deg); }
   100% { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+@keyframes pulse-dot {
+  0% { transform: scale(0.9); opacity: 0.7; }
+  100% { transform: scale(1.15); opacity: 1; }
 }
 
 /* Public Brand Footer Tag below card */
@@ -1817,6 +1828,67 @@ table {
       animation: none !important;
     }
   }
+}
+
+/* ==========================================================================
+   UNIVERSAL PRIORITY BADGES, STATUS CHIPS AND COMPACT LABELS PROTECTION
+   Guarantees no awkward line wrapping (e.g. "Trung bình") or clipped content
+   ========================================================================== */
+.priority-badge,
+.priority-indicator,
+.badge-priority,
+.prio-tag,
+.branch-prio-tag,
+.detail-prio-badge {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  padding: 0.18rem 0.55rem !important;
+  border-radius: 6px !important;
+  font-size: 0.75rem !important;
+  font-weight: 600 !important;
+  white-space: nowrap !important;
+  word-break: keep-all !important;
+  flex-shrink: 0 !important;
+  vertical-align: middle !important;
+  line-height: 1.3 !important;
+
+  &.priority-low, &[data-priority="LOW"], &.prio-low {
+    background: #f1f5f9 !important;
+    color: #475569 !important;
+    border: 1px solid #cbd5e1 !important;
+  }
+  &.priority-medium, &[data-priority="MEDIUM"], &.prio-medium {
+    background: #fef3c7 !important;
+    color: #92400e !important;
+    border: 1px solid #fde68a !important;
+  }
+  &.priority-high, &[data-priority="HIGH"], &.prio-high {
+    background: #ffedd5 !important;
+    color: #c2410c !important;
+    border: 1px solid #fed7aa !important;
+  }
+  &.priority-critical, &.priority-urgent, &[data-priority="CRITICAL"], &[data-priority="URGENT"], &.prio-critical {
+    background: #fee2e2 !important;
+    color: #b91c1c !important;
+    border: 1px solid #fecaca !important;
+    font-weight: 700 !important;
+  }
+}
+
+/* Universal Table Cell & Column Protection for Short Badges */
+td .badge-status,
+td .status-label,
+td .status-badge,
+td .status-chip,
+td .badge-task-parent,
+td .badge-task-child,
+td .badge-task-independent,
+td .badge-type,
+td .company-code {
+  white-space: nowrap !important;
+  word-break: keep-all !important;
+  flex-shrink: 0 !important;
 }
 
 @media (prefers-reduced-motion: reduce) {

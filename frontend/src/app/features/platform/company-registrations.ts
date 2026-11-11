@@ -16,6 +16,7 @@ interface Registration {
   code: string;
   name: string;
   taxId?: string;
+  tenantKey?: string | null;
   contactPersonName?: string;
   contactEmail: string;
   contactPhone?: string;
@@ -65,7 +66,7 @@ interface RegistrationPage {
     </header>
 
     <main id="main-content" class="page-content" tabindex="-1">
-      <h1>{{ 'platform.title' | translate: 'Quản lý Đăng ký & Cung cấp Doanh nghiệp' }}</h1>
+      <h1>{{ 'platform.title' | translate: 'Quản lý đăng ký & cung cấp doanh nghiệp' }}</h1>
       <p>
         {{
           'platform.subtitle'
@@ -175,6 +176,9 @@ interface RegistrationPage {
                       <th scope="row">
                         <strong>{{ item.name }}</strong>
                         <span class="company-code">{{ item.code }}</span>
+                        @if (item.tenantKey) {
+                          <span class="company-code" style="color: #0369a1; background: #e0f2fe; border: 1px solid #bae6fd; border-radius: 9999px; padding: 2px 8px; font-weight: 600;">Workspace: {{ item.tenantKey }}</span>
+                        }
                         @if (item.taxId) {
                           <span class="company-code" style="color: #145da0; font-weight: 600;"
                             >MST: {{ item.taxId }}</span
@@ -289,7 +293,7 @@ interface RegistrationPage {
       @if (approvingItem(); as item) {
         <div class="modal-backdrop">
           <div class="modal-card">
-            <h2>{{ 'platform.approveModalTitle' | translate: 'Phê duyệt & Cấp Workspace' }}</h2>
+            <h2>{{ 'platform.approveModalTitle' | translate: 'Phê duyệt & cấp workspace' }}</h2>
             <p class="modal-desc">
               {{ 'platform.approveModalDescBefore' | translate: 'Phê duyệt doanh nghiệp' }} <strong>{{ item.name }}</strong> {{ 'platform.approveModalDescAfter' | translate: 'sẽ tự động khởi tạo không gian làm việc (tenant) và tài khoản Quản trị viên Doanh nghiệp.' }}
 
@@ -353,7 +357,7 @@ interface RegistrationPage {
       @if (rejectingItem(); as item) {
         <div class="modal-backdrop">
           <div class="modal-card">
-            <h2>{{ 'platform.rejectModalTitle' | translate: 'Từ chối Hồ sơ Doanh nghiệp' }}</h2>
+            <h2>{{ 'platform.rejectModalTitle' | translate: 'Từ chối hồ sơ doanh nghiệp' }}</h2>
             <p class="modal-desc">
               {{ 'platform.rejectModalDescBefore' | translate: 'Vui lòng cung cấp lý do từ chối hồ sơ đăng ký của' }}
               <strong>{{ item.name }}</strong> {{ 'platform.rejectModalDescAfter' | translate: '(bắt buộc theo quy định BR-022).' }}
@@ -410,7 +414,7 @@ export class CompanyRegistrations {
   private readonly fb = inject(FormBuilder);
   private readonly destroy = inject(DestroyRef);
   private request?: Subscription;
-  private applied = { search: '', status: 'PENDING' };
+  private applied = { search: '', status: '' };
 
   readonly filters = this.fb.nonNullable.group(this.applied);
   readonly result = signal<RegistrationPage | null>(null);
