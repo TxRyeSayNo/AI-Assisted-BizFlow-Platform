@@ -16,9 +16,18 @@ using BizFlow.Domain.Workflows;
 
 namespace BizFlow.Application.Workflows;
 
+public sealed record WorkflowConditionDto(
+    string Id,
+    string FieldKey,
+    string Operator,
+    string Value,
+    string Label,
+    string TargetNodeId,
+    bool IsDefault = false);
+
 public sealed record WorkflowGraphNodeDto(
     string Id,
-    string Type, // "START" | "DEPARTMENT" | "APPROVAL" | "DECISION" | "END"
+    string Type, // "START" | "DEPARTMENT" | "APPROVAL" | "DECISION" | "CONFIRMATION" | "END"
     string Name,
     int X,
     int Y,
@@ -29,13 +38,21 @@ public sealed record WorkflowGraphNodeDto(
     int? SlaHours = null,
     string? Description = null,
     string? Trigger = null,
-    string? CompletionState = null);
+    string? CompletionState = null,
+    string? AssignmentMethod = null,
+    Guid? SpecificUserId = null,
+    string? SpecificUserName = null,
+    string? Milestone = null,
+    IReadOnlyList<WorkflowConditionDto>? Conditions = null);
 
 public sealed record WorkflowGraphEdgeDto(
     string Id,
     string Source,
     string Target,
-    string? Label = null);
+    string? Label = null,
+    string? OutcomeCode = null,
+    string? ConditionId = null,
+    bool IsDefault = false);
 
 public sealed record WorkflowDraftGraphDto(
     string WorkflowName,

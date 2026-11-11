@@ -8,7 +8,7 @@ import { FormsModule } from '@angular/forms';
 import { Subscription } from 'rxjs';
 import { SessionService } from '../../core/auth/session';
 import type { WorkflowRow } from './workflows';
-import { WorkflowDesigner, LookupItem } from './workflow-designer';
+import { WorkflowDesigner, LookupItem, UserLookupItem } from './workflow-designer';
 
 export interface WorkflowVersionView {
   workflowId: string;
@@ -110,6 +110,7 @@ export class WorkflowVersion {
   // Lookups for designer
   readonly departments = signal<LookupItem[]>([]);
   readonly roles = signal<LookupItem[]>([]);
+  readonly users = signal<UserLookupItem[]>([]);
   readonly services = signal<ServiceLookupItem[]>([]);
   readonly versionHistory = signal<VersionSummaryItem[]>([]);
 
@@ -314,6 +315,14 @@ export class WorkflowVersion {
         next: (svcs) => this.services.set(svcs),
         error: () => {},
       });
+
+    this.http
+      .get<UserLookupItem[]>('/api/v1/workflows/lookup/users')
+      .pipe(takeUntilDestroyed(this.destroy))
+      .subscribe({
+        next: (users) => this.users.set(users),
+        error: () => {},
+      });
   }
 
   loadHistory(workflowId: string) {
@@ -361,7 +370,15 @@ export class WorkflowVersion {
             departmentId: n.departmentId,
             roleId: n.roleId,
             slaHours: n.slaHours,
+            assignmentMethod: n.assignmentMethod,
+            specificUserId: n.specificUserId,
+            specificUserName: n.specificUserName,
             approverType: n.approverType,
+            approvalCountPolicy: n.approvalCountPolicy,
+            rejectionReasonRequired: n.rejectionReasonRequired,
+            requireNotes: n.requireNotes,
+            requireAttachment: n.requireAttachment,
+            requireDeliverable: n.requireDeliverable,
             milestone: n.milestone,
             description: n.description,
           }),
@@ -371,7 +388,12 @@ export class WorkflowVersion {
     const transitions = edges.map((e) => ({
       fromState: e.source,
       toState: e.target,
-      guardJson: e.label ? JSON.stringify({ label: e.label }) : null,
+      guardJson: JSON.stringify({
+        label: e.label || '',
+        outcomeCode: e.outcomeCode || 'DEFAULT',
+        conditionId: e.conditionId,
+        isDefault: e.isDefault,
+      }),
     }));
 
     const newName = this.workflowNameEdit().trim() || undefined;

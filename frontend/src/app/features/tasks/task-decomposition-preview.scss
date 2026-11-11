@@ -29,6 +29,10 @@
   box-shadow: var(--bf-shadow-card);
   margin-bottom: 1.5rem;
 
+  @media (max-width: 480px) {
+    padding: 1rem;
+  }
+
   .card-header h2 {
     margin: 0 0 1rem;
     font-size: 1.15rem;
@@ -221,7 +225,7 @@
 
     .grid-row {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
       gap: 0.75rem;
     }
 

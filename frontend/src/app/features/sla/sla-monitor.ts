@@ -72,7 +72,7 @@ export interface SlaBreachItem {
             <span class="pulse-beacon"></span>
           </div>
           <div class="kpi-value text-danger">{{ overdueCount() }}</div>
-          <p class="kpi-meta">{{ 'slaMonitor.immediateIntervention' | translate: 'Immediate intervention required' }}</p>
+          <p class="kpi-meta">{{ 'slaMonitor.immediateIntervention' | translate: 'Cần can thiệp ngay lập tức' }}</p>
         </div>
 
         <div class="kpi-card highlight-warning">

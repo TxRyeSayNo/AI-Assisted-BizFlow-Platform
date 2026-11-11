@@ -69,6 +69,7 @@ interface UploadDocumentResponse {
         color: #0b223d;
         font-family: var(
           --bf-font-sans,
+          'Be Vietnam Pro',
           'Plus Jakarta Sans',
           -apple-system,
           BlinkMacSystemFont,

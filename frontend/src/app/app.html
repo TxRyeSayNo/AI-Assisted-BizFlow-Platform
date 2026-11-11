@@ -13,7 +13,7 @@
   <!-- Top Horizontal Utility Header -->
   <header class="app-topbar" role="banner">
     <div class="topbar-left">
-      <a class="wordmark" routerLink="/workspace" title="BizFlow Home">
+      <a class="wordmark" routerLink="/workspace" title="Trang chủ BizFlow">
         <img src="/assets/brand/bizflow-logo.png" alt="BizFlow logo" class="brand-mark brand-logo-img" width="34"
           height="34" />
         <span class="brand-name">BizFlow</span>
@@ -47,7 +47,7 @@
       </div>
 
       <!-- Sign Out Action -->
-      <button type="button" class="btn-signout" (click)="signOut()" title="Sign out" aria-label="Sign out of BizFlow">
+      <button type="button" class="btn-signout" (click)="signOut()" title="Đăng xuất" aria-label="Đăng xuất khỏi BizFlow">
         {{ 'common.signOut' | translate: 'Sign out' }}
       </button>
     </div>
@@ -68,8 +68,8 @@
               routerLinkActive="active"
               [routerLinkActiveOptions]="{ exact: true }"
               class="sidebar-item"
-              title="Home"
-              aria-label="Home"
+              title="Trang chủ"
+              aria-label="Trang chủ"
             >
               <svg class="nav-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
@@ -89,8 +89,8 @@
                 routerLink="/tasks"
                 routerLinkActive="active"
                 class="sidebar-item"
-                title="Tasks"
-                aria-label="Tasks"
+                title="Nhiệm vụ"
+                aria-label="Nhiệm vụ"
               >
                 <svg class="nav-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                   <path d="M9 11l3 3L22 4"/>
@@ -110,8 +110,8 @@
                 routerLink="/requests"
                 routerLinkActive="active"
                 class="sidebar-item"
-                title="Requests"
-                aria-label="Requests"
+                title="Yêu cầu"
+                aria-label="Yêu cầu"
               >
                 <svg class="nav-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                   <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
@@ -131,8 +131,8 @@
                 routerLink="/approvals"
                 routerLinkActive="active"
                 class="sidebar-item"
-                title="Approvals"
-                aria-label="Approvals"
+                title="Phê duyệt"
+                aria-label="Phê duyệt"
               >
                 <svg class="nav-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                   <circle cx="12" cy="12" r="10"/>
@@ -153,8 +153,8 @@
                 routerLink="/reports"
                 routerLinkActive="active"
                 class="sidebar-item"
-                title="Reports"
-                aria-label="Reports"
+                title="Báo cáo"
+                aria-label="Báo cáo"
               >
                 <svg class="nav-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                   <line x1="18" y1="20" x2="18" y2="10"/>
@@ -176,8 +176,8 @@
                 routerLink="/sla-monitor"
                 routerLinkActive="active"
                 class="sidebar-item"
-                title="SLA Monitor"
-                aria-label="SLA Monitor"
+                title="Giám sát SLA"
+                aria-label="Giám sát SLA"
               >
                 <svg class="nav-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                   <circle cx="12" cy="12" r="10"/>
@@ -193,8 +193,8 @@
                 routerLink="/records/search"
                 routerLinkActive="active"
                 class="sidebar-item"
-                title="Search"
-                aria-label="Search records"
+                title="Tra cứu"
+                aria-label="Tra cứu hồ sơ"
               >
                 <svg class="nav-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                   <circle cx="11" cy="11" r="8"/>
@@ -217,8 +217,8 @@
                 routerLink="/settings"
                 routerLinkActive="active"
                 class="sidebar-item"
-                title="Settings"
-                aria-label="Settings"
+                title="Cài đặt hệ thống"
+                aria-label="Cài đặt hệ thống"
               >
                 <svg class="nav-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                   <circle cx="12" cy="12" r="3"/>
@@ -234,8 +234,8 @@
               routerLinkActive="active"
               [routerLinkActiveOptions]="{ exact: true }"
               class="sidebar-item"
-              title="Home"
-              aria-label="Home"
+              title="Trang chủ"
+              aria-label="Trang chủ"
             >
               <svg class="nav-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
@@ -247,8 +247,8 @@
               routerLink="/platform/companies"
               routerLinkActive="active"
               class="sidebar-item"
-              title="Companies"
-              aria-label="Companies"
+              title="Quản lý Doanh nghiệp"
+              aria-label="Quản lý Doanh nghiệp"
             >
               <svg class="nav-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
@@ -260,8 +260,8 @@
               routerLink="/platform/audit"
               routerLinkActive="active"
               class="sidebar-item"
-              title="Platform Audit"
-              aria-label="Platform Audit"
+              title="Kiểm toán Hệ thống"
+              aria-label="Kiểm toán Hệ thống"
             >
               <svg class="nav-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>

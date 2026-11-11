@@ -46,6 +46,11 @@ public sealed class WorkflowDocumentAnalysisTests
         public Task<IReadOnlyList<WorkflowLookupItem>> GetActiveRolesAsync(Guid tenantId, CancellationToken cancellationToken) =>
             Task.FromResult<IReadOnlyList<WorkflowLookupItem>>(Roles);
 
+        public List<WorkflowUserLookupItem> Users { get; } = [];
+
+        public Task<IReadOnlyList<WorkflowUserLookupItem>> GetActiveUsersAsync(Guid tenantId, Guid? departmentId, CancellationToken cancellationToken) =>
+            Task.FromResult<IReadOnlyList<WorkflowUserLookupItem>>(Users);
+
         public Task<WorkflowPage> ListAsync(Guid tenantId, WorkflowFilter filter, CancellationToken cancellationToken) => throw new NotImplementedException();
         public Task<WorkflowVersionView?> ReadVersionAsync(Guid tenantId, Guid versionId, CancellationToken cancellationToken) => throw new NotImplementedException();
         public Task<WorkflowRow> CreateAsync(WorkflowDefinition workflow, WorkflowVersion version, AuditLog audit, CancellationToken cancellationToken) => throw new NotImplementedException();

@@ -21,6 +21,7 @@ public sealed record WorkflowSaveDraftInput(string DefinitionJson, IReadOnlyList
 public sealed record WorkflowPublishInput(Guid? ServiceId = null);
 public sealed record WorkflowLookupItem(Guid Id, string Name, string? Code = null);
 public sealed record WorkflowServiceLookupItem(Guid Id, string Name, string Code, Guid? ActiveWorkflowVersionId);
+public sealed record WorkflowUserLookupItem(Guid Id, string FullName, string EmployeeCode, string Email, Guid? DepartmentId);
 public sealed record WorkflowVersionSummary(Guid VersionId, int VersionNo, string Status, DateTimeOffset? PublishedAt);
 public sealed record WorkflowValidationResult(bool IsValid, IReadOnlyList<string> Errors, IReadOnlyList<string> Warnings);
 
@@ -37,6 +38,7 @@ public interface IWorkflowLibraryStore
     Task<WorkflowRow?> UpdateStatusAsync(Guid tenantId, Guid workflowId, WorkflowStatus status, AuditLog audit, CancellationToken cancellationToken);
     Task<IReadOnlyList<WorkflowLookupItem>> GetActiveDepartmentsAsync(Guid tenantId, CancellationToken cancellationToken);
     Task<IReadOnlyList<WorkflowLookupItem>> GetActiveRolesAsync(Guid tenantId, CancellationToken cancellationToken);
+    Task<IReadOnlyList<WorkflowUserLookupItem>> GetActiveUsersAsync(Guid tenantId, Guid? departmentId, CancellationToken cancellationToken);
     Task<IReadOnlyList<WorkflowServiceLookupItem>> GetServicesAsync(Guid tenantId, CancellationToken cancellationToken);
     Task<IReadOnlyList<WorkflowVersionSummary>> GetWorkflowVersionsAsync(Guid tenantId, Guid workflowId, CancellationToken cancellationToken);
     Task<WorkflowDefinition?> GetWorkflowByIdAsync(Guid tenantId, Guid workflowId, CancellationToken cancellationToken);
@@ -60,6 +62,9 @@ public sealed class WorkflowLibrary(ITenantContext context, IResourceAuthorizer 
         await authorizer.AuthorizeAsync(permission, new(context.TenantId), cancellationToken: cancellationToken);
         return context.TenantId ?? throw new ApplicationFault(FaultKind.Forbidden, "ACCESS.DENIED", "Cấu hình quy trình yêu cầu không gian làm việc của công ty.");
     }
+
+    public async Task<Guid> AuthorizeReadAsync(CancellationToken cancellationToken) =>
+        await AuthorizeAsync(ReadPermission, cancellationToken);
 
     public async Task<WorkflowPage> ListAsync(WorkflowFilter filter, CancellationToken cancellationToken)
     {
@@ -141,14 +146,16 @@ public sealed class WorkflowLibrary(ITenantContext context, IResourceAuthorizer 
 
         var departments = await store.GetActiveDepartmentsAsync(tenantId, cancellationToken);
         var roles = await store.GetActiveRolesAsync(tenantId, cancellationToken);
+        var users = await store.GetActiveUsersAsync(tenantId, null, cancellationToken);
 
         var deptIds = departments.Select(d => d.Id).ToHashSet();
         var roleIds = roles.Select(r => r.Id).ToHashSet();
+        var userIds = users.Select(u => u.Id).ToHashSet();
 
         var businessType = Enum.Parse<WorkflowBusinessType>(version.BusinessType, true);
         var definitionJson = version.Definition.GetRawText();
 
-        return WorkflowValidator.Validate(definitionJson, businessType, deptIds, roleIds);
+        return WorkflowValidator.Validate(definitionJson, businessType, deptIds, roleIds, userIds);
     }
 
     public async Task<WorkflowVersionView> PublishVersionAsync(Guid versionId, WorkflowPublishInput input, CancellationToken cancellationToken)
@@ -247,6 +254,12 @@ public sealed class WorkflowLibrary(ITenantContext context, IResourceAuthorizer 
     {
         var tenantId = await AuthorizeAsync(ConfigurePermission, cancellationToken);
         return await store.GetActiveRolesAsync(tenantId, cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<WorkflowUserLookupItem>> GetActiveUsersAsync(Guid? departmentId, CancellationToken cancellationToken)
+    {
+        var tenantId = await AuthorizeAsync(ConfigurePermission, cancellationToken);
+        return await store.GetActiveUsersAsync(tenantId, departmentId, cancellationToken);
     }
 
     public async Task<IReadOnlyList<WorkflowServiceLookupItem>> GetServicesAsync(CancellationToken cancellationToken)

@@ -25,7 +25,7 @@ import { Feedback } from './feedback';
         </a>
       } @else {
         <a routerLink="/login" style="display: inline-block; padding: 10px 24px; background: #2563eb; color: #fff; border-radius: 8px; text-decoration: none; font-weight: 500; box-shadow: 0 2px 4px rgba(37,99,235,0.2);">
-          {{ 'accessDenied.back' | translate: 'Back to sign in' }}
+          {{ 'accessDenied.back' | translate: 'Quay lại trang đăng nhập' }}
         </a>
       }
     </div>

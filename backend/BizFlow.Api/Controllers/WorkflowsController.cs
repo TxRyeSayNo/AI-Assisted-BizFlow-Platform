@@ -116,6 +116,35 @@ public sealed class WorkflowsController(
         return Ok(result);
     }
 
+    [HttpPost("/api/v1/workflow-versions/{id:guid}/resolve-step")]
+    public async Task<ActionResult<WorkflowStepResolution>> ResolveStep(
+        Guid id,
+        [FromBody] ResolveWorkflowStepInput input,
+        [FromServices] IWorkflowRuntimeEngine runtimeEngine,
+        CancellationToken cancellationToken = default)
+    {
+        var tenantId = await workflows.AuthorizeReadAsync(cancellationToken);
+        var resolution = string.IsNullOrWhiteSpace(input.CurrentNodeId)
+            ? await runtimeEngine.StartWorkflowAsync(
+                tenantId,
+                id,
+                input.Payload,
+                input.RequesterUserId,
+                input.RequesterDepartmentId,
+                cancellationToken)
+            : await runtimeEngine.ResolveNextStepAsync(
+                tenantId,
+                id,
+                input.CurrentNodeId,
+                input.ActionOutcome ?? "",
+                input.Payload,
+                input.RequesterUserId,
+                input.RequesterDepartmentId,
+                cancellationToken);
+
+        return Ok(resolution);
+    }
+
     [HttpGet("lookup/departments")]
     public Task<IReadOnlyList<WorkflowLookupItem>> GetDepartments(CancellationToken cancellationToken) =>
         workflows.GetActiveDepartmentsAsync(cancellationToken);
@@ -123,6 +152,10 @@ public sealed class WorkflowsController(
     [HttpGet("lookup/roles")]
     public Task<IReadOnlyList<WorkflowLookupItem>> GetRoles(CancellationToken cancellationToken) =>
         workflows.GetActiveRolesAsync(cancellationToken);
+
+    [HttpGet("lookup/users")]
+    public Task<IReadOnlyList<WorkflowUserLookupItem>> GetUsers([FromQuery] Guid? departmentId = null, CancellationToken cancellationToken = default) =>
+        workflows.GetActiveUsersAsync(departmentId, cancellationToken);
 
     [HttpGet("lookup/services")]
     public Task<IReadOnlyList<WorkflowServiceLookupItem>> GetServices(CancellationToken cancellationToken) =>
@@ -146,3 +179,10 @@ public sealed record PublishWorkflowInput(Guid? ServiceId = null);
 public sealed record UpdateWorkflowStatusInput([Required] string Status);
 
 public sealed record UpdateWorkflowNameInput([Required, StringLength(200)] string Name);
+
+public sealed record ResolveWorkflowStepInput(
+    string? CurrentNodeId = null,
+    string? ActionOutcome = null,
+    System.Text.Json.JsonElement Payload = default,
+    Guid? RequesterUserId = null,
+    Guid? RequesterDepartmentId = null);

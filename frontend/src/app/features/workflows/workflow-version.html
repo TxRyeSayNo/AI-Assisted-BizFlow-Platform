@@ -111,7 +111,7 @@
   <div class="designer-host-area">
     <bf-workflow-designer [workflowId]="data.workflowId" [workflowName]="data.name" [businessType]="data.businessType"
       [versionNo]="data.versionNo" [versionStatus]="data.status" [readonly]="data.status !== 'DRAFT'"
-      [initialDefinition]="data.definition" [departments]="departments()" [roles]="roles()" (saveDraft)="onSaveDraft()"
+      [initialDefinition]="data.definition" [departments]="departments()" [roles]="roles()" [users]="users()" (saveDraft)="onSaveDraft()"
       (validateWorkflow)="onValidate()" (publishWorkflow)="openPublishModal()"></bf-workflow-designer>
   </div>
 
@@ -239,7 +239,7 @@
           [disabled]="aiAnalyzing()"
           style="width: 100%; border: 1px solid #cbd5e1; border-radius: 6px; padding: 10px; font-family: inherit; font-size: 13px;"></textarea>
 
-        <div style="margin-top: 12px; display: flex; justify-content: space-between; align-items: center;">
+        <div style="margin-top: 12px; display: flex; flex-wrap: wrap; gap: 8px; justify-content: space-between; align-items: center;">
           <div>
             <span style="font-size: 13px; font-weight: 500;">Chọn tệp tin từ máy tính: </span>
             <input type="file" accept=".docx, .txt, .md, .pdf" (change)="onAiFileSelected($event)"

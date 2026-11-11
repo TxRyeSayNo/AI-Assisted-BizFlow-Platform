@@ -50,6 +50,7 @@ describe('workflow version view', () => {
     const http = TestBed.inject(HttpTestingController);
     http.match('/api/v1/workflows/lookup/departments').forEach((r) => r.flush([]));
     http.match('/api/v1/workflows/lookup/roles').forEach((r) => r.flush([]));
+    http.match('/api/v1/workflows/lookup/users').forEach((r) => r.flush([]));
     http.match('/api/v1/workflows/lookup/services').forEach((r) => r.flush([]));
     http.match('/api/v1/workflows/workflow/versions').forEach((r) => r.flush([]));
   };

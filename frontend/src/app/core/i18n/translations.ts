@@ -526,6 +526,12 @@ export const TRANSLATIONS: Record<LanguageCode, Record<string, string>> = {
     'requests.resolve': 'Giải quyết',
     'requests.confirm': 'Xác nhận hoàn tất',
     'requests.reject': 'Từ chối',
+    'requests.rejectedTitle': 'Yêu cầu bị từ chối',
+    'requests.archivedSuccess': 'Lưu trữ yêu cầu thành công.',
+    'requests.resolvedSuccess': 'Xác nhận giải quyết yêu cầu thành công.',
+    'requests.revisedSuccess': 'Tạo lại bản thảo yêu cầu bị từ chối thành công.',
+    'requests.reworkNoteRequired': 'Vui lòng nhập lý do yêu cầu làm lại.',
+    'requests.taskCreatedSuccess': 'Tạo nhiệm vụ và liên kết với yêu cầu thành công.',
 
     // Request Create
     'requestCreate.breadcrumb': 'Yêu cầu mới',
@@ -550,6 +556,7 @@ export const TRANSLATIONS: Record<LanguageCode, Record<string, string>> = {
     // Request Detail
     'requestDetail.breadcrumb': 'Chi tiết yêu cầu',
     'requestDetail.loading': 'Đang tải chi tiết yêu cầu…',
+    'requestDetail.errNotFound': 'Không tìm thấy yêu cầu hoặc bạn không có quyền xem yêu cầu này.',
     'requestDetail.backToRequests': 'Quay lại danh sách yêu cầu',
     'requestDetail.submit': 'Gửi yêu cầu',
     'requestDetail.submitBtn': 'Gửi yêu cầu',
@@ -683,6 +690,7 @@ export const TRANSLATIONS: Record<LanguageCode, Record<string, string>> = {
     'approvals.awaitingDecision': 'Chờ quyết định',
     'approvals.allDecisions': 'Tất cả quyết định',
     'approvals.taskResults': 'Kết quả nhiệm vụ',
+    'approvals.submittedAt': 'Đã gửi:',
     'approvals.requestResolutions': 'Giải quyết yêu cầu',
     'approvals.filterPlaceholder': 'Lọc theo tiêu đề hoặc người thực hiện…',
     'approvals.allCaughtUp': 'Đã xử lý hết!',
@@ -716,6 +724,8 @@ export const TRANSLATIONS: Record<LanguageCode, Record<string, string>> = {
     'slaMonitor.colOwnerDept': 'Phụ trách / Phòng ban',
     'slaMonitor.colAction': 'Thao tác',
     'slaMonitor.inspect': 'Kiểm tra →',
+    'slaMonitor.manageProfiles': 'Quản lý Hồ sơ SLA →',
+    'slaMonitor.noBreaches': 'Hiện không có công việc hoặc yêu cầu nào vi phạm hoặc tiệm cận ngưỡng cảnh báo SLA.',
 
     // Reports & Dashboard
     'reports.breadcrumb': 'Báo cáo',
@@ -881,6 +891,9 @@ export const TRANSLATIONS: Record<LanguageCode, Record<string, string>> = {
     'users.error': 'Không thể tải danh bạ nhân sự. Vui lòng thử lại.',
     'users.empty': 'Không có nhân sự nào khớp với bộ lọc.',
     'users.col.person': 'Nhân sự',
+    'users.col.department': 'Phòng ban',
+    'users.col.role': 'Chức danh / Vai trò',
+    'users.batchImport': '+ Nhập nhân sự từ file (Excel/CSV)',
     'users.tableCaption': 'Danh bạ nhân sự không gian làm việc',
     'users.noDepartment': 'Chưa phân bổ phòng ban',
     'users.person': 'nhân sự',

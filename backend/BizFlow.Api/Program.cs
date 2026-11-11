@@ -3,6 +3,8 @@ using BizFlow.Api;
 using BizFlow.Api.Security;
 using BizFlow.Application.Authentication;
 using BizFlow.Application.Security;
+using System.Text.Encodings.Web;
+using System.Text.Unicode;
 using Microsoft.AspNetCore.Mvc;
 using Serilog;
 using Serilog.Formatting.Compact;
@@ -80,6 +82,7 @@ builder.Services.AddScoped<BizFlow.Application.Requests.IRequestDetailReader, Bi
 builder.Services.AddScoped<BizFlow.Application.Organization.IUserDirectoryReader, BizFlow.Infrastructure.Organization.UserDirectoryReader>();
 builder.Services.AddScoped<BizFlow.Application.Workflows.WorkflowLibrary>();
 builder.Services.AddScoped<BizFlow.Application.Workflows.IWorkflowLibraryStore, BizFlow.Infrastructure.Workflows.WorkflowLibraryStore>();
+builder.Services.AddScoped<BizFlow.Application.Workflows.IWorkflowRuntimeEngine, BizFlow.Application.Workflows.WorkflowExecutionEngine>();
 builder.Services.AddScoped<BizFlow.Application.Audit.AuditQuery>();
 builder.Services.AddScoped<BizFlow.Application.Sla.SlaProfileCatalog>();
 builder.Services.AddScoped<BizFlow.Application.Sla.ISlaProfileStore, BizFlow.Infrastructure.Sla.SlaProfileStore>();
@@ -157,6 +160,13 @@ builder.Services.AddControllers().ConfigureApiBehaviorOptions(options =>
             context.ModelState.Where(entry => entry.Value?.Errors.Count > 0)
                 // Model-binding exceptions can echo submitted secrets. Expose field names only.
                 .ToDictionary(entry => entry.Key, _ => new[] { "The supplied value is invalid." })));
+}).AddJsonOptions(options =>
+{
+    options.JsonSerializerOptions.Encoder = JavaScriptEncoder.Create(UnicodeRanges.All);
+});
+builder.Services.ConfigureHttpJsonOptions(options =>
+{
+    options.SerializerOptions.Encoder = JavaScriptEncoder.Create(UnicodeRanges.All);
 });
 builder.Services.AddAuthorization();
 builder.Services.AddSignalR(options => options.EnableDetailedErrors = false);

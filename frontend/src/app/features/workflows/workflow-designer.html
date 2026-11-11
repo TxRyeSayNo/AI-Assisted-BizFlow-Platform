@@ -381,40 +381,122 @@
             />
           </div>
 
+          <!-- START NODE PROPERTIES -->
+          @if (node.type === 'START') {
+            <div class="form-group">
+              <label for="prop-start-trigger">Sự kiện kích hoạt *:</label>
+              <select
+                id="prop-start-trigger"
+                class="form-select"
+                [ngModel]="node.trigger || (businessType === 'REQUEST' ? 'REQUEST_CREATED' : 'TASK_CREATED')"
+                (ngModelChange)="updateSelectedNodeProps({ trigger: $event })"
+                [disabled]="readonly"
+              >
+                @if (businessType === 'REQUEST') {
+                  <option value="REQUEST_CREATED">Tạo yêu cầu mới (REQUEST_CREATED)</option>
+                  <option value="MANUAL">Kích hoạt thủ công (MANUAL)</option>
+                } @else {
+                  <option value="TASK_CREATED">Tạo nhiệm vụ mới (TASK_CREATED)</option>
+                  <option value="MANUAL">Kích hoạt thủ công (MANUAL)</option>
+                }
+              </select>
+              <p class="hint-text">Quy trình bắt đầu khi sự kiện tương ứng xuất hiện trong hệ thống.</p>
+            </div>
+          }
+
+          <!-- END NODE PROPERTIES -->
+          @if (node.type === 'END') {
+            <div class="form-group">
+              <label for="prop-end-state">Trạng thái kết thúc *:</label>
+              <select
+                id="prop-end-state"
+                class="form-select"
+                [ngModel]="node.completionState || 'COMPLETED'"
+                (ngModelChange)="updateSelectedNodeProps({ completionState: $event })"
+                [disabled]="readonly"
+              >
+                <option value="COMPLETED">Hoàn tất thành công (COMPLETED)</option>
+                <option value="REJECTED">Bị từ chối (REJECTED)</option>
+                <option value="CANCELLED">Hủy bỏ (CANCELLED)</option>
+                <option value="FAILED">Thất bại (FAILED)</option>
+              </select>
+              <p class="hint-text">Trạng thái hồ sơ được cập nhật khi đi đến điểm kết thúc này.</p>
+            </div>
+          }
+
           <!-- DEPARTMENT NODE PROPERTIES -->
           @if (node.type === 'DEPARTMENT') {
             <div class="form-group">
-              <label for="prop-dept-select">Phòng ban phụ trách *:</label>
+              <label for="prop-dept-assign-method">Phương thức phân công *:</label>
               <select
-                id="prop-dept-select"
+                id="prop-dept-assign-method"
                 class="form-select"
-                [ngModel]="node.departmentId"
-                (ngModelChange)="onDepartmentSelect($event)"
+                [ngModel]="node.assignmentMethod || 'DEPARTMENT_QUEUE'"
+                (ngModelChange)="updateSelectedNodeProps({ assignmentMethod: $event })"
                 [disabled]="readonly"
               >
-                <option value="">-- Chọn phòng ban trong công ty --</option>
-                @for (d of departments; track d.id) {
-                  <option [value]="d.id">{{ d.name }}</option>
-                }
+                <option value="DEPARTMENT_QUEUE">Hàng đợi phòng ban (Ai rảnh tiếp nhận)</option>
+                <option value="BUSINESS_ROLE">Theo chức vụ / Vai trò cụ thể</option>
+                <option value="DEPARTMENT_MANAGER">Trưởng phòng ban phụ trách</option>
+                <option value="DIRECT_MANAGER">Quản lý trực tiếp của người yêu cầu</option>
+                <option value="SPECIFIC_USER">Chỉ định đích danh nhân sự</option>
+                <option value="REQUESTER">Giao lại cho người tạo yêu cầu (Rework)</option>
               </select>
-              <p class="hint-text">Chỉ các phòng ban đang hoạt động của công ty mới được phân công.</p>
             </div>
 
-            <div class="form-group">
-              <label for="prop-role-select">Vai trò thực hiện (tùy chọn):</label>
-              <select
-                id="prop-role-select"
-                class="form-select"
-                [ngModel]="node.roleId"
-                (ngModelChange)="onRoleSelect($event)"
-                [disabled]="readonly"
-              >
-                <option value="">-- Mọi nhân sự trong phòng ban --</option>
-                @for (r of roles; track r.id) {
-                  <option [value]="r.id">{{ r.name }}</option>
-                }
-              </select>
-            </div>
+            @if (node.assignmentMethod !== 'REQUESTER' && node.assignmentMethod !== 'DIRECT_MANAGER') {
+              <div class="form-group">
+                <label for="prop-dept-select">Phòng ban phụ trách *:</label>
+                <select
+                  id="prop-dept-select"
+                  class="form-select"
+                  [ngModel]="node.departmentId"
+                  (ngModelChange)="onDepartmentSelect($event)"
+                  [disabled]="readonly"
+                >
+                  <option value="">-- Chọn phòng ban trong công ty --</option>
+                  @for (d of departments; track d.id) {
+                    <option [value]="d.id">{{ d.name }}</option>
+                  }
+                </select>
+              </div>
+            }
+
+            @if (node.assignmentMethod === 'BUSINESS_ROLE') {
+              <div class="form-group">
+                <label for="prop-role-select">Vai trò thực hiện *:</label>
+                <select
+                  id="prop-role-select"
+                  class="form-select"
+                  [ngModel]="node.roleId"
+                  (ngModelChange)="onRoleSelect($event)"
+                  [disabled]="readonly"
+                >
+                  <option value="">-- Chọn vai trò nghiệp vụ --</option>
+                  @for (r of roles; track r.id) {
+                    <option [value]="r.id">{{ r.name }}</option>
+                  }
+                </select>
+              </div>
+            }
+
+            @if (node.assignmentMethod === 'SPECIFIC_USER') {
+              <div class="form-group">
+                <label for="prop-dept-user">Nhân sự thực hiện *:</label>
+                <select
+                  id="prop-dept-user"
+                  class="form-select"
+                  [ngModel]="node.specificUserId"
+                  (ngModelChange)="onUserSelect($event)"
+                  [disabled]="readonly"
+                >
+                  <option value="">-- Chọn nhân sự công ty --</option>
+                  @for (u of getFilteredUsers(node.departmentId); track u.id) {
+                    <option [value]="u.id">{{ u.fullName }} ({{ u.employeeCode }}) - {{ u.email }}</option>
+                  }
+                </select>
+              </div>
+            }
 
             <div class="form-group">
               <label for="prop-sla-hours">Thời hạn SLA bước (giờ):</label>
@@ -422,53 +504,149 @@
                 id="prop-sla-hours"
                 type="number"
                 class="form-input"
-                [ngModel]="node.slaHours"
+                [ngModel]="node.slaHours || 24"
                 (ngModelChange)="updateSelectedNodeProps({ slaHours: $event })"
                 [readonly]="readonly"
                 min="1"
                 max="720"
               />
             </div>
+
+            <div class="form-group">
+              <label>Yêu cầu bằng chứng & Bàn giao:</label>
+              <div class="checkbox-group">
+                <label class="checkbox-label">
+                  <input
+                    type="checkbox"
+                    [ngModel]="node.requireNotes"
+                    (ngModelChange)="updateSelectedNodeProps({ requireNotes: $event })"
+                    [disabled]="readonly"
+                  />
+                  <span>Bắt buộc ghi chú / giải trình khi xử lý</span>
+                </label>
+                <label class="checkbox-label">
+                  <input
+                    type="checkbox"
+                    [ngModel]="node.requireAttachment"
+                    (ngModelChange)="updateSelectedNodeProps({ requireAttachment: $event })"
+                    [disabled]="readonly"
+                  />
+                  <span>Bắt buộc tệp tin tài liệu đính kèm</span>
+                </label>
+                <label class="checkbox-label">
+                  <input
+                    type="checkbox"
+                    [ngModel]="node.requireDeliverable"
+                    (ngModelChange)="updateSelectedNodeProps({ requireDeliverable: $event })"
+                    [disabled]="readonly"
+                  />
+                  <span>Bắt buộc xác nhận bàn giao kết quả (Deliverable)</span>
+                </label>
+              </div>
+            </div>
           }
 
           <!-- APPROVAL NODE PROPERTIES -->
           @if (node.type === 'APPROVAL') {
             <div class="form-group">
-              <label for="prop-appr-type">Hình thức phê duyệt:</label>
+              <label for="prop-appr-method">Phương thức duyệt *:</label>
               <select
-                id="prop-appr-type"
+                id="prop-appr-method"
                 class="form-select"
-                [ngModel]="node.approverType || 'ROLE'"
-                (ngModelChange)="updateSelectedNodeProps({ approverType: $event })"
+                [ngModel]="node.assignmentMethod || 'BUSINESS_ROLE'"
+                (ngModelChange)="updateSelectedNodeProps({ assignmentMethod: $event })"
                 [disabled]="readonly"
               >
-                <option value="ROLE">Theo chức vụ / Vai trò</option>
-                <option value="DEPARTMENT_LEAD">Trưởng bộ phận phụ trách</option>
-                <option value="SPECIFIC_USER">Người dùng được chỉ định</option>
+                <option value="BUSINESS_ROLE">Theo chức vụ / Vai trò</option>
+                <option value="DEPARTMENT_MANAGER">Trưởng phòng ban</option>
+                <option value="DIRECT_MANAGER">Quản lý trực tiếp</option>
+                <option value="SPECIFIC_USER">Chỉ định đích danh người duyệt</option>
+              </select>
+            </div>
+
+            @if (node.assignmentMethod === 'BUSINESS_ROLE') {
+              <div class="form-group">
+                <label for="prop-appr-role">Vai trò người duyệt *:</label>
+                <select
+                  id="prop-appr-role"
+                  class="form-select"
+                  [ngModel]="node.roleId"
+                  (ngModelChange)="onRoleSelect($event)"
+                  [disabled]="readonly"
+                >
+                  <option value="">-- Chọn vai trò duyệt --</option>
+                  @for (r of roles; track r.id) {
+                    <option [value]="r.id">{{ r.name }}</option>
+                  }
+                </select>
+                <p class="hint-text">Chỉ các vai trò nội bộ doanh nghiệp. Không cho phép Platform Admin.</p>
+              </div>
+            }
+
+            @if (node.assignmentMethod === 'SPECIFIC_USER') {
+              <div class="form-group">
+                <label for="prop-appr-user">Người duyệt đích danh *:</label>
+                <select
+                  id="prop-appr-user"
+                  class="form-select"
+                  [ngModel]="node.specificUserId"
+                  (ngModelChange)="onUserSelect($event)"
+                  [disabled]="readonly"
+                >
+                  <option value="">-- Chọn nhân sự duyệt --</option>
+                  @for (u of users; track u.id) {
+                    <option [value]="u.id">{{ u.fullName }} ({{ u.employeeCode }}) - {{ u.email }}</option>
+                  }
+                </select>
+              </div>
+            }
+
+            <div class="form-group">
+              <label for="prop-appr-policy">Chính sách phê duyệt:</label>
+              <select
+                id="prop-appr-policy"
+                class="form-select"
+                [ngModel]="node.approvalCountPolicy || 'SINGLE'"
+                (ngModelChange)="updateSelectedNodeProps({ approvalCountPolicy: $event })"
+                [disabled]="readonly"
+              >
+                <option value="SINGLE">Chỉ cần 1 người duyệt chấp thuận (SINGLE)</option>
+                <option value="ALL">Tất cả người có thẩm quyền đồng thuận (ALL)</option>
+                <option value="ANY">Bất kỳ ai trong nhóm duyệt (ANY)</option>
               </select>
             </div>
 
             <div class="form-group">
-              <label for="prop-appr-role">Vai trò người duyệt:</label>
-              <select
-                id="prop-appr-role"
-                class="form-select"
-                [ngModel]="node.roleId"
-                (ngModelChange)="onRoleSelect($event)"
-                [disabled]="readonly"
-              >
-                <option value="">-- Chọn vai trò duyệt --</option>
-                @for (r of roles; track r.id) {
-                  <option [value]="r.id">{{ r.name }}</option>
-                }
-              </select>
+              <label for="prop-appr-sla">Thời hạn phê duyệt (giờ):</label>
+              <input
+                id="prop-appr-sla"
+                type="number"
+                class="form-input"
+                [ngModel]="node.slaHours || 24"
+                (ngModelChange)="updateSelectedNodeProps({ slaHours: $event })"
+                [readonly]="readonly"
+                min="1"
+                max="720"
+              />
+            </div>
+
+            <div class="form-group">
+              <label class="checkbox-label">
+                <input
+                  type="checkbox"
+                  [ngModel]="node.rejectionReasonRequired ?? true"
+                  (ngModelChange)="updateSelectedNodeProps({ rejectionReasonRequired: $event })"
+                  [disabled]="readonly"
+                />
+                <span>Bắt buộc nhập lý do khi từ chối</span>
+              </label>
             </div>
           }
 
           <!-- CONFIRMATION NODE PROPERTIES -->
           @if (node.type === 'CONFIRMATION') {
             <div class="form-group">
-              <label for="prop-milestone">Cột mốc xác nhận:</label>
+              <label for="prop-milestone">Cột mốc xác nhận *:</label>
               <select
                 id="prop-milestone"
                 class="form-select"
@@ -476,10 +654,189 @@
                 (ngModelChange)="updateSelectedNodeProps({ milestone: $event })"
                 [disabled]="readonly"
               >
-                <option value="RECEIVE">Tiếp nhận hồ sơ (RECEIVE)</option>
-                <option value="RESULT">Xác nhận kết quả xử lý (RESULT)</option>
-                <option value="RESOLUTION">Giải quyết dứt điểm (RESOLUTION)</option>
+                <option value="RECEIVE">Tiếp nhận hồ sơ / Bàn giao ban đầu (RECEIVE)</option>
+                <option value="RESULT">Xác nhận kết quả xử lý nghiệp vụ (RESULT)</option>
+                <option value="RESOLUTION">Nghiệm thu đóng hồ sơ (RESOLUTION)</option>
               </select>
+            </div>
+
+            <div class="form-group">
+              <label for="prop-conf-assign">Người chịu trách nhiệm xác nhận *:</label>
+              <select
+                id="prop-conf-assign"
+                class="form-select"
+                [ngModel]="node.assignmentMethod || 'REQUESTER'"
+                (ngModelChange)="updateSelectedNodeProps({ assignmentMethod: $event })"
+                [disabled]="readonly"
+              >
+                <option value="REQUESTER">Người tạo yêu cầu (Requester)</option>
+                <option value="DEPARTMENT_MANAGER">Trưởng phòng phụ trách</option>
+                <option value="SPECIFIC_USER">Chỉ định đích danh nhân sự</option>
+              </select>
+            </div>
+
+            @if (node.assignmentMethod === 'SPECIFIC_USER') {
+              <div class="form-group">
+                <label for="prop-conf-user">Nhân sự xác nhận *:</label>
+                <select
+                  id="prop-conf-user"
+                  class="form-select"
+                  [ngModel]="node.specificUserId"
+                  (ngModelChange)="onUserSelect($event)"
+                  [disabled]="readonly"
+                >
+                  <option value="">-- Chọn nhân sự xác nhận --</option>
+                  @for (u of users; track u.id) {
+                    <option [value]="u.id">{{ u.fullName }} ({{ u.employeeCode }})</option>
+                  }
+                </select>
+              </div>
+            }
+
+            <div class="form-group">
+              <label>Yêu cầu xác nhận:</label>
+              <div class="checkbox-group">
+                <label class="checkbox-label">
+                  <input
+                    type="checkbox"
+                    [ngModel]="node.requireNotes"
+                    (ngModelChange)="updateSelectedNodeProps({ requireNotes: $event })"
+                    [disabled]="readonly"
+                  />
+                  <span>Bắt buộc ghi nhận xét nghiệm thu</span>
+                </label>
+                <label class="checkbox-label">
+                  <input
+                    type="checkbox"
+                    [ngModel]="node.requireAttachment"
+                    (ngModelChange)="updateSelectedNodeProps({ requireAttachment: $event })"
+                    [disabled]="readonly"
+                  />
+                  <span>Bắt buộc biên bản nghiệm thu đính kèm</span>
+                </label>
+              </div>
+            </div>
+          }
+
+          <!-- DECISION NODE CONDITION BUILDER -->
+          @if (node.type === 'DECISION') {
+            <div class="decision-inspector-section">
+              <div class="section-title-row">
+                <label class="section-label">Quy tắc rẽ nhánh (Conditions):</label>
+                @if (!readonly) {
+                  <button type="button" class="btn-sm btn-outline" (click)="addCondition(node)">
+                    + Thêm quy tắc
+                  </button>
+                }
+              </div>
+              <p class="hint-text">Quy tắc được xét duyệt tuần tự từ trên xuống dưới. Nhánh đầu tiên thỏa mãn sẽ được chọn.</p>
+
+              <div class="condition-list">
+                @for (cond of node.conditions || []; track cond.id; let idx = $index) {
+                  <div class="condition-card" [class.is-default]="cond.isDefault">
+                    <div class="condition-card-header">
+                      <span class="cond-index">#{{ idx + 1 }}</span>
+                      <input
+                        type="text"
+                        class="form-input form-input-sm cond-label"
+                        [ngModel]="cond.label"
+                        (ngModelChange)="updateCondition(node, cond.id, { label: $event })"
+                        [readonly]="readonly"
+                        placeholder="Nhãn điều kiện (VD: Chi phí > 20tr)"
+                      />
+                      @if (!readonly) {
+                        <button type="button" class="btn-icon-danger" (click)="removeCondition(node, cond.id)" title="Xóa quy tắc">✕</button>
+                      }
+                    </div>
+
+                    <div class="condition-card-body">
+                      @if (!cond.isDefault) {
+                        <div class="cond-fields-grid">
+                          <input
+                            type="text"
+                            class="form-input form-input-sm"
+                            [ngModel]="cond.field"
+                            (ngModelChange)="updateCondition(node, cond.id, { field: $event })"
+                            [readonly]="readonly"
+                            placeholder="Tên trường (VD: amount)"
+                          />
+
+                          <select
+                            class="form-select form-select-sm"
+                            [ngModel]="cond.operator"
+                            (ngModelChange)="updateCondition(node, cond.id, { operator: $event })"
+                            [disabled]="readonly"
+                          >
+                            <option value="EQ">= Bằng (EQ)</option>
+                            <option value="NEQ">≠ Khác (NEQ)</option>
+                            <option value="GT">&gt; Lớn hơn (GT)</option>
+                            <option value="GTE">≥ Lớn hơn bằng (GTE)</option>
+                            <option value="LT">&lt; Nhỏ hơn (LT)</option>
+                            <option value="LTE">≤ Nhỏ hơn bằng (LTE)</option>
+                            <option value="IN">Thuộc danh sách (IN)</option>
+                            <option value="IS_EMPTY">Rỗng (IS_EMPTY)</option>
+                            <option value="IS_NOT_EMPTY">Không rỗng (IS_NOT_EMPTY)</option>
+                          </select>
+
+                          @if (cond.operator !== 'IS_EMPTY' && cond.operator !== 'IS_NOT_EMPTY') {
+                            <input
+                              type="text"
+                              class="form-input form-input-sm"
+                              [ngModel]="cond.value"
+                              (ngModelChange)="updateCondition(node, cond.id, { value: $event })"
+                              [readonly]="readonly"
+                              placeholder="Giá trị (VD: 20000000)"
+                            />
+                          }
+                        </div>
+                      } @else {
+                        <div class="default-branch-notice">
+                          <span>⚙️ Nhánh mặc định (Chạy khi không khớp quy tắc nào ở trên)</span>
+                        </div>
+                      }
+
+                      <div class="cond-target-row">
+                        <label>Bước tiếp theo:</label>
+                        <select
+                          class="form-select form-select-sm"
+                          [ngModel]="cond.targetNodeId"
+                          (ngModelChange)="updateCondition(node, cond.id, { targetNodeId: $event })"
+                          [disabled]="readonly"
+                        >
+                          <option value="">-- Chọn bước tiếp theo --</option>
+                          @for (target of getOutgoingNodes(node.id); track target.id) {
+                            <option [value]="target.id">{{ target.name }}</option>
+                          }
+                        </select>
+                      </div>
+
+                      @if (!readonly) {
+                        <div class="cond-default-toggle">
+                          <label class="checkbox-label-sm">
+                            <input
+                              type="checkbox"
+                              [checked]="cond.isDefault"
+                              (change)="toggleDefaultBranch(node, cond.id)"
+                            />
+                            <span>Đặt làm nhánh mặc định (Else)</span>
+                          </label>
+                        </div>
+                      }
+                    </div>
+                  </div>
+                }
+
+                @if (!node.conditions || node.conditions.length === 0) {
+                  <div class="empty-conditions">
+                    <p>Chưa có quy tắc điều kiện nào.</p>
+                    @if (!readonly) {
+                      <button type="button" class="btn-sm btn-primary" (click)="addCondition(node)">
+                        + Thêm quy tắc đầu tiên
+                      </button>
+                    }
+                  </div>
+                }
+              </div>
             </div>
           }
 
@@ -524,11 +881,43 @@
               type="text"
               class="form-input"
               [ngModel]="edge.label"
-              (ngModelChange)="updateSelectedEdgeLabel($event)"
+              (ngModelChange)="updateSelectedEdgeProps({ label: $event })"
               [readonly]="readonly"
               placeholder="VD: Đã duyệt, Từ chối, Chi phí > 10tr…"
             />
             <p class="hint-text">Nhãn này sẽ hiển thị trực tiếp trên đường nối sơ đồ.</p>
+          </div>
+
+          <div class="form-group">
+            <label for="prop-edge-outcome">Mã kết quả chuyển tiếp (Outcome Code):</label>
+            <select
+              id="prop-edge-outcome"
+              class="form-select"
+              [ngModel]="edge.outcomeCode || 'DEFAULT'"
+              (ngModelChange)="updateSelectedEdgeProps({ outcomeCode: $event })"
+              [disabled]="readonly"
+            >
+              <option value="DEFAULT">Tuần tự / Mặc định (DEFAULT)</option>
+              <option value="APPROVED">Chấp thuận / Phê duyệt (APPROVED)</option>
+              <option value="REJECTED">Từ chối (REJECTED)</option>
+              <option value="REQUEST_CHANGES">Yêu cầu sửa đổi / Làm lại (REQUEST_CHANGES)</option>
+              <option value="COMPLETED">Hoàn tất bước (COMPLETED)</option>
+              <option value="CONFIRMED">Đã xác nhận / Nghiệm thu (CONFIRMED)</option>
+              <option value="NEEDS_INFORMATION">Yêu cầu bổ sung thông tin (NEEDS_INFORMATION)</option>
+            </select>
+            <p class="hint-text">Dùng để kích hoạt đường nối khi bước trước hoàn tất với kết quả tương ứng.</p>
+          </div>
+
+          <div class="form-group">
+            <label class="checkbox-label">
+              <input
+                type="checkbox"
+                [ngModel]="edge.isDefault"
+                (ngModelChange)="updateSelectedEdgeProps({ isDefault: $event })"
+                [disabled]="readonly"
+              />
+              <span>Là đường chuyển tiếp mặc định (Default Edge)</span>
+            </label>
           </div>
         </div>
 
