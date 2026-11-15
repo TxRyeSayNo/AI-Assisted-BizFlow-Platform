@@ -86,7 +86,9 @@ export class WorkItemComments implements OnInit {
           this.loading.set(false);
         },
         error: (err) => {
-          this.error.set(err?.error?.message ?? this.i18n.t('comments.errLoad', 'Failed to load comments.'));
+          this.error.set(
+            err?.error?.message ?? this.i18n.t('comments.errLoad', 'Failed to load comments.'),
+          );
           this.loading.set(false);
         },
       });
@@ -112,7 +114,9 @@ export class WorkItemComments implements OnInit {
           this.submitting.set(false);
         },
         error: (err) => {
-          this.error.set(err?.error?.message ?? this.i18n.t('comments.errPost', 'Failed to post comment.'));
+          this.error.set(
+            err?.error?.message ?? this.i18n.t('comments.errPost', 'Failed to post comment.'),
+          );
           this.submitting.set(false);
         },
       });
@@ -143,7 +147,9 @@ export class WorkItemComments implements OnInit {
         this.savingEdit = false;
       },
       error: (err) => {
-        this.error.set(err?.error?.message ?? this.i18n.t('comments.errUpdate', 'Failed to update comment.'));
+        this.error.set(
+          err?.error?.message ?? this.i18n.t('comments.errUpdate', 'Failed to update comment.'),
+        );
         this.savingEdit = false;
       },
     });
@@ -158,7 +164,9 @@ export class WorkItemComments implements OnInit {
         this.comments.update((prev) => prev.filter((c) => c.commentId !== commentId));
       },
       error: (err) => {
-        this.error.set(err?.error?.message ?? this.i18n.t('comments.errDelete', 'Failed to delete comment.'));
+        this.error.set(
+          err?.error?.message ?? this.i18n.t('comments.errDelete', 'Failed to delete comment.'),
+        );
       },
     });
   }

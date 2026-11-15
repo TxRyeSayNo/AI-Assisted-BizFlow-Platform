@@ -216,7 +216,12 @@ export class RequestDetail implements OnInit {
         error: (err: HttpErrorResponse) => {
           this.busy.set(false);
           if (err.status === 404) {
-            this.error.set(this.i18n.t('requestDetail.errNotFound', 'Request not found or you do not have permission to view it.'));
+            this.error.set(
+              this.i18n.t(
+                'requestDetail.errNotFound',
+                'Request not found or you do not have permission to view it.',
+              ),
+            );
           } else if (err.status === 403 || err.status === 401) {
             this.error.set('Bạn không có quyền xem yêu cầu này.');
           } else {
@@ -317,7 +322,6 @@ export class RequestDetail implements OnInit {
           this.aiMessage.set('Phân tích đa mục tiêu thất bại.');
         },
       });
-
   }
 
   planBranching() {
@@ -378,7 +382,6 @@ export class RequestDetail implements OnInit {
           this.actionError.set(err?.error?.message || 'Khởi chạy phân nhánh thất bại.');
         },
       });
-
   }
 
   confirmSplit() {
@@ -440,7 +443,6 @@ export class RequestDetail implements OnInit {
           this.aiBusy.set(false);
           this.aiMessage.set('Gợi ý điều phối thất bại.');
         },
-
       });
   }
 
@@ -518,7 +520,10 @@ export class RequestDetail implements OnInit {
           } else if (err.status === 409) {
             this.actionError.set('Yêu cầu không thể điều phối ở trạng thái hiện tại.');
           } else {
-            this.actionError.set(err.error?.message || this.i18n.t('requestDetail.routeFail', 'Failed to route request.'));
+            this.actionError.set(
+              err.error?.message ||
+                this.i18n.t('requestDetail.routeFail', 'Failed to route request.'),
+            );
           }
         },
       });
@@ -554,7 +559,10 @@ export class RequestDetail implements OnInit {
           } else if (err.status === 409) {
             this.actionError.set('Yêu cầu không thể tiếp nhận ở trạng thái hiện tại.');
           } else {
-            this.actionError.set(err.error?.message || this.i18n.t('requestDetail.receiveFail', 'Failed to receive request.'));
+            this.actionError.set(
+              err.error?.message ||
+                this.i18n.t('requestDetail.receiveFail', 'Failed to receive request.'),
+            );
           }
         },
       });
@@ -588,7 +596,10 @@ export class RequestDetail implements OnInit {
           } else if (err.status === 409) {
             this.actionError.set('Yêu cầu không thể chuyển sang Đang xử lý ở trạng thái hiện tại.');
           } else {
-            this.actionError.set(err.error?.message || this.i18n.t('requestDetail.startFail', 'Failed to start processing request.'));
+            this.actionError.set(
+              err.error?.message ||
+                this.i18n.t('requestDetail.startFail', 'Failed to start processing request.'),
+            );
           }
         },
       });
@@ -629,7 +640,10 @@ export class RequestDetail implements OnInit {
           } else if (err.status === 409) {
             this.actionError.set('Yêu cầu không thể từ chối ở trạng thái hiện tại.');
           } else {
-            this.actionError.set(err.error?.message || this.i18n.t('requestDetail.rejectFail', 'Failed to reject request.'));
+            this.actionError.set(
+              err.error?.message ||
+                this.i18n.t('requestDetail.rejectFail', 'Failed to reject request.'),
+            );
           }
         },
       });
@@ -664,7 +678,10 @@ export class RequestDetail implements OnInit {
           } else if (err.status === 409) {
             this.actionError.set('Yêu cầu không thể hủy ở trạng thái hiện tại.');
           } else {
-            this.actionError.set(err.error?.message || this.i18n.t('requestDetail.cancelFail', 'Failed to cancel request.'));
+            this.actionError.set(
+              err.error?.message ||
+                this.i18n.t('requestDetail.cancelFail', 'Failed to cancel request.'),
+            );
           }
         },
       });
@@ -695,7 +712,9 @@ export class RequestDetail implements OnInit {
         next: () => {
           this.actionInProgress.set(false);
           this.closeModal();
-          this.actionSuccess.set(this.i18n.t('requests.resolvedSuccess', 'Request resolved successfully.'));
+          this.actionSuccess.set(
+            this.i18n.t('requests.resolvedSuccess', 'Request resolved successfully.'),
+          );
           this.load();
         },
         error: (err: HttpErrorResponse) => {
@@ -705,7 +724,10 @@ export class RequestDetail implements OnInit {
           } else if (err.status === 409) {
             this.actionError.set('Yêu cầu không thể hoàn tất giải quyết ở trạng thái hiện tại.');
           } else {
-            this.actionError.set(err.error?.message || this.i18n.t('requestDetail.resolveFail', 'Failed to resolve request.'));
+            this.actionError.set(
+              err.error?.message ||
+                this.i18n.t('requestDetail.resolveFail', 'Failed to resolve request.'),
+            );
           }
         },
       });
@@ -716,7 +738,12 @@ export class RequestDetail implements OnInit {
     const decision = this.confirmDecision();
     const note = this.confirmNote().trim();
     if (decision === 'REWORK' && !note) {
-      this.actionError.set(this.i18n.t('requests.reworkNoteRequired', 'A note explaining why rework is needed is required.'));
+      this.actionError.set(
+        this.i18n.t(
+          'requests.reworkNoteRequired',
+          'A note explaining why rework is needed is required.',
+        ),
+      );
       return;
     }
 
@@ -793,7 +820,9 @@ export class RequestDetail implements OnInit {
         next: (res) => {
           this.actionInProgress.set(false);
           this.closeModal();
-          this.actionSuccess.set(this.i18n.t('requests.revisedSuccess', 'Revised request created successfully.'));
+          this.actionSuccess.set(
+            this.i18n.t('requests.revisedSuccess', 'Revised request created successfully.'),
+          );
           this.router.navigate(['/requests', res.requestId]);
         },
         error: (err: HttpErrorResponse) => {
@@ -863,7 +892,12 @@ export class RequestDetail implements OnInit {
         next: () => {
           this.actionInProgress.set(false);
           this.closeModal();
-          this.actionSuccess.set(this.i18n.t('requests.taskCreatedSuccess', 'Task created successfully and linked to this request.'));
+          this.actionSuccess.set(
+            this.i18n.t(
+              'requests.taskCreatedSuccess',
+              'Task created successfully and linked to this request.',
+            ),
+          );
           this.load();
         },
         error: (err: HttpErrorResponse) => {
@@ -871,7 +905,9 @@ export class RequestDetail implements OnInit {
           if (err.status === 403) {
             this.actionError.set('Bạn không có quyền tạo nhiệm vụ.');
           } else if (err.status === 409) {
-            this.actionError.set('Không thể liên kết nhiệm vụ: yêu cầu không ở trạng thái hoạt động.');
+            this.actionError.set(
+              'Không thể liên kết nhiệm vụ: yêu cầu không ở trạng thái hoạt động.',
+            );
           } else {
             this.actionError.set(
               err.error?.message ||
@@ -972,7 +1008,9 @@ export class RequestDetail implements OnInit {
       .subscribe({
         next: () => {
           this.actionInProgress.set(false);
-          this.actionSuccess.set(this.i18n.t('requests.archivedSuccess', 'Request archived successfully.'));
+          this.actionSuccess.set(
+            this.i18n.t('requests.archivedSuccess', 'Request archived successfully.'),
+          );
           this.load();
         },
         error: (err: HttpErrorResponse) => {

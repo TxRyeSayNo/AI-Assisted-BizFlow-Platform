@@ -6,11 +6,15 @@
       <span aria-hidden="true" class="breadcrumb-separator">/</span>
       <a routerLink="/requests">{{ 'requests.title' | translate: 'Yêu cầu' }}</a>
       <span aria-hidden="true" class="breadcrumb-separator">/</span>
-      <span class="breadcrumb-current">{{ 'requestCreate.breadcrumb' | translate: 'Tạo yêu cầu mới' }}</span>
+      <span class="breadcrumb-current">{{
+        'requestCreate.breadcrumb' | translate: 'Tạo yêu cầu mới'
+      }}</span>
     </nav>
     <div class="task-header-row">
       <div class="header-titles">
-        <h1 class="task-header-title">{{ 'requestCreate.title' | translate: 'Tạo yêu cầu dịch vụ' }}</h1>
+        <h1 class="task-header-title">
+          {{ 'requestCreate.title' | translate: 'Tạo yêu cầu dịch vụ' }}
+        </h1>
         <p class="task-header-desc">
           {{
             'requestCreate.subtitle'

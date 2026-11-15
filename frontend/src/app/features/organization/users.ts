@@ -196,10 +196,7 @@ export class Users {
   }
 
   get isCompanyAdmin(): boolean {
-    return (
-      this.session.hasPermission('roles.configure') ||
-      false
-    );
+    return this.session.hasPermission('roles.configure') || false;
   }
 
   constructor() {
@@ -208,15 +205,16 @@ export class Users {
   }
 
   loadDepartments() {
-    this.http.get<{ items: { departmentId: string; name: string }[] }>('/api/v1/departments?pageSize=100')
+    this.http
+      .get<{ items: { departmentId: string; name: string }[] }>('/api/v1/departments?pageSize=100')
       .pipe(takeUntilDestroyed(this.destroy))
       .subscribe({
         next: (res) => {
           if (res?.items) {
-            this.departments.set(res.items.map(d => ({ id: d.departmentId, name: d.name })));
+            this.departments.set(res.items.map((d) => ({ id: d.departmentId, name: d.name })));
           }
         },
-        error: () => {}
+        error: () => {},
       });
   }
 
@@ -259,7 +257,11 @@ export class Users {
       return;
     }
 
-    if (!confirm(`Xác nhận thăng cấp nhân sự "${user.fullName}" (${user.employeeCode}) lên vai trò Quản lý / Trưởng phòng?`)) {
+    if (
+      !confirm(
+        `Xác nhận thăng cấp nhân sự "${user.fullName}" (${user.employeeCode}) lên vai trò Quản lý / Trưởng phòng?`,
+      )
+    ) {
       return;
     }
 
@@ -291,21 +293,23 @@ export class Users {
     this.demoteModalOpen.set(true);
     this.actionBusy.set(true);
 
-    this.http.get<UserResponsibilitiesView>(`/api/v1/users/${user.userId}/responsibilities`).subscribe({
-      next: (res) => {
-        this.actionBusy.set(false);
-        this.demoteResponsibilities.set(res);
-        if (res.eligibleReplacementManagers?.length > 0) {
-          this.selectedReplacementManagerId.set(res.eligibleReplacementManagers[0].userId);
-        }
-      },
-      error: (err) => {
-        this.actionBusy.set(false);
-        const msg = err.error?.message || 'Không thể kiểm tra trách nhiệm quản lý.';
-        this.toast.error(msg);
-        this.closeDemoteModal();
-      },
-    });
+    this.http
+      .get<UserResponsibilitiesView>(`/api/v1/users/${user.userId}/responsibilities`)
+      .subscribe({
+        next: (res) => {
+          this.actionBusy.set(false);
+          this.demoteResponsibilities.set(res);
+          if (res.eligibleReplacementManagers?.length > 0) {
+            this.selectedReplacementManagerId.set(res.eligibleReplacementManagers[0].userId);
+          }
+        },
+        error: (err) => {
+          this.actionBusy.set(false);
+          const msg = err.error?.message || 'Không thể kiểm tra trách nhiệm quản lý.';
+          this.toast.error(msg);
+          this.closeDemoteModal();
+        },
+      });
   }
 
   closeDemoteModal(): void {
@@ -334,7 +338,10 @@ export class Users {
     const target = this.transferTargetUser();
     if (!target) return;
     this.actionBusy.set(true);
-    this.http.post<UserRow>(`/api/v1/users/${target.userId}/transfer-ownership`, { targetUserId: target.userId })
+    this.http
+      .post<UserRow>(`/api/v1/users/${target.userId}/transfer-ownership`, {
+        targetUserId: target.userId,
+      })
       .pipe(takeUntilDestroyed(this.destroy))
       .subscribe({
         next: () => {
@@ -347,7 +354,7 @@ export class Users {
           this.actionBusy.set(false);
           const msg = err.error?.message || 'Không thể chuyển quyền quản trị viên.';
           this.toast.error(msg, 'Lỗi bàn giao Admin');
-        }
+        },
       });
   }
 
@@ -357,7 +364,9 @@ export class Users {
     if (!user || this.actionBusy()) return;
 
     if (resp && resp.activeMainTasksCount > 0 && !this.selectedReplacementManagerId()) {
-      this.toast.error('Vui lòng chọn Quản lý thay thế để tiếp nhận các công việc chính đang phụ trách.');
+      this.toast.error(
+        'Vui lòng chọn Quản lý thay thế để tiếp nhận các công việc chính đang phụ trách.',
+      );
       return;
     }
 
@@ -387,9 +396,9 @@ export class Users {
     this.selectedImportFile.set(null);
     this.batchInputText.set(
       'Mã NV, Họ và Tên, Email, Mã Phòng Ban, Vai Trò\n' +
-      'EMP010, Nguyen Van A, a.nguyen@bizflow.local, TECH, EMPLOYEE\n' +
-      'EMP011, Tran Thi B, b.tran@bizflow.local, HR, EMPLOYEE\n' +
-      'EMP012, Le Van C, c.le@bizflow.local, TECH, MANAGER'
+        'EMP010, Nguyen Van A, a.nguyen@bizflow.local, TECH, EMPLOYEE\n' +
+        'EMP011, Tran Thi B, b.tran@bizflow.local, HR, EMPLOYEE\n' +
+        'EMP012, Le Van C, c.le@bizflow.local, TECH, MANAGER',
     );
   }
 
@@ -416,15 +425,19 @@ export class Users {
         a.click();
         window.URL.revokeObjectURL(url);
       },
-      error: () => this.toast.error('Không thể tải báo cáo lỗi.')
+      error: () => this.toast.error('Không thể tải báo cáo lỗi.'),
     });
   }
 
   parseCsvRows(text: string): BatchImportUserRow[] {
-    const lines = text.split('\n').map((l) => l.trim()).filter((l) => l.length > 0);
+    const lines = text
+      .split('\n')
+      .map((l) => l.trim())
+      .filter((l) => l.length > 0);
     if (lines.length <= 1) return [];
 
-    const startIndex = lines[0].toLowerCase().includes('email') || lines[0].toLowerCase().includes('mã') ? 1 : 0;
+    const startIndex =
+      lines[0].toLowerCase().includes('email') || lines[0].toLowerCase().includes('mã') ? 1 : 0;
     const rows: BatchImportUserRow[] = [];
 
     for (let i = startIndex; i < lines.length; i++) {
@@ -450,7 +463,7 @@ export class Users {
 
     if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
       this.batchInputText.set(
-        `[Đã chọn tệp Excel: ${file.name} (${(file.size / 1024).toFixed(1)} KB)]\nNhấn "Kiểm tra Hợp lệ" để hệ thống phân tích trực tiếp tệp Excel này.`
+        `[Đã chọn tệp Excel: ${file.name} (${(file.size / 1024).toFixed(1)} KB)]\nNhấn "Kiểm tra Hợp lệ" để hệ thống phân tích trực tiếp tệp Excel này.`,
       );
     } else {
       const reader = new FileReader();
@@ -474,7 +487,8 @@ export class Users {
       isValid: it.isValid,
       errors: it.errors || (it.errorMessage ? [it.errorMessage] : []),
       activationToken: it.activationToken,
-      errorMessage: it.errors && it.errors.length > 0 ? it.errors.join(' | ') : it.errorMessage || null,
+      errorMessage:
+        it.errors && it.errors.length > 0 ? it.errors.join(' | ') : it.errorMessage || null,
     }));
 
     const total = res.totalProcessed ?? res.totalRows ?? items.length;
@@ -509,23 +523,29 @@ export class Users {
           const res = this.normalizeBatchResult(raw);
           this.batchDryRunResult.set(res);
           if (res.errorRows > 0) {
-            this.toast.warning(`Phát hiện ${res.errorRows} dòng dữ liệu không hợp lệ. Vui lòng kiểm tra bảng đối soát.`);
+            this.toast.warning(
+              `Phát hiện ${res.errorRows} dòng dữ liệu không hợp lệ. Vui lòng kiểm tra bảng đối soát.`,
+            );
           } else {
-            this.toast.success(`Hợp lệ 100% (${res.validRows}/${res.totalRows} nhân sự). Sẵn sàng nhập vào hệ thống.`);
+            this.toast.success(
+              `Hợp lệ 100% (${res.validRows}/${res.totalRows} nhân sự). Sẵn sàng nhập vào hệ thống.`,
+            );
           }
         },
         error: (err) => {
           this.batchExecuting.set(false);
           const msg = err?.error?.message || 'Không thể kiểm tra dữ liệu file Excel.';
           this.toast.error(msg);
-        }
+        },
       });
       return;
     }
 
     const rows = this.parseCsvRows(this.batchInputText());
     if (rows.length === 0) {
-      this.toast.error('Vui lòng nhập ít nhất 1 dòng dữ liệu nhân sự hợp lệ theo định dạng CSV/Excel.');
+      this.toast.error(
+        'Vui lòng nhập ít nhất 1 dòng dữ liệu nhân sự hợp lệ theo định dạng CSV/Excel.',
+      );
       return;
     }
 
@@ -533,12 +553,12 @@ export class Users {
     this.http
       .post<any>('/api/v1/users/batch-import', {
         dryRun: true,
-        users: rows.map(r => ({
+        users: rows.map((r) => ({
           employeeCode: r.employeeCode,
           fullName: r.fullName,
           email: r.email,
           departmentCode: r.departmentCode,
-          role: r.roleCode
+          role: r.roleCode,
         })),
       })
       .subscribe({
@@ -584,7 +604,7 @@ export class Users {
           this.batchExecuting.set(false);
           const msg = err?.error?.message || 'Không thể nhập dữ liệu từ file Excel.';
           this.toast.error(msg);
-        }
+        },
       });
       return;
     }
@@ -596,12 +616,12 @@ export class Users {
     this.http
       .post<any>('/api/v1/users/batch-import', {
         dryRun: false,
-        users: rows.map(r => ({
+        users: rows.map((r) => ({
           employeeCode: r.employeeCode,
           fullName: r.fullName,
           email: r.email,
           departmentCode: r.departmentCode,
-          role: r.roleCode
+          role: r.roleCode,
         })),
       })
       .subscribe({

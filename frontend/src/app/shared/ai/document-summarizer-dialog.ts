@@ -142,7 +142,6 @@ export interface CreateTasksFromSummaryResponse {
                 </button>
               </div>
             </div>
-
           </div>
 
           <!-- Action trigger -->
@@ -254,7 +253,10 @@ export interface CreateTasksFromSummaryResponse {
                         class="badge-priority"
                         [class]="'pri-' + (item.suggestedPriority || 'medium').toLowerCase()"
                       >
-                        {{ 'priority.' + (item.suggestedPriority || 'MEDIUM').toUpperCase() | translate: (item.suggestedPriority || 'Trung bình') }}
+                        {{
+                          'priority.' + (item.suggestedPriority || 'MEDIUM').toUpperCase()
+                            | translate: item.suggestedPriority || 'Trung bình'
+                        }}
                       </span>
                       <span *ngIf="item.suggestedDurationDays" class="badge-days">
                         ⏱ {{ item.suggestedDurationDays }} {{ 'common.days' | translate: 'ngày' }}

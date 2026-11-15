@@ -139,7 +139,8 @@ export interface PendingApprovalItem {
                 </span>
               </div>
               <time class="card-time" [attr.datetime]="item.submittedAt">
-                {{ 'approvals.submittedAt' | translate: 'Đã gửi:' }} {{ item.submittedAt | date: 'dd/MM/yyyy HH:mm' }}
+                {{ 'approvals.submittedAt' | translate: 'Đã gửi:' }}
+                {{ item.submittedAt | date: 'dd/MM/yyyy HH:mm' }}
               </time>
             </div>
 
@@ -465,7 +466,8 @@ export class Approvals implements OnInit {
             departmentName: t.assignedDepartmentName,
             priority: t.priority,
             submittedAt: t.createdAt,
-            summary: 'Đã nộp kết quả công việc. Đang chờ cấp quản lý xem xét và nghiệm thu hoàn thành.',
+            summary:
+              'Đã nộp kết quả công việc. Đang chờ cấp quản lý xem xét và nghiệm thu hoàn thành.',
             status: t.status,
           }));
           list.push(...taskItems);
@@ -497,7 +499,8 @@ export class Approvals implements OnInit {
             departmentName: r.currentRoutingDepartmentName,
             priority: r.priority,
             submittedAt: r.createdAt,
-            summary: 'Yêu cầu nội bộ mới được gửi. Đang chờ Trưởng phòng duyệt phân luồng hoặc leo thang cấp Công ty.',
+            summary:
+              'Yêu cầu nội bộ mới được gửi. Đang chờ Trưởng phòng duyệt phân luồng hoặc leo thang cấp Công ty.',
             status: r.status,
           }));
           list.push(...reqItems);

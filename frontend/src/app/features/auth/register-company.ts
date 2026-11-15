@@ -430,7 +430,9 @@ interface UploadDocumentResponse {
                 <input
                   matInput
                   formControlName="name"
-                  [placeholder]="'register.companyNamePlaceholder' | translate: 'Acme Logistics Corp.'"
+                  [placeholder]="
+                    'register.companyNamePlaceholder' | translate: 'Acme Logistics Corp.'
+                  "
                   maxlength="200"
                   required
                 />
@@ -453,7 +455,9 @@ interface UploadDocumentResponse {
                     matInput
                     formControlName="code"
                     (input)="onCodeInput($event)"
-                    [placeholder]="'register.workspaceCodePlaceholder' | translate: 'e.g. acme-corp'"
+                    [placeholder]="
+                      'register.workspaceCodePlaceholder' | translate: 'e.g. acme-corp'
+                    "
                     maxlength="50"
                     required
                   />
@@ -532,9 +536,7 @@ interface UploadDocumentResponse {
               </mat-form-field>
 
               <mat-form-field appearance="outline">
-                <mat-label>{{
-                  'register.contactPhone' | translate: 'Contact Phone'
-                }}</mat-label>
+                <mat-label>{{ 'register.contactPhone' | translate: 'Contact Phone' }}</mat-label>
                 <input
                   matInput
                   formControlName="contactPhone"
@@ -861,10 +863,7 @@ export class RegisterCompany implements OnInit, OnDestroy {
           this.uploadingDocument.set(false);
           this.uploadError.set(
             err.error?.message ||
-              this.i18n.t(
-                'register.uploadFailed',
-                'Failed to upload document. Please try again.',
-              ),
+              this.i18n.t('register.uploadFailed', 'Failed to upload document. Please try again.'),
           );
         },
       });

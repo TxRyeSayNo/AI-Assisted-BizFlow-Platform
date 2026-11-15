@@ -311,8 +311,7 @@ export class Reports implements OnInit {
           },
           error: (err) => {
             this.error.set(
-              err?.error?.message ??
-                this.i18n.t('reports.errSla', 'Failed to load SLA report.'),
+              err?.error?.message ?? this.i18n.t('reports.errSla', 'Failed to load SLA report.'),
             );
             this.busy.set(false);
           },

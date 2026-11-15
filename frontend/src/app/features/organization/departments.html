@@ -74,35 +74,35 @@
         </p>
       } @else {
         <div class="table-scroll">
-        <table>
-          <caption>
-            {{
-              'departments.tableCaption' | translate: 'Department directory'
-            }}
-          </caption>
-          <thead>
-            <tr>
-              <th scope="col">{{ 'departments.col.department' | translate: 'Department' }}</th>
-              <th scope="col">{{ 'common.status' | translate: 'Status' }}</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (item of data.items; track item.departmentId) {
+          <table>
+            <caption>
+              {{
+                'departments.tableCaption' | translate: 'Department directory'
+              }}
+            </caption>
+            <thead>
               <tr>
-                <th scope="row">
-                  {{ item.name }}<span class="department-code">{{ item.code }}</span>
-                </th>
-                <td>
-                  <span class="status-label">{{
-                    item.status === 'ACTIVE'
-                      ? ('departments.active' | translate: labels[item.status])
-                      : ('departments.inactive' | translate: labels[item.status])
-                  }}</span>
-                </td>
+                <th scope="col">{{ 'departments.col.department' | translate: 'Department' }}</th>
+                <th scope="col">{{ 'common.status' | translate: 'Status' }}</th>
               </tr>
-            }
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              @for (item of data.items; track item.departmentId) {
+                <tr>
+                  <th scope="row">
+                    {{ item.name }}<span class="department-code">{{ item.code }}</span>
+                  </th>
+                  <td>
+                    <span class="status-label">{{
+                      item.status === 'ACTIVE'
+                        ? ('departments.active' | translate: labels[item.status])
+                        : ('departments.inactive' | translate: labels[item.status])
+                    }}</span>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
         </div>
       }
       <nav aria-label="Department pages" class="pagination">

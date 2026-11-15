@@ -213,7 +213,9 @@
     <!-- Rejection Callout -->
     @if (detail.status === 'REJECTED' && detail.rejectionReason) {
       <div class="rejection-callout" role="alert">
-        <div class="rejection-title">{{ 'requests.rejectedTitle' | translate: 'Request Rejected' }}</div>
+        <div class="rejection-title">
+          {{ 'requests.rejectedTitle' | translate: 'Request Rejected' }}
+        </div>
         <div class="rejection-body">{{ detail.rejectionReason }}</div>
       </div>
     }
@@ -224,7 +226,9 @@
         <div class="routing-target-header">
           <span class="routing-target-label">Phân công & Điều phối hiện tại</span>
           @if (detail.routedAt) {
-            <span class="routing-time">Đã điều phối {{ detail.routedAt | date: 'dd/MM/yyyy HH:mm' }}</span>
+            <span class="routing-time"
+              >Đã điều phối {{ detail.routedAt | date: 'dd/MM/yyyy HH:mm' }}</span
+            >
           }
         </div>
         <div class="routing-target-details">
@@ -832,7 +836,6 @@
             'ai.branchingSubtitle'
               | translate: 'Phân rã kế hoạch thành cây thực thi song song và tuần tự theo phòng ban'
           }}
-
         </p>
 
         @if (branchingPlan()?.rationale) {
@@ -889,7 +892,9 @@
                   @if (node.departmentName) {
                     <span class="badge badge-dept">{{ node.departmentName }}</span>
                   }
-                  <span class="badge badge-pri">{{ 'priorityBadge.' + node.priority | translate: node.priority }}</span>
+                  <span class="badge badge-pri">{{
+                    'priorityBadge.' + node.priority | translate: node.priority
+                  }}</span>
                   <span class="badge-days"
                     >⏱ {{ node.suggestedDurationDays }}
                     {{ 'common.days' | translate: 'ngày' }}</span
@@ -927,7 +932,6 @@
                   <div class="node-reasoning">
                     <em>{{ 'ai.reasoning' | translate: 'Lý do AI:' }}</em> {{ node.reasoning }}
                   </div>
-
                 }
               </div>
             }
@@ -991,7 +995,6 @@
             </button>
           </div>
         }
-
       </div>
     }
 
@@ -1079,7 +1082,9 @@
           <h2>{{ 'requestDetail.linkedTasks' | translate: 'Linked Tasks' }}</h2>
           <span class="badge"
             >{{ detail.tasks?.length || 0 }}
-            {{ 'requestDetail.unitTasks' | translate: (detail.tasks?.length === 1 ? 'task' : 'tasks') }}</span
+            {{
+              'requestDetail.unitTasks' | translate: (detail.tasks?.length === 1 ? 'task' : 'tasks')
+            }}</span
           >
         </div>
         @if (canCreateTask()) {
@@ -1172,7 +1177,10 @@
           <h2>{{ 'requestDetail.resolutionHistory' | translate: 'Resolution History' }}</h2>
           <span class="badge"
             >{{ detail.resolutions.length }}
-            {{ 'requestDetail.unitRevisions' | translate: (detail.resolutions.length === 1 ? 'revision' : 'revisions') }}</span
+            {{
+              'requestDetail.unitRevisions'
+                | translate: (detail.resolutions.length === 1 ? 'revision' : 'revisions')
+            }}</span
           >
         </div>
         <div class="history-list">
@@ -1208,7 +1216,10 @@
           </h2>
           <span class="badge"
             >{{ detail.confirmations.length }}
-            {{ 'requestDetail.unitDecisions' | translate: (detail.confirmations.length === 1 ? 'decision' : 'decisions') }}</span
+            {{
+              'requestDetail.unitDecisions'
+                | translate: (detail.confirmations.length === 1 ? 'decision' : 'decisions')
+            }}</span
           >
         </div>
         <div class="history-list">

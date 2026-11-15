@@ -16,14 +16,20 @@
       <nav aria-label="Breadcrumb" class="compact-breadcrumb">
         <a routerLink="/tasks">{{ 'tasks.title' | translate: 'Tasks' }}</a>
         <span aria-hidden="true" class="sep">/</span>
-        <span class="breadcrumb-current">{{ 'taskDetail.breadcrumb' | translate: 'Task details' }}</span>
+        <span class="breadcrumb-current">{{
+          'taskDetail.breadcrumb' | translate: 'Task details'
+        }}</span>
       </nav>
       <div class="task-header-row">
         <div class="header-titles">
           <h1 class="task-header-title">{{ detail.task.title }}</h1>
         </div>
         <div class="task-nav-container" aria-label="Task actions">
-          <a routerLink="/tasks" class="task-nav-btn" [title]="'taskCreate.backToTasks' | translate: 'Back to tasks'">
+          <a
+            routerLink="/tasks"
+            class="task-nav-btn"
+            [title]="'taskCreate.backToTasks' | translate: 'Back to tasks'"
+          >
             <span>← {{ 'taskCreate.backToTasks' | translate: 'Back to tasks' }}</span>
           </a>
           @if (canStart()) {
@@ -76,17 +82,47 @@
         </div>
       </div>
     </div>
-    
+
     @if (detail.parentTaskId || detail.task.parentTaskId) {
-      <div class="parent-task-link-box" style="background: #eff6ff; border: 1.5px solid #bfdbfe; border-radius: 12px; padding: 14px 18px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between;">
-        <div style="display: flex; align-items: center; gap: 10px;">
-          <span style="font-size: 20px;">🔗</span>
+      <div
+        class="parent-task-link-box"
+        style="
+          background: #eff6ff;
+          border: 1.5px solid #bfdbfe;
+          border-radius: 12px;
+          padding: 14px 18px;
+          margin-bottom: 20px;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+        "
+      >
+        <div style="display: flex; align-items: center; gap: 10px">
+          <span style="font-size: 20px">🔗</span>
           <div>
-            <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: #1e40af;">Nhiệm vụ cấp công ty (Nhiệm vụ cha)</div>
-            <strong style="color: #0f172a; font-size: 14px;">{{ detail.parentTaskTitle || 'Xem nhiệm vụ chính' }}</strong>
+            <div
+              style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: #1e40af"
+            >
+              Nhiệm vụ cấp công ty (Nhiệm vụ cha)
+            </div>
+            <strong style="color: #0f172a; font-size: 14px">{{
+              detail.parentTaskTitle || 'Xem nhiệm vụ chính'
+            }}</strong>
           </div>
         </div>
-        <a [routerLink]="['/tasks', detail.parentTaskId || detail.task.parentTaskId]" style="text-decoration: none; padding: 6px 14px; background: #ffffff; border-radius: 8px; border: 1px solid #cbd5e1; font-weight: 600; color: #1e40af; font-size: 13px;">
+        <a
+          [routerLink]="['/tasks', detail.parentTaskId || detail.task.parentTaskId]"
+          style="
+            text-decoration: none;
+            padding: 6px 14px;
+            background: #ffffff;
+            border-radius: 8px;
+            border: 1px solid #cbd5e1;
+            font-weight: 600;
+            color: #1e40af;
+            font-size: 13px;
+          "
+        >
           Mở nhiệm vụ cha →
         </a>
       </div>
@@ -131,14 +167,28 @@
       }
     </section>
     <!-- SUBTASKS DELEGATION HUB -->
-    <section class="directory-panel subtasks-hub-section" aria-label="Danh sách nhiệm vụ con" style="margin-top: 1.5rem; margin-bottom: 1.5rem; padding: 18px 24px;">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 12px;">
+    <section
+      class="directory-panel subtasks-hub-section"
+      aria-label="Danh sách nhiệm vụ con"
+      style="margin-top: 1.5rem; margin-bottom: 1.5rem; padding: 18px 24px"
+    >
+      <div
+        style="
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 16px;
+          flex-wrap: wrap;
+          gap: 12px;
+        "
+      >
         <div>
-          <h2 style="font-size: 1.15rem; font-weight: 700; margin: 0; color: #0f172a;">
+          <h2 style="font-size: 1.15rem; font-weight: 700; margin: 0; color: #0f172a">
             📋 Phân rã công việc & nhiệm vụ con ({{ detail.subtasks?.length || 0 }})
           </h2>
-          <p style="font-size: 0.8125rem; color: #64748b; margin: 4px 0 0;">
-            Quản lý phòng ban phân rã công việc cấp công ty và ủy quyền cho nhân sự phụ trách thực hiện.
+          <p style="font-size: 0.8125rem; color: #64748b; margin: 4px 0 0">
+            Quản lý phòng ban phân rã công việc cấp công ty và ủy quyền cho nhân sự phụ trách thực
+            hiện.
           </p>
         </div>
         @if (canCreateSubtask()) {
@@ -147,7 +197,7 @@
             color="primary"
             [routerLink]="['/tasks/create']"
             [queryParams]="{ parentTaskId: detail.task.taskId, parentTaskTitle: detail.task.title }"
-            style="background: #1e40af; color: #ffffff;"
+            style="background: #1e40af; color: #ffffff"
           >
             + Thêm nhiệm vụ con / Phân công nhân sự
           </a>
@@ -155,48 +205,150 @@
       </div>
 
       @if (detail.subtasks && detail.subtasks.length > 0) {
-        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px 16px; margin-bottom: 16px;">
-          <div style="display: flex; justify-content: space-between; font-size: 12px; font-weight: 600; color: #475569; margin-bottom: 6px;">
+        <div
+          style="
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 12px 16px;
+            margin-bottom: 16px;
+          "
+        >
+          <div
+            style="
+              display: flex;
+              justify-content: space-between;
+              font-size: 12px;
+              font-weight: 600;
+              color: #475569;
+              margin-bottom: 6px;
+            "
+          >
             <span>Tiến độ hoàn thành nhiệm vụ con</span>
-            <span>{{ completedSubtasksCount() }} / {{ detail.subtasks.length }} hoàn thành ({{ subtasksProgressPercent() }}%)</span>
+            <span
+              >{{ completedSubtasksCount() }} / {{ detail.subtasks.length }} hoàn thành ({{
+                subtasksProgressPercent()
+              }}%)</span
+            >
           </div>
-          <div style="height: 8px; background: #e2e8f0; border-radius: 9999px; overflow: hidden;">
-            <div style="height: 100%; background: #10b981; border-radius: 9999px; transition: width 300ms ease;" [style.width.%]="subtasksProgressPercent()"></div>
+          <div style="height: 8px; background: #e2e8f0; border-radius: 9999px; overflow: hidden">
+            <div
+              style="
+                height: 100%;
+                background: #10b981;
+                border-radius: 9999px;
+                transition: width 300ms ease;
+              "
+              [style.width.%]="subtasksProgressPercent()"
+            ></div>
           </div>
         </div>
 
-        <div class="table-container" style="overflow-x: auto;">
-          <table style="width: 100%; min-width: 720px; border-collapse: separate; border-spacing: 0; font-size: 13px;">
+        <div class="table-container" style="overflow-x: auto">
+          <table
+            style="
+              width: 100%;
+              min-width: 720px;
+              border-collapse: separate;
+              border-spacing: 0;
+              font-size: 13px;
+            "
+          >
             <thead>
-              <tr style="background: #f8fafc; text-align: left; color: #64748b; font-size: 11px; text-transform: uppercase;">
-                <th style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0;">Tiêu đề nhiệm vụ con</th>
-                <th style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; min-width: 170px; white-space: nowrap;">Nhân sự thực thi</th>
-                <th style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; min-width: 155px; white-space: nowrap;">Trạng thái</th>
-                <th style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; min-width: 130px; white-space: nowrap;">Độ ưu tiên</th>
-                <th style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; min-width: 110px; white-space: nowrap; text-align: right;">Chi tiết</th>
+              <tr
+                style="
+                  background: #f8fafc;
+                  text-align: left;
+                  color: #64748b;
+                  font-size: 11px;
+                  text-transform: uppercase;
+                "
+              >
+                <th style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0">
+                  Tiêu đề nhiệm vụ con
+                </th>
+                <th
+                  style="
+                    padding: 10px 14px;
+                    border-bottom: 1px solid #e2e8f0;
+                    min-width: 170px;
+                    white-space: nowrap;
+                  "
+                >
+                  Nhân sự thực thi
+                </th>
+                <th
+                  style="
+                    padding: 10px 14px;
+                    border-bottom: 1px solid #e2e8f0;
+                    min-width: 155px;
+                    white-space: nowrap;
+                  "
+                >
+                  Trạng thái
+                </th>
+                <th
+                  style="
+                    padding: 10px 14px;
+                    border-bottom: 1px solid #e2e8f0;
+                    min-width: 130px;
+                    white-space: nowrap;
+                  "
+                >
+                  Độ ưu tiên
+                </th>
+                <th
+                  style="
+                    padding: 10px 14px;
+                    border-bottom: 1px solid #e2e8f0;
+                    min-width: 110px;
+                    white-space: nowrap;
+                    text-align: right;
+                  "
+                >
+                  Chi tiết
+                </th>
               </tr>
             </thead>
             <tbody>
               @for (sub of detail.subtasks; track sub.taskId) {
                 <tr>
-                  <td style="padding: 10px 14px; border-bottom: 1px solid #f1f5f9;">
-                    <a [routerLink]="['/tasks', sub.taskId]" style="font-weight: 600; color: #1d4ed8; text-decoration: none;">
+                  <td style="padding: 10px 14px; border-bottom: 1px solid #f1f5f9">
+                    <a
+                      [routerLink]="['/tasks', sub.taskId]"
+                      style="font-weight: 600; color: #1d4ed8; text-decoration: none"
+                    >
                       {{ sub.title }}
                     </a>
                   </td>
-                  <td style="padding: 10px 14px; border-bottom: 1px solid #f1f5f9;">
-                    <span style="font-weight: 500; color: #1e293b;">{{ sub.assignedUserName ?? 'Chưa phân công' }}</span>
+                  <td style="padding: 10px 14px; border-bottom: 1px solid #f1f5f9">
+                    <span style="font-weight: 500; color: #1e293b">{{
+                      sub.assignedUserName ?? 'Chưa phân công'
+                    }}</span>
                   </td>
-                  <td style="padding: 10px 14px; border-bottom: 1px solid #f1f5f9;">
-                    <span class="status-chip" [class.active]="sub.status === 'COMPLETED' || sub.status === 'CONFIRMED'">
+                  <td style="padding: 10px 14px; border-bottom: 1px solid #f1f5f9">
+                    <span
+                      class="status-chip"
+                      [class.active]="sub.status === 'COMPLETED' || sub.status === 'CONFIRMED'"
+                    >
                       {{ 'status.' + sub.status | translate: sub.status }}
                     </span>
                   </td>
-                  <td style="padding: 10px 14px; border-bottom: 1px solid #f1f5f9;">
+                  <td style="padding: 10px 14px; border-bottom: 1px solid #f1f5f9">
                     <span>{{ 'priority.' + sub.priority | translate: sub.priority }}</span>
                   </td>
-                  <td style="padding: 10px 14px; border-bottom: 1px solid #f1f5f9; text-align: right;">
-                    <a [routerLink]="['/tasks', sub.taskId]" style="font-size: 12px; font-weight: 600; color: #2563eb; text-decoration: none;">
+                  <td
+                    style="padding: 10px 14px; border-bottom: 1px solid #f1f5f9; text-align: right"
+                  >
+                    <a
+                      [routerLink]="['/tasks', sub.taskId]"
+                      style="
+                        font-size: 12px;
+                        font-weight: 600;
+                        color: #2563eb;
+                        text-decoration: none;
+                      "
+                    >
                       Xem →
                     </a>
                   </td>
@@ -206,7 +358,7 @@
           </table>
         </div>
       } @else {
-        <p style="color: #64748b; font-size: 13px; margin: 0; font-style: italic;">
+        <p style="color: #64748b; font-size: 13px; margin: 0; font-style: italic">
           Nhiệm vụ này chưa được phân rã thành các nhiệm vụ con.
         </p>
       }
@@ -241,7 +393,6 @@
           [disabled]="aiBusy()"
         >
           {{ 'ai.summary' | translate: 'Tóm tắt tiến độ (AI Summary)' }}
-
         </button>
       </div>
       @if (aiError()) {
@@ -267,7 +418,8 @@
                     ? '#ea580c'
                     : '#16a34a'
               "
-              >{{ 'priority.' + risk.riskLevel | translate: risk.riskLevel }} (Điểm: {{ (risk.riskScore * 100).toFixed(0) }}%)</span
+              >{{ 'priority.' + risk.riskLevel | translate: risk.riskLevel }} (Điểm:
+              {{ (risk.riskScore * 100).toFixed(0) }}%)</span
             >
           </p>
 
@@ -317,11 +469,21 @@
       }
     </section>
     @for (section of sections; track section.key) {
-      <section class="directory-panel detail-section" [attr.aria-label]="section.nameKey | translate: section.fallback">
+      <section
+        class="directory-panel detail-section"
+        [attr.aria-label]="section.nameKey | translate: section.fallback"
+      >
         <h2>{{ section.nameKey | translate: section.fallback }}</h2>
         @for (item of detail[section.key].items; track item.id) {
           @if (section.key === 'checklist') {
-            <p>{{ item.isCompleted ? ('taskDetail.checklistDone' | translate: 'Completed') : ('taskDetail.checklistOpen' | translate: 'Open') }} · {{ item.title }}</p>
+            <p>
+              {{
+                item.isCompleted
+                  ? ('taskDetail.checklistDone' | translate: 'Completed')
+                  : ('taskDetail.checklistOpen' | translate: 'Open')
+              }}
+              · {{ item.title }}
+            </p>
           } @else {
             <article>
               <p>
@@ -332,14 +494,23 @@
                 }}
                 · {{ item.submittedAt | date: 'medium' }}
               </p>
-              <p>{{ item.content ?? ('taskDetail.noTextContent' | translate: 'No text content') }}</p>
+              <p>
+                {{ item.content ?? ('taskDetail.noTextContent' | translate: 'No text content') }}
+              </p>
             </article>
           }
         } @empty {
           <p>{{ section.emptyKey | translate: section.emptyFallback }}</p>
         }
-        <nav class="pagination" [attr.aria-label]="(section.nameKey | translate: section.fallback) + ' pages'">
-          <span>{{ detail[section.key].total }} {{ 'taskDetail.itemsPagePrefix' | translate: 'items · Page' }} {{ detail[section.key].page }}</span>
+        <nav
+          class="pagination"
+          [attr.aria-label]="(section.nameKey | translate: section.fallback) + ' pages'"
+        >
+          <span
+            >{{ detail[section.key].total }}
+            {{ 'taskDetail.itemsPagePrefix' | translate: 'items · Page' }}
+            {{ detail[section.key].page }}</span
+          >
           <button
             mat-stroked-button
             [disabled]="detail[section.key].page <= 1"

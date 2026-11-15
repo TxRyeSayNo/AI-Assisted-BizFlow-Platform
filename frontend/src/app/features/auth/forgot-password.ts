@@ -60,7 +60,7 @@ export interface ToastAlert {
                   {{
                     'forgot.subtitle'
                       | translate
-                        : "Chúng tôi sẽ gửi liên kết đặt lại mật khẩu tới email công ty của bạn. Nếu bạn không có quyền truy cập email đó, vui lòng liên hệ quản trị viên công ty."
+                        : 'Chúng tôi sẽ gửi liên kết đặt lại mật khẩu tới email công ty của bạn. Nếu bạn không có quyền truy cập email đó, vui lòng liên hệ quản trị viên công ty.'
                   }}
                 </p>
               </div>
@@ -153,7 +153,8 @@ export interface ToastAlert {
           </div>
 
           <div class="auth-platform-tag">
-            BizFlow Platform <span class="tag-sep">•</span> Điều phối quy trình & nâng cao trách nhiệm giải trình.
+            BizFlow Platform <span class="tag-sep">•</span> Điều phối quy trình & nâng cao trách
+            nhiệm giải trình.
           </div>
         </div>
       </main>
@@ -250,7 +251,10 @@ export class ForgotPassword implements OnDestroy {
         return;
       }
 
-      this.showToast('Dữ liệu không hợp lệ', 'Vui lòng kiểm tra lại các trường bắt buộc và thử lại.');
+      this.showToast(
+        'Dữ liệu không hợp lệ',
+        'Vui lòng kiểm tra lại các trường bắt buộc và thử lại.',
+      );
       return;
     }
 

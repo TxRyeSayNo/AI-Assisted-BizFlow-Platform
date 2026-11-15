@@ -143,7 +143,9 @@ export class Notifications {
       .subscribe({
         next: () => {
           this.reading.set(null);
-          this.receiptMessage.set(this.i18n.t('notifications.markedRead', 'Notification marked read.'));
+          this.receiptMessage.set(
+            this.i18n.t('notifications.markedRead', 'Notification marked read.'),
+          );
           this.load(this.page());
         },
         error: (failure: HttpErrorResponse) => {

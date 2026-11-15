@@ -177,7 +177,10 @@ export class Login implements OnInit, OnDestroy {
       } catch (err: unknown) {
         this.busy.set(false);
         const firebaseErr = err as { code?: string; message?: string };
-        if (firebaseErr?.code !== 'auth/popup-closed-by-user' && firebaseErr?.code !== 'auth/cancelled-popup-request') {
+        if (
+          firebaseErr?.code !== 'auth/popup-closed-by-user' &&
+          firebaseErr?.code !== 'auth/cancelled-popup-request'
+        ) {
           console.warn('Live Google Sign-In unavailable, opening Account Chooser:', firebaseErr);
         } else {
           return; // User explicitly cancelled popup
@@ -275,7 +278,7 @@ export class Login implements OnInit, OnDestroy {
     this.error.set('');
     this.dismissToast();
 
-    const tenantKey = isSuper ? undefined : (values.tenantKey?.trim() || undefined);
+    const tenantKey = isSuper ? undefined : values.tenantKey?.trim() || undefined;
 
     this.session
       .login({
@@ -338,7 +341,8 @@ export class Login implements OnInit, OnDestroy {
               'Không thể đăng nhập. Vui lòng kiểm tra lại thông tin tài khoản và mã không gian làm việc, hoặc liên hệ Quản trị viên công ty.',
             );
           } else if (failure.status === 429) {
-            const msg = 'Đã thử đăng nhập sai quá nhiều lần. Vui lòng chờ ít phút trước khi thử lại.';
+            const msg =
+              'Đã thử đăng nhập sai quá nhiều lần. Vui lòng chờ ít phút trước khi thử lại.';
             this.error.set(msg);
             this.showToast(
               'Quá nhiều lần thử',

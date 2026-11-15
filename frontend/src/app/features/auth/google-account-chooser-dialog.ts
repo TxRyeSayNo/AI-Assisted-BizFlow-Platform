@@ -102,11 +102,7 @@ export interface GoogleAccountItem {
               [disabled]="loadingEmail() !== null"
             />
             <div class="custom-btn-actions">
-              <button
-                type="button"
-                class="btn-text-cancel"
-                (click)="showCustomInput.set(false)"
-              >
+              <button type="button" class="btn-text-cancel" (click)="showCustomInput.set(false)">
                 Hủy
               </button>
               <button
@@ -140,7 +136,14 @@ export interface GoogleAccountItem {
       .google-chooser-container {
         background-color: #1a1a1a;
         color: #e8eaed;
-        font-family: var(--tp-font-body, 'Be Vietnam Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif);
+        font-family: var(
+          --tp-font-body,
+          'Be Vietnam Pro',
+          -apple-system,
+          BlinkMacSystemFont,
+          'Segoe UI',
+          sans-serif
+        );
         padding: 24px 28px;
         min-width: 340px;
         max-width: 440px;
@@ -425,4 +428,3 @@ export class GoogleAccountChooserDialog {
     }
   }
 }
-

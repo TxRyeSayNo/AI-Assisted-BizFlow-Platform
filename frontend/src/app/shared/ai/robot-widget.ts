@@ -80,7 +80,7 @@ export class RobotWidgetComponent implements OnInit {
     try {
       sessionStorage.setItem('bizflow_robot_open', 'true');
       sessionStorage.removeItem('bizflow_robot_dismissed');
-    } catch { }
+    } catch {}
     this.scrollToBottom();
   }
 
@@ -89,7 +89,7 @@ export class RobotWidgetComponent implements OnInit {
     try {
       sessionStorage.removeItem('bizflow_robot_open');
       sessionStorage.setItem('bizflow_robot_dismissed', 'true');
-    } catch { }
+    } catch {}
   }
 
   toggleExpand() {
@@ -236,7 +236,11 @@ export class RobotWidgetComponent implements OnInit {
       .slice(-8)
       .map((m) => ({ sender: m.sender, text: m.text }));
 
-    const payload: { message: string; locale: string; history?: Array<{ sender: string; text: string }> } = {
+    const payload: {
+      message: string;
+      locale: string;
+      history?: Array<{ sender: string; text: string }>;
+    } = {
       message: text,
       locale: this.i18n.currentLanguage(),
     };
@@ -246,10 +250,13 @@ export class RobotWidgetComponent implements OnInit {
 
     // 2. Dispatch to backend AI Chat
     this.http
-      .post<{ response: string; recognizedCommand?: string; actionCards?: any[]; questionnaire?: any; agentThought?: string }>(
-        '/api/v1/ai/chat',
-        payload,
-      )
+      .post<{
+        response: string;
+        recognizedCommand?: string;
+        actionCards?: any[];
+        questionnaire?: any;
+        agentThought?: string;
+      }>('/api/v1/ai/chat', payload)
       .pipe(takeUntilDestroyed(this.destroy))
       .subscribe({
         next: (res) => {
@@ -258,7 +265,10 @@ export class RobotWidgetComponent implements OnInit {
           // Check if response contains decomposition proposals
           let actionCards = res.actionCards;
           const decompCard = res.actionCards?.find(
-            (c) => c.actionType === 'OPEN_DECOMPOSITION' || c.actionType === 'OPEN_BRANCHES' || c.actionType === 'VIEW_BRANCHES',
+            (c) =>
+              c.actionType === 'OPEN_DECOMPOSITION' ||
+              c.actionType === 'OPEN_BRANCHES' ||
+              c.actionType === 'VIEW_BRANCHES',
           );
 
           if (decompCard?.payload?.proposals) {
@@ -288,9 +298,10 @@ export class RobotWidgetComponent implements OnInit {
         },
         error: (err) => {
           this.agent.busy.set(false);
-          const errorText = err?.status === 403
-            ? '🔒 Bạn không có quyền sử dụng tính năng AI Agent này.'
-            : '⚠️ Không thể kết nối với máy chủ AI Agent vào lúc này. Vui lòng kiểm tra kết nối mạng hoặc thử lại sau.';
+          const errorText =
+            err?.status === 403
+              ? '🔒 Bạn không có quyền sử dụng tính năng AI Agent này.'
+              : '⚠️ Không thể kết nối với máy chủ AI Agent vào lúc này. Vui lòng kiểm tra kết nối mạng hoặc thử lại sau.';
           const robotMsg: ChatMessage = {
             id: crypto.randomUUID(),
             sender: 'robot',
@@ -320,8 +331,12 @@ export class RobotWidgetComponent implements OnInit {
     }
 
     // Quick fill / Quick reply
-    if (card.actionType && (card.actionType.startsWith('QUICK_FILL_') || card.actionType === 'QUICK_REPLY')) {
-      const sample = card.payload?.template || card.payload?.text || card.title.replace(/^Mẫu:\s*/i, '');
+    if (
+      card.actionType &&
+      (card.actionType.startsWith('QUICK_FILL_') || card.actionType === 'QUICK_REPLY')
+    ) {
+      const sample =
+        card.payload?.template || card.payload?.text || card.title.replace(/^Mẫu:\s*/i, '');
       this.sendQuickPrompt(sample);
       return;
     }
@@ -376,9 +391,15 @@ export class RobotWidgetComponent implements OnInit {
   }
 
   // Questionnaire selections state: messageId -> questionId -> { selectedOptions: string[], customText: string }
-  readonly formSelections = signal<Record<string, Record<string, { selectedOptions: string[]; customText: string }>>>({});
+  readonly formSelections = signal<
+    Record<string, Record<string, { selectedOptions: string[]; customText: string }>>
+  >({});
 
-  getSelection(msgId: string, qId: string, defaultOptIds: string[] = []): { selectedOptions: string[]; customText: string } {
+  getSelection(
+    msgId: string,
+    qId: string,
+    defaultOptIds: string[] = [],
+  ): { selectedOptions: string[]; customText: string } {
     const currentMsgMap = this.formSelections()[msgId] || {};
     if (!currentMsgMap[qId]) {
       return { selectedOptions: defaultOptIds, customText: '' };

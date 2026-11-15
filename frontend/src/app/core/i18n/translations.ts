@@ -725,7 +725,8 @@ export const TRANSLATIONS: Record<LanguageCode, Record<string, string>> = {
     'slaMonitor.colAction': 'Thao tác',
     'slaMonitor.inspect': 'Kiểm tra →',
     'slaMonitor.manageProfiles': 'Quản lý Hồ sơ SLA →',
-    'slaMonitor.noBreaches': 'Hiện không có công việc hoặc yêu cầu nào vi phạm hoặc tiệm cận ngưỡng cảnh báo SLA.',
+    'slaMonitor.noBreaches':
+      'Hiện không có công việc hoặc yêu cầu nào vi phạm hoặc tiệm cận ngưỡng cảnh báo SLA.',
 
     // Reports & Dashboard
     'reports.breadcrumb': 'Báo cáo',
@@ -1317,10 +1318,12 @@ export const TRANSLATIONS: Record<LanguageCode, Record<string, string>> = {
     'slaMonitor.tier1Desc': 'Gửi thông báo tức thì tới nhân viên phụ trách và quản lý trực tiếp.',
     'slaMonitor.tier2Tag': 'Cấp 2 · Quá hạn 100%',
     'slaMonitor.tier2Title': 'Leo thang cấp quản lý',
-    'slaMonitor.tier2Desc': 'Công việc được đánh dấu quá hạn để trưởng bộ phận theo dõi và điều phối lại.',
+    'slaMonitor.tier2Desc':
+      'Công việc được đánh dấu quá hạn để trưởng bộ phận theo dõi và điều phối lại.',
     'slaMonitor.tier3Tag': 'Cấp 3 · Quá hạn > 24 giờ',
     'slaMonitor.tier3Title': 'Cảnh báo ban lãnh đạo',
-    'slaMonitor.tier3Desc': 'Hiển thị ưu tiên trên báo cáo điều hành để xử lý các điểm nghẽn kéo dài.',
+    'slaMonitor.tier3Desc':
+      'Hiển thị ưu tiên trên báo cáo điều hành để xử lý các điểm nghẽn kéo dài.',
     'slaMonitor.refreshing': 'Đang cập nhật...',
     'slaMonitor.colType': 'Loại hình',
     'slaMonitor.colEscalation': 'Cấp độ leo thang',
@@ -1496,7 +1499,8 @@ export const TRANSLATIONS: Record<LanguageCode, Record<string, string>> = {
     'taskDialog.acceptTitle': 'Tiếp nhận nhiệm vụ',
     'taskDialog.acceptConfirm': 'Xác nhận tiếp nhận',
     'taskDialog.acceptRetry': 'Thử lại xác nhận',
-    'taskDialog.acceptConflict': 'Thông tin phân công hoặc quyền truy cập vừa thay đổi. Hãy đóng hộp thoại để kiểm tra lại nhiệm vụ.',
+    'taskDialog.acceptConflict':
+      'Thông tin phân công hoặc quyền truy cập vừa thay đổi. Hãy đóng hộp thoại để kiểm tra lại nhiệm vụ.',
     'taskDialog.assignTitle': 'Phân công nhiệm vụ',
     'taskDialog.searchTargets': 'Tìm người hoặc phòng ban thực hiện',
     'taskDialog.loadingTargets': 'Đang tải danh sách…',
@@ -1507,13 +1511,16 @@ export const TRANSLATIONS: Record<LanguageCode, Record<string, string>> = {
     'taskDialog.assigning': 'Đang phân công…',
     'taskDialog.retryAssign': 'Thử lại phân công',
     'taskDialog.confirmAssign': 'Xác nhận phân công',
-    'taskDialog.assignConflict': 'Nhiệm vụ hoặc quyền phân công vừa thay đổi. Vui lòng đóng và kiểm tra lại trước khi thao tác.',
+    'taskDialog.assignConflict':
+      'Nhiệm vụ hoặc quyền phân công vừa thay đổi. Vui lòng đóng và kiểm tra lại trước khi thao tác.',
     'taskDialog.confirmTitle': 'Xác nhận kết quả nhiệm vụ',
     'taskDialog.approveComplete': 'Phê duyệt & hoàn thành',
     'taskDialog.requestRework': 'Yêu cầu làm lại',
     'taskDialog.confirmCompletion': 'Xác nhận hoàn thành',
-    'taskDialog.statusConflict': 'Trạng thái nhiệm vụ, phân công hoặc quyền hạn vừa thay đổi. Vui lòng đóng và kiểm tra lại.',
-    'taskDialog.resumeDesc': 'Tiếp tục thực hiện nhiệm vụ đang triển khai. Thời hạn và lịch sử quá hạn được giữ nguyên.',
+    'taskDialog.statusConflict':
+      'Trạng thái nhiệm vụ, phân công hoặc quyền hạn vừa thay đổi. Vui lòng đóng và kiểm tra lại.',
+    'taskDialog.resumeDesc':
+      'Tiếp tục thực hiện nhiệm vụ đang triển khai. Thời hạn và lịch sử quá hạn được giữ nguyên.',
     'taskDialog.startDesc': 'Bắt đầu thực hiện nhiệm vụ này và ghi nhận thời điểm khởi chạy.',
     'taskDialog.retryAction': 'Thử lại thao tác',
     'taskDialog.confirmResume': 'Xác nhận tiếp tục',
@@ -1537,7 +1544,8 @@ export const TRANSLATIONS: Record<LanguageCode, Record<string, string>> = {
     'requestDetail.reviseFail': 'Không thể tạo bản sửa yêu cầu.',
     'requestDetail.createTaskFail': 'Không thể tạo nhiệm vụ liên kết.',
     'requestDetail.archiveFail': 'Không thể lưu trữ yêu cầu.',
-    'requestDetail.confirmAndCloseNote': 'Xác nhận kết quả đã đáp ứng yêu cầu để đóng hồ sơ, hoặc yêu cầu làm lại kèm ghi chú.',
+    'requestDetail.confirmAndCloseNote':
+      'Xác nhận kết quả đã đáp ứng yêu cầu để đóng hồ sơ, hoặc yêu cầu làm lại kèm ghi chú.',
     'requestDetail.unitTasks': 'nhiệm vụ',
     'requestDetail.unitRevisions': 'lần sửa',
     'requestDetail.unitDecisions': 'quyết định',
@@ -1576,7 +1584,8 @@ export const TRANSLATIONS: Record<LanguageCode, Record<string, string>> = {
     'audit.platformEvent': 'Sự kiện nền tảng',
     'audit.workspaceLevel': 'Cấp không gian làm việc',
     'audit.platformLevel': 'Cấp nền tảng',
-    'audit.errInvalidUuid': 'Vui lòng nhập đầy đủ UUID hợp lệ cho tác nhân hoặc đối tượng, hoặc để trống.',
+    'audit.errInvalidUuid':
+      'Vui lòng nhập đầy đủ UUID hợp lệ cho tác nhân hoặc đối tượng, hoặc để trống.',
     'recordSearch.typeTask': 'Nhiệm vụ',
     'recordSearch.typeRequest': 'Yêu cầu',
     'recordSearch.errLoad': 'Không thể tải danh sách hồ sơ.',
@@ -1593,47 +1602,64 @@ export const TRANSLATIONS: Record<LanguageCode, Record<string, string>> = {
     'platform.errStatus': 'Không thể cập nhật trạng thái doanh nghiệp.',
     'register.errUploadDoc': 'Tải tài liệu chứng minh thất bại. Vui lòng thử lại.',
     'register.errSubmitReg': 'Gửi đăng ký doanh nghiệp thất bại. Vui lòng kiểm tra lại thông tin.',
-    'reset.errInvalidLink': 'Liên kết đặt lại mật khẩu không hợp lệ hoặc đã hết hạn. Vui lòng yêu cầu liên kết mới.',
-    'reset.errPasswordPolicy': 'Vui lòng chọn mật khẩu mạnh hơn theo chính sách bảo mật của công ty.',
+    'reset.errInvalidLink':
+      'Liên kết đặt lại mật khẩu không hợp lệ hoặc đã hết hạn. Vui lòng yêu cầu liên kết mới.',
+    'reset.errPasswordPolicy':
+      'Vui lòng chọn mật khẩu mạnh hơn theo chính sách bảo mật của công ty.',
     'reset.errTooMany': 'Quá nhiều yêu cầu. Vui lòng đợi trong giây lát trước khi thử lại.',
     'reset.errUnavailable': 'Tính năng đặt lại mật khẩu tạm thời gián đoạn. Vui lòng thử lại sau.',
 
     // Completed Keys Coverage
     'audit.platformHistoryCaption': 'Nhật ký kiểm toán cấp nền tảng',
     'audit.workspaceHistoryCaption': 'Nhật ký kiểm toán không gian làm việc',
-    'audit.errInvalidDates': 'Vui lòng chọn ngày UTC hợp lệ với ngày bắt đầu trước hoặc bằng ngày kết thúc.',
+    'audit.errInvalidDates':
+      'Vui lòng chọn ngày UTC hợp lệ với ngày bắt đầu trước hoặc bằng ngày kết thúc.',
     'search.errLoad': 'Không thể tải danh sách hồ sơ.',
     'comments.editedAtPrefix': 'Chỉnh sửa lúc',
     'comments.updatePlaceholder': 'Cập nhật nội dung bình luận…',
     'notifications.errUnavailable': 'Thông báo này không còn khả dụng. Vui lòng làm mới hộp thư.',
     'requestDetail.revisedTitlePrefix': 'Bản sửa đổi:',
-    'requestDetail.confirmDenied': 'Bạn không có quyền xác nhận hoặc yêu cầu xử lý lại yêu cầu này.',
-    'services.errInvalidCreate': 'Kiểm tra lại thông tin dịch vụ và danh mục: mã tối đa 80 ký tự, tên tối đa 200 ký tự.',
-    'services.errCreateUncertain': 'Chưa xác nhận được việc khởi tạo. Vui lòng tải lại danh mục trước khi thử lại.',
-    'services.errCategorySaveUncertain': 'Chưa xác nhận được việc lưu danh mục. Vui lòng tải lại và chọn lại dịch vụ.',
+    'requestDetail.confirmDenied':
+      'Bạn không có quyền xác nhận hoặc yêu cầu xử lý lại yêu cầu này.',
+    'services.errInvalidCreate':
+      'Kiểm tra lại thông tin dịch vụ và danh mục: mã tối đa 80 ký tự, tên tối đa 200 ký tự.',
+    'services.errCreateUncertain':
+      'Chưa xác nhận được việc khởi tạo. Vui lòng tải lại danh mục trước khi thử lại.',
+    'services.errCategorySaveUncertain':
+      'Chưa xác nhận được việc lưu danh mục. Vui lòng tải lại và chọn lại dịch vụ.',
     'services.categoryAddedPrefix': 'Đã thêm danh mục:',
     'services.categoryAddedTo': 'vào dịch vụ',
-    'services.errCategoryExists': 'Mã danh mục này đã tồn tại trong dịch vụ. Vui lòng chọn mã khác.',
-    'services.errCategoryInvalid': 'Kiểm tra lại giá trị danh mục: mã tối đa 80 ký tự, tên tối đa 200 ký tự.',
-    'services.errCategoryStale': 'Dịch vụ vừa thay đổi. Vui lòng tải lại danh mục và chọn lại dịch vụ.',
-    'services.errServiceSaveUncertain': 'Chưa xác nhận được việc lưu dịch vụ. Vui lòng tải lại và thử lại.',
-    'services.errServiceInvalid': 'Kiểm tra lại thông tin dịch vụ: mã tối đa 80 ký tự, tên tối đa 200 ký tự.',
+    'services.errCategoryExists':
+      'Mã danh mục này đã tồn tại trong dịch vụ. Vui lòng chọn mã khác.',
+    'services.errCategoryInvalid':
+      'Kiểm tra lại giá trị danh mục: mã tối đa 80 ký tự, tên tối đa 200 ký tự.',
+    'services.errCategoryStale':
+      'Dịch vụ vừa thay đổi. Vui lòng tải lại danh mục và chọn lại dịch vụ.',
+    'services.errServiceSaveUncertain':
+      'Chưa xác nhận được việc lưu dịch vụ. Vui lòng tải lại và thử lại.',
+    'services.errServiceInvalid':
+      'Kiểm tra lại thông tin dịch vụ: mã tối đa 80 ký tự, tên tối đa 200 ký tự.',
     'services.errServiceStale': 'Dịch vụ vừa thay đổi. Vui lòng tải lại danh mục trước khi lưu.',
     'sla.tableCaption': 'Danh sách hồ sơ SLA trong không gian làm việc',
     'sla.viewHistoryTitle': 'Xem lịch sử phiên bản',
-    'sla.timingSnapshotDesc': 'Thao tác này tạo một bản chụp bất biến mới. Mọi phiên bản đã lưu và công việc đang áp dụng sẽ không bị thay đổi.',
+    'sla.timingSnapshotDesc':
+      'Thao tác này tạo một bản chụp bất biến mới. Mọi phiên bản đã lưu và công việc đang áp dụng sẽ không bị thay đổi.',
     'sla.timingInvalidRange': 'Nhập số phút nguyên với 0 ≤ cảnh báo < mục tiêu.',
     'sla.preservedConfigHeading': 'Cấu hình được bảo lưu',
     'sla.frozenCalendarTerm': 'Lịch làm việc cố định',
     'sla.escalationLevelsTerm': 'Các cấp leo thang',
     'sla.unchangedLabel': 'Giữ nguyên',
-    'sla.timingOnlyDesc': 'Chỉ cập nhật giá trị thời gian tại đây. Lịch làm việc và chính sách leo thang của phiên bản nguồn được sao chép giữ nguyên.',
+    'sla.timingOnlyDesc':
+      'Chỉ cập nhật giá trị thời gian tại đây. Lịch làm việc và chính sách leo thang của phiên bản nguồn được sao chép giữ nguyên.',
     'sla.creatingImmutable': 'Đang tạo phiên bản bất biến…',
     'sla.errPermVersions': 'Bạn không còn quyền cấu hình phiên bản SLA.',
     'sla.errCalendarGone': 'Hồ sơ hoặc lịch làm việc không còn tồn tại.',
-    'sla.errBadEscalation': 'Chính sách leo thang chứa người nhận không hoạt động hoặc không khả dụng. Cần cập nhật trước khi lưu.',
-    'sla.errSaveVersion': 'Chưa lưu được phiên bản mới. Vui lòng kiểm tra thông số thời gian và thử lại.',
-    'sla.errUncertainVersion': 'Chưa xác nhận được kết quả lưu. Vui lòng kiểm tra lịch sử phiên bản trước khi thao tác lại.',
+    'sla.errBadEscalation':
+      'Chính sách leo thang chứa người nhận không hoạt động hoặc không khả dụng. Cần cập nhật trước khi lưu.',
+    'sla.errSaveVersion':
+      'Chưa lưu được phiên bản mới. Vui lòng kiểm tra thông số thời gian và thử lại.',
+    'sla.errUncertainVersion':
+      'Chưa xác nhận được kết quả lưu. Vui lòng kiểm tra lịch sử phiên bản trước khi thao tác lại.',
     'slaDetail.title': 'Phiên bản SLA',
     'slaDetail.versionId': 'Mã phiên bản',
     'slaDetail.workingMinutes': 'phút làm việc',
@@ -1655,12 +1681,14 @@ export const TRANSLATIONS: Record<LanguageCode, Record<string, string>> = {
     'sla.versionCreatedNoticeSuffix': 'đã được tạo. Các bản chụp trước đó được giữ nguyên.',
     'sla.reviewSavedFirst': 'Vui lòng kiểm tra các phiên bản đã lưu trước khi tạo bản mới.',
     'taskDialog.outOfScope': 'Đối tượng này nằm ngoài phạm vi quản lý được cấu hình của bạn.',
-    'taskDialog.invalidTarget': 'Nhiệm vụ hoặc đối tượng không khả dụng, hoặc dữ liệu phân công không hợp lệ.',
-    'taskDialog.assignUncertain': 'Chưa xác nhận được kết quả phân công. Vui lòng kiểm tra lại nhiệm vụ trước khi thử lại.',
-    'taskDetail.errUnavailable': 'Nhiệm vụ không tồn tại hoặc nằm ngoài phạm vi quyền truy cập của bạn.',
+    'taskDialog.invalidTarget':
+      'Nhiệm vụ hoặc đối tượng không khả dụng, hoặc dữ liệu phân công không hợp lệ.',
+    'taskDialog.assignUncertain':
+      'Chưa xác nhận được kết quả phân công. Vui lòng kiểm tra lại nhiệm vụ trước khi thử lại.',
+    'taskDetail.errUnavailable':
+      'Nhiệm vụ không tồn tại hoặc nằm ngoài phạm vi quyền truy cập của bạn.',
     'taskDetail.noChecklist': 'Chưa có mục kiểm tra nào trong trang này.',
     'taskDetail.noReports': 'Chưa có báo cáo tiến độ nào trong trang này.',
     'taskDetail.noResults': 'Chưa có kết quả nộp nào trong trang này.',
-
   },
 };

@@ -43,7 +43,13 @@ export interface DesignerNode {
   departmentName?: string;
   roleId?: string;
   roleName?: string;
-  assignmentMethod?: 'DEPARTMENT_QUEUE' | 'BUSINESS_ROLE' | 'DEPARTMENT_MANAGER' | 'DIRECT_MANAGER' | 'SPECIFIC_USER' | 'REQUESTER';
+  assignmentMethod?:
+    | 'DEPARTMENT_QUEUE'
+    | 'BUSINESS_ROLE'
+    | 'DEPARTMENT_MANAGER'
+    | 'DIRECT_MANAGER'
+    | 'SPECIFIC_USER'
+    | 'REQUESTER';
   specificUserId?: string;
   specificUserName?: string;
   description?: string;
@@ -404,7 +410,9 @@ export class WorkflowDesigner implements OnInit {
       const newY = Math.round((event.clientY - this.dragNodeOffset.y) / this.zoom());
 
       this.nodes.update((list) =>
-        list.map((n) => (n.id === draggingId ? { ...n, x: Math.max(10, newX), y: Math.max(10, newY) } : n))
+        list.map((n) =>
+          n.id === draggingId ? { ...n, x: Math.max(10, newX), y: Math.max(10, newY) } : n,
+        ),
       );
 
       // sync selectedNode coordinates
@@ -471,7 +479,9 @@ export class WorkflowDesigner implements OnInit {
     }
 
     // Check duplicate
-    const exists = this.edges().some((e) => e.source === source.nodeId && e.target === targetNode.id);
+    const exists = this.edges().some(
+      (e) => e.source === source.nodeId && e.target === targetNode.id,
+    );
     if (!exists) {
       const newEdge: DesignerEdge = {
         id: `e-${Date.now().toString(36)}`,
@@ -500,7 +510,11 @@ export class WorkflowDesigner implements OnInit {
 
     const connectedEdges = this.edges().filter((e) => e.source === node.id || e.target === node.id);
     if (connectedEdges.length > 0) {
-      if (!confirm(`Xóa bước "${node.name}" sẽ đồng thời xóa ${connectedEdges.length} liên kết kết nối tới bước này. Bạn có chắc chắn?`)) {
+      if (
+        !confirm(
+          `Xóa bước "${node.name}" sẽ đồng thời xóa ${connectedEdges.length} liên kết kết nối tới bước này. Bạn có chắc chắn?`,
+        )
+      ) {
         return;
       }
     }
@@ -707,7 +721,11 @@ export class WorkflowDesigner implements OnInit {
   }
 
   getOutgoingNodes(nodeId: string): DesignerNode[] {
-    const outgoingTargets = new Set(this.edges().filter((e) => e.source === nodeId).map((e) => e.target));
+    const outgoingTargets = new Set(
+      this.edges()
+        .filter((e) => e.source === nodeId)
+        .map((e) => e.target),
+    );
     return this.nodes().filter((n) => outgoingTargets.has(n.id));
   }
 
@@ -734,14 +752,14 @@ export class WorkflowDesigner implements OnInit {
 
   updateCondition(node: DesignerNode, conditionId: string, patch: Partial<DesignerCondition>) {
     const conditions = (node.conditions || []).map((c) =>
-      c.id === conditionId ? { ...c, ...patch } : c
+      c.id === conditionId ? { ...c, ...patch } : c,
     );
     this.updateSelectedNodeProps({ conditions });
   }
 
   toggleDefaultBranch(node: DesignerNode, conditionId: string) {
     const conditions = (node.conditions || []).map((c) =>
-      c.id === conditionId ? { ...c, isDefault: !c.isDefault } : { ...c, isDefault: false }
+      c.id === conditionId ? { ...c, isDefault: !c.isDefault } : { ...c, isDefault: false },
     );
     this.updateSelectedNodeProps({ conditions });
   }
@@ -791,7 +809,7 @@ export class WorkflowDesigner implements OnInit {
       const matchQuote = msg.match(/['"“](.*?)['"”]/);
       if (matchQuote && matchQuote[1]) {
         const found = currentNodes.find(
-          (n) => n.name.toLowerCase() === matchQuote[1].toLowerCase() || n.id === matchQuote[1]
+          (n) => n.name.toLowerCase() === matchQuote[1].toLowerCase() || n.id === matchQuote[1],
         );
         if (found) {
           matchedNodeId = found.id;
@@ -803,31 +821,55 @@ export class WorkflowDesigner implements OnInit {
       if (lower.includes('bắt đầu') || lower.includes('start')) {
         title = 'Thiếu sự kiện Bắt đầu (START)';
         cause = 'Quy trình chưa xác định điểm kích hoạt đầu tiên để tiếp nhận xử lý.';
-        suggestion = 'Kéo thả nút "Bắt đầu" (màu xanh lá) từ bảng công cụ bên trái vào vùng vẽ và nối tới bước xử lý đầu tiên.';
+        suggestion =
+          'Kéo thả nút "Bắt đầu" (màu xanh lá) từ bảng công cụ bên trái vào vùng vẽ và nối tới bước xử lý đầu tiên.';
       } else if (lower.includes('kết thúc') || lower.includes('end')) {
         title = 'Thiếu sự kiện Kết thúc (END)';
         cause = 'Quy trình chưa có điểm dừng cuối cùng để hoàn tất hoặc đóng luồng công việc.';
-        suggestion = 'Kéo thả ít nhất 1 nút "Kết thúc" (màu đỏ) từ bảng công cụ bên trái vào vùng vẽ và nối từ bước cuối cùng đến nút này.';
+        suggestion =
+          'Kéo thả ít nhất 1 nút "Kết thúc" (màu đỏ) từ bảng công cụ bên trái vào vùng vẽ và nối từ bước cuối cùng đến nút này.';
       } else if (lower.includes('phòng ban') || lower.includes('department')) {
         title = `Chưa gán phòng ban xử lý${nodeName ? ': ' + nodeName : ''}`;
         cause = `Bước xử lý "${nodeName || 'này'}" chưa được chọn phòng ban chịu trách nhiệm thực thi.`;
-        suggestion = 'Bấm vào bước này trên sơ đồ, sau đó mở bảng Thuộc tính bên phải và chọn một Phòng ban hợp lệ trong doanh nghiệp.';
-      } else if (lower.includes('không thể tiếp cận') || lower.includes('kết nối từ sự kiện bắt đầu') || lower.includes('unreachable')) {
+        suggestion =
+          'Bấm vào bước này trên sơ đồ, sau đó mở bảng Thuộc tính bên phải và chọn một Phòng ban hợp lệ trong doanh nghiệp.';
+      } else if (
+        lower.includes('không thể tiếp cận') ||
+        lower.includes('kết nối từ sự kiện bắt đầu') ||
+        lower.includes('unreachable')
+      ) {
         title = `Bước bị cô lập${nodeName ? ': ' + nodeName : ''}`;
         cause = `Không có đường liên kết nào từ sự kiện Bắt đầu dẫn tới bước "${nodeName || 'này'}".`;
-        suggestion = 'Kéo một đường nối từ cổng ra của bước liền trước (hoặc từ điểm Bắt đầu) đến cổng vào của bước này.';
-      } else if (lower.includes('đường dẫn đến sự kiện kết thúc') || lower.includes('dead end') || lower.includes('không có lối ra')) {
+        suggestion =
+          'Kéo một đường nối từ cổng ra của bước liền trước (hoặc từ điểm Bắt đầu) đến cổng vào của bước này.';
+      } else if (
+        lower.includes('đường dẫn đến sự kiện kết thúc') ||
+        lower.includes('dead end') ||
+        lower.includes('không có lối ra')
+      ) {
         title = `Đường cụt - Không thể hoàn tất${nodeName ? ': ' + nodeName : ''}`;
         cause = `Luồng công việc đi vào bước "${nodeName || 'này'}" nhưng không có lối thoát để đi tiếp đến điểm Kết thúc.`;
-        suggestion = 'Kéo một đường nối từ cổng ra của bước này đến bước kế tiếp hoặc trực tiếp đến điểm Kết thúc.';
-      } else if (lower.includes('chu trình') || lower.includes('vòng lặp') || lower.includes('cycle')) {
+        suggestion =
+          'Kéo một đường nối từ cổng ra của bước này đến bước kế tiếp hoặc trực tiếp đến điểm Kết thúc.';
+      } else if (
+        lower.includes('chu trình') ||
+        lower.includes('vòng lặp') ||
+        lower.includes('cycle')
+      ) {
         title = 'Phát hiện vòng lặp vô tận (Cycle)';
-        cause = 'Các bước nối vòng quay lại nhau mà không có nhánh rẽ để thoát ra sự kiện Kết thúc.';
-        suggestion = 'Thêm một Cổng rẽ nhánh điều kiện hoặc điều chỉnh lại các đường nối để đảm bảo có nhánh dẫn đến sự kiện Kết thúc.';
-      } else if (lower.includes('cổng rẽ nhánh') || lower.includes('gateway') || lower.includes('nhánh rẽ')) {
+        cause =
+          'Các bước nối vòng quay lại nhau mà không có nhánh rẽ để thoát ra sự kiện Kết thúc.';
+        suggestion =
+          'Thêm một Cổng rẽ nhánh điều kiện hoặc điều chỉnh lại các đường nối để đảm bảo có nhánh dẫn đến sự kiện Kết thúc.';
+      } else if (
+        lower.includes('cổng rẽ nhánh') ||
+        lower.includes('gateway') ||
+        lower.includes('nhánh rẽ')
+      ) {
         title = 'Cổng điều kiện chưa đủ nhánh rẽ';
         cause = 'Cổng rẽ nhánh yêu cầu ít nhất 2 đường rẽ để phân luồng xử lý theo điều kiện.';
-        suggestion = 'Kéo thêm đường nối từ cổng này tới các bước xử lý tương ứng và đặt nhãn/điều kiện cho từng nhánh.';
+        suggestion =
+          'Kéo thêm đường nối từ cổng này tới các bước xử lý tương ứng và đặt nhãn/điều kiện cho từng nhánh.';
       }
 
       return {
@@ -837,7 +879,9 @@ export class WorkflowDesigner implements OnInit {
         cause,
         suggestion,
         nodeId: matchedNodeId,
-        nodeName: nodeName || (matchedNodeId ? currentNodes.find((n) => n.id === matchedNodeId)?.name : undefined),
+        nodeName:
+          nodeName ||
+          (matchedNodeId ? currentNodes.find((n) => n.id === matchedNodeId)?.name : undefined),
       };
     });
 

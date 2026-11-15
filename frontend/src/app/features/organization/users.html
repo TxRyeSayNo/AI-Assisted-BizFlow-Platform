@@ -41,20 +41,45 @@
 
   <section aria-label="Danh bạ nhân sự" class="directory-panel" [attr.aria-busy]="busy()">
     @if (!canManageRoles) {
-      <div style="display: inline-flex; align-items: center; gap: 8px; margin-bottom: 1rem; padding: 6px 14px; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; font-size: 0.85rem; color: #1e40af;">
-        <span>🔒 Phạm vi hiển thị: <strong>Nhân sự thuộc phòng ban được ủy quyền của bạn</strong></span>
+      <div
+        style="
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          margin-bottom: 1rem;
+          padding: 6px 14px;
+          background: #eff6ff;
+          border: 1px solid #bfdbfe;
+          border-radius: 8px;
+          font-size: 0.85rem;
+          color: #1e40af;
+        "
+      >
+        <span
+          >🔒 Phạm vi hiển thị: <strong>Nhân sự thuộc phòng ban được ủy quyền của bạn</strong></span
+        >
       </div>
     }
     <form [formGroup]="filters" (ngSubmit)="apply()" class="filters">
       <mat-form-field appearance="outline" subscriptSizing="dynamic">
-        <mat-label>{{ 'users.searchLabel' | translate: 'Họ tên, mã nhân viên hoặc email' }}</mat-label>
-        <input matInput formControlName="search" maxlength="200" [readonly]="busy()" placeholder="Nhập từ khóa tìm kiếm…" />
+        <mat-label>{{
+          'users.searchLabel' | translate: 'Họ tên, mã nhân viên hoặc email'
+        }}</mat-label>
+        <input
+          matInput
+          formControlName="search"
+          maxlength="200"
+          [readonly]="busy()"
+          placeholder="Nhập từ khóa tìm kiếm…"
+        />
       </mat-form-field>
       @if (canManageRoles && departments().length > 0) {
         <mat-form-field appearance="outline" subscriptSizing="dynamic">
           <mat-label>{{ 'users.departmentLabel' | translate: 'Phòng ban' }}</mat-label>
           <mat-select formControlName="departmentId">
-            <mat-option value="">{{ 'departments.allDepartments' | translate: 'Tất cả phòng ban' }}</mat-option>
+            <mat-option value="">{{
+              'departments.allDepartments' | translate: 'Tất cả phòng ban'
+            }}</mat-option>
             @for (dept of departments(); track dept.id) {
               <mat-option [value]="dept.id">{{ dept.name }}</mat-option>
             }
@@ -64,9 +89,15 @@
       <mat-form-field appearance="outline" subscriptSizing="dynamic">
         <mat-label>{{ 'users.statusLabel' | translate: 'Trạng thái tài khoản' }}</mat-label>
         <mat-select formControlName="status">
-          <mat-option value="">{{ 'departments.allStatuses' | translate: 'Tất cả trạng thái' }}</mat-option>
-          <mat-option value="ACTIVE">{{ 'departments.active' | translate: 'Đang hoạt động' }}</mat-option>
-          <mat-option value="INACTIVE">{{ 'departments.inactive' | translate: 'Ngừng hoạt động' }}</mat-option>
+          <mat-option value="">{{
+            'departments.allStatuses' | translate: 'Tất cả trạng thái'
+          }}</mat-option>
+          <mat-option value="ACTIVE">{{
+            'departments.active' | translate: 'Đang hoạt động'
+          }}</mat-option>
+          <mat-option value="INACTIVE">{{
+            'departments.inactive' | translate: 'Ngừng hoạt động'
+          }}</mat-option>
           <mat-option value="LOCKED">{{ 'users.locked' | translate: 'Tạm khóa' }}</mat-option>
         </mat-select>
       </mat-form-field>
@@ -95,22 +126,29 @@
     } @else if (result(); as data) {
       @if (data.items.length === 0) {
         <p role="status" class="directory-feedback">
-          {{
-            'users.empty'
-              | translate: 'No people match the selected filters.'
-          }}
+          {{ 'users.empty' | translate: 'No people match the selected filters.' }}
         </p>
       } @else {
         <div class="table-container">
           <table class="users-table">
             <thead>
               <tr>
-                <th scope="col" style="min-width: 240px;">{{ 'users.col.person' | translate: 'Nhân sự' }}</th>
-                <th scope="col" style="min-width: 170px;">{{ 'users.col.department' | translate: 'Phòng ban' }}</th>
-                <th scope="col" style="width: 150px;">{{ 'users.col.role' | translate: 'Chức danh / vai trò' }}</th>
-                <th scope="col" style="width: 130px;">{{ 'common.status' | translate: 'Trạng thái' }}</th>
+                <th scope="col" style="min-width: 240px">
+                  {{ 'users.col.person' | translate: 'Nhân sự' }}
+                </th>
+                <th scope="col" style="min-width: 170px">
+                  {{ 'users.col.department' | translate: 'Phòng ban' }}
+                </th>
+                <th scope="col" style="width: 150px">
+                  {{ 'users.col.role' | translate: 'Chức danh / vai trò' }}
+                </th>
+                <th scope="col" style="width: 130px">
+                  {{ 'common.status' | translate: 'Trạng thái' }}
+                </th>
                 @if (canManageRoles) {
-                  <th scope="col" style="width: 180px; text-align: right;">{{ 'common.actions' | translate: 'Thao tác' }}</th>
+                  <th scope="col" style="width: 180px; text-align: right">
+                    {{ 'common.actions' | translate: 'Thao tác' }}
+                  </th>
                 }
               </tr>
             </thead>
@@ -125,7 +163,9 @@
                     </div>
                   </td>
                   <td>
-                    <span class="dept-badge">{{ item.departmentName ?? ('users.noDepartment' | translate: 'No department') }}</span>
+                    <span class="dept-badge">{{
+                      item.departmentName ?? ('users.noDepartment' | translate: 'No department')
+                    }}</span>
                   </td>
                   <td>
                     @if (item.isManager) {
@@ -135,12 +175,17 @@
                     }
                   </td>
                   <td>
-                    <span class="status-chip" [class.active]="item.status === 'ACTIVE'" [class.inactive]="item.status === 'INACTIVE'" [class.locked]="item.status === 'LOCKED'">
+                    <span
+                      class="status-chip"
+                      [class.active]="item.status === 'ACTIVE'"
+                      [class.inactive]="item.status === 'INACTIVE'"
+                      [class.locked]="item.status === 'LOCKED'"
+                    >
                       {{ labels[item.status] }}
                     </span>
                   </td>
                   @if (canManageRoles) {
-                    <td style="text-align: right;">
+                    <td style="text-align: right">
                       <div class="action-btn-group">
                         @if (item.userId !== identity()?.userId) {
                           @if (!item.isManager) {
@@ -189,10 +234,8 @@
       }
 
       <nav aria-label="Phân trang nhân sự" class="pagination">
-        <span role="status">
-          Tổng cộng {{ data.total }} nhân sự · Trang {{ data.page }}
-        </span>
-        <div style="display: flex; gap: 8px;">
+        <span role="status"> Tổng cộng {{ data.total }} nhân sự · Trang {{ data.page }} </span>
+        <div style="display: flex; gap: 8px">
           <button
             mat-stroked-button
             type="button"
@@ -226,7 +269,9 @@
 
       <div class="modal-body">
         @if (actionBusy() && !demoteResponsibilities()) {
-          <p style="text-align: center; color: #64748b; padding: 24px;">Đang kiểm tra các nhiệm vụ và trách nhiệm đang phụ trách…</p>
+          <p style="text-align: center; color: #64748b; padding: 24px">
+            Đang kiểm tra các nhiệm vụ và trách nhiệm đang phụ trách…
+          </p>
         } @else if (demoteResponsibilities(); as resp) {
           <div class="resp-summary-card">
             <h4 class="summary-title">Báo cáo Trách nhiệm Hiện tại</h4>
@@ -249,12 +294,18 @@
               <div class="transfer-warning-box">
                 <p class="warning-title">⚠️ Bắt buộc chuyển giao công việc cấp công ty</p>
                 <p class="warning-desc">
-                  Quản lý này đang phụ trách <strong>{{ resp.activeMainTasksCount }} công việc chính</strong>. Để đảm bảo tiến độ không bị gián đoạn, vui lòng chọn Quản lý thay thế để tiếp nhận ngay toàn bộ các công việc này:
+                  Quản lý này đang phụ trách
+                  <strong>{{ resp.activeMainTasksCount }} công việc chính</strong>. Để đảm bảo tiến
+                  độ không bị gián đoạn, vui lòng chọn Quản lý thay thế để tiếp nhận ngay toàn bộ
+                  các công việc này:
                 </p>
 
                 @if (resp.eligibleReplacementManagers.length > 0) {
-                  <div class="form-group" style="margin-top: 12px;">
-                    <label for="replacement-manager-select" style="font-size: 13px; font-weight: 600; display: block; margin-bottom: 6px;">
+                  <div class="form-group" style="margin-top: 12px">
+                    <label
+                      for="replacement-manager-select"
+                      style="font-size: 13px; font-weight: 600; display: block; margin-bottom: 6px"
+                    >
                       Quản lý nhận chuyển giao công việc *:
                     </label>
                     <select
@@ -264,19 +315,23 @@
                       (ngModelChange)="selectedReplacementManagerId.set($event)"
                     >
                       @for (mgr of resp.eligibleReplacementManagers; track mgr.userId) {
-                        <option [value]="mgr.userId">{{ mgr.fullName }} ({{ mgr.employeeCode }})</option>
+                        <option [value]="mgr.userId">
+                          {{ mgr.fullName }} ({{ mgr.employeeCode }})
+                        </option>
                       }
                     </select>
                   </div>
                 } @else {
-                  <p class="error-text" style="color: #ef4444; font-size: 13px; margin-top: 8px;">
-                    ❌ Hiện tại phòng ban không có Quản lý nào khác khả dụng để bàn giao. Vui lòng thăng cấp một nhân viên khác làm Quản lý trước khi hạ cấp người này.
+                  <p class="error-text" style="color: #ef4444; font-size: 13px; margin-top: 8px">
+                    ❌ Hiện tại phòng ban không có Quản lý nào khác khả dụng để bàn giao. Vui lòng
+                    thăng cấp một nhân viên khác làm Quản lý trước khi hạ cấp người này.
                   </p>
                 }
               </div>
             } @else {
               <p class="safe-notice">
-                ✅ Quản lý này hiện không phụ trách công việc cấp công ty nào đang mở. Bạn có thể tiến hành hạ cấp an toàn về vai trò Nhân viên.
+                ✅ Quản lý này hiện không phụ trách công việc cấp công ty nào đang mở. Bạn có thể
+                tiến hành hạ cấp an toàn về vai trò Nhân viên.
               </p>
             }
           </div>
@@ -284,14 +339,23 @@
       </div>
 
       <div class="modal-foot">
-        <button type="button" class="btn-cancel" (click)="closeDemoteModal()" [disabled]="actionBusy()">
+        <button
+          type="button"
+          class="btn-cancel"
+          (click)="closeDemoteModal()"
+          [disabled]="actionBusy()"
+        >
           Hủy bỏ
         </button>
         <button
           type="button"
           class="btn-danger-confirm"
           (click)="executeDemote()"
-          [disabled]="actionBusy() || (demoteResponsibilities()?.activeMainTasksCount || 0) > 0 && !selectedReplacementManagerId()"
+          [disabled]="
+            actionBusy() ||
+            ((demoteResponsibilities()?.activeMainTasksCount || 0) > 0 &&
+              !selectedReplacementManagerId())
+          "
         >
           <span>{{ actionBusy() ? 'Đang xử lý…' : 'Xác nhận Hạ cấp xuống Nhân viên' }}</span>
         </button>
@@ -306,20 +370,40 @@
     <div class="modal-card batch-modal" (click)="$event.stopPropagation()">
       <div class="modal-head">
         <h3>📁 Nhập Nhân sự Hàng loạt (Excel / CSV)</h3>
-        <button type="button" class="btn-close" (click)="closeBatchImportModal()" title="Đóng">✕</button>
+        <button type="button" class="btn-close" (click)="closeBatchImportModal()" title="Đóng">
+          ✕
+        </button>
       </div>
 
       <div class="modal-body">
         <div class="csv-input-wrap">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-            <p class="csv-format-hint" style="margin: 0;">
-              <strong>Định dạng cột chuẩn:</strong> <code>Mã NV, Họ và Tên, Email, Mã Phòng Ban, Vai Trò</code>
+          <div
+            style="
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              margin-bottom: 8px;
+            "
+          >
+            <p class="csv-format-hint" style="margin: 0">
+              <strong>Định dạng cột chuẩn:</strong>
+              <code>Mã NV, Họ và Tên, Email, Mã Phòng Ban, Vai Trò</code>
             </p>
-            <div style="display: flex; gap: 8px;">
-              <button type="button" class="btn-tbl-action" (click)="downloadTemplate('xlsx')" title="Tải file mẫu Microsoft Excel">
+            <div style="display: flex; gap: 8px">
+              <button
+                type="button"
+                class="btn-tbl-action"
+                (click)="downloadTemplate('xlsx')"
+                title="Tải file mẫu Microsoft Excel"
+              >
                 📥 Mẫu Excel (.xlsx)
               </button>
-              <button type="button" class="btn-tbl-action" (click)="downloadTemplate('csv')" title="Tải file mẫu CSV chuẩn">
+              <button
+                type="button"
+                class="btn-tbl-action"
+                (click)="downloadTemplate('csv')"
+                title="Tải file mẫu CSV chuẩn"
+              >
                 📥 Mẫu CSV
               </button>
             </div>
@@ -334,13 +418,21 @@
             [disabled]="batchExecuting()"
           ></textarea>
 
-          <div class="file-chooser-row" style="display: flex; justify-content: space-between; align-items: center;">
+          <div
+            class="file-chooser-row"
+            style="display: flex; justify-content: space-between; align-items: center"
+          >
             <div>
               <span>Hoặc chọn file Excel/CSV từ máy tính: </span>
-              <input type="file" accept=".xlsx, .xls, .csv, .txt, .tsv" (change)="onFileSelected($event)" [disabled]="batchExecuting()" />
+              <input
+                type="file"
+                accept=".xlsx, .xls, .csv, .txt, .tsv"
+                (change)="onFileSelected($event)"
+                [disabled]="batchExecuting()"
+              />
             </div>
             @if (selectedImportFile(); as f) {
-              <span style="font-size: 12px; color: #0284c7; font-weight: 500;">
+              <span style="font-size: 12px; color: #0284c7; font-weight: 500">
                 📎 Đã chọn: {{ f.name }}
               </span>
             }
@@ -364,8 +456,13 @@
           </div>
 
           @if (res.errorRows > 0) {
-            <div style="display: flex; justify-content: flex-end; margin-bottom: 8px;">
-              <button type="button" class="btn-tbl-action" (click)="downloadErrorReport()" style="color: #dc2626; border-color: #fca5a5;">
+            <div style="display: flex; justify-content: flex-end; margin-bottom: 8px">
+              <button
+                type="button"
+                class="btn-tbl-action"
+                (click)="downloadErrorReport()"
+                style="color: #dc2626; border-color: #fca5a5"
+              >
                 ⚠️ Xuất báo cáo lỗi chi tiết (.csv)
               </button>
             </div>
@@ -375,10 +472,10 @@
             <table>
               <thead>
                 <tr>
-                  <th style="width: 40px;">#</th>
+                  <th style="width: 40px">#</th>
                   <th>Mã NV</th>
                   <th>Email</th>
-                  <th style="min-width: 115px; white-space: nowrap;">Trạng thái</th>
+                  <th style="min-width: 115px; white-space: nowrap">Trạng thái</th>
                   <th>Ghi chú / Lỗi đối soát</th>
                 </tr>
               </thead>
@@ -386,10 +483,16 @@
                 @for (item of res.validationItems; track item.rowIndex) {
                   <tr [class.err-row]="!item.isValid">
                     <td>{{ item.rowIndex + 1 }}</td>
-                    <td><strong>{{ item.employeeCode }}</strong></td>
+                    <td>
+                      <strong>{{ item.employeeCode }}</strong>
+                    </td>
                     <td>{{ item.email }}</td>
                     <td>
-                      <span class="val-status-badge" [class.ok]="item.isValid" [class.fail]="!item.isValid">
+                      <span
+                        class="val-status-badge"
+                        [class.ok]="item.isValid"
+                        [class.fail]="!item.isValid"
+                      >
                         {{ item.isValid ? 'HỢP LỆ' : 'LỖI' }}
                       </span>
                     </td>
@@ -403,7 +506,12 @@
       </div>
 
       <div class="modal-foot">
-        <button type="button" class="btn-cancel" (click)="closeBatchImportModal()" [disabled]="batchExecuting()">
+        <button
+          type="button"
+          class="btn-cancel"
+          (click)="closeBatchImportModal()"
+          [disabled]="batchExecuting()"
+        >
           Hủy bỏ
         </button>
         <button
@@ -418,7 +526,9 @@
           type="button"
           class="btn-primary-confirm"
           (click)="commitBatchImport()"
-          [disabled]="batchExecuting() || !batchDryRunResult() || (batchDryRunResult()?.validRows || 0) === 0"
+          [disabled]="
+            batchExecuting() || !batchDryRunResult() || (batchDryRunResult()?.validRows || 0) === 0
+          "
         >
           🚀 {{ batchExecuting() ? 'Đang nhập…' : 'Xác nhận Nhập vào Hệ thống' }}
         </button>
@@ -438,20 +548,50 @@
 
       <div class="modal-body">
         <p>
-          Bạn có chắc chắn muốn bàn giao vai trò <strong>Quản trị viên Doanh nghiệp (Company Admin)</strong> cao nhất cho nhân sự
-          <strong>{{ transferTargetUser()?.fullName }}</strong> (Mã NV: {{ transferTargetUser()?.employeeCode }}) không?
+          Bạn có chắc chắn muốn bàn giao vai trò
+          <strong>Quản trị viên Doanh nghiệp (Company Admin)</strong> cao nhất cho nhân sự
+          <strong>{{ transferTargetUser()?.fullName }}</strong> (Mã NV:
+          {{ transferTargetUser()?.employeeCode }}) không?
         </p>
-        <div class="warning-alert" style="background: #fffbeb; border: 1px solid #fde68a; color: #92400e; padding: 12px; border-radius: 6px; margin-top: 12px; font-size: 13px;">
-          ⚠️ <strong>Lưu ý quan trọng:</strong> Sau khi bàn giao thành công, tài khoản này sẽ nắm giữ toàn quyền cấu hình và điều hành hệ thống. Tài khoản của bạn sẽ chuyển về vai trò Quản lý / Trưởng phòng.
+        <div
+          class="warning-alert"
+          style="
+            background: #fffbeb;
+            border: 1px solid #fde68a;
+            color: #92400e;
+            padding: 12px;
+            border-radius: 6px;
+            margin-top: 12px;
+            font-size: 13px;
+          "
+        >
+          ⚠️ <strong>Lưu ý quan trọng:</strong> Sau khi bàn giao thành công, tài khoản này sẽ nắm
+          giữ toàn quyền cấu hình và điều hành hệ thống. Tài khoản của bạn sẽ chuyển về vai trò Quản
+          lý / Trưởng phòng.
         </div>
       </div>
 
       <div class="modal-foot">
-        <button mat-stroked-button type="button" (click)="closeTransferOwnershipModal()" [disabled]="actionBusy()">
+        <button
+          mat-stroked-button
+          type="button"
+          (click)="closeTransferOwnershipModal()"
+          [disabled]="actionBusy()"
+        >
           Hủy bỏ
         </button>
-        <button mat-flat-button color="warn" type="button" (click)="confirmTransferOwnership()" [disabled]="actionBusy()">
-          @if (actionBusy()) { Đang bàn giao… } @else { Xác nhận bàn giao Admin }
+        <button
+          mat-flat-button
+          color="warn"
+          type="button"
+          (click)="confirmTransferOwnership()"
+          [disabled]="actionBusy()"
+        >
+          @if (actionBusy()) {
+            Đang bàn giao…
+          } @else {
+            Xác nhận bàn giao Admin
+          }
         </button>
       </div>
     </div>

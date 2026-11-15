@@ -124,7 +124,8 @@ export class AiAgentService {
     // Watch session identity changes (login, logout, switch account)
     try {
       effect(() => {
-        const identity = typeof this.session?.identity === 'function' ? this.session.identity() : null;
+        const identity =
+          typeof this.session?.identity === 'function' ? this.session.identity() : null;
         const newUserId = identity?.userId || null;
         if (newUserId !== this.currentUserId) {
           if (this.currentUserId) {
@@ -177,7 +178,7 @@ export class AiAgentService {
           this.branches.set(updated);
         }
       },
-      error: () => { },
+      error: () => {},
     });
   }
 
@@ -194,7 +195,7 @@ export class AiAgentService {
     try {
       sessionStorage.setItem('bizflow_robot_open', 'true');
       sessionStorage.removeItem('bizflow_robot_dismissed');
-    } catch { }
+    } catch {}
   }
 
   close(): void {
@@ -202,7 +203,7 @@ export class AiAgentService {
     try {
       sessionStorage.removeItem('bizflow_robot_open');
       sessionStorage.setItem('bizflow_robot_dismissed', 'true');
-    } catch { }
+    } catch {}
   }
 
   toggleExpand(): void {
@@ -236,7 +237,11 @@ export class AiAgentService {
         type: 'Assignment',
         priority: 'HIGH',
         departmentName: 'Phòng Kỹ thuật & CNTT',
-        checklistItems: ['Kiểm tra kết nối và phần cứng', 'Ghi nhận mã lỗi', 'Lập biên bản khảo sát'],
+        checklistItems: [
+          'Kiểm tra kết nối và phần cứng',
+          'Ghi nhận mã lỗi',
+          'Lập biên bản khảo sát',
+        ],
         reasoning: 'Bước đầu tiên bắt buộc để làm rõ phạm vi xử lý.',
       },
       {
@@ -245,7 +250,11 @@ export class AiAgentService {
         type: 'SupportRequest',
         priority: 'MEDIUM',
         departmentName: 'Phòng Hành chính - Quản trị',
-        checklistItems: ['Kiểm tra tồn kho vật tư', 'Trình phê duyệt xuất kho', 'Bàn giao vật tư cho kỹ thuật'],
+        checklistItems: [
+          'Kiểm tra tồn kho vật tư',
+          'Trình phê duyệt xuất kho',
+          'Bàn giao vật tư cho kỹ thuật',
+        ],
         reasoning: 'Yêu cầu phối hợp liên phòng ban để chuẩn bị vật tư.',
       },
       {
@@ -254,7 +263,11 @@ export class AiAgentService {
         type: 'Assignment',
         priority: 'MEDIUM',
         departmentName: 'Phòng Kỹ thuật & CNTT',
-        checklistItems: ['Lắp đặt linh kiện mới', 'Cấu hình và in thử', 'Bàn giao người dùng nghiệm thu'],
+        checklistItems: [
+          'Lắp đặt linh kiện mới',
+          'Cấu hình và in thử',
+          'Bàn giao người dùng nghiệm thu',
+        ],
         reasoning: 'Hoàn thành hạng mục công việc chính.',
       },
     ]);
@@ -317,7 +330,7 @@ export class AiAgentService {
     try {
       const key = this.getStorageKey(this.HISTORY_STORAGE_KEY);
       localStorage.setItem(key, JSON.stringify(this.chatSessions()));
-    } catch { }
+    } catch {}
   }
 
   private restoreCurrentSessionFromStorage(): void {
@@ -335,7 +348,7 @@ export class AiAgentService {
           return;
         }
       }
-    } catch { }
+    } catch {}
 
     // Initial default welcome message
     this.initWelcomeMessage();
@@ -387,7 +400,7 @@ export class AiAgentService {
         this.chatSessions.set(sessions);
         this.persistHistoryToStorage();
       }
-    } catch { }
+    } catch {}
   }
 
   startNewChat(saveCurrent: boolean = true): void {
@@ -402,7 +415,7 @@ export class AiAgentService {
     try {
       const key = this.getStorageKey(this.CURRENT_STORAGE_KEY);
       localStorage.removeItem(key);
-    } catch { }
+    } catch {}
     this.showToast('Đã bắt đầu cuộc trò chuyện mới', 'info');
   }
 
@@ -446,7 +459,9 @@ export class AiAgentService {
     const trimmed = text.trim();
 
     // 1. Delete branch: "Xóa nhánh X", "Bỏ nhánh X", "Hủy nhánh X"
-    const deleteMatch = trimmed.match(/(?:xóa|bỏ|hủy)\s+(?:nhánh|task|nhiệm\s*vụ)\s*(?:số\s*)?(\d+)/i);
+    const deleteMatch = trimmed.match(
+      /(?:xóa|bỏ|hủy)\s+(?:nhánh|task|nhiệm\s*vụ)\s*(?:số\s*)?(\d+)/i,
+    );
     if (deleteMatch) {
       const idx = parseInt(deleteMatch[1], 10) - 1;
       if (idx >= 0 && idx < list.length) {
@@ -468,8 +483,12 @@ export class AiAgentService {
 
     // 2. Change department: "Đổi phòng ban nhánh X thành Y", "Chuyển nhánh X cho phòng Y"
     const deptMatch =
-      trimmed.match(/(?:đổi|chuyển|sửa)\s+(?:phòng\s*ban|bộ\s*phận|phòng)\s+(?:của\s+)?(?:nhánh\s*)?(\d+)\s+(?:thành|cho|sang)\s+(.+)/i) ||
-      trimmed.match(/(?:nhánh\s*)(\d+)\s+(?:đổi|chuyển)\s+(?:phòng\s*ban|phòng)\s+(?:thành|cho|sang)\s+(.+)/i);
+      trimmed.match(
+        /(?:đổi|chuyển|sửa)\s+(?:phòng\s*ban|bộ\s*phận|phòng)\s+(?:của\s+)?(?:nhánh\s*)?(\d+)\s+(?:thành|cho|sang)\s+(.+)/i,
+      ) ||
+      trimmed.match(
+        /(?:nhánh\s*)(\d+)\s+(?:đổi|chuyển)\s+(?:phòng\s*ban|phòng)\s+(?:thành|cho|sang)\s+(.+)/i,
+      );
     if (deptMatch) {
       const idx = parseInt(deptMatch[1], 10) - 1;
       const targetDeptName = deptMatch[2].trim();
@@ -500,7 +519,9 @@ export class AiAgentService {
 
     // 3. Change title: "Đổi tiêu đề nhánh X thành Y", "Đổi tên nhánh X thành Y"
     const titleMatch =
-      trimmed.match(/(?:đổi|sửa)\s+(?:tiêu\s*đề|tên)\s+(?:của\s+)?(?:nhánh\s*)?(\d+)\s+(?:thành|là)\s+(.+)/i) ||
+      trimmed.match(
+        /(?:đổi|sửa)\s+(?:tiêu\s*đề|tên)\s+(?:của\s+)?(?:nhánh\s*)?(\d+)\s+(?:thành|là)\s+(.+)/i,
+      ) ||
       trimmed.match(/(?:nhánh\s*)(\d+)\s+(?:đổi|sửa)\s+(?:tiêu\s*đề|tên)\s+(?:thành|là)\s+(.+)/i);
     if (titleMatch) {
       const idx = parseInt(titleMatch[1], 10) - 1;
@@ -524,13 +545,22 @@ export class AiAgentService {
 
     // 4. Change priority: "Đổi ưu tiên nhánh X thành HIGH/MEDIUM/LOW/Cao/Thấp"
     const prioMatch =
-      trimmed.match(/(?:đổi|sửa)\s+(?:mức\s+)?ưu\s*tiên\s+(?:của\s+)?(?:nhánh\s*)?(\d+)\s+(?:thành|là)\s+(.+)/i) ||
-      trimmed.match(/(?:nhánh\s*)(\d+)\s+(?:đổi|sửa)\s+(?:mức\s+)?ưu\s*tiên\s+(?:thành|là)\s+(.+)/i);
+      trimmed.match(
+        /(?:đổi|sửa)\s+(?:mức\s+)?ưu\s*tiên\s+(?:của\s+)?(?:nhánh\s*)?(\d+)\s+(?:thành|là)\s+(.+)/i,
+      ) ||
+      trimmed.match(
+        /(?:nhánh\s*)(\d+)\s+(?:đổi|sửa)\s+(?:mức\s+)?ưu\s*tiên\s+(?:thành|là)\s+(.+)/i,
+      );
     if (prioMatch) {
       const idx = parseInt(prioMatch[1], 10) - 1;
       const rawPrio = prioMatch[2].trim().toLowerCase();
       let prio: 'LOW' | 'MEDIUM' | 'HIGH' = 'MEDIUM';
-      if (rawPrio.includes('cao') || rawPrio.includes('high') || rawPrio.includes('gấp') || rawPrio.includes('khẩn')) {
+      if (
+        rawPrio.includes('cao') ||
+        rawPrio.includes('high') ||
+        rawPrio.includes('gấp') ||
+        rawPrio.includes('khẩn')
+      ) {
         prio = 'HIGH';
       } else if (rawPrio.includes('thấp') || rawPrio.includes('low')) {
         prio = 'LOW';
@@ -556,7 +586,9 @@ export class AiAgentService {
     }
 
     // 5. Add new branch: "Thêm nhánh mới: Y", "Bổ sung nhánh Y"
-    const addMatch = trimmed.match(/(?:thêm|tạo\s*thêm|bổ\s*sung)\s+nhánh(?:\s+mới)?(?::|\s+là)\s+(.+)/i);
+    const addMatch = trimmed.match(
+      /(?:thêm|tạo\s*thêm|bổ\s*sung)\s+nhánh(?:\s+mới)?(?::|\s+là)\s+(.+)/i,
+    );
     if (addMatch) {
       const desc = addMatch[1].trim();
       const newBranch: SubtaskBranch = {
@@ -598,11 +630,11 @@ export class AiAgentService {
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       actionCards: withActionCard
         ? [
-          {
-            actionType: 'VIEW_BRANCHES',
-            title: `🌿 Xem các nhánh phân rã (${this.branches().length} nhánh)`,
-          },
-        ]
+            {
+              actionType: 'VIEW_BRANCHES',
+              title: `🌿 Xem các nhánh phân rã (${this.branches().length} nhánh)`,
+            },
+          ]
         : undefined,
     };
     this.messages.update((msgs) => [...msgs, msg]);
@@ -618,7 +650,11 @@ export class AiAgentService {
       const title = p.title || p.Title || `Nhiệm vụ #${idx + 1}`;
       const description = p.description || p.Description || title;
       const rawType = p.type || p.Type;
-      const type = (!canCreateTasks ? 'SupportRequest' : (rawType === 'SupportRequest' ? 'SupportRequest' : 'Assignment'));
+      const type = !canCreateTasks
+        ? 'SupportRequest'
+        : rawType === 'SupportRequest'
+          ? 'SupportRequest'
+          : 'Assignment';
       const deptName = p.departmentName || p.DepartmentName || 'Phòng ban chuyên trách';
       let deptId = p.departmentId || p.DepartmentId || null;
       if (!deptId && deptName) {
@@ -630,15 +666,21 @@ export class AiAgentService {
         if (match) deptId = match.id;
       }
       const rawPriority = p.priority || p.Priority;
-      const priority = (rawPriority === 'HIGH' || rawPriority === 'LOW' ? rawPriority : 'MEDIUM');
+      const priority = rawPriority === 'HIGH' || rawPriority === 'LOW' ? rawPriority : 'MEDIUM';
       const suggestedDurationDays = p.suggestedDurationDays || p.SuggestedDurationDays || 3;
       const rawChecklist = p.checklistItems || p.ChecklistItems;
-      const checklistItems = Array.isArray(rawChecklist) && rawChecklist.length ? rawChecklist : [
-        `Bước 1: Chuẩn bị nội dung và kế hoạch`,
-        `Bước 2: Thực hiện công việc`,
-        `Bước 3: Hoàn tất và báo cáo`,
-      ];
-      const reasoning = p.reasoning || p.Reasoning || 'Được bóc tách tự động bởi AI Agent dựa trên mục tiêu tổng thể.';
+      const checklistItems =
+        Array.isArray(rawChecklist) && rawChecklist.length
+          ? rawChecklist
+          : [
+              `Bước 1: Chuẩn bị nội dung và kế hoạch`,
+              `Bước 2: Thực hiện công việc`,
+              `Bước 3: Hoàn tất và báo cáo`,
+            ];
+      const reasoning =
+        p.reasoning ||
+        p.Reasoning ||
+        'Được bóc tách tự động bởi AI Agent dựa trên mục tiêu tổng thể.';
 
       return {
         id: crypto.randomUUID(),
@@ -709,7 +751,10 @@ export class AiAgentService {
   submitSingleBranch(branch: SubtaskBranch, force: boolean = false): void {
     if (branch.status === 'submitting') return;
     if (!this.session.hasPermission('tasks.create')) {
-      this.showToast('Tài khoản Nhân viên không thể tạo nhiệm vụ cho cấp dưới. Vui lòng tạo Yêu cầu nếu cần đề xuất công việc.', 'error');
+      this.showToast(
+        'Tài khoản Nhân viên không thể tạo nhiệm vụ cho cấp dưới. Vui lòng tạo Yêu cầu nếu cần đề xuất công việc.',
+        'error',
+      );
       return;
     }
 
@@ -762,7 +807,10 @@ export class AiAgentService {
           this.branches.set(list);
           this.selectedBranch.set(list[bIdx]);
         }
-        const errMsg = err?.error?.message || err?.message || 'Không thể tạo nhiệm vụ. Vui lòng kiểm tra lại dịch vụ máy chủ.';
+        const errMsg =
+          err?.error?.message ||
+          err?.message ||
+          'Không thể tạo nhiệm vụ. Vui lòng kiểm tra lại dịch vụ máy chủ.';
         this.showToast(`❌ Lỗi tạo nhiệm vụ: ${errMsg}`, 'error');
       },
     });
@@ -770,7 +818,10 @@ export class AiAgentService {
 
   submitAllBranches(): void {
     if (!this.session.hasPermission('tasks.create')) {
-      this.showToast('Tài khoản Nhân viên không thể tạo nhiệm vụ cho cấp dưới. Vui lòng tạo Yêu cầu nếu cần đề xuất công việc.', 'error');
+      this.showToast(
+        'Tài khoản Nhân viên không thể tạo nhiệm vụ cho cấp dưới. Vui lòng tạo Yêu cầu nếu cần đề xuất công việc.',
+        'error',
+      );
       return;
     }
     let pendingBranches = this.branches().filter((b) => b.status !== 'created');
@@ -819,16 +870,28 @@ export class AiAgentService {
       },
       error: (err) => {
         this.busy.set(false);
-        const errMsg = err?.error?.message || err?.message || 'Không thể tạo hàng loạt. Vui lòng kiểm tra lại dịch vụ máy chủ.';
+        const errMsg =
+          err?.error?.message ||
+          err?.message ||
+          'Không thể tạo hàng loạt. Vui lòng kiểm tra lại dịch vụ máy chủ.';
         this.showToast(`❌ Lỗi tạo hàng loạt: ${errMsg}`, 'error');
       },
     });
   }
 
-  sendFormAnswers(formId: string, answers: AgentAnswer[], summaryText: string, messageId: string): void {
+  sendFormAnswers(
+    formId: string,
+    answers: AgentAnswer[],
+    summaryText: string,
+    messageId: string,
+  ): void {
     // 1. Mark questionnaire in the original robot message as answered
     this.messages.update((msgs) =>
-      msgs.map((m) => (m.id === messageId ? { ...m, questionnaireAnswered: true, userAnswersSummary: summaryText } : m)),
+      msgs.map((m) =>
+        m.id === messageId
+          ? { ...m, questionnaireAnswered: true, userAnswersSummary: summaryText }
+          : m,
+      ),
     );
 
     // 2. Append user message showing the selected answers
@@ -857,17 +920,23 @@ export class AiAgentService {
     };
 
     this.http
-      .post<{ response: string; recognizedCommand?: string; actionCards?: any[]; questionnaire?: any; agentThought?: string }>(
-        '/api/v1/ai/chat',
-        payload,
-      )
+      .post<{
+        response: string;
+        recognizedCommand?: string;
+        actionCards?: any[];
+        questionnaire?: any;
+        agentThought?: string;
+      }>('/api/v1/ai/chat', payload)
       .subscribe({
         next: (res) => {
           this.busy.set(false);
 
           let actionCards = res.actionCards;
           const decompCard = res.actionCards?.find(
-            (c) => c.actionType === 'OPEN_DECOMPOSITION' || c.actionType === 'OPEN_BRANCHES' || c.actionType === 'VIEW_BRANCHES',
+            (c) =>
+              c.actionType === 'OPEN_DECOMPOSITION' ||
+              c.actionType === 'OPEN_BRANCHES' ||
+              c.actionType === 'VIEW_BRANCHES',
           );
 
           if (decompCard?.payload?.proposals) {
@@ -896,7 +965,8 @@ export class AiAgentService {
         },
         error: (err) => {
           this.busy.set(false);
-          const errMsg = err?.error?.message || err?.message || 'Không thể gửi phản hồi. Vui lòng thử lại.';
+          const errMsg =
+            err?.error?.message || err?.message || 'Không thể gửi phản hồi. Vui lòng thử lại.';
           this.showToast(`❌ Lỗi kết nối: ${errMsg}`, 'error');
         },
       });

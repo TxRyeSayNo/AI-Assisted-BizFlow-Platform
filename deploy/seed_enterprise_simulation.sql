@@ -426,3 +426,13 @@ VALUES
         NOW() - INTERVAL '10 days', NOW()
     )
 ON CONFLICT ("MemoryId") DO UPDATE SET "Title" = EXCLUDED."Title", "Content" = EXCLUDED."Content", "EmbeddingJson" = EXCLUDED."EmbeddingJson";
+
+-- 10. Platform Super Administrator (KISS-03)
+INSERT INTO "User" ("UserId", "TenantId", "IsPlatformAdministrator", "EmployeeCode", "NormalizedEmployeeCode", "Email", "NormalizedEmail", "PasswordHash", "SecurityStamp", "FullName", "DepartmentId", "Status", "AccessFailedCount", "MustChangePassword", "CreatedAt", "UpdatedAt")
+VALUES ('019f8000-0000-7000-8000-0000000000ff', NULL, TRUE, 'SUPERADMIN', 'SUPERADMIN', 'platform@bizflow.local', 'PLATFORM@BIZFLOW.LOCAL',
+'AQAAAAIAAYagAAAAEMa9qd78Fhm+i6WlQIWbA0oTRemrrwoIP/XwOmaoEFH4y54oHQg5favZTIwG7ixFcQ==', 'STAMP_SUPERADMIN', 'Platform Administrator', NULL, 'ACTIVE', 0, FALSE, NOW(), NOW())
+ON CONFLICT ("UserId") DO UPDATE SET "Status" = 'ACTIVE', "AccessFailedCount" = 0;
+
+INSERT INTO "UserRole" ("UserId", "RoleId")
+VALUES ('019f8000-0000-7000-8000-0000000000ff', '019f7a64-0000-7000-8000-000000000002')
+ON CONFLICT ("UserId", "RoleId") DO NOTHING;

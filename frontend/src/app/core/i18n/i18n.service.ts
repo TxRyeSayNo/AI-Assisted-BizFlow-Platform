@@ -63,7 +63,9 @@ export class I18nService {
       typeof g['describe'] === 'function' ||
       typeof g['it'] === 'function' ||
       typeof g['__vitest_worker__'] !== 'undefined' ||
-      (proc !== undefined && proc.env !== undefined && (proc.env['NODE_ENV'] === 'test' || !!proc.env['VITEST']))
+      (proc !== undefined &&
+        proc.env !== undefined &&
+        (proc.env['NODE_ENV'] === 'test' || !!proc.env['VITEST']))
     );
   }
 

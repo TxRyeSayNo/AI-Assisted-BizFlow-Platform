@@ -161,7 +161,9 @@ export class RequestCreate implements OnInit {
           } else if (failure.status === 409) {
             this.form.enable();
             this.key = crypto.randomUUID();
-            this.error.set('Yêu cầu bị xung đột với một yêu cầu đã gửi trước đó. Vui lòng thử lại.');
+            this.error.set(
+              'Yêu cầu bị xung đột với một yêu cầu đã gửi trước đó. Vui lòng thử lại.',
+            );
           } else if (failure.status === 403 || failure.status === 401) {
             this.done.set(true);
             this.error.set('Bạn không có quyền tạo yêu cầu dịch vụ.');

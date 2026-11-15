@@ -141,7 +141,9 @@ export class TaskCreate {
           if (res?.subtasks?.length) {
             const checklistText = res.subtasks.map((s: any) => s.title).join('\n');
             this.form.patchValue({ checklist: checklistText });
-            this.aiMessage.set(`AI đã gợi ý phân rã thành ${res.subtasks.length} hạng mục checklist.`);
+            this.aiMessage.set(
+              `AI đã gợi ý phân rã thành ${res.subtasks.length} hạng mục checklist.`,
+            );
           }
         },
         error: () => {
@@ -208,7 +210,9 @@ export class TaskCreate {
           if (failure.status === 422 && !this.uncertain()) {
             this.form.enable();
             this.key = crypto.randomUUID();
-            this.error.set('Vui lòng kiểm tra lại tiêu đề, danh mục kiểm tra và hạn chót. Nhiệm vụ chưa được tạo.');
+            this.error.set(
+              'Vui lòng kiểm tra lại tiêu đề, danh mục kiểm tra và hạn chót. Nhiệm vụ chưa được tạo.',
+            );
           } else if (failure.status === 403 || failure.status === 401) {
             this.done.set(true);
             this.error.set('Bạn không có quyền tạo nhiệm vụ.');

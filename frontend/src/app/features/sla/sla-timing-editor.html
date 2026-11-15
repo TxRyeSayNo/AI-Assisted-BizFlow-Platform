@@ -1,11 +1,17 @@
-<h2 mat-dialog-title id="sla-timing-title">{{ 'sla.timingTitle' | translate: 'Tạo phiên bản thời gian SLA' }}</h2>
+<h2 mat-dialog-title id="sla-timing-title">
+  {{ 'sla.timingTitle' | translate: 'Tạo phiên bản thời gian SLA' }}
+</h2>
 <form [formGroup]="form" (ngSubmit)="save()" [attr.aria-busy]="busy()">
   <mat-dialog-content>
-    <p>{{ data.profileName }} · {{ 'sla.basedOnVersion' | translate: 'Based on version' }} {{ data.source.versionNo }}</p>
+    <p>
+      {{ data.profileName }} · {{ 'sla.basedOnVersion' | translate: 'Based on version' }}
+      {{ data.source.versionNo }}
+    </p>
     <p>
       {{
         'sla.timingSnapshotDesc'
-          | translate: 'Thao tác này tạo một bản chụp bất biến mới. Mọi phiên bản đã lưu và công việc đang áp dụng sẽ không bị thay đổi.'
+          | translate
+            : 'Thao tác này tạo một bản chụp bất biến mới. Mọi phiên bản đã lưu và công việc đang áp dụng sẽ không bị thay đổi.'
       }}
     </p>
     <mat-form-field appearance="outline">
@@ -22,7 +28,9 @@
       <mat-error>Vui lòng nhập số nguyên dương cho số phút làm việc.</mat-error>
     </mat-form-field>
     <mat-form-field appearance="outline">
-      <mat-label>{{ 'sla.warningMinutesLabel' | translate: 'Số phút làm việc cảnh báo từ lúc bắt đầu' }}</mat-label>
+      <mat-label>{{
+        'sla.warningMinutesLabel' | translate: 'Số phút làm việc cảnh báo từ lúc bắt đầu'
+      }}</mat-label>
       <input
         matInput
         type="number"
@@ -37,23 +45,32 @@
     <p class="hint">
       {{
         'sla.timingWarningRule'
-          | translate: 'Warning time is elapsed working time from SLA start, and must be less than the target.'
+          | translate
+            : 'Warning time is elapsed working time from SLA start, and must be less than the target.'
       }}
     </p>
     @if (form.hasError('timing') && form.touched) {
-      <p role="alert">{{ 'sla.timingInvalidRange' | translate: 'Nhập số phút nguyên với 0 ≤ cảnh báo < mục tiêu.' }}</p>
+      <p role="alert">
+        {{
+          'sla.timingInvalidRange' | translate: 'Nhập số phút nguyên với 0 ≤ cảnh báo < mục tiêu.'
+        }}
+      </p>
     }
     <h3>{{ 'sla.preservedConfigHeading' | translate: 'Cấu hình được bảo lưu' }}</h3>
     <dl>
       <dt>{{ 'sla.frozenCalendarTerm' | translate: 'Lịch làm việc cố định' }}</dt>
       <dd>{{ data.source.calendar.timeZone }}</dd>
       <dt>{{ 'sla.escalationLevelsTerm' | translate: 'Các cấp leo thang' }}</dt>
-      <dd>{{ data.source.escalationConfig?.levels?.length ?? 0 }} · {{ 'sla.unchangedLabel' | translate: 'Giữ nguyên' }}</dd>
+      <dd>
+        {{ data.source.escalationConfig?.levels?.length ?? 0 }} ·
+        {{ 'sla.unchangedLabel' | translate: 'Giữ nguyên' }}
+      </dd>
     </dl>
     <p>
       {{
         'sla.timingOnlyDesc'
-          | translate: 'Chỉ cập nhật giá trị thời gian tại đây. Lịch làm việc và chính sách leo thang của phiên bản nguồn được sao chép giữ nguyên.'
+          | translate
+            : 'Chỉ cập nhật giá trị thời gian tại đây. Lịch làm việc và chính sách leo thang của phiên bản nguồn được sao chép giữ nguyên.'
       }}
     </p>
     @if (error()) {

@@ -111,7 +111,10 @@ export class WorkItemAttachments implements OnInit {
           this.loading.set(false);
         },
         error: (err) => {
-          this.error.set(err?.error?.message ?? this.i18n.t('attachments.errLoad', 'Failed to load attachments.'));
+          this.error.set(
+            err?.error?.message ??
+              this.i18n.t('attachments.errLoad', 'Failed to load attachments.'),
+          );
           this.loading.set(false);
         },
       });
@@ -145,7 +148,9 @@ export class WorkItemAttachments implements OnInit {
       );
 
       if (!sessionResult) {
-        throw new Error(this.i18n.t('attachments.errCreateSession', 'Failed to create upload session.'));
+        throw new Error(
+          this.i18n.t('attachments.errCreateSession', 'Failed to create upload session.'),
+        );
       }
 
       // Step 2: Upload binary
@@ -191,7 +196,10 @@ export class WorkItemAttachments implements OnInit {
         this.attachments.update((prev) => prev.filter((a) => a.attachmentId !== attachmentId));
       },
       error: (err) => {
-        this.error.set(err?.error?.message ?? this.i18n.t('attachments.errDelete', 'Failed to delete attachment.'));
+        this.error.set(
+          err?.error?.message ??
+            this.i18n.t('attachments.errDelete', 'Failed to delete attachment.'),
+        );
       },
     });
   }

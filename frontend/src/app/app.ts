@@ -112,7 +112,11 @@ export class App {
   welcomeName(): string {
     const raw = this.identity()?.fullName?.trim();
     if (!raw) return 'Quản trị viên Hệ thống';
-    if (raw === 'Platform Administrator' || raw === 'superadmin' || raw.toLowerCase().includes('platform admin')) {
+    if (
+      raw === 'Platform Administrator' ||
+      raw === 'superadmin' ||
+      raw.toLowerCase().includes('platform admin')
+    ) {
       return 'Quản trị viên Hệ thống';
     }
     if (raw === 'Company Administrator') {

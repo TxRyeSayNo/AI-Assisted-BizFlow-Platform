@@ -240,7 +240,9 @@
           <div class="kpi-value">
             {{
               comp.averageTaskCompletionTimeHours !== null
-                ? (comp.averageTaskCompletionTimeHours | number: '1.1-1') + ' ' + ('reports.unitHours' | translate: 'hrs')
+                ? (comp.averageTaskCompletionTimeHours | number: '1.1-1') +
+                  ' ' +
+                  ('reports.unitHours' | translate: 'hrs')
                 : '—'
             }}
           </div>
@@ -262,7 +264,9 @@
           <div class="kpi-value">
             {{
               comp.averageRequestResolutionTimeHours !== null
-                ? (comp.averageRequestResolutionTimeHours | number: '1.1-1') + ' ' + ('reports.unitHours' | translate: 'hrs')
+                ? (comp.averageRequestResolutionTimeHours | number: '1.1-1') +
+                  ' ' +
+                  ('reports.unitHours' | translate: 'hrs')
                 : '—'
             }}
           </div>

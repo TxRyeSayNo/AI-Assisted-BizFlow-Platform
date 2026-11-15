@@ -23,9 +23,7 @@ import { SessionService } from '../../core/auth/session';
     <h2 mat-dialog-title id="task-confirmation-title">Đánh giá kết quả nhiệm vụ</h2>
     <mat-dialog-content>
       <p>{{ data.title }}</p>
-      <p>
-        Xem xét kết quả đã nộp để xác nhận hoàn thành nhiệm vụ hoặc gửi yêu cầu làm lại.
-      </p>
+      <p>Xem xét kết quả đã nộp để xác nhận hoàn thành nhiệm vụ hoặc gửi yêu cầu làm lại.</p>
       @if (error()) {
         <p role="alert">{{ error() }}</p>
       }

@@ -2,7 +2,11 @@
   <!-- 1. TOP DESIGNER TOOLBAR -->
   <header class="designer-header">
     <div class="toolbar-left">
-      <span class="badge-status" [class.draft]="versionStatus === 'DRAFT'" [class.published]="versionStatus !== 'DRAFT'">
+      <span
+        class="badge-status"
+        [class.draft]="versionStatus === 'DRAFT'"
+        [class.published]="versionStatus !== 'DRAFT'"
+      >
         {{ versionStatus === 'DRAFT' ? 'Bản nháp' : 'Đã xuất bản' }} v{{ versionNo }}
       </span>
       <span class="divider"></span>
@@ -38,7 +42,9 @@
     <div class="toolbar-right">
       <div class="zoom-controls">
         <button type="button" class="zoom-btn" (click)="zoomOut()" title="Thu nhỏ (-)">−</button>
-        <button type="button" class="zoom-label" (click)="resetZoom()" title="Đặt lại tỷ lệ 100%">{{ zoomPercentage() }}%</button>
+        <button type="button" class="zoom-label" (click)="resetZoom()" title="Đặt lại tỷ lệ 100%">
+          {{ zoomPercentage() }}%
+        </button>
         <button type="button" class="zoom-btn" (click)="zoomIn()" title="Phóng to (+)">+</button>
       </div>
       <button
@@ -232,7 +238,9 @@
               [attr.d]="getEdgePath(edge)"
               class="edge-path"
               [class.selected]="selectedEdge()?.id === edge.id"
-              [attr.marker-end]="selectedEdge()?.id === edge.id ? 'url(#arrow-selected)' : 'url(#arrow)'"
+              [attr.marker-end]="
+                selectedEdge()?.id === edge.id ? 'url(#arrow-selected)' : 'url(#arrow)'
+              "
               (click)="selectEdge(edge, $event)"
             />
           }
@@ -284,21 +292,45 @@
             <div class="node-header-bar {{ node.type | lowercase }}">
               <div class="header-title-wrap">
                 @switch (node.type) {
-                  @case ('START') { <span>▶</span> }
-                  @case ('DEPARTMENT') { <span>🏢</span> }
-                  @case ('APPROVAL') { <span>🛡️</span> }
-                  @case ('DECISION') { <span>🔀</span> }
-                  @case ('CONFIRMATION') { <span>✓</span> }
-                  @case ('END') { <span>⏹</span> }
+                  @case ('START') {
+                    <span>▶</span>
+                  }
+                  @case ('DEPARTMENT') {
+                    <span>🏢</span>
+                  }
+                  @case ('APPROVAL') {
+                    <span>🛡️</span>
+                  }
+                  @case ('DECISION') {
+                    <span>🔀</span>
+                  }
+                  @case ('CONFIRMATION') {
+                    <span>✓</span>
+                  }
+                  @case ('END') {
+                    <span>⏹</span>
+                  }
                 }
                 <span class="node-type-label">
                   @switch (node.type) {
-                    @case ('START') { Bắt đầu }
-                    @case ('DEPARTMENT') { Phòng ban }
-                    @case ('APPROVAL') { Phê duyệt }
-                    @case ('DECISION') { Rẽ nhánh }
-                    @case ('CONFIRMATION') { Xác nhận }
-                    @case ('END') { Kết thúc }
+                    @case ('START') {
+                      Bắt đầu
+                    }
+                    @case ('DEPARTMENT') {
+                      Phòng ban
+                    }
+                    @case ('APPROVAL') {
+                      Phê duyệt
+                    }
+                    @case ('DECISION') {
+                      Rẽ nhánh
+                    }
+                    @case ('CONFIRMATION') {
+                      Xác nhận
+                    }
+                    @case ('END') {
+                      Kết thúc
+                    }
                   }
                 </span>
               </div>
@@ -342,7 +374,7 @@
       <!-- Floating Zoom Controls -->
       <div class="canvas-floating-toolbar" role="toolbar" aria-label="Điều khiển thu phóng">
         <button type="button" class="zoom-btn" (click)="zoomOut()" title="Thu nhỏ">−</button>
-        <span class="zoom-label">{{ (zoom() * 100) | number: '1.0-0' }}%</span>
+        <span class="zoom-label">{{ zoom() * 100 | number: '1.0-0' }}%</span>
         <button type="button" class="zoom-btn" (click)="zoomIn()" title="Phóng to">+</button>
         <button type="button" class="zoom-btn" (click)="resetZoom()" title="Tỉ lệ 100%">1:1</button>
         <button type="button" class="zoom-btn" (click)="fitView()" title="Vừa khung nhìn">⛶</button>
@@ -356,12 +388,24 @@
         <div class="inspector-header">
           <h3>
             @switch (node.type) {
-              @case ('START') { <span>▶</span> Sự kiện Bắt đầu }
-              @case ('DEPARTMENT') { <span>🏢</span> Bước Phòng ban }
-              @case ('APPROVAL') { <span>🛡️</span> Bước Phê duyệt }
-              @case ('DECISION') { <span>🔀</span> Cổng Rẽ nhánh }
-              @case ('CONFIRMATION') { <span>✓</span> Bước Xác nhận }
-              @case ('END') { <span>⏹</span> Sự kiện Kết thúc }
+              @case ('START') {
+                <span>▶</span> Sự kiện Bắt đầu
+              }
+              @case ('DEPARTMENT') {
+                <span>🏢</span> Bước Phòng ban
+              }
+              @case ('APPROVAL') {
+                <span>🛡️</span> Bước Phê duyệt
+              }
+              @case ('DECISION') {
+                <span>🔀</span> Cổng Rẽ nhánh
+              }
+              @case ('CONFIRMATION') {
+                <span>✓</span> Bước Xác nhận
+              }
+              @case ('END') {
+                <span>⏹</span> Sự kiện Kết thúc
+              }
             }
           </h3>
           <button type="button" class="btn-close" (click)="selectedNode.set(null)">✕</button>
@@ -388,7 +432,9 @@
               <select
                 id="prop-start-trigger"
                 class="form-select"
-                [ngModel]="node.trigger || (businessType === 'REQUEST' ? 'REQUEST_CREATED' : 'TASK_CREATED')"
+                [ngModel]="
+                  node.trigger || (businessType === 'REQUEST' ? 'REQUEST_CREATED' : 'TASK_CREATED')
+                "
                 (ngModelChange)="updateSelectedNodeProps({ trigger: $event })"
                 [disabled]="readonly"
               >
@@ -400,7 +446,9 @@
                   <option value="MANUAL">Kích hoạt thủ công (MANUAL)</option>
                 }
               </select>
-              <p class="hint-text">Quy trình bắt đầu khi sự kiện tương ứng xuất hiện trong hệ thống.</p>
+              <p class="hint-text">
+                Quy trình bắt đầu khi sự kiện tương ứng xuất hiện trong hệ thống.
+              </p>
             </div>
           }
 
@@ -444,7 +492,9 @@
               </select>
             </div>
 
-            @if (node.assignmentMethod !== 'REQUESTER' && node.assignmentMethod !== 'DIRECT_MANAGER') {
+            @if (
+              node.assignmentMethod !== 'REQUESTER' && node.assignmentMethod !== 'DIRECT_MANAGER'
+            ) {
               <div class="form-group">
                 <label for="prop-dept-select">Phòng ban phụ trách *:</label>
                 <select
@@ -492,7 +542,9 @@
                 >
                   <option value="">-- Chọn nhân sự công ty --</option>
                   @for (u of getFilteredUsers(node.departmentId); track u.id) {
-                    <option [value]="u.id">{{ u.fullName }} ({{ u.employeeCode }}) - {{ u.email }}</option>
+                    <option [value]="u.id">
+                      {{ u.fullName }} ({{ u.employeeCode }}) - {{ u.email }}
+                    </option>
                   }
                 </select>
               </div>
@@ -579,7 +631,9 @@
                     <option [value]="r.id">{{ r.name }}</option>
                   }
                 </select>
-                <p class="hint-text">Chỉ các vai trò nội bộ doanh nghiệp. Không cho phép Platform Admin.</p>
+                <p class="hint-text">
+                  Chỉ các vai trò nội bộ doanh nghiệp. Không cho phép Platform Admin.
+                </p>
               </div>
             }
 
@@ -595,7 +649,9 @@
                 >
                   <option value="">-- Chọn nhân sự duyệt --</option>
                   @for (u of users; track u.id) {
-                    <option [value]="u.id">{{ u.fullName }} ({{ u.employeeCode }}) - {{ u.email }}</option>
+                    <option [value]="u.id">
+                      {{ u.fullName }} ({{ u.employeeCode }}) - {{ u.email }}
+                    </option>
                   }
                 </select>
               </div>
@@ -729,7 +785,10 @@
                   </button>
                 }
               </div>
-              <p class="hint-text">Quy tắc được xét duyệt tuần tự từ trên xuống dưới. Nhánh đầu tiên thỏa mãn sẽ được chọn.</p>
+              <p class="hint-text">
+                Quy tắc được xét duyệt tuần tự từ trên xuống dưới. Nhánh đầu tiên thỏa mãn sẽ được
+                chọn.
+              </p>
 
               <div class="condition-list">
                 @for (cond of node.conditions || []; track cond.id; let idx = $index) {
@@ -745,7 +804,14 @@
                         placeholder="Nhãn điều kiện (VD: Chi phí > 20tr)"
                       />
                       @if (!readonly) {
-                        <button type="button" class="btn-icon-danger" (click)="removeCondition(node, cond.id)" title="Xóa quy tắc">✕</button>
+                        <button
+                          type="button"
+                          class="btn-icon-danger"
+                          (click)="removeCondition(node, cond.id)"
+                          title="Xóa quy tắc"
+                        >
+                          ✕
+                        </button>
                       }
                     </div>
 
@@ -903,9 +969,13 @@
               <option value="REQUEST_CHANGES">Yêu cầu sửa đổi / Làm lại (REQUEST_CHANGES)</option>
               <option value="COMPLETED">Hoàn tất bước (COMPLETED)</option>
               <option value="CONFIRMED">Đã xác nhận / Nghiệm thu (CONFIRMED)</option>
-              <option value="NEEDS_INFORMATION">Yêu cầu bổ sung thông tin (NEEDS_INFORMATION)</option>
+              <option value="NEEDS_INFORMATION">
+                Yêu cầu bổ sung thông tin (NEEDS_INFORMATION)
+              </option>
             </select>
-            <p class="hint-text">Dùng để kích hoạt đường nối khi bước trước hoàn tất với kết quả tương ứng.</p>
+            <p class="hint-text">
+              Dùng để kích hoạt đường nối khi bước trước hoàn tất với kết quả tương ứng.
+            </p>
           </div>
 
           <div class="form-group">
@@ -937,15 +1007,16 @@
           <h4>Sơ đồ quy trình</h4>
           <p>Bấm vào một nút hoặc đường nối để xem và chỉnh sửa thông tin chi tiết.</p>
 
-          <div style="margin-top: 20px; width: 100%; text-align: left;">
-            <p style="font-size: 11.5px; color: #475569; margin: 4px 0;">
+          <div style="margin-top: 20px; width: 100%; text-align: left">
+            <p style="font-size: 11.5px; color: #475569; margin: 4px 0">
               <strong>Số bước xử lý:</strong> {{ nodes().length }}
             </p>
-            <p style="font-size: 11.5px; color: #475569; margin: 4px 0;">
+            <p style="font-size: 11.5px; color: #475569; margin: 4px 0">
               <strong>Số đường liên kết:</strong> {{ edges().length }}
             </p>
-            <p style="font-size: 11.5px; color: #475569; margin: 4px 0;">
-              <strong>Loại quy trình:</strong> {{ businessType === 'REQUEST' ? 'Yêu cầu' : 'Nhiệm vụ' }}
+            <p style="font-size: 11.5px; color: #475569; margin: 4px 0">
+              <strong>Loại quy trình:</strong>
+              {{ businessType === 'REQUEST' ? 'Yêu cầu' : 'Nhiệm vụ' }}
             </p>
           </div>
         </div>
@@ -958,7 +1029,11 @@
     <div class="validation-bottom-drawer" role="region" aria-label="Kết quả kiểm tra quy trình">
       <div class="drawer-header">
         <div class="drawer-header-left">
-          <div class="status-indicator-badge" [class.valid]="validationIssues().length === 0" [class.invalid]="validationIssues().length > 0">
+          <div
+            class="status-indicator-badge"
+            [class.valid]="validationIssues().length === 0"
+            [class.invalid]="validationIssues().length > 0"
+          >
             {{ validationIssues().length === 0 ? '✓' : '⚠' }}
           </div>
           <span class="drawer-title">
@@ -971,10 +1046,20 @@
         </div>
 
         <div class="drawer-header-actions">
-          <button type="button" class="btn-drawer-recheck" (click)="validateWorkflow.emit()" title="Kiểm tra lại sơ đồ">
+          <button
+            type="button"
+            class="btn-drawer-recheck"
+            (click)="validateWorkflow.emit()"
+            title="Kiểm tra lại sơ đồ"
+          >
             🔄 Kiểm tra lại
           </button>
-          <button type="button" class="btn-drawer-close" (click)="showValidation.set(false)" title="Đóng bảng">
+          <button
+            type="button"
+            class="btn-drawer-close"
+            (click)="showValidation.set(false)"
+            title="Đóng bảng"
+          >
             ✕
           </button>
         </div>
@@ -984,12 +1069,18 @@
         @if (validationIssues().length === 0) {
           <div class="success-banner">
             <span class="success-icon">🎉</span>
-            <span>Quy trình có đủ điểm bắt đầu, điểm kết thúc và các bước được liên kết hợp lệ.</span>
+            <span
+              >Quy trình có đủ điểm bắt đầu, điểm kết thúc và các bước được liên kết hợp lệ.</span
+            >
           </div>
         } @else {
           <div class="issues-compact-list">
             @for (issue of validationIssues(); track issue.id) {
-              <div class="issue-row" [class.row-error]="issue.type === 'error'" [class.row-warning]="issue.type === 'warning'">
+              <div
+                class="issue-row"
+                [class.row-error]="issue.type === 'error'"
+                [class.row-warning]="issue.type === 'warning'"
+              >
                 <span class="badge-issue-type">
                   {{ issue.type === 'error' ? 'Lỗi' : 'Cảnh báo' }}
                 </span>
@@ -999,7 +1090,12 @@
                 <span class="issue-title-text">{{ issue.title }}</span>
                 <span class="issue-suggestion-text">💡 {{ issue.suggestion }}</span>
                 @if (issue.nodeId) {
-                  <button type="button" class="btn-focus-node" (click)="focusIssueNode(issue.nodeId)" title="Đến bước này trên sơ đồ">
+                  <button
+                    type="button"
+                    class="btn-focus-node"
+                    (click)="focusIssueNode(issue.nodeId)"
+                    title="Đến bước này trên sơ đồ"
+                  >
                     🎯 Xem
                   </button>
                 }
@@ -1011,4 +1107,3 @@
     </div>
   }
 </div>
-

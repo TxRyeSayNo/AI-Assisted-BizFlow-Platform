@@ -19,16 +19,27 @@ public sealed class AuthenticationStore(DbContextOptions<BizFlowDbContext> optio
     {
         await using var db = Create();
         // Only identity resolution bypasses default filters. No business objects or password hashes leave this query.
-        var query = from user in db.Users.IgnoreQueryFilters().AsNoTracking()
-                    join tenant in db.Tenants.IgnoreQueryFilters() on user.TenantId equals tenant.Id into tenants
-                    from tenant in tenants.DefaultIfEmpty()
-                    where user.DeletedAt == null && user.Status == UserStatus.Active &&
-                        (user.NormalizedEmployeeCode == normalizedIdentifier || user.NormalizedEmail == normalizedIdentifier) &&
-                        (tenantKey == null || (tenant != null && tenant.TenantKey == tenantKey))
-                    orderby user.Id
-                    select new AuthenticationCandidate(user.Id, user.TenantId, tenant == null ? null : tenant.Name, tenant == null ? null : tenant.TenantKey);
-        // Bound anonymous lookup results; more than one always requires workspace context.
-        return await query.Take(20).ToListAsync(cancellationToken);
+        var baseQuery = db.Users.IgnoreQueryFilters().AsNoTracking()
+            .Where(user => user.DeletedAt == null && user.Status == UserStatus.Active &&
+                (user.NormalizedEmployeeCode == normalizedIdentifier || user.NormalizedEmail == normalizedIdentifier));
+
+        if (tenantKey == null)
+        {
+            var query = from user in baseQuery
+                        where user.TenantId == null && user.IsPlatformAdministrator
+                        orderby user.Id
+                        select new AuthenticationCandidate(user.Id, null, null, null);
+            return await query.Take(20).ToListAsync(cancellationToken);
+        }
+        else
+        {
+            var query = from user in baseQuery
+                        join tenant in db.Tenants.IgnoreQueryFilters() on user.TenantId equals tenant.Id
+                        where tenant.TenantKey == tenantKey
+                        orderby user.Id
+                        select new AuthenticationCandidate(user.Id, user.TenantId, tenant.Name, tenant.TenantKey);
+            return await query.Take(20).ToListAsync(cancellationToken);
+        }
     }
 
     public async Task<AuthenticationCandidate?> FindSessionOwnerAsync(string tokenHash, CancellationToken cancellationToken)

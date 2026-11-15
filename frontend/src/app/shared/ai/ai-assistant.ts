@@ -1207,7 +1207,8 @@ export class AiAssistantComponent {
             this.loading.set(false);
             this.intentResult.set(null);
             this.errorMsg.set(
-              err?.error?.message || 'Không thể phân tích yêu cầu bằng AI. Vui lòng kiểm tra lại dịch vụ máy chủ.',
+              err?.error?.message ||
+                'Không thể phân tích yêu cầu bằng AI. Vui lòng kiểm tra lại dịch vụ máy chủ.',
             );
           },
         });
@@ -1228,7 +1229,8 @@ export class AiAssistantComponent {
             this.loading.set(false);
             this.branchingResult.set(null);
             this.errorMsg.set(
-              err?.error?.message || 'Không thể phân tích phân nhánh đa luồng bằng AI. Vui lòng thử lại.',
+              err?.error?.message ||
+                'Không thể phân tích phân nhánh đa luồng bằng AI. Vui lòng thử lại.',
             );
           },
         });
@@ -1304,7 +1306,8 @@ export class AiAssistantComponent {
           this.planExecutedSuccess.set(false);
           this.executedPlanResult.set(null);
           this.errorMsg.set(
-            err?.error?.message || 'Không thể thực thi kế hoạch phân nhánh vào hệ thống. Vui lòng kiểm tra lại dịch vụ máy chủ.',
+            err?.error?.message ||
+              'Không thể thực thi kế hoạch phân nhánh vào hệ thống. Vui lòng kiểm tra lại dịch vụ máy chủ.',
           );
         },
       });
@@ -1409,7 +1412,8 @@ export class AiAssistantComponent {
           branchIndex: 2,
           branchType: 'SupportRequest',
           title: 'Phê duyệt & nghiệm thu kết quả: ' + title,
-          description: 'Trình lãnh đạo kiểm duyệt, đối chiếu tiêu chí chất lượng và hoàn tất nhiệm vụ.',
+          description:
+            'Trình lãnh đạo kiểm duyệt, đối chiếu tiêu chí chất lượng và hoàn tất nhiệm vụ.',
           priority: 'MEDIUM',
           executionPhase: 3,
           dependsOnBranchIndexes: [1],
@@ -1438,7 +1442,8 @@ export class AiAssistantComponent {
         {
           orderIndex: 0,
           title: 'Rà soát và phổ biến nội dung tài liệu đến nhân sự phụ trách',
-          description: 'Tổ chức họp ngắn hoặc gửi thông báo triển khai nội dung cho các chuyên viên.',
+          description:
+            'Tổ chức họp ngắn hoặc gửi thông báo triển khai nội dung cho các chuyên viên.',
           suggestedDepartment: 'Phòng Công nghệ & Chuyển đổi số',
           suggestedPriority: 'HIGH',
           suggestedDurationDays: 1,

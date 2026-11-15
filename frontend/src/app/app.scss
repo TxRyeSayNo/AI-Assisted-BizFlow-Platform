@@ -38,7 +38,9 @@
   top: 0;
   z-index: 1000;
   box-shadow: 0 2px 8px rgba(7, 27, 51, 0.04);
-  transition: height 0.2s ease, padding 0.2s ease;
+  transition:
+    height 0.2s ease,
+    padding 0.2s ease;
 }
 
 .topbar-left {
@@ -211,7 +213,9 @@
   border-radius: 9999px;
   cursor: default;
   box-shadow: 0 1px 4px rgba(7, 27, 51, 0.04);
-  transition: border-color 0.16s ease, box-shadow 0.16s ease;
+  transition:
+    border-color 0.16s ease,
+    box-shadow 0.16s ease;
 
   &:hover {
     border-color: #bfdbfe;
@@ -316,7 +320,7 @@
   max-width: 320px;
   flex-shrink: 0;
   /* Pristine light white-ocean background matching the login screen */
-  background: 
+  background:
     radial-gradient(circle at 18% 12%, rgba(214, 233, 255, 0.85) 0%, transparent 55%),
     radial-gradient(circle at 82% 85%, rgba(214, 233, 255, 0.75) 0%, transparent 50%),
     linear-gradient(180deg, #f8fbff 0%, #edf5ff 35%, #e1effe 70%, #d6e9ff 100%);
@@ -357,7 +361,8 @@
   z-index: 110;
   user-select: none;
   transition: background-color 150ms ease;
-  &:hover, &:active {
+  &:hover,
+  &:active {
     background-color: #2563eb;
   }
 }
@@ -407,7 +412,9 @@
     stroke-width: 2.1;
     position: relative;
     z-index: 3;
-    transition: transform 0.2s ease, stroke 0.2s ease;
+    transition:
+      transform 0.2s ease,
+      stroke 0.2s ease;
   }
 
   .nav-label {
@@ -449,7 +456,7 @@
     color: #ffffff;
     font-weight: 700;
     border: 1.5px solid transparent;
-    box-shadow: 
+    box-shadow:
       0 4px 18px rgba(36, 120, 242, 0.45),
       0 2px 8px rgba(18, 60, 118, 0.22);
 
@@ -501,7 +508,7 @@
 
     &:hover {
       transform: translateY(-1px) scale(1.01);
-      box-shadow: 
+      box-shadow:
         0 6px 22px rgba(36, 120, 242, 0.55),
         0 2px 8px rgba(18, 60, 118, 0.28);
     }
@@ -588,7 +595,7 @@
     top: auto;
     border-right: none;
     border-top: 1px solid rgba(191, 219, 254, 0.85);
-    background: 
+    background:
       radial-gradient(circle at 50% 0%, rgba(214, 233, 255, 0.8) 0%, transparent 60%),
       linear-gradient(180deg, #f8fbff 0%, #eaf4ff 100%);
     padding: 0.35rem 0.5rem;
