@@ -31,6 +31,7 @@ public sealed class BizFlowDbContext(DbContextOptions<BizFlowDbContext> options,
     public DbSet<ServiceCategory> ServiceCategories => Set<ServiceCategory>();
     public DbSet<WorkRequest> Requests => Set<WorkRequest>();
     public DbSet<RequestRouting> RequestRoutings => Set<RequestRouting>();
+    public DbSet<RequestEscalation> RequestEscalations => Set<RequestEscalation>();
     public DbSet<RequestResolution> RequestResolutions => Set<RequestResolution>();
     public DbSet<WorkTask> WorkTasks => Set<WorkTask>();
     public DbSet<TaskChecklistItem> TaskChecklistItems => Set<TaskChecklistItem>();
@@ -76,6 +77,7 @@ public sealed class BizFlowDbContext(DbContextOptions<BizFlowDbContext> options,
         model.Entity<ServiceCategory>().HasQueryFilter(x => Services.Any(s => s.Id == x.ServiceId));
         model.Entity<WorkRequest>().HasQueryFilter(x => CurrentUserId != null && CurrentTenantId != null && x.TenantId == CurrentTenantId && x.DeletedAt == null);
         model.Entity<RequestRouting>().HasQueryFilter(x => CurrentUserId != null && CurrentTenantId != null && x.TenantId == CurrentTenantId);
+        model.Entity<RequestEscalation>().HasQueryFilter(x => CurrentUserId != null && CurrentTenantId != null && x.TenantId == CurrentTenantId);
         model.Entity<RequestResolution>().HasQueryFilter(x => Requests.Any(r => r.Id == x.RequestId));
         model.Entity<WorkTask>().HasQueryFilter(x => CurrentUserId != null && CurrentTenantId != null && x.TenantId == CurrentTenantId && x.DeletedAt == null);
         model.Entity<TaskChecklistItem>().HasQueryFilter(x => WorkTasks.Any(t => t.Id == x.TaskId));
@@ -410,6 +412,24 @@ public sealed class BizFlowDbContext(DbContextOptions<BizFlowDbContext> options,
                         !await Users.AnyAsync(u => u.Id == routing.RoutedBy, cancellationToken) ||
                         (routing.ToDepartmentId is { } toDept && !await Departments.AnyAsync(d => d.Id == toDept, cancellationToken)) ||
                         (routing.ToUserId is { } toUser && !await Users.AnyAsync(u => u.Id == toUser, cancellationToken))) throw Denied();
+                    break;
+                case RequestEscalation escalation:
+                    // Additive approval record. The escalator/decider must be the acting user and the
+                    // request must belong to this tenant. The command enforces the requests.escalate /
+                    // requests.approve.elevated permissions before reaching this boundary.
+                    AssertTenant(escalation.TenantId);
+                    if (entry.State == EntityState.Added)
+                    {
+                        if (escalation.EscalatedById != CurrentUserId ||
+                            !await Requests.AnyAsync(r => r.Id == escalation.RequestId, cancellationToken) ||
+                            !await Users.AnyAsync(u => u.Id == escalation.EscalatedById, cancellationToken)) throw Denied();
+                    }
+                    else if (entry.State == EntityState.Modified)
+                    {
+                        if (escalation.DecidedById != CurrentUserId ||
+                            !await Users.AnyAsync(u => u.Id == escalation.DecidedById, cancellationToken)) throw Denied();
+                    }
+                    else throw Denied();
                     break;
                 case InternalService service:
                     AssertTenant(service.TenantId);

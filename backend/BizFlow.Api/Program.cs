@@ -70,6 +70,11 @@ builder.Services.AddScoped<BizFlow.Application.Requests.RequestDetailQuery>();
 builder.Services.AddScoped<BizFlow.Application.Requests.IRequestCreationStore, BizFlow.Infrastructure.Requests.RequestCreationStore>();
 builder.Services.AddScoped<BizFlow.Application.Requests.IRequestSubmissionStore, BizFlow.Infrastructure.Requests.RequestSubmissionStore>();
 builder.Services.AddScoped<BizFlow.Application.Requests.IRequestRoutingStore, BizFlow.Infrastructure.Requests.RequestRoutingStore>();
+builder.Services.AddScoped<BizFlow.Application.Requests.RequestEscalationCommand>();
+builder.Services.AddScoped<BizFlow.Application.Requests.IRequestEscalationStore, BizFlow.Infrastructure.Requests.RequestEscalationStore>();
+builder.Services.AddScoped<BizFlow.Application.Requests.RequestRecipientQuery>();
+builder.Services.AddScoped<BizFlow.Application.Requests.IRequestRecipientStore, BizFlow.Infrastructure.Requests.RequestRecipientStore>();
+builder.Services.AddScoped<BizFlow.Application.Requests.SendRequestCommand>();
 builder.Services.AddScoped<BizFlow.Application.Requests.IRequestReceiptStore, BizFlow.Infrastructure.Requests.RequestReceiptStore>();
 builder.Services.AddScoped<BizFlow.Application.Requests.IRequestProcessingStore, BizFlow.Infrastructure.Requests.RequestProcessingStore>();
 builder.Services.AddScoped<BizFlow.Application.Requests.IRequestRejectionStore, BizFlow.Infrastructure.Requests.RequestRejectionStore>();
@@ -125,6 +130,14 @@ builder.Services.AddScoped<BizFlow.Application.Collaboration.IRecordSearchReader
 builder.Services.AddScoped<BizFlow.Application.Collaboration.RecordService>();
 builder.Services.AddScoped<BizFlow.Application.Reports.IReportingReader, BizFlow.Infrastructure.Reports.ReportingReader>();
 builder.Services.AddScoped<BizFlow.Application.Reports.ReportingService>();
+// Project / role dashboards. Read-only projections over existing Task storage; they add no
+// entity, no migration and no permission, and reuse TaskReadPolicy for visibility.
+builder.Services.AddScoped<BizFlow.Application.Dashboard.IProjectDashboardReader, BizFlow.Infrastructure.Dashboard.ProjectDashboardReader>();
+builder.Services.AddScoped<BizFlow.Application.Dashboard.IMyWorkDashboardReader, BizFlow.Infrastructure.Dashboard.MyWorkDashboardReader>();
+builder.Services.AddScoped<BizFlow.Application.Dashboard.ITeamDashboardReader, BizFlow.Infrastructure.Dashboard.TeamDashboardReader>();
+builder.Services.AddScoped<BizFlow.Application.Dashboard.ProjectDashboardQuery>();
+builder.Services.AddScoped<BizFlow.Application.Dashboard.MyWorkDashboardQuery>();
+builder.Services.AddScoped<BizFlow.Application.Dashboard.TeamDashboardQuery>();
 builder.Services.AddHttpClient<BizFlow.Application.AI.IAiModelClient, BizFlow.Infrastructure.AI.OpenAiModelClient>();
 builder.Services.AddHttpClient<BizFlow.Application.AI.IAiEmbeddingService, BizFlow.Infrastructure.AI.AiEmbeddingService>();
 builder.Services.AddScoped<BizFlow.Application.AI.IAiVectorMemoryStore, BizFlow.Infrastructure.AI.AiVectorMemoryStore>();

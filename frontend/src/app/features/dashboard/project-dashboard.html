@@ -1,0 +1,229 @@
+<main id="main-content" class="page-content reports-container" tabindex="-1">
+  <nav aria-label="Breadcrumb">
+    <a routerLink="/workspace">{{ 'common.workspace' | translate: 'Không gian làm việc' }}</a>
+    <span aria-hidden="true"> / </span>
+    <span>{{ 'projectDashboard.breadcrumb' | translate: 'Dashboard dự án' }}</span>
+  </nav>
+
+  <div class="page-header">
+    <div class="header-titles">
+      <h2>{{ 'projectDashboard.title' | translate: 'Dashboard dự án' }}</h2>
+      <p class="subtitle">
+        {{
+          'projectDashboard.subtitle'
+            | translate
+              : 'Phân loại dự án lớn/nhỏ, người phụ trách từng phần việc, tiến độ và phần trăm trách nhiệm.'
+        }}
+      </p>
+    </div>
+  </div>
+
+  <div class="tabs-bar">
+    <a routerLink="/dashboard/projects" class="tab-btn active">
+      {{ 'projectDashboard.tab.projects' | translate: 'Dự án' }}
+    </a>
+    <a routerLink="/dashboard/my-work" class="tab-btn">
+      {{ 'projectDashboard.tab.myWork' | translate: 'Việc của tôi' }}
+    </a>
+    @if (canFilterByDepartment()) {
+      <a routerLink="/dashboard/team" class="tab-btn">
+        {{ 'projectDashboard.tab.team' | translate: 'Cấp dưới của tôi' }}
+      </a>
+    }
+  </div>
+
+  @if (isPersonalScope()) {
+    <p class="scope-note">
+      {{
+        'projectDashboard.personalScope'
+          | translate
+            : 'Bạn đang xem các dự án mà bạn tham gia. Thông tin chung của dự án được hiển thị đầy đủ, nhưng phần việc của người khác được ẩn.'
+      }}
+    </p>
+  }
+
+  <div class="filter-panel" [formGroup]="filters">
+    <div class="filter-group">
+      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="filter-field">
+        <mat-label>{{ 'common.search' | translate: 'Tìm kiếm' }}</mat-label>
+        <input matInput formControlName="search" [maxlength]="200" />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="filter-field">
+        <mat-label>{{ 'projectDashboard.size' | translate: 'Quy mô' }}</mat-label>
+        <mat-select formControlName="size">
+          <mat-option value="">{{ 'projectDashboard.allSizes' | translate: 'Tất cả' }}</mat-option>
+          <mat-option value="LARGE">{{
+            'projectDashboard.large' | translate: 'Dự án lớn'
+          }}</mat-option>
+          <mat-option value="SMALL">{{
+            'projectDashboard.small' | translate: 'Dự án nhỏ'
+          }}</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      @if (canFilterByDepartment()) {
+        <mat-form-field appearance="outline" subscriptSizing="dynamic" class="filter-field">
+          <mat-label>{{ 'reports.department' | translate: 'Phòng ban' }}</mat-label>
+          <mat-select formControlName="departmentId">
+            <mat-option value="">{{
+              'reports.allDepartments' | translate: 'Tất cả phòng ban'
+            }}</mat-option>
+            @for (department of departments(); track department.departmentId) {
+              <mat-option [value]="department.departmentId">{{ department.name }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      }
+
+      <button
+        mat-flat-button
+        color="primary"
+        class="apply-btn"
+        type="button"
+        (click)="applyFilters()"
+      >
+        {{ 'common.apply' | translate: 'Áp dụng' }}
+      </button>
+      <button mat-stroked-button class="apply-btn" type="button" (click)="resetFilters()">
+        {{ 'common.reset' | translate: 'Đặt lại' }}
+      </button>
+    </div>
+  </div>
+
+  @if (error()) {
+    <div class="error-banner" role="alert">{{ error() }}</div>
+  }
+
+  @if (busy()) {
+    <div class="loading-state">{{ 'common.loading' | translate: 'Đang tải…' }}</div>
+  } @else if (isEmpty()) {
+    <div class="empty-state">
+      {{
+        'projectDashboard.empty'
+          | translate
+            : 'Chưa có dự án nào trong phạm vi của bạn. Một dự án là một nhiệm vụ cha có ít nhất một phần việc.'
+      }}
+    </div>
+  } @else {
+    @if (large().length) {
+      <section class="size-section">
+        <div class="size-section-head">
+          <h3>{{ 'projectDashboard.large' | translate: 'Dự án lớn' }}</h3>
+          <span class="size-count">{{ large().length }}</span>
+        </div>
+        <div class="project-grid">
+          @for (project of large(); track project.projectId) {
+            <ng-container
+              [ngTemplateOutlet]="card"
+              [ngTemplateOutletContext]="{ project: project }"
+            />
+          }
+        </div>
+      </section>
+    }
+
+    @if (small().length) {
+      <section class="size-section">
+        <div class="size-section-head">
+          <h3>{{ 'projectDashboard.small' | translate: 'Dự án nhỏ' }}</h3>
+          <span class="size-count">{{ small().length }}</span>
+        </div>
+        <div class="project-grid">
+          @for (project of small(); track project.projectId) {
+            <ng-container
+              [ngTemplateOutlet]="card"
+              [ngTemplateOutletContext]="{ project: project }"
+            />
+          }
+        </div>
+      </section>
+    }
+
+    @if (data(); as page) {
+      <div class="pagination">
+        <button
+          mat-stroked-button
+          type="button"
+          [disabled]="page.page <= 1"
+          (click)="previousPage()"
+        >
+          {{ 'common.previous' | translate: 'Trang trước' }}
+        </button>
+        <span>
+          {{ 'common.page' | translate: 'Trang' }} {{ page.page }} ·
+          {{ 'projectDashboard.totalProjects' | translate: 'Tổng số dự án' }}: {{ page.total }}
+        </span>
+        <button
+          mat-stroked-button
+          type="button"
+          [disabled]="page.page * page.pageSize >= page.total"
+          (click)="nextPage()"
+        >
+          {{ 'common.next' | translate: 'Trang sau' }}
+        </button>
+      </div>
+    }
+  }
+</main>
+
+<ng-template #card let-project="project">
+  <article class="project-card">
+    <div class="project-card-head">
+      <h4 class="project-title">
+        <a [routerLink]="['/dashboard/projects', project.projectId]">{{ project.title }}</a>
+      </h4>
+      <span
+        class="badge"
+        [class.badge-danger]="project.overdueWorkItemCount > 0"
+        [class.badge-info]="project.overdueWorkItemCount === 0"
+      >
+        {{ project.status }}
+      </span>
+    </div>
+
+    <p class="project-owner">
+      {{ 'projectDashboard.owner' | translate: 'Phụ trách' }}:
+      <strong>{{
+        project.ownerName || ('projectDashboard.noOwner' | translate: 'Chưa rõ')
+      }}</strong>
+      @if (project.ownerDepartmentName) {
+        · {{ project.ownerDepartmentName }}
+      }
+    </p>
+
+    <div class="progress-row">
+      <div class="progress-track">
+        <div
+          class="progress-fill"
+          [class]="tone(project.progressPercent)"
+          [style.width.%]="project.progressPercent"
+        ></div>
+      </div>
+      <span class="progress-value">{{ project.progressPercent }}%</span>
+    </div>
+
+    <div class="project-stats">
+      <span>
+        {{ 'projectDashboard.workItems' | translate: 'Phần việc' }}:
+        <strong>{{ project.completedWorkItemCount }}/{{ project.workItemCount }}</strong>
+      </span>
+      <span>
+        {{ 'projectDashboard.participants' | translate: 'Người tham gia' }}:
+        <strong>{{ project.participantCount }}</strong>
+      </span>
+      @if (project.overdueWorkItemCount) {
+        <span>
+          {{ 'projectDashboard.overdue' | translate: 'Trễ hạn' }}:
+          <strong>{{ project.overdueWorkItemCount }}</strong>
+        </span>
+      }
+      @if (project.unassignedWorkItemCount) {
+        <span>
+          {{ 'projectDashboard.unassigned' | translate: 'Chưa phân công' }}:
+          <strong>{{ project.unassignedWorkItemCount }}</strong>
+        </span>
+      }
+    </div>
+  </article>
+</ng-template>

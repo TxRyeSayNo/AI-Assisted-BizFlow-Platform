@@ -163,6 +163,38 @@
             {{ 'common.cancel' | translate: 'Cancel' }}
           </button>
         }
+        @if (canEscalate()) {
+          <button
+            mat-stroked-button
+            color="accent"
+            type="button"
+            [disabled]="actionInProgress()"
+            (click)="openModal('escalate')"
+            title="Chuyển yêu cầu lên cấp trên (Giám đốc) để phê duyệt"
+          >
+            ⬆️ {{ 'requestDetail.escalate' | translate: 'Chuyển lên cấp trên duyệt' }}
+          </button>
+        }
+        @if (canDecideElevated()) {
+          <button
+            mat-flat-button
+            color="primary"
+            type="button"
+            [disabled]="actionInProgress()"
+            (click)="executeElevatedDecision(true)"
+          >
+            ✓ {{ 'requestDetail.approveElevated' | translate: 'Duyệt (cấp trên)' }}
+          </button>
+          <button
+            mat-stroked-button
+            color="warn"
+            type="button"
+            [disabled]="actionInProgress()"
+            (click)="executeElevatedDecision(false)"
+          >
+            ✕ {{ 'requestDetail.rejectElevated' | translate: 'Từ chối (cấp trên)' }}
+          </button>
+        }
         @if (canArchive()) {
           <button
             mat-stroked-button
@@ -200,6 +232,44 @@
     @if (actionError()) {
       <div class="alert-error" role="alert">
         {{ actionError() }}
+      </div>
+    }
+
+    @if (escalation(); as esc) {
+      <div
+        role="status"
+        style="
+          margin: 12px 0;
+          padding: 12px 14px;
+          border-radius: 10px;
+          border: 1px solid;
+          font-size: 0.86rem;
+        "
+        [style.background]="
+          esc.state === 'PENDING' ? '#fff7ed' : esc.state === 'APPROVED' ? '#f0fdf4' : '#fef2f2'
+        "
+        [style.border-color]="
+          esc.state === 'PENDING' ? '#fdba74' : esc.state === 'APPROVED' ? '#86efac' : '#fca5a5'
+        "
+      >
+        <strong>
+          @if (esc.state === 'PENDING') {
+            ⏳ Đang chờ cấp trên duyệt
+          } @else if (esc.state === 'APPROVED') {
+            ✓ Cấp trên đã duyệt
+          } @else {
+            ✕ Cấp trên đã từ chối
+          }
+        </strong>
+        <div style="margin-top: 4px; color: #475569">
+          {{ esc.escalatedByName }} chuyển lên: "{{ esc.reason }}"
+          @if (esc.decidedByName) {
+            <br />{{ esc.decidedByName }}
+            {{ esc.state === 'APPROVED' ? 'đã duyệt' : 'đã từ chối' }}@if (esc.decisionNote) {
+              : "{{ esc.decisionNote }}"
+            }
+          }
+        </div>
       </div>
     }
 
@@ -424,6 +494,42 @@
                 ? ('requestDetail.rejectingProgress' | translate: 'Rejecting…')
                 : ('requestDetail.confirmRejectBtn' | translate: 'Reject Request')
             }}
+          </button>
+          <button mat-stroked-button type="button" (click)="closeModal()">
+            {{ 'common.cancel' | translate: 'Cancel' }}
+          </button>
+        </div>
+      </div>
+    }
+
+    @if (activeModal() === 'escalate') {
+      <div class="action-card" role="region" aria-label="Escalate request panel">
+        <h3>{{ 'requestDetail.escalateModalTitle' | translate: 'Chuyển lên cấp trên duyệt' }}</h3>
+        <p class="action-subtext">
+          Khi yêu cầu vượt quá thẩm quyền của bạn, hãy nêu lý do và chuyển lên cấp trên (Giám đốc)
+          để phê duyệt. Yêu cầu vẫn giữ nguyên trạng thái xử lý hiện tại.
+        </p>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Lý do chuyển lên cấp trên *</mat-label>
+          <textarea
+            matInput
+            [(ngModel)]="escalateReason"
+            rows="3"
+            required
+            placeholder="Ví dụ: Chi phí vượt hạn mức phòng, cần Giám đốc phê duyệt…"
+          ></textarea>
+        </mat-form-field>
+
+        <div class="modal-actions">
+          <button
+            mat-flat-button
+            color="primary"
+            type="button"
+            [disabled]="actionInProgress() || !escalateReason().trim()"
+            (click)="executeEscalate()"
+          >
+            {{ actionInProgress() ? 'Đang chuyển…' : 'Chuyển lên cấp trên' }}
           </button>
           <button mat-stroked-button type="button" (click)="closeModal()">
             {{ 'common.cancel' | translate: 'Cancel' }}

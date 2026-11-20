@@ -204,8 +204,44 @@ export class WorkItemAttachments implements OnInit {
     });
   }
 
-  downloadUrl(attachmentId: string): string {
-    return `/api/v1/attachments/${attachmentId}/download`;
+  readonly downloading = signal<string | null>(null);
+
+  // The download endpoint requires the bearer token, so a raw anchor navigation returns 401.
+  // Fetch the bytes through HttpClient (the interceptor adds the token), then view or save them.
+  downloadAttachment(att: AttachmentItem, event: Event, save = false): void {
+    event.preventDefault();
+    if (this.downloading()) return;
+    // Open the tab synchronously inside the click gesture to avoid popup blocking (view mode only).
+    const viewer = save ? null : window.open('', '_blank');
+    this.downloading.set(att.attachmentId);
+    this.error.set('');
+    this.http
+      .get(`/api/v1/attachments/${att.attachmentId}/download`, { responseType: 'blob' })
+      .subscribe({
+        next: (blob) => {
+          this.downloading.set(null);
+          const url = window.URL.createObjectURL(blob);
+          if (save) {
+            const anchor = document.createElement('a');
+            anchor.href = url;
+            anchor.download = att.fileName;
+            anchor.click();
+          } else if (viewer && !viewer.closed) {
+            viewer.location.href = url;
+          } else {
+            window.open(url, '_blank');
+          }
+          setTimeout(() => window.URL.revokeObjectURL(url), 60_000);
+        },
+        error: (err) => {
+          this.downloading.set(null);
+          if (viewer && !viewer.closed) viewer.close();
+          this.error.set(
+            err?.error?.message ??
+              this.i18n.t('attachments.errDownload', 'Không tải được tệp đính kèm.'),
+          );
+        },
+      });
   }
 
   formatBytes(bytes: number): string {

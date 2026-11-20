@@ -200,17 +200,29 @@ interface RegistrationPage {
                         @if (item.evidenceDocumentDownloadUrl) {
                           <div style="margin-top: 0.35rem;">
                             <a
-                              [href]="item.evidenceDocumentDownloadUrl"
-                              target="_blank"
-                              rel="noopener"
-                              style="font-size: 0.8rem; color: #2563eb; font-weight: 600; text-decoration: underline;"
+                              href="#"
+                              (click)="openDocument(item, $event)"
+                              style="font-size: 0.8rem; color: #2563eb; font-weight: 600; text-decoration: underline; cursor: pointer;"
                             >
                               📄
                               {{
                                 item.evidenceDocumentFileName ||
                                   ('platform.viewLicense' | translate: 'Xem giấy phép kinh doanh')
                               }}
+                              @if (docBusy() === item.companyId) {
+                                <span style="color: #52657c;">
+                                  ({{ 'common.loading' | translate: 'Đang tải…' }})</span
+                                >
+                              }
                             </a>
+                            @if (docError() === item.companyId) {
+                              <div style="font-size: 0.75rem; color: #dc2626;">
+                                {{
+                                  'platform.documentOpenFailed'
+                                    | translate: 'Không mở được tài liệu, vui lòng thử lại.'
+                                }}
+                              </div>
+                            }
                           </div>
                         }
                       </td>
@@ -456,6 +468,9 @@ export class CompanyRegistrations {
   readonly error = signal(false);
   readonly page = signal(1);
 
+  readonly docBusy = signal<string | null>(null);
+  readonly docError = signal<string | null>(null);
+
   readonly approvingItem = signal<Registration | null>(null);
   readonly rejectingItem = signal<Registration | null>(null);
   readonly actionBusy = signal(false);
@@ -489,6 +504,41 @@ export class CompanyRegistrations {
   apply() {
     this.applied = this.filters.getRawValue();
     this.load(1);
+  }
+
+  // The evidence endpoint requires the bearer token, so a plain anchor navigation returns 401.
+  // Fetch it through HttpClient (the interceptor adds the token) and open the bytes locally.
+  openDocument(item: Registration, event: Event): void {
+    event.preventDefault();
+    const url = item.evidenceDocumentDownloadUrl;
+    if (!url || this.docBusy()) return;
+    // Open the tab synchronously inside the click gesture to avoid popup blocking.
+    const viewer = window.open('', '_blank');
+    this.docBusy.set(item.companyId);
+    this.docError.set(null);
+    this.http
+      .get(url, { responseType: 'blob' })
+      .pipe(takeUntilDestroyed(this.destroy))
+      .subscribe({
+        next: (blob) => {
+          this.docBusy.set(null);
+          const objectUrl = URL.createObjectURL(blob);
+          if (viewer && !viewer.closed) {
+            viewer.location.href = objectUrl;
+          } else {
+            const anchor = document.createElement('a');
+            anchor.href = objectUrl;
+            anchor.download = item.evidenceDocumentFileName || 'document';
+            anchor.click();
+          }
+          setTimeout(() => URL.revokeObjectURL(objectUrl), 60_000);
+        },
+        error: () => {
+          this.docBusy.set(null);
+          this.docError.set(item.companyId);
+          if (viewer && !viewer.closed) viewer.close();
+        },
+      });
   }
 
   load(page: number) {

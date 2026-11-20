@@ -99,6 +99,38 @@
         </mat-select>
       </mat-form-field>
 
+      @if (recipients(); as rec) {
+        <mat-form-field appearance="outline">
+          <mat-label>{{
+            'requestCreate.recipient' | translate: 'Nơi nhận (tùy chọn)'
+          }}</mat-label>
+          <mat-select formControlName="recipient">
+            <mat-option value="">— Để quản lý định tuyến —</mat-option>
+            @if (rec.departments.length) {
+              <mat-optgroup label="Phòng ban">
+                @for (d of rec.departments; track d.departmentId) {
+                  <mat-option [value]="'dept:' + d.departmentId">{{ d.name }}</mat-option>
+                }
+              </mat-optgroup>
+            }
+            @if (rec.users.length) {
+              <mat-optgroup label="Người nhận (ngang cấp hoặc cấp trên trực tiếp)">
+                @for (u of rec.users; track u.userId) {
+                  <mat-option [value]="'user:' + u.userId">
+                    {{ u.fullName }} ({{ u.employeeCode }}) ·
+                    {{ u.level === 2 ? 'Giám đốc' : u.level === 1 ? 'Trưởng phòng' : 'Nhân viên' }}
+                  </mat-option>
+                }
+              </mat-optgroup>
+            }
+          </mat-select>
+        </mat-form-field>
+        <p style="margin: -6px 0 4px; font-size: 0.78rem; color: #64748b">
+          Chọn nơi gửi yêu cầu. Danh sách chỉ hiện người ngang cấp hoặc cấp trên trực tiếp (không
+          vượt cấp). Chỉ áp dụng khi gửi ngay (không áp dụng khi lưu nháp).
+        </p>
+      }
+
       <mat-checkbox formControlName="submitImmediately" color="primary">
         {{
           'requestCreate.submitImm'

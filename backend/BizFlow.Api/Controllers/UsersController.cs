@@ -42,6 +42,7 @@ public sealed class UsersController(
     public async Task<BatchImportUsersResult> UploadImport(
         [FromForm] IFormFile file,
         [FromForm] bool dryRun = false,
+        [FromForm] string? initialPassword = null,
         CancellationToken cancellationToken = default)
     {
         if (file == null || file.Length == 0)
@@ -49,6 +50,10 @@ public sealed class UsersController(
 
         using var stream = file.OpenReadStream();
         var rows = EmployeeFileProcessing.ParseFile(stream, file.FileName);
+        // An initial password lets the imported accounts sign in immediately; rows that already
+        // carry their own password keep it. Without a password the account stays pending activation.
+        if (!string.IsNullOrWhiteSpace(initialPassword))
+            rows = rows.Select(r => string.IsNullOrWhiteSpace(r.Password) ? r with { Password = initialPassword } : r).ToList();
         return await management.BatchImportAsync(new(rows, dryRun), cancellationToken);
     }
 

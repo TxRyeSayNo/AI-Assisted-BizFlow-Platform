@@ -23,6 +23,9 @@ public sealed class RequestsController(
     RequestResolutionCommand resolutionCommand,
     RequestConfirmationCommand confirmationCommand,
     RequestReviseCommand reviseCommand,
+    RequestEscalationCommand escalationCommand,
+    RequestRecipientQuery recipientQuery,
+    SendRequestCommand sendCommand,
     RequestDetailQuery detail,
     TaskCreation taskCreation,
     TaskListQuery taskListQuery,
@@ -149,6 +152,51 @@ public sealed class RequestsController(
 
         return Ok(result);
     }
+
+    [JsonUnmappedMemberHandling(JsonUnmappedMemberHandling.Disallow)]
+    public sealed record SendRequestDto(Guid? ToDepartmentId, Guid? ToUserId, string? Reason);
+
+    // Recipient options the current requester may send to (filtered by the no-skip rule).
+    [HttpGet("recipient-options")]
+    public async Task<IActionResult> RecipientOptions(CancellationToken cancellationToken) =>
+        Ok(await recipientQuery.ListAsync(cancellationToken));
+
+    // The requester routes their own submitted request to a chosen person or department.
+    [HttpPost("{id:guid}/send-to")]
+    public async Task<IActionResult> SendTo(Guid id, SendRequestDto input, CancellationToken cancellationToken) =>
+        Ok(await sendCommand.SendAsync(id, new(input.ToDepartmentId, input.ToUserId, input.Reason), cancellationToken));
+
+    [JsonUnmappedMemberHandling(JsonUnmappedMemberHandling.Disallow)]
+    public sealed record EscalateRequestDto(string Reason);
+
+    [JsonUnmappedMemberHandling(JsonUnmappedMemberHandling.Disallow)]
+    public sealed record ElevatedDecisionDto(string Decision, string? Note);
+
+    // A manager pushes a request up to the elevated approval level (no state-machine change).
+    [HttpPost("{id:guid}/escalate")]
+    public async Task<IActionResult> Escalate(Guid id, EscalateRequestDto input, CancellationToken cancellationToken) =>
+        Ok(await escalationCommand.EscalateAsync(id, input.Reason, cancellationToken));
+
+    // An elevated approver (e.g. a Director role granted requests.approve.elevated) approves or rejects.
+    [HttpPost("{id:guid}/elevated-decision")]
+    public async Task<IActionResult> ElevatedDecision(Guid id, ElevatedDecisionDto input, CancellationToken cancellationToken)
+    {
+        var approve = string.Equals(input.Decision, "APPROVE", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(input.Decision, "APPROVED", StringComparison.OrdinalIgnoreCase);
+        var reject = string.Equals(input.Decision, "REJECT", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(input.Decision, "REJECTED", StringComparison.OrdinalIgnoreCase);
+        if (!approve && !reject)
+            throw new ApplicationFault(FaultKind.Validation, "REQUEST.ELEVATED_DECISION_INVALID", "Decision phải là APPROVE hoặc REJECT.");
+        return Ok(await escalationCommand.DecideAsync(id, approve, input.Note, cancellationToken));
+    }
+
+    [HttpGet("{id:guid}/escalation")]
+    public async Task<IActionResult> GetEscalation(Guid id, CancellationToken cancellationToken) =>
+        Ok(await escalationCommand.GetLatestAsync(id, cancellationToken));
+
+    [HttpGet("escalations/pending")]
+    public async Task<IActionResult> PendingEscalations(CancellationToken cancellationToken) =>
+        Ok(new { items = await escalationCommand.ListPendingAsync(cancellationToken) });
 
     [HttpPost("{id:guid}/reject")]
     public async Task<IActionResult> Reject(Guid id, RejectRequestDto input, CancellationToken cancellationToken)

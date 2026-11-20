@@ -218,6 +218,50 @@ export class Users {
       });
   }
 
+  readonly deptSaving = signal<string | null>(null);
+
+  // Reassign an employee's department. RoleIds is intentionally omitted so the backend
+  // keeps the user's existing roles (it only touches roles when RoleIds is provided).
+  changeUserDepartment(user: UserRow, departmentId: string): void {
+    const newId = departmentId || null;
+    if (newId === (user.departmentId ?? null) || this.deptSaving()) return;
+    this.deptSaving.set(user.userId);
+    this.http
+      .put<{ departmentId: string | null; departmentName: string | null }>(
+        `/api/v1/users/${user.userId}`,
+        { fullName: user.fullName, departmentId: newId },
+      )
+      .subscribe({
+        next: (res) => {
+          this.deptSaving.set(null);
+          this.result.update((page) =>
+            page
+              ? {
+                  ...page,
+                  items: page.items.map((u) =>
+                    u.userId === user.userId
+                      ? {
+                          ...u,
+                          departmentId: res?.departmentId ?? newId,
+                          departmentName:
+                            res?.departmentName ??
+                            this.departments().find((d) => d.id === newId)?.name ??
+                            null,
+                        }
+                      : u,
+                  ),
+                }
+              : page,
+          );
+          this.toast.success('Đã cập nhật phòng ban cho nhân viên.');
+        },
+        error: (err: HttpErrorResponse) => {
+          this.deptSaving.set(null);
+          this.toast.error(err?.error?.message || 'Không thể cập nhật phòng ban.');
+        },
+      });
+  }
+
   apply() {
     this.applied = this.filters.getRawValue();
     this.load(1);
@@ -394,11 +438,13 @@ export class Users {
     this.batchModalOpen.set(true);
     this.batchDryRunResult.set(null);
     this.selectedImportFile.set(null);
+    // Cột Mã Phòng Ban để trống trong mẫu: phòng ban là tùy chọn và mỗi công ty có
+    // mã riêng, nên điền sẵn mã cố định sẽ gây lỗi "không tồn tại" ở công ty khác.
     this.batchInputText.set(
       'Mã NV, Họ và Tên, Email, Mã Phòng Ban, Vai Trò\n' +
-        'EMP010, Nguyen Van A, a.nguyen@bizflow.local, TECH, EMPLOYEE\n' +
-        'EMP011, Tran Thi B, b.tran@bizflow.local, HR, EMPLOYEE\n' +
-        'EMP012, Le Van C, c.le@bizflow.local, TECH, MANAGER',
+        'EMP010, Nguyen Van A, a.nguyen@bizflow.local, , EMPLOYEE\n' +
+        'EMP011, Tran Thi B, b.tran@bizflow.local, , EMPLOYEE\n' +
+        'EMP012, Le Van C, c.le@bizflow.local, , MANAGER',
     );
   }
 
@@ -408,8 +454,42 @@ export class Users {
     this.selectedImportFile.set(null);
   }
 
+  // Initial password applied to every imported employee so they can sign in immediately.
+  // Pre-filled with a sensible default; the admin shares it and asks staff to change it later.
+  readonly initialPassword = signal('Welcome@123');
+
+  get initialPasswordError(): string {
+    const pwd = this.initialPassword();
+    if (pwd && pwd.length < 8) return 'Mật khẩu khởi tạo phải từ 8 ký tự trở lên.';
+    return '';
+  }
+
+  // Explains why the confirm button is disabled; empty string means it is enabled.
+  get batchConfirmHint(): string {
+    if (this.batchExecuting()) return '';
+    const res = this.batchDryRunResult();
+    if (!res) return 'Hãy bấm "Kiểm tra Hợp lệ (Dry Run)" trước để bật nút xác nhận.';
+    if ((res.validRows || 0) === 0)
+      return 'Chưa có dòng nào hợp lệ. Sửa các lỗi trong bảng đối soát (ví dụ mã phòng ban để trống nếu công ty chưa có phòng ban) rồi kiểm tra lại.';
+    return '';
+  }
+
   downloadTemplate(format: 'xlsx' | 'csv' = 'xlsx'): void {
-    window.open(`/api/v1/users/import-template?format=${format}`, '_blank');
+    // The endpoint requires the bearer token, so a raw window.open returns 401.
+    // Fetch it through HttpClient (the interceptor adds the token) and save the bytes.
+    this.http
+      .get(`/api/v1/users/import-template?format=${format}`, { responseType: 'blob' })
+      .subscribe({
+        next: (blob) => {
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `bizflow_import_template.${format}`;
+          a.click();
+          window.URL.revokeObjectURL(url);
+        },
+        error: () => this.toast.error('Không thể tải tệp mẫu.'),
+      });
   }
 
   downloadErrorReport(): void {
@@ -510,12 +590,17 @@ export class Users {
   }
 
   runDryRunValidation(): void {
+    if (this.initialPasswordError) {
+      this.toast.error(this.initialPasswordError);
+      return;
+    }
     const file = this.selectedImportFile();
     if (file && (file.name.endsWith('.xlsx') || file.name.endsWith('.xls'))) {
       this.batchExecuting.set(true);
       const formData = new FormData();
       formData.append('file', file);
       formData.append('dryRun', 'true');
+      if (this.initialPassword().trim()) formData.append('initialPassword', this.initialPassword().trim());
 
       this.http.post<any>('/api/v1/users/upload-import', formData).subscribe({
         next: (raw) => {
@@ -559,6 +644,7 @@ export class Users {
           email: r.email,
           departmentCode: r.departmentCode,
           role: r.roleCode,
+          password: this.initialPassword().trim() || undefined,
         })),
       })
       .subscribe({
@@ -585,12 +671,17 @@ export class Users {
   }
 
   commitBatchImport(): void {
+    if (this.initialPasswordError) {
+      this.toast.error(this.initialPasswordError);
+      return;
+    }
     const file = this.selectedImportFile();
     if (file && (file.name.endsWith('.xlsx') || file.name.endsWith('.xls'))) {
       this.batchExecuting.set(true);
       const formData = new FormData();
       formData.append('file', file);
       formData.append('dryRun', 'false');
+      if (this.initialPassword().trim()) formData.append('initialPassword', this.initialPassword().trim());
 
       this.http.post<any>('/api/v1/users/upload-import', formData).subscribe({
         next: (raw) => {
@@ -622,6 +713,7 @@ export class Users {
           email: r.email,
           departmentCode: r.departmentCode,
           role: r.roleCode,
+          password: this.initialPassword().trim() || undefined,
         })),
       })
       .subscribe({

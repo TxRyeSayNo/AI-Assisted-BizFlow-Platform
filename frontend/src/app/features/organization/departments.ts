@@ -1,7 +1,7 @@
 import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
 import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -9,6 +9,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { RouterLink } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { SessionService } from '../../core/auth/session';
+import { ToastService } from '../../core/toast/toast.service';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
 
 interface DepartmentRow {
@@ -43,10 +44,13 @@ interface DepartmentPage {
 export class Departments {
   private readonly http = inject(HttpClient);
   private readonly destroy = inject(DestroyRef);
+  private readonly session = inject(SessionService);
+  private readonly toast = inject(ToastService);
+  private readonly fb = inject(FormBuilder);
   private request?: Subscription;
   private applied = { search: '', status: '' };
-  readonly identity = inject(SessionService).identity;
-  readonly filters = inject(FormBuilder).nonNullable.group(this.applied);
+  readonly identity = this.session.identity;
+  readonly filters = this.fb.nonNullable.group(this.applied);
   readonly result = signal<DepartmentPage | null>(null);
   readonly busy = signal(false);
   readonly denied = signal(false);
@@ -54,8 +58,74 @@ export class Departments {
   readonly page = signal(1);
   readonly labels = { ACTIVE: 'Active', INACTIVE: 'Inactive' };
 
+  // Create-department modal state.
+  readonly createOpen = signal(false);
+  readonly creating = signal(false);
+  readonly allDepartments = signal<DepartmentRow[]>([]);
+  readonly createForm = this.fb.nonNullable.group({
+    code: ['', [Validators.required, Validators.maxLength(50)]],
+    name: ['', [Validators.required, Validators.maxLength(200)]],
+    parentDepartmentId: [''],
+  });
+
+  get canManage(): boolean {
+    return (
+      this.session.hasPermission('roles.configure') ||
+      this.session.hasPermission('users.manage') ||
+      false
+    );
+  }
+
   constructor() {
     this.load(1);
+    this.loadAllDepartments();
+  }
+
+  loadAllDepartments(): void {
+    this.http
+      .get<DepartmentPage>('/api/v1/departments?pageSize=200')
+      .pipe(takeUntilDestroyed(this.destroy))
+      .subscribe({
+        next: (data) => this.allDepartments.set(data.items),
+        error: () => this.allDepartments.set([]),
+      });
+  }
+
+  openCreate(): void {
+    this.createForm.reset({ code: '', name: '', parentDepartmentId: '' });
+    this.createOpen.set(true);
+  }
+
+  closeCreate(): void {
+    this.createOpen.set(false);
+  }
+
+  submitCreate(): void {
+    if (this.createForm.invalid || this.creating()) {
+      this.createForm.markAllAsTouched();
+      return;
+    }
+    const v = this.createForm.getRawValue();
+    this.creating.set(true);
+    this.http
+      .post('/api/v1/departments', {
+        code: v.code.trim(),
+        name: v.name.trim(),
+        parentDepartmentId: v.parentDepartmentId || null,
+      })
+      .subscribe({
+        next: () => {
+          this.creating.set(false);
+          this.toast.success('Đã tạo phòng ban mới.');
+          this.closeCreate();
+          this.load(1);
+          this.loadAllDepartments();
+        },
+        error: (err: HttpErrorResponse) => {
+          this.creating.set(false);
+          this.toast.error(err?.error?.message || 'Không thể tạo phòng ban. Vui lòng thử lại.');
+        },
+      });
   }
 
   apply() {

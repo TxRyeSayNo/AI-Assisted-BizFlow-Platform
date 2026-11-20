@@ -95,6 +95,57 @@ export const routes: Routes = [
     canActivate: [tenantGuard],
     loadComponent: () => import('./features/sla/sla-monitor').then((m) => m.SlaMonitor),
   },
+  // Project / role dashboards. These are additive siblings of the existing 'dashboard' redirect,
+  // which keeps matching only the exact '/dashboard' path because of its pathMatch: 'full'.
+  {
+    path: 'dashboard/projects/:id',
+    canActivate: [tenantGuard, permissionGuard],
+    data: {
+      anyPermissions: [
+        'tasks.read.tenant',
+        'tasks.read.managed',
+        'tasks.read.own',
+        'tasks.read.assigned',
+      ],
+    },
+    loadComponent: () =>
+      import('./features/dashboard/project-dashboard-detail').then((m) => m.ProjectDashboardDetail),
+  },
+  {
+    path: 'dashboard/projects',
+    canActivate: [tenantGuard, permissionGuard],
+    data: {
+      anyPermissions: [
+        'tasks.read.tenant',
+        'tasks.read.managed',
+        'tasks.read.own',
+        'tasks.read.assigned',
+      ],
+    },
+    loadComponent: () =>
+      import('./features/dashboard/project-dashboard').then((m) => m.ProjectDashboard),
+  },
+  {
+    path: 'dashboard/my-work',
+    canActivate: [tenantGuard, permissionGuard],
+    data: {
+      anyPermissions: [
+        'tasks.read.tenant',
+        'tasks.read.managed',
+        'tasks.read.own',
+        'tasks.read.assigned',
+      ],
+    },
+    loadComponent: () =>
+      import('./features/dashboard/my-work-dashboard').then((m) => m.MyWorkDashboard),
+  },
+  {
+    // Reading other people is a management capability; the backend refuses it as well.
+    path: 'dashboard/team',
+    canActivate: [tenantGuard, permissionGuard],
+    data: { anyPermissions: ['tasks.read.tenant', 'tasks.read.managed'] },
+    loadComponent: () => import('./features/dashboard/team-dashboard').then((m) => m.TeamDashboard),
+  },
   {
     path: 'dashboard',
     redirectTo: 'reports',

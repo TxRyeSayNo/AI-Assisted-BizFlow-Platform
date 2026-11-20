@@ -57,6 +57,16 @@ import { TranslatePipe } from '../../core/i18n/translate.pipe';
             }}</a>
           }
           @if (
+            session.hasPermission('tasks.read.tenant') ||
+            session.hasPermission('tasks.read.managed') ||
+            session.hasPermission('tasks.read.own') ||
+            session.hasPermission('tasks.read.assigned')
+          ) {
+            <a routerLink="/dashboard/projects" class="nav-link">{{
+              'projectDashboard.breadcrumb' | translate: 'Dashboard dự án'
+            }}</a>
+          }
+          @if (
             session.hasPermission('reports.manager') ||
             session.hasPermission('reports.company') ||
             session.hasPermission('reports.workload') ||
@@ -354,6 +364,50 @@ import { TranslatePipe } from '../../core/i18n/translate.pipe';
                     'workspace.browseDepartments' | translate: 'Xem cơ cấu tổ chức & phòng ban'
                   }}</a>
                 </p>
+              </div>
+            </article>
+          }
+
+          <!-- 4b. Dashboard dự án theo vai trò (bổ sung, không thay thế Báo cáo) -->
+          @if (
+            (session.hasPermission('tasks.read.tenant') ||
+              session.hasPermission('tasks.read.managed') ||
+              session.hasPermission('tasks.read.own') ||
+              session.hasPermission('tasks.read.assigned')) &&
+            identity()?.tenantId
+          ) {
+            <article class="module-card">
+              <div class="module-icon">📈</div>
+              <h3>{{ 'workspace.cardProjectsTitle' | translate: 'Dashboard dự án & tiến độ' }}</h3>
+              <p>
+                {{
+                  'workspace.cardProjectsDesc'
+                    | translate
+                      : 'Phân loại dự án lớn/nhỏ, ai phụ trách phần việc nào, tiến độ từng phần và phần trăm trách nhiệm của mỗi người.'
+                }}
+              </p>
+              <div class="module-link-wrap">
+                <p>
+                  <a routerLink="/dashboard/projects">{{
+                    'workspace.viewProjectDashboard' | translate: 'Xem dashboard dự án'
+                  }}</a>
+                </p>
+                @if (
+                  session.hasPermission('tasks.read.tenant') ||
+                  session.hasPermission('tasks.read.managed')
+                ) {
+                  <p>
+                    <a routerLink="/dashboard/team">{{
+                      'workspace.viewTeamDashboard' | translate: 'Quản lý cấp dưới của tôi'
+                    }}</a>
+                  </p>
+                } @else {
+                  <p>
+                    <a routerLink="/dashboard/my-work">{{
+                      'workspace.viewMyWork' | translate: 'Bảng công việc của tôi'
+                    }}</a>
+                  </p>
+                }
               </div>
             </article>
           }
