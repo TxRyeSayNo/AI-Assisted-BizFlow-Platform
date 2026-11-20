@@ -1,16 +1,9 @@
-<header class="public-header directory-header">
-  <a class="wordmark" routerLink="/workspace">
-    <span class="brand-mark" aria-hidden="true"></span> BizFlow
-  </a>
-  <span class="tenant-badge">{{ session.identity()?.tenantName }}</span>
-</header>
 <main id="main-content" class="page-content reports-container" tabindex="-1">
   <nav aria-label="Breadcrumb">
-    <a routerLink="/workspace">{{ 'common.workspace' | translate: 'Workspace' }}</a
-    ><span aria-hidden="true"> / </span
-    ><span>{{ 'reports.breadcrumb' | translate: 'Reports' }}</span>
+    <a routerLink="/workspace">{{ 'common.workspace' | translate: 'Không gian làm việc' }}</a>
+    <span aria-hidden="true"> / </span>
+    <span>{{ 'reports.breadcrumb' | translate: 'Báo cáo & Phân tích' }}</span>
   </nav>
-  <span class="eyebrow">{{ 'reports.eyebrow' | translate: 'Executive Intelligence' }}</span>
   <div class="page-header">
     <div class="header-titles">
       <h2>{{ 'reports.title' | translate: 'Dashboard & Reports' }}</h2>
@@ -68,6 +61,7 @@
     <div class="filter-group">
       <mat-form-field
         appearance="outline"
+        subscriptSizing="dynamic"
         class="filter-field"
         *ngIf="activeTab() !== 'sla' && activeTab() !== 'company'"
       >
@@ -82,12 +76,12 @@
         </mat-select>
       </mat-form-field>
 
-      <mat-form-field appearance="outline" class="filter-field">
+      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="filter-field">
         <mat-label>{{ 'reports.fromDate' | translate: 'From Date' }}</mat-label>
         <input matInput type="date" formControlName="from" />
       </mat-form-field>
 
-      <mat-form-field appearance="outline" class="filter-field">
+      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="filter-field">
         <mat-label>{{ 'reports.toDate' | translate: 'To Date' }}</mat-label>
         <input matInput type="date" formControlName="to" />
       </mat-form-field>
@@ -236,7 +230,7 @@
           <div class="kpi-value">{{ comp.taskCompletionRatePercent }}%</div>
           <div class="kpi-sub">
             {{ comp.totalTasksCompleted }} {{ 'common.of' | translate: 'of' }}
-            {{ comp.totalTasksCreated }} tasks
+            {{ comp.totalTasksCreated }} {{ 'reports.unitTasks' | translate: 'tasks' }}
           </div>
         </div>
         <div class="kpi-card accent-blue">
@@ -246,8 +240,10 @@
           <div class="kpi-value">
             {{
               comp.averageTaskCompletionTimeHours !== null
-                ? (comp.averageTaskCompletionTimeHours | number: '1.1-1') + ' hrs'
-                : 'N/A'
+                ? (comp.averageTaskCompletionTimeHours | number: '1.1-1') +
+                  ' ' +
+                  ('reports.unitHours' | translate: 'hrs')
+                : '—'
             }}
           </div>
         </div>
@@ -258,7 +254,7 @@
           <div class="kpi-value">{{ comp.requestResolutionRatePercent }}%</div>
           <div class="kpi-sub">
             {{ comp.totalRequestsClosed }} {{ 'common.of' | translate: 'of' }}
-            {{ comp.totalRequestsSubmitted }} requests
+            {{ comp.totalRequestsSubmitted }} {{ 'reports.unitRequests' | translate: 'requests' }}
           </div>
         </div>
         <div class="kpi-card accent-blue">
@@ -268,8 +264,10 @@
           <div class="kpi-value">
             {{
               comp.averageRequestResolutionTimeHours !== null
-                ? (comp.averageRequestResolutionTimeHours | number: '1.1-1') + ' hrs'
-                : 'N/A'
+                ? (comp.averageRequestResolutionTimeHours | number: '1.1-1') +
+                  ' ' +
+                  ('reports.unitHours' | translate: 'hrs')
+                : '—'
             }}
           </div>
         </div>

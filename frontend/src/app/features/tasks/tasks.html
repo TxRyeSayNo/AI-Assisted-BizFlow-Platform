@@ -5,32 +5,55 @@
   <span class="tenant-badge">{{ identity()?.tenantName }}</span>
 </header>
 <main id="main-content" class="page-content" tabindex="-1">
-  <nav aria-label="Breadcrumb">
-    <a routerLink="/workspace">{{ 'common.workspace' | translate: 'Workspace' }}</a
-    ><span aria-hidden="true"> / </span><span>{{ 'tasks.title' | translate: 'Tasks' }}</span>
-  </nav>
-  <span class="eyebrow">{{ 'tasks.eyebrow' | translate: 'Work management' }}</span>
-  <h1>{{ 'tasks.title' | translate: 'Tasks' }}</h1>
-  <div class="tasks-actions-bar" style="display: flex; gap: 0.5rem; margin-bottom: 1rem">
-    @if (session.hasPermission('tasks.create')) {
-      <a mat-flat-button routerLink="/tasks/new">{{ 'tasks.newTask' | translate: 'New task' }}</a>
-      <a mat-stroked-button color="primary" routerLink="/tasks/ai-decomposition">{{
-        'nav.aiDecomp' | translate: 'AI Decompose'
-      }}</a>
-    }
-    @if (session.hasPermission('records.search')) {
-      <a mat-stroked-button routerLink="/records/search">{{
-        'nav.searchRecords' | translate: 'Search records'
-      }}</a>
-    }
+  <div class="task-page-header">
+    <nav class="compact-breadcrumb" aria-label="Breadcrumb">
+      <a routerLink="/workspace">{{ 'common.workspace' | translate: 'Workspace' }}</a>
+      <span class="sep" aria-hidden="true">/</span>
+      <span class="breadcrumb-current">{{ 'tasks.title' | translate: 'Tasks' }}</span>
+    </nav>
+    <div class="task-header-row">
+      <div class="header-titles">
+        <h1 class="task-header-title">{{ 'tasks.title' | translate: 'Tasks' }}</h1>
+        <p class="task-header-subtitle">
+          {{
+            'tasks.subtitle'
+              | translate
+                : 'Track work, current responsibility and deadlines. Only tasks within your access scope appear here.'
+          }}
+        </p>
+      </div>
+      <div class="task-nav-container" aria-label="Task navigation">
+        @if (session.hasPermission('tasks.create')) {
+          <a
+            class="task-nav-btn primary-nav-btn"
+            routerLink="/tasks/new"
+            [title]="'tasks.newTask' | translate: 'New task'"
+          >
+            <span class="nav-btn-icon" aria-hidden="true">+</span>
+            <span>{{ 'tasks.newTask' | translate: 'New task' }}</span>
+          </a>
+          <a
+            class="task-nav-btn"
+            routerLink="/tasks/ai-decomposition"
+            [title]="'nav.aiDecomp' | translate: 'AI Decompose tasks into subtasks'"
+          >
+            <span class="nav-btn-icon" aria-hidden="true">⚡</span>
+            <span>{{ 'nav.aiDecomp' | translate: 'AI Decompose' }}</span>
+          </a>
+        }
+        @if (session.hasPermission('records.search')) {
+          <a
+            class="task-nav-btn"
+            routerLink="/records/search"
+            [title]="'nav.searchRecords' | translate: 'Search audit records and history'"
+          >
+            <span class="nav-btn-icon" aria-hidden="true">🔍</span>
+            <span>{{ 'nav.searchRecords' | translate: 'Search records' }}</span>
+          </a>
+        }
+      </div>
+    </div>
   </div>
-  <p>
-    {{
-      'tasks.subtitle'
-        | translate
-          : 'Track work, current responsibility and deadlines. Only tasks within your access scope appear here.'
-    }}
-  </p>
   <section aria-label="Task list" class="directory-panel" [attr.aria-busy]="busy()">
     <form [formGroup]="filters" (ngSubmit)="apply()" class="filters">
       <mat-form-field appearance="outline" subscriptSizing="dynamic"
@@ -38,12 +61,7 @@
         ><input matInput formControlName="search" maxlength="200" [readonly]="busy()"
       /></mat-form-field>
       <mat-form-field appearance="outline" subscriptSizing="dynamic"
-        ><mat-label>{{
-          'common.status'
-            | translate
-              : 'Task
-          status'
-        }}</mat-label
+        ><mat-label>{{ 'common.status' | translate: 'Task status' }}</mat-label
         ><mat-select formControlName="status"
           ><mat-option value="">{{ 'common.allStatuses' | translate: 'All statuses' }}</mat-option>
           @for (option of stateOptions; track option[0]) {
@@ -93,73 +111,107 @@
           {{ 'tasks.noTasksMatch' | translate: 'No tasks match your access scope and filters.' }}
         </p>
       } @else {
-        <table>
-          <caption>
-            {{
-              'tasks.tableCaption'
-                | translate: 'Accessible tasks · Newest first · Dates shown in your local time'
-            }}
-          </caption>
-          <thead>
-            <tr>
-              <th scope="col">{{ 'tasks.colTask' | translate: 'Task and responsibility' }}</th>
-              <th scope="col">{{ 'tasks.colStatus' | translate: 'Status and deadline' }}</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (item of data.items; track item.taskId) {
+        <div class="table-scroll">
+          <table>
+            <caption>
+              {{
+                'tasks.tableCaption'
+                  | translate: 'Accessible tasks · Newest first · Dates shown in your local time'
+              }}
+            </caption>
+            <thead>
               <tr>
-                <th scope="row">
-                  <a class="task-title" [routerLink]="['/tasks', item.taskId]">{{ item.title }}</a>
-                  <span class="task-meta"
-                    >{{ 'priority.' + item.priority | translate: priorities[item.priority] }}
-                    {{ 'tasks.prioritySuffix' | translate: 'priority' }} ·
-                    {{
-                      item.requestId
-                        ? ('tasks.linkedToRequest' | translate: 'Linked to a request')
-                        : ('tasks.independentTask' | translate: 'Independent task')
-                    }}</span
-                  >
-                  <span class="task-meta">
-                    @if (item.assignedUserId) {
-                      {{ item.assignedUserName ?? 'Assigned user unavailable' }}
-                    } @else if (item.assignedDepartmentId) {
-                      {{ 'tasks.departmentQueue' | translate: 'Department queue' }}
-                    } @else {
-                      {{ 'tasks.unassigned' | translate: 'Unassigned' }}
-                    }
-                    @if (item.assignedDepartmentId) {
-                      · {{ item.assignedDepartmentName ?? 'Department unavailable' }}
-                    }
-                  </span>
+                <th scope="col">{{ 'tasks.colTask' | translate: 'Nhiệm vụ & Người phụ trách' }}</th>
+                <th scope="col" style="min-width: 230px; white-space: nowrap">Loại nhiệm vụ</th>
+                <th scope="col" style="min-width: 240px; white-space: nowrap">
+                  {{ 'tasks.colStatus' | translate: 'Trạng thái & Thời hạn' }}
                 </th>
-                <td>
-<span
-                    class="status-label"
-                    [attr.data-status]="item.status"
-                    [class.overdue]="item.status === 'OVERDUE'"
-                  >{{
-                    'status.' + item.status | translate: states[item.status]
-                  }}</span>
-                  @if (item.deadline) {
-                    <time class="task-meta" [attr.datetime]="item.deadline">{{
-                      item.deadline | date: 'medium'
-                    }}</time>
-                  } @else {
-                    <span class="task-meta">{{
-                      'tasks.noDeadline' | translate: 'No deadline'
-                    }}</span>
-                  }
-                </td>
               </tr>
-            }
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              @for (item of data.items; track item.taskId) {
+                <tr>
+                  <th scope="row">
+                    <a class="task-title" [routerLink]="['/tasks', item.taskId]">{{
+                      item.title
+                    }}</a>
+                    <span class="task-meta"
+                      >{{
+                        'priorityBadge.' + item.priority
+                          | translate: priorities[item.priority] + ' priority'
+                      }}
+                      ·
+                      {{
+                        item.requestId
+                          ? ('tasks.linkedToRequest' | translate: 'Linked to a request')
+                          : ('tasks.independentTask' | translate: 'Independent task')
+                      }}</span
+                    >
+                    <span class="task-meta">
+                      @if (item.assignedUserId) {
+                        {{
+                          item.assignedUserName ?? ('tasks.unassigned' | translate: 'Unassigned')
+                        }}
+                      } @else if (item.assignedDepartmentId) {
+                        {{ 'tasks.departmentQueue' | translate: 'Department queue' }}
+                      } @else {
+                        {{ 'tasks.unassigned' | translate: 'Unassigned' }}
+                      }
+                      @if (item.assignedDepartmentId) {
+                        · {{ item.assignedDepartmentName ?? 'Chưa có phòng ban' }}
+                      }
+                    </span>
+                  </th>
+                  <td class="td-task-type">
+                    @if (item.subtaskCount && item.subtaskCount > 0) {
+                      <span class="badge-task-parent">
+                        🏢 Nhiệm vụ chính ({{ item.completedSubtaskCount }}/{{ item.subtaskCount }}
+                        việc con)
+                      </span>
+                    } @else if (item.parentTaskId) {
+                      <a
+                        class="badge-task-child"
+                        [routerLink]="['/tasks', item.parentTaskId]"
+                        title="Nhấn để xem nhiệm vụ chính"
+                      >
+                        ↳ Nhiệm vụ con
+                      </a>
+                    } @else {
+                      <span class="badge-task-independent"> ⚪ Nhiệm vụ độc lập </span>
+                    }
+                  </td>
+                  <td>
+                    <span
+                      class="status-label"
+                      [attr.data-status]="item.status"
+                      [class.overdue]="item.status === 'OVERDUE'"
+                      >{{ 'status.' + item.status | translate: states[item.status] }}</span
+                    >
+                    @if (item.deadline) {
+                      <time class="task-meta" [attr.datetime]="item.deadline">{{
+                        item.deadline | date: 'medium'
+                      }}</time>
+                    } @else {
+                      <span class="task-meta">{{
+                        'tasks.noDeadline' | translate: 'No deadline'
+                      }}</span>
+                    }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
       }
       <nav aria-label="Task pages" class="pagination">
         <span role="status"
-          >{{ data.total }} {{ data.total === 1 ? 'task' : 'tasks' }} ·
-          {{ 'common.page' | translate: 'Page' }} {{ data.page }}</span
+          >{{ data.total }}
+          {{
+            data.total === 1
+              ? ('tasks.itemSingular' | translate: 'task')
+              : ('tasks.itemPlural' | translate: 'tasks')
+          }}
+          · {{ 'common.page' | translate: 'Page' }} {{ data.page }}</span
         >
         <button
           mat-stroked-button

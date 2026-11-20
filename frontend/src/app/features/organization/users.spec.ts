@@ -10,7 +10,14 @@ describe('tenant people directory', () => {
       providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
     }),
   );
-  afterEach(() => TestBed.inject(HttpTestingController).verify());
+  afterEach(() => {
+    const http = TestBed.inject(HttpTestingController);
+    http
+      .match((r) => r.url.startsWith('/api/v1/departments'))
+      .filter((r) => !r.cancelled)
+      .forEach((r) => r.flush({ items: [] }));
+    http.verify();
+  });
   const pending = () =>
     TestBed.inject(HttpTestingController).expectOne((r) => r.url === '/api/v1/users');
   const empty = { items: [], total: 0, page: 1, pageSize: 25 };
@@ -52,7 +59,7 @@ describe('tenant people directory', () => {
     expect(fixture.nativeElement.textContent).toContain('<img src=x onerror=alert(1)>');
     expect(fixture.nativeElement.querySelector('img')).toBeNull();
     expect(fixture.nativeElement.textContent).toContain('No department');
-    expect(fixture.nativeElement.textContent).toContain('Locked');
+    expect(fixture.nativeElement.textContent).toMatch(/Tạm khóa|Locked/);
     fixture.componentInstance.load(1);
     pending().flush({ message: 'internal-secret' }, { status: 403, statusText: 'Forbidden' });
     fixture.detectChanges();
@@ -70,7 +77,7 @@ describe('tenant people directory', () => {
     const component = fixture.componentInstance;
     component.load(2);
     const old = pending();
-    component.filters.setValue({ search: ' Employee ', status: 'INACTIVE' });
+    component.filters.patchValue({ search: ' Employee ', status: 'INACTIVE' });
     component.apply();
     expect(old.cancelled).toBe(true);
     const filtered = pending();
@@ -78,7 +85,7 @@ describe('tenant people directory', () => {
     expect(filtered.request.params.get('search')).toBe('Employee');
     expect(filtered.request.params.get('status')).toBe('INACTIVE');
     filtered.flush({ ...empty, total: 30 });
-    component.filters.setValue({ search: 'Unapplied', status: 'LOCKED' });
+    component.filters.patchValue({ search: 'Unapplied', status: 'LOCKED' });
     component.load(2);
     const next = pending();
     expect(next.request.params.get('search')).toBe('Employee');

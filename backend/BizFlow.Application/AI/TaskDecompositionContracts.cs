@@ -25,7 +25,9 @@ public sealed record ConfirmTaskDecompositionItem(
     [Required] string Type, // "SupportRequest" | "Assignment"
     Guid? DepartmentId,
     string? Priority,
-    IReadOnlyList<string>? ChecklistItems);
+    IReadOnlyList<string>? ChecklistItems,
+    string? DepartmentName = null,
+    int? SuggestedDurationDays = null);
 
 public sealed record ConfirmTaskDecompositionCommand(
     [Required] IReadOnlyList<ConfirmTaskDecompositionItem> Items);

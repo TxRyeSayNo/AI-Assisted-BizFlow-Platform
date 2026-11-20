@@ -81,11 +81,12 @@
       </p>
     } @else if (result(); as data) {
       <p class="directory-feedback" role="status">
-        {{ data.unreadCount }} {{ 'notifications.unreadCount' | translate: 'unread' }}
         {{
           data.unreadCount === 1
-            ? ('notifications.notification' | translate: 'notification')
-            : ('notifications.notifications' | translate: 'notifications')
+            ? ('notifications.unreadCountOne' | translate: '1 unread notification')
+            : data.unreadCount +
+              ' ' +
+              ('notifications.unreadCountMany' | translate: 'unread notifications')
         }}
       </p>
       @if (data.items.length === 0) {
@@ -100,47 +101,63 @@
         <ol class="notification-list" aria-label="Notification list">
           @for (row of data.items; track row.notificationId) {
             <li>
-              <article [attr.aria-label]="row.title">
+              <article [attr.aria-label]="displayTitle(row.title)">
                 <span class="status-label">{{
                   row.readAt
                     ? ('notifications.read' | translate: 'Read')
                     : ('notifications.unread' | translate: 'Unread')
                 }}</span>
-                <h2>{{ row.title }}</h2>
+                <h2>{{ displayTitle(row.title) }}</h2>
                 <p class="notification-content">{{ row.content }}</p>
-                <p class="notification-meta">{{ row.type }}</p>
+                <p class="notification-meta">{{ displayType(row.type) }}</p>
                 @if (row.objectType) {
                   <p class="notification-meta">
-                    {{ 'notifications.related' | translate: 'Related:' }} {{ row.objectType }}
-                    @if (row.objectId) {
-                      · {{ row.objectId }}
-                    }
+                    {{ 'notifications.related' | translate: 'Related:' }}
+                    {{ displayObjectType(row.objectType) }}
                   </p>
                 }
-                @if (row.objectType === 'Task' && row.objectId) {
-                  <a mat-stroked-button [routerLink]="['/tasks', row.objectId]">{{
-                    'notifications.openTask' | translate: 'Open task'
-                  }}</a>
-                }
+                <div class="notification-actions">
+                  @if (row.objectType === 'Task' && row.objectId) {
+                    <a
+                      mat-stroked-button
+                      color="primary"
+                      class="action-btn open-btn"
+                      [routerLink]="['/tasks', row.objectId]"
+                    >
+                      {{ 'notifications.openTask' | translate: 'Mở nhiệm vụ' }}
+                    </a>
+                  } @else if (row.objectType === 'Request' && row.objectId) {
+                    <a
+                      mat-stroked-button
+                      color="primary"
+                      class="action-btn open-btn"
+                      [routerLink]="['/requests', row.objectId]"
+                    >
+                      {{ 'notifications.openRequest' | translate: 'Mở yêu cầu' }}
+                    </a>
+                  }
+                  @if (!row.readAt) {
+                    <button
+                      mat-stroked-button
+                      type="button"
+                      class="action-btn mark-read-btn"
+                      [disabled]="reading() !== null"
+                      (click)="markRead(row)"
+                      [attr.aria-label]="'Đánh dấu đã đọc: ' + displayTitle(row.title)"
+                    >
+                      {{
+                        reading() === row.notificationId
+                          ? ('notifications.saving' | translate: 'Đang lưu…')
+                          : ('notifications.markRead' | translate: 'Đánh dấu đã đọc')
+                      }}
+                    </button>
+                  }
+                </div>
                 @if (row.readAt) {
-                  <p class="notification-meta">
-                    {{ 'notifications.read' | translate: 'Read' }}
-                    {{ row.readAt | date: 'yyyy-MM-dd HH:mm:ss' : 'UTC' }} UTC
+                  <p class="notification-meta read-timestamp">
+                    {{ 'notifications.readAt' | translate: 'Đã đọc lúc' }}
+                    {{ row.readAt | date: 'medium' }}
                   </p>
-                } @else {
-                  <button
-                    mat-stroked-button
-                    type="button"
-                    [disabled]="reading() !== null"
-                    (click)="markRead(row)"
-                    [attr.aria-label]="'Mark read: ' + row.title"
-                  >
-                    {{
-                      reading() === row.notificationId
-                        ? ('notifications.saving' | translate: 'Saving…')
-                        : ('notifications.markRead' | translate: 'Mark read')
-                    }}
-                  </button>
                 }
               </article>
             </li>

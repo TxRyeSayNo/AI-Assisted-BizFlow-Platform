@@ -1,15 +1,9 @@
-<header class="public-header directory-header">
-  <a class="wordmark" routerLink="/workspace">
-    <span class="brand-mark" aria-hidden="true"></span> BizFlow
-  </a>
-  <span class="tenant-badge">{{ identity()?.tenantName }}</span>
-</header>
 <main id="main-content" class="page-content" tabindex="-1">
   <nav aria-label="Breadcrumb">
-    <a routerLink="/workspace">{{ 'common.workspace' | translate: 'Workspace' }}</a
-    ><span aria-hidden="true"> / </span><span>{{ 'requests.title' | translate: 'Requests' }}</span>
+    <a routerLink="/workspace">{{ 'common.workspace' | translate: 'Không gian làm việc' }}</a>
+    <span aria-hidden="true"> / </span>
+    <span>{{ 'requests.title' | translate: 'Yêu cầu' }}</span>
   </nav>
-  <span class="eyebrow">{{ 'requests.eyebrow' | translate: 'Service Requests' }}</span>
   <div
     style="
       display: flex;
@@ -17,10 +11,11 @@
       align-items: baseline;
       flex-wrap: wrap;
       gap: 1rem;
+      margin-bottom: 1rem;
     "
   >
-    <h1>{{ 'requests.title' | translate: 'Requests' }}</h1>
-    <div style="display: flex; gap: 0.5rem">
+    <h1>{{ 'requests.title' | translate: 'Yêu cầu' }}</h1>
+    <div style="display: flex; flex-wrap: wrap; gap: 0.75rem">
       @if (session.hasPermission('requests.create')) {
         <a mat-flat-button routerLink="/requests/new">{{
           'requests.newRequest' | translate: 'New request'
@@ -113,58 +108,61 @@
           {{ 'requests.empty' | translate: 'No requests match your access scope and filters.' }}
         </p>
       } @else {
-        <table>
-          <caption>
-            {{
-              'requests.caption'
-                | translate: 'Accessible requests · Newest first · Dates shown in your local time'
-            }}
-          </caption>
-          <thead>
-            <tr>
-              <th scope="col">{{ 'requests.col.request' | translate: 'Request & Service' }}</th>
-              <th scope="col">{{ 'requests.col.requester' | translate: 'Requester' }}</th>
-              <th scope="col">
-                {{ 'requests.col.statusPriority' | translate: 'Status & Priority' }}
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (item of data.items; track item.requestId) {
+        <div class="table-scroll" tabindex="0" role="region" aria-label="Bảng danh sách yêu cầu">
+          <table>
+            <caption>
+              {{
+                'requests.caption'
+                  | translate: 'Accessible requests · Newest first · Dates shown in your local time'
+              }}
+            </caption>
+            <thead>
               <tr>
-                <th scope="row">
-                  <a class="request-title" [routerLink]="['/requests', item.requestId]">{{
-                    item.title
-                  }}</a>
-                  <span class="request-meta">
-                    {{ item.serviceName }} · {{ item.categoryName }}
-                  </span>
+                <th scope="col">{{ 'requests.col.request' | translate: 'Request & Service' }}</th>
+                <th scope="col">{{ 'requests.col.requester' | translate: 'Requester' }}</th>
+                <th scope="col" style="min-width: 220px; white-space: nowrap">
+                  {{ 'requests.col.statusPriority' | translate: 'Trạng thái & Độ ưu tiên' }}
                 </th>
-                <td>
-                  <span>{{ item.requesterName }}</span>
-                  <time class="request-meta" [attr.datetime]="item.createdAt">{{
-                    item.createdAt | date: 'medium'
-                  }}</time>
-                </td>
-                <td>
-<span
-                    class="status-badge"
-                    [attr.data-status]="item.status"
-                    [ngClass]="statusClass(item.status)"
-                  >{{
-                    'reqStatus.' + item.status | translate: getStateName(item.status)
-                  }}</span>
-                  <span class="request-meta">
-                    <span class="priority-indicator" [ngClass]="priorityClass(item.priority)">
-                      {{ 'priority.' + item.priority | translate: getPriorityName(item.priority) }}
-                    </span>
-                    {{ 'tasks.prioritySuffix' | translate: 'priority' }}
-                  </span>
-                </td>
               </tr>
-            }
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              @for (item of data.items; track item.requestId) {
+                <tr>
+                  <th scope="row">
+                    <a class="request-title" [routerLink]="['/requests', item.requestId]">{{
+                      item.title
+                    }}</a>
+                    <span class="request-meta">
+                      {{ item.serviceName }} · {{ item.categoryName }}
+                    </span>
+                  </th>
+                  <td>
+                    <span>{{ item.requesterName }}</span>
+                    <time class="request-meta" [attr.datetime]="item.createdAt">{{
+                      item.createdAt | date: 'medium'
+                    }}</time>
+                  </td>
+                  <td>
+                    <span
+                      class="status-badge"
+                      [attr.data-status]="item.status"
+                      [ngClass]="statusClass(item.status)"
+                      >{{ 'reqStatus.' + item.status | translate: getStateName(item.status) }}</span
+                    >
+                    <span class="request-meta">
+                      <span class="priority-indicator" [ngClass]="priorityClass(item.priority)">
+                        {{
+                          'priorityBadge.' + item.priority
+                            | translate: getPriorityName(item.priority) + ' priority'
+                        }}
+                      </span>
+                    </span>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
         <div
           style="
             display: flex;
@@ -182,7 +180,7 @@
             }}
             {{ 'common.total' | translate: 'total' }})
           </span>
-          <div style="display: flex; gap: 0.5rem">
+          <div style="display: flex; flex-wrap: wrap; gap: 0.75rem">
             <button
               mat-stroked-button
               type="button"

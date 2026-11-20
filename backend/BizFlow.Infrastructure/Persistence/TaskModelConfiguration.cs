@@ -20,11 +20,14 @@ internal sealed class TaskModelConfiguration : IEntityTypeConfiguration<WorkTask
         b.Property(t => t.Priority).HasDefaultValue(TaskPriority.Medium).HasSentinel(TaskPriority.Medium);
         b.Property(t => t.Status).HasDefaultValue(TaskState.Draft);
         b.Property(t => t.SlaVersionId).HasColumnName("SLAVersionId");
+        b.Property(t => t.ParentTaskId).HasColumnName("ParentTaskId");
         b.HasOne<Tenant>().WithMany().HasForeignKey(t => t.TenantId).OnDelete(DeleteBehavior.Restrict);
+        b.HasOne<WorkTask>().WithMany().HasForeignKey(t => t.ParentTaskId).OnDelete(DeleteBehavior.Restrict);
         b.HasOne<UserAccount>().WithMany().HasForeignKey(t => t.CreatorId).OnDelete(DeleteBehavior.Restrict);
         b.HasOne<WorkRequest>().WithMany().HasForeignKey(t => t.RequestId).OnDelete(DeleteBehavior.Restrict);
         b.HasOne<WorkflowVersion>().WithMany().HasForeignKey(t => t.WorkflowVersionId).OnDelete(DeleteBehavior.Restrict);
         b.HasOne<SlaVersion>().WithMany().HasForeignKey(t => t.SlaVersionId).OnDelete(DeleteBehavior.Restrict);
+        b.HasIndex(t => t.ParentTaskId);
         b.HasIndex(t => new { t.TenantId, t.Status, t.Deadline });
         b.HasIndex(t => new { t.TenantId, t.CreatorId, t.CreatedAt });
         b.Property<uint>("Version").IsRowVersion();

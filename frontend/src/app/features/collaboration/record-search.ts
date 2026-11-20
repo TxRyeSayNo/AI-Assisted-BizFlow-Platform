@@ -11,6 +11,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { SessionService } from '../../core/auth/session';
+import { I18nService } from '../../core/i18n/i18n.service';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
 
 export interface RecordSearchResultItem {
@@ -52,17 +53,14 @@ export interface RecordSearchPagedResult {
     TranslatePipe,
   ],
   templateUrl: './record-search.html',
-  styleUrls: [
-    '../organization/departments.scss',
-    '../requests/requests.scss',
-    './record-search.scss',
-  ],
+  styleUrls: ['./record-search.scss'],
 })
 export class RecordSearch implements OnInit {
   private readonly http = inject(HttpClient);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly destroy = inject(DestroyRef);
+  private readonly i18n = inject(I18nService);
   readonly session = inject(SessionService);
 
   readonly busy = signal(false);
@@ -214,7 +212,9 @@ export class RecordSearch implements OnInit {
           this.busy.set(false);
         },
         error: (err) => {
-          this.error.set(err?.error?.message ?? 'Failed to load records.');
+          this.error.set(
+            err?.error?.message ?? this.i18n.t('search.errLoad', 'Failed to load records.'),
+          );
           this.busy.set(false);
         },
       });

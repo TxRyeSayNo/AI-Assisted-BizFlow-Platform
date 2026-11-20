@@ -45,9 +45,42 @@ public sealed class TaskDetailReader(BizFlowDbContext db) : ITaskDetailReader
         async Task<TaskEvidencePage<T>> Page<T>(IQueryable<T> query, int page) => new(
             await query.Skip((page - 1) * pages.PageSize).Take(pages.PageSize).ToArrayAsync(cancellationToken),
             page, pages.PageSize, await query.LongCountAsync(cancellationToken));
-        return new(new(task.Id, task.Title, TaskListCodes.State(task.Status), TaskListCodes.Priority(task.Priority), task.Deadline,
-            task.CreatedAt, task.CreatorId, task.RequestId, assignment?.UserId, userName, assignment?.DepartmentId, departmentName),
+
+        string? parentTitle = null;
+        if (task.ParentTaskId is { } pId)
+        {
+            parentTitle = await db.WorkTasks.Where(t => t.TenantId == scope.TenantId && t.Id == pId).Select(t => t.Title).SingleOrDefaultAsync(cancellationToken);
+        }
+
+        var subtaskCount = await db.WorkTasks.CountAsync(st => st.TenantId == scope.TenantId && st.ParentTaskId == id && st.DeletedAt == null, cancellationToken);
+        var completedSubtaskCount = await db.WorkTasks.CountAsync(st => st.TenantId == scope.TenantId && st.ParentTaskId == id && (st.Status == TaskState.Completed || st.Status == TaskState.Confirmed) && st.DeletedAt == null, cancellationToken);
+
+        var subtaskEntities = await db.WorkTasks.Where(st => st.TenantId == scope.TenantId && st.ParentTaskId == id && st.DeletedAt == null)
+            .OrderBy(st => st.CreatedAt)
+            .Select(st => new
+            {
+                st.Id, st.Title, st.Status, st.Priority, st.Deadline, st.CreatedAt, st.CreatorId, st.RequestId, st.ParentTaskId,
+                Assignment = db.TaskAssignments.Where(a => a.TaskId == st.Id && a.EndedAt == null)
+                    .Select(a => new
+                    {
+                        a.UserId, a.DepartmentId,
+                        UserName = db.Users.Where(u => u.TenantId == scope.TenantId && u.Id == a.UserId).Select(u => u.FullName).FirstOrDefault(),
+                        DepartmentName = db.Departments.Where(d => d.TenantId == scope.TenantId && d.Id == a.DepartmentId).Select(d => d.Name).FirstOrDefault()
+                    }).FirstOrDefault()
+            }).ToListAsync(cancellationToken);
+
+        var subtasks = subtaskEntities.Select(st => new TaskListRow(
+            st.Id, st.Title, TaskListCodes.State(st.Status), TaskListCodes.Priority(st.Priority), st.Deadline,
+            st.CreatedAt, st.CreatorId, st.RequestId, st.Assignment?.UserId, st.Assignment?.UserName,
+            st.Assignment?.DepartmentId, st.Assignment?.DepartmentName, st.ParentTaskId, 0, 0)).ToList();
+
+        var taskRow = new TaskListRow(task.Id, task.Title, TaskListCodes.State(task.Status), TaskListCodes.Priority(task.Priority), task.Deadline,
+            task.CreatedAt, task.CreatorId, task.RequestId, assignment?.UserId, userName, assignment?.DepartmentId, departmentName,
+            task.ParentTaskId, subtaskCount, completedSubtaskCount);
+
+        return new(taskRow,
             task.Description, creator, task.WorkflowVersionId, task.SlaVersionId, task.CompletedAt, task.UpdatedAt,
-            await Page(checklist, pages.ChecklistPage), await Page(reports, pages.ReportPage), await Page(results, pages.ResultPage));
+            await Page(checklist, pages.ChecklistPage), await Page(reports, pages.ReportPage), await Page(results, pages.ResultPage),
+            subtasks, parentTitle);
     }
 }

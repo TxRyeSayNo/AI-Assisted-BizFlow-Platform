@@ -1,0 +1,165 @@
+/* Only the pieces the existing report styles do not already provide. */
+
+.size-section {
+  margin-bottom: 2rem;
+
+  .size-section-head {
+    display: flex;
+    align-items: baseline;
+    gap: 0.65rem;
+    margin-bottom: 0.9rem;
+
+    h3 {
+      margin: 0;
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #0b2a4a;
+      letter-spacing: -0.015em;
+    }
+
+    .size-count {
+      font-size: 0.85rem;
+      color: #64748b;
+      font-weight: 600;
+    }
+  }
+}
+
+.project-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1rem;
+}
+
+.project-card {
+  background: #ffffff;
+  border: 1px solid #d5e3f4;
+  border-radius: 12px;
+  padding: 1.15rem 1.25rem;
+  box-shadow: var(--bf-shadow-card);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  transition:
+    transform 180ms cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 180ms cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 180ms ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--bf-shadow-hover);
+    border-color: #8ec5ff;
+  }
+
+  .project-card-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .project-title {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #071b33;
+    line-height: 1.35;
+
+    a {
+      color: inherit;
+      text-decoration: none;
+
+      &:hover {
+        color: #2563eb;
+        text-decoration: underline;
+      }
+    }
+  }
+
+  .project-owner {
+    margin: 0;
+    font-size: 0.82rem;
+    color: #64748b;
+  }
+
+  .project-stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem 1rem;
+    font-size: 0.82rem;
+    color: #475569;
+
+    strong {
+      color: #071b33;
+    }
+  }
+}
+
+.progress-row {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+
+  .progress-value {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #0b2a4a;
+    min-width: 2.75rem;
+    text-align: right;
+  }
+}
+
+.progress-track {
+  flex: 1;
+  height: 8px;
+  background: #eef4fb;
+  border-radius: 9999px;
+  overflow: hidden;
+
+  .progress-fill {
+    height: 100%;
+    border-radius: 9999px;
+    transition: width 220ms ease;
+
+    &.tone-done {
+      background: #059669;
+    }
+    &.tone-good {
+      background: linear-gradient(90deg, #145da0, #2563eb);
+    }
+    &.tone-mid {
+      background: #d97706;
+    }
+    &.tone-low {
+      background: #94a3b8;
+    }
+  }
+}
+
+.scope-note {
+  background: #eaf4ff;
+  border: 1px solid #bfdbfe;
+  border-left: 4px solid #2563eb;
+  color: #145da0;
+  padding: 0.75rem 1rem;
+  border-radius: 10px;
+  margin-bottom: 1.25rem;
+  font-size: 0.86rem;
+}
+
+.empty-state {
+  background: #ffffff;
+  border: 1px dashed #c7d9ee;
+  border-radius: 12px;
+  padding: 2.25rem 1.5rem;
+  text-align: center;
+  color: #52657c;
+}
+
+.cell-progress {
+  min-width: 11rem;
+}
+
+.self-row {
+  background: #f5f9ff;
+}

@@ -24,6 +24,7 @@ public interface ITaskConfirmationTransaction : IAsyncDisposable
     TaskAssignment? Assignment { get; }
     UserAccount? Actor { get; }
     Task<StoredTaskConfirmation?> FindReplayAsync(CancellationToken cancellationToken);
+    Task<bool> HasIncompleteChildTasksAsync(CancellationToken cancellationToken) => System.Threading.Tasks.Task.FromResult(false);
     Task CommitAsync(Confirmation confirmation, AuditLog audit, Notification notification, CancellationToken cancellationToken);
 }
 
@@ -67,6 +68,12 @@ public sealed class TaskConfirmationCommand(ITenantContext context, IResourceAut
             throw new ApplicationFault(FaultKind.Forbidden, "ACCESS.DENIED", "You no longer have access to review this work.");
         }
         if (!decision.Allowed) throw new ApplicationFault(FaultKind.Conflict, "TASK.TRANSITION_DENIED", "This result cannot be reviewed in its current state or configuration.");
+        if (accept && await transaction.HasIncompleteChildTasksAsync(cancellationToken))
+        {
+            throw new ApplicationFault(FaultKind.Conflict, "TASK.CHILD_TASKS_INCOMPLETE",
+                "All child subtasks must be completed before the main assignment can be confirmed and finalized.");
+        }
+
         var confirmation = accept ? Confirmation.TaskResultConfirmed(task, actorId, note) : Confirmation.TaskResultRejected(task, actorId, note);
         var audit = accept ? AuditLog.TaskResultConfirmed(task, assignment, confirmation, keyHash, keyHash is null ? null : fingerprint)
                             : AuditLog.TaskResultRework(task, assignment, confirmation, keyHash, keyHash is null ? null : fingerprint);

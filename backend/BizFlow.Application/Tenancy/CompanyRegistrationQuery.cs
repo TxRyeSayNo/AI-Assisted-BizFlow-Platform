@@ -17,7 +17,8 @@ public sealed record CompanyRegistrationRow(
     DateTimeOffset CreatedAt,
     string? EvidenceDocumentKey = null,
     string? EvidenceDocumentFileName = null,
-    string? EvidenceDocumentDownloadUrl = null);
+    string? EvidenceDocumentDownloadUrl = null,
+    string? TenantKey = null);
 public sealed record CompanyRegistrationPage(IReadOnlyList<CompanyRegistrationRow> Items, int Page, int PageSize, long Total);
 public interface ICompanyRegistrationReader
 {

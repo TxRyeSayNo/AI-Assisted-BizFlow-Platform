@@ -12,7 +12,7 @@ namespace BizFlow.Application.Tasks;
 public sealed record AssignTaskCommand(string TargetType, Guid TargetId, string? Note = null);
 public sealed record TaskAssignedView(Guid TaskId, Guid AssignmentId, string Status, DateTimeOffset AssignedAt);
 public sealed record StoredTaskAssignment(string Fingerprint, TaskAssignedView Result);
-public sealed record AssignmentTarget(Guid? UserId, Guid? DepartmentId, Guid ScopeDepartmentId, IReadOnlyList<Guid> Recipients);
+public sealed record AssignmentTarget(Guid? UserId, Guid? DepartmentId, Guid ScopeDepartmentId, IReadOnlyList<Guid> Recipients, bool IsTargetManager = false);
 public interface ITaskAssignmentStore
 {
     Task<ITaskAssignmentTransaction> BeginAsync(Guid tenantId, Guid actorId, Guid taskId, string? keyHash, CancellationToken cancellationToken);
@@ -60,6 +60,38 @@ public sealed class TaskAssignmentCommand(ITenantContext context, IResourceAutho
             throw new ApplicationFault(FaultKind.Conflict, "TASK.ASSIGNMENT_CONFLICT", "The current assignment does not match the task state.");
         var access = await snapshots.ResolveAsync(actorId, tenantId, cancellationToken);
         if (access is null || access.UserId != actorId || access.TenantId != tenantId) throw ApplicationFault.NotFound();
+
+        // Hierarchical Business Validation:
+        // Case 1: Company-level main task (task.ParentTaskId == null)
+        if (task.ParentTaskId == null)
+        {
+            var isActorCompanyAdmin = access.Grants.Any(g => g.Code == "roles.configure" && g.Scope == PermissionScope.Tenant);
+            if (isActorCompanyAdmin)
+            {
+                // Company Administrator MUST assign company-level tasks to an accountable Department Manager
+                if (input.TargetType == "USER" && !target.IsTargetManager)
+                {
+                    throw new ApplicationFault(FaultKind.Validation, "TASK.MANAGER_ASSIGNMENT_REQUIRED",
+                        "Company-level tasks must be assigned to an accountable Department Manager, not directly to individual employees.");
+                }
+                if (input.TargetType == "DEPARTMENT" && target.Recipients.Count == 0)
+                {
+                    throw new ApplicationFault(FaultKind.Validation, "TASK.DEPARTMENT_MANAGER_REQUIRED",
+                        "The selected department does not have an active Manager to receive company-level assignments.");
+                }
+            }
+        }
+        else // Case 2: Child task (task.ParentTaskId != null)
+        {
+            // A child task is created and assigned by the Manager to employees within their authorized scope.
+            var isActorManager = access.Grants.Any(g => g.Code == "tasks.read.managed");
+            if (isActorManager && target.ScopeDepartmentId != Guid.Empty && !access.ManagedDepartmentIds.Contains(target.ScopeDepartmentId))
+            {
+                throw new ApplicationFault(FaultKind.Forbidden, "ACCESS.DENIED",
+                    "Managers can only assign child tasks to employees within their authorized department scope.");
+            }
+        }
+
         var now = TaskCreationRules.DatabaseTime(clock.GetUtcNow());
         var decision = workflow.AssignTask(task, access, target.ScopeDepartmentId, true, now);
         if (!decision.Allowed && decision.AccessDenial is { } denial)

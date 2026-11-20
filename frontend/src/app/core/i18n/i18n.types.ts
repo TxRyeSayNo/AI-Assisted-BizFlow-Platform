@@ -1,4 +1,4 @@
-export type LanguageCode = 'en' | 'vi' | 'ja';
+export type LanguageCode = 'vi';
 
 export interface LanguageOption {
   code: LanguageCode;
@@ -9,6 +9,4 @@ export interface LanguageOption {
 
 export const SUPPORTED_LANGUAGES: LanguageOption[] = [
   { code: 'vi', label: 'Tiếng Việt', nativeName: 'Tiếng Việt', flag: '🇻🇳' },
-  { code: 'en', label: 'English', nativeName: 'English', flag: '🇺🇸' },
-  { code: 'ja', label: 'Japanese', nativeName: '日本語', flag: '🇯🇵' },
 ];

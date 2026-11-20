@@ -7,6 +7,8 @@ import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/materia
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { SessionService } from '../../core/auth/session';
+import { I18nService } from '../../core/i18n/i18n.service';
+import { TranslatePipe } from '../../core/i18n/translate.pipe';
 import type { SlaHistoryRow } from './sla-version-history';
 
 export interface SlaTimingData {
@@ -35,6 +37,7 @@ interface CreatedVersion {
     MatDialogModule,
     MatFormFieldModule,
     MatInputModule,
+    TranslatePipe,
   ],
   templateUrl: './sla-timing-editor.html',
   styleUrl: './sla-timing-editor.scss',
@@ -42,6 +45,7 @@ interface CreatedVersion {
 export class SlaTimingEditor {
   readonly data = structuredClone(inject<SlaTimingData>(MAT_DIALOG_DATA));
   readonly session = inject(SessionService);
+  private readonly i18n = inject(I18nService);
   readonly dialog = inject<MatDialogRef<SlaTimingEditor, SlaTimingOutcome>>(MatDialogRef);
   private readonly http = inject(HttpClient);
   private readonly destroy = inject(DestroyRef);
@@ -129,12 +133,24 @@ export class SlaTimingEditor {
           this.terminal.set([401, 403, 404].includes(failure.status));
           this.error.set(
             failure.status === 401 || failure.status === 403
-              ? 'You no longer have permission to configure SLA versions.'
+              ? this.i18n.t(
+                  'sla.errPermVersions',
+                  'You no longer have permission to configure SLA versions.',
+                )
               : failure.status === 404
-                ? 'The profile or calendar is no longer available.'
+                ? this.i18n.t(
+                    'sla.errCalendarGone',
+                    'The profile or calendar is no longer available.',
+                  )
                 : failure.error?.code === 'SLA.INVALID_ESCALATION_TARGET'
-                  ? 'The preserved escalation policy has an inactive or unavailable recipient. Its configuration must be corrected before this version can be saved.'
-                  : 'The version was not saved. Check the timing values and selected calendar or policy before trying again.',
+                  ? this.i18n.t(
+                      'sla.errBadEscalation',
+                      'The preserved escalation policy has an inactive or unavailable recipient. Its configuration must be corrected before this version can be saved.',
+                    )
+                  : this.i18n.t(
+                      'sla.errSaveVersion',
+                      'The version was not saved. Check the timing values and selected calendar or policy before trying again.',
+                    ),
           );
         },
       });
@@ -143,7 +159,10 @@ export class SlaTimingEditor {
     this.uncertain.set(true);
     this.dialog.disableClose = true;
     this.error.set(
-      'The save outcome is unknown. A version may have been created. Review saved history before making another version; this form will not submit again.',
+      this.i18n.t(
+        'sla.errUncertainVersion',
+        'The save outcome is unknown. A version may have been created. Review saved history before making another version; this form will not submit again.',
+      ),
     );
   }
   close() {

@@ -143,4 +143,34 @@
 
 1. **Tuân thủ Nguyên tắc An toàn Tuyệt đối:** Trong suốt đợt cập nhật tài liệu v1.2, **không có bất kỳ tệp mã nguồn nào** thuộc các thư mục `backend/`, `frontend/`, `tests/`, `deploy/` bị chỉnh sửa hay can thiệp.
 2. **Tính Nhất Quán Tuyệt Đối:** Mọi thuật ngữ, mã định danh (`FR-*`, `BR-*`, `UC-*`, `MOD-*`, `INT-*`, `ADR-*`, `TST-*`), đường dẫn file, tham số API và DTO đều đồng nhất 100% giữa RDS, SRS, SSS và các báo cáo Audit.
-3. **Phê duyệt Phát hành:** Bộ tài liệu `v1.2-DRAFT` được phê duyệt làm cơ sở kỹ thuật chính thức và duy nhất cho các đợt phát triển tiếp theo của dự án.
+3. **Phê duyệt Phát hành:** Bộ tài liệu `v1.2-DRAFT` được phê duyệt làm cơ sở kỹ thuật chính thức cho các đợt phát triển tiếp theo của dự án.
+
+---
+
+## 5. Cập Nhật Tiến Độ Thực Tế Đợt v1.3-LIVE (01/11/2026)
+
+Đợt cập nhật ngày **01/11/2026** phản ánh chính xác kết quả đối soát mã nguồn thực tế tại commit `61cca5c` / `97aae18` trên nhánh `develop`:
+1. **Đồng Bộ Hóa Danh Mục Giao Diện (INTERFACE_CATALOG.md):**
+   - Chuyển `INT-002` (Platform Company Registration & Approval Queue) sang trạng thái `IMPLEMENTED` sau khi xác minh `PublicCompanyRegistrationsController.cs` và `CompanyRegistrationsController.cs`.
+   - Chuyển `INT-004` (Organization User & Department Management) sang `IMPLEMENTED` sau khi xác minh `UsersController.cs` (CRUD, status) và `DepartmentsController.cs` (CRUD).
+   - Chuyển `INT-029` (Email-Link Authentication Suite) sang `IMPLEMENTED` sau khi xác minh `EmailLinkAuthenticationController.cs`, `EmailLinkAuthenticationService.cs` và `workspace-selector-dialog.ts`.
+   - Chuyển `INT-030` (Workspace Code Check & Legal Document Inspection) sang `IMPLEMENTED` sau khi xác minh `TenantCodeAndDocumentController.cs` và `PublicCompanyRegistrationsController.cs`.
+   - Chuyển `INT-031` (AI Task Decomposition & Human Confirmation) sang `IMPLEMENTED` sau khi xác minh `AiTaskDecompositionController.cs`, `AiBranchingController.cs`, `AiDocumentSummarizerController.cs`, và `task-decomposition-preview.ts`.
+   - Cập nhật `INT-032` (Deadline Reminder & Multi-channel Dispatcher) sang `PARTIAL` phản ánh đúng việc schema, migration, service, store và dispatcher đã có, đang chờ controller API và timer daemon hoàn tất đăng ký.
+2. **Đồng Bộ Hóa Phân Rã Module (MODULE_CATALOG.md):**
+   - Chuyển `MOD-001` (Auth), `MOD-002` (Tenancy), `MOD-014` (Robot Chatbot & AI Assistance) sang trạng thái `IMPLEMENTED`.
+   - Cập nhật `MOD-015` (Deadline Reminder) và `MOD-BG-001` (Background Worker) sang trạng thái `PARTIAL` (đã có `ProactiveAgentDaemon` chạy nền, đang kết nối deadline timer).
+3. **Cập Nhật Toàn Diện Bảng Phân Tích Khoảng Trống (IMPLEMENTATION_GAP_ANALYSIS.md):**
+   - Nâng tỷ lệ hoàn thành lên **108 / 132 yêu cầu (81.8%)** đạt trạng thái `VERIFIED`.
+   - Cập nhật dữ liệu kiểm thử thực tế: **495 / 495 tests backend đạt 100% Pass** và **270 / 270 tests frontend đạt 100% Pass** qua 45 test files.
+   - Ghi nhận lỗi ngân sách CSS tại `src/app/shared/ai/robot-widget.scss` (23.85 kB so với 16.00 kB) và xây dựng Remediation Backlog tinh gọn.
+4. **Cập Nhật Báo Cáo Tiến Độ và Báo Cáo Kiểm Toán (PROJECT_PROGRESS_AND_CHANGE_IMPACT.md, PROJECT_AUDIT_REPORT.md):**
+   - Thể hiện chính xác quy mô 26 Controllers, 41 DbSets, 37 Migrations, PostgreSQL 18.3, Redis 7.4, MinIO và Enterprise AI platform (Vector memory, Proactive agent, Self-reflection).
+5. **Đồng Bộ Hóa Ma Trận Truy Vết Hai Chiều (REQUIREMENT_TRACEABILITY_MATRIX.md, RDS/SRS/SSS REQUIREMENTS_TRACEABILITY.md, SSS_TRACEABILITY.md):**
+   - Đồng bộ toàn diện trạng thái triển khai 132 yêu cầu SRS, 68 FR, 20 IR, 17 DR, 15 NFR, 12 SEC sang `v1.3-LIVE`.
+   - Xác thực 108 yêu cầu `VERIFIED` (81.8%), 16 yêu cầu `PARTIAL` (12.1%), 6 yêu cầu `NOT_IMPLEMENTED` (4.5%), và 2 yêu cầu `OUT_OF_SCOPE` (1.5%).
+   - Cập nhật bằng chứng mã nguồn chi tiết cho từng nhóm yêu cầu cốt lõi A, B, C, D, E.
+6. **Cập Nhật Báo Cáo Khoảng Trống Còn Lại & Đường Cơ Sở (REMAINING_GAPS.md, CURRENT_IMPLEMENTATION_BASELINE.md):**
+   - Phân loại rõ ràng GAP-01 đến GAP-05 trong Remediation Backlog.
+   - Bổ sung số liệu thực tế 270/270 Frontend Vitest tests PASS và 41 DbSets vào tài liệu đường cơ sở triển khai hiện tại.
+   - Hướng dẫn chi tiết cấu hình các dịch vụ đám mây thực tế (OpenAI API key, SMTP mail server, VAPID Web Push).

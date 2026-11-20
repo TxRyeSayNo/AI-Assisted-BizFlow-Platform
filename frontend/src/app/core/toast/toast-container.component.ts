@@ -17,20 +17,20 @@ import { TranslatePipe } from '../i18n/translate.pipe';
 
       .toast-viewport {
         position: fixed;
-        top: 1.25rem;
-        right: 1.25rem;
-        z-index: 999999;
+        top: 1.5rem;
+        right: 1.5rem;
+        z-index: 9999999;
         display: flex;
         flex-direction: column;
-        gap: 0.65rem;
-        max-width: 420px;
-        width: calc(100vw - 2.5rem);
+        gap: 0.75rem;
+        width: 400px;
+        max-width: calc(100vw - 2rem);
         pointer-events: none;
       }
 
       @media (max-width: 640px) {
         .toast-viewport {
-          top: 0.85rem;
+          top: 1rem;
           left: 1rem;
           right: 1rem;
           width: auto;
@@ -43,23 +43,27 @@ import { TranslatePipe } from '../i18n/translate.pipe';
         position: relative;
         display: flex;
         align-items: flex-start;
-        gap: 0.75rem;
-        padding: 0.85rem 1rem;
-        background: rgba(255, 255, 255, 0.98);
-        backdrop-filter: blur(16px);
-        -webkit-backdrop-filter: blur(16px);
-        border-radius: 12px;
+        gap: 0.85rem;
+        width: 100% !important;
+        min-width: 0 !important;
+        box-sizing: border-box;
+        padding: 0.95rem 1.15rem;
+        background: #ffffff !important;
+        border-radius: 12px !important;
         border: 1px solid #e2e8f0;
         box-shadow:
-          0 10px 25px -4px rgba(11, 42, 74, 0.12),
-          0 4px 10px -2px rgba(11, 42, 74, 0.06);
+          0 10px 25px -5px rgba(15, 23, 42, 0.1),
+          0 8px 10px -6px rgba(15, 23, 42, 0.05);
         overflow: hidden;
         animation: toast-slide-in 240ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
         transform-origin: top right;
+        transition:
+          opacity 180ms ease,
+          transform 180ms ease;
       }
 
       .toast-card.leaving {
-        animation: toast-slide-out 200ms ease-in forwards;
+        animation: toast-slide-out 180ms ease-in forwards;
       }
 
       @keyframes toast-slide-in {
@@ -85,26 +89,39 @@ import { TranslatePipe } from '../i18n/translate.pipe';
       }
 
       .toast-type-error {
-        border-left: 4px solid #ef4444;
-        background: #fffafa;
+        border: 1.5px solid #fecaca !important;
+        background: #ffffff !important;
+        box-shadow:
+          0 10px 25px -5px rgba(239, 68, 68, 0.12),
+          0 8px 10px -6px rgba(15, 23, 42, 0.04) !important;
       }
       .toast-type-success {
-        border-left: 4px solid #10b981;
-        background: #f8fefb;
+        border: 1.5px solid #a7f3d0 !important;
+        background: #ffffff !important;
+        box-shadow:
+          0 10px 25px -5px rgba(16, 185, 129, 0.12),
+          0 8px 10px -6px rgba(15, 23, 42, 0.04) !important;
       }
       .toast-type-warning {
-        border-left: 4px solid #f59e0b;
-        background: #fffdf7;
+        border: 1.5px solid #fde68a !important;
+        background: #ffffff !important;
+        box-shadow:
+          0 10px 25px -5px rgba(245, 158, 11, 0.12),
+          0 8px 10px -6px rgba(15, 23, 42, 0.04) !important;
       }
       .toast-type-info {
-        border-left: 4px solid #3b82f6;
-        background: #f7faff;
+        border: 1.5px solid #bfdbfe !important;
+        background: #ffffff !important;
+        box-shadow:
+          0 10px 25px -5px rgba(37, 99, 235, 0.12),
+          0 8px 10px -6px rgba(15, 23, 42, 0.04) !important;
       }
 
       .toast-icon {
         flex-shrink: 0;
-        width: 22px;
-        height: 22px;
+        width: 34px;
+        height: 34px;
+        border-radius: 9px;
         margin-top: 1px;
         display: flex;
         align-items: center;
@@ -112,63 +129,82 @@ import { TranslatePipe } from '../i18n/translate.pipe';
       }
 
       .toast-icon svg {
-        width: 20px;
-        height: 20px;
+        width: 18px;
+        height: 18px;
+        pointer-events: none;
       }
 
       .toast-type-error .toast-icon {
+        background: #fee2e2;
         color: #ef4444;
       }
       .toast-type-success .toast-icon {
-        color: #10b981;
+        background: #d1fae5;
+        color: #059669;
       }
       .toast-type-warning .toast-icon {
-        color: #f59e0b;
+        background: #fef3c7;
+        color: #d97706;
       }
       .toast-type-info .toast-icon {
-        color: #3b82f6;
+        background: #dbeafe;
+        color: #2563eb;
       }
 
       .toast-content {
-        flex: 1;
+        flex: 1 1 auto;
         min-width: 0;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 0.2rem;
+        white-space: normal !important;
+        word-break: break-word !important;
+        overflow-wrap: break-word;
       }
 
       .toast-header {
-        font-size: 0.78rem;
+        font-size: 0.875rem;
         font-weight: 700;
-        letter-spacing: 0.03em;
-        text-transform: uppercase;
-        margin-bottom: 0.2rem;
+        letter-spacing: -0.01em;
+        margin-bottom: 0;
+        white-space: normal !important;
+        word-break: break-word !important;
       }
 
       .toast-type-error .toast-header {
-        color: #b91c1c;
+        color: #991b1b;
       }
       .toast-type-success .toast-header {
-        color: #047857;
+        color: #065f46;
       }
       .toast-type-warning .toast-header {
-        color: #b45309;
+        color: #92400e;
       }
       .toast-type-info .toast-header {
-        color: #1d4ed8;
+        color: #1e40af;
       }
 
       .toast-message {
-        font-size: 0.88rem;
-        line-height: 1.4;
-        color: #1e293b;
-        word-break: break-word;
+        font-size: 0.8125rem;
+        line-height: 1.45;
+        color: #475569;
+        white-space: normal !important;
+        word-break: break-word !important;
       }
 
       .toast-close-btn {
         flex-shrink: 0;
+        position: relative;
+        z-index: 20;
         background: transparent;
         border: none;
         color: #94a3b8;
-        cursor: pointer;
-        padding: 2px 4px;
+        cursor: pointer !important;
+        pointer-events: auto !important;
+        padding: 5px;
+        min-width: 28px;
+        min-height: 28px;
         border-radius: 6px;
         display: flex;
         align-items: center;
@@ -176,6 +212,10 @@ import { TranslatePipe } from '../i18n/translate.pipe';
         transition:
           background-color 140ms ease,
           color 140ms ease;
+      }
+
+      .toast-close-btn svg {
+        pointer-events: none;
       }
 
       .toast-close-btn:hover {
@@ -188,8 +228,10 @@ import { TranslatePipe } from '../i18n/translate.pipe';
         bottom: 0;
         left: 0;
         right: 0;
-        height: 2.5px;
-        background: rgba(0, 0, 0, 0.05);
+        height: 3.5px;
+        background: rgba(0, 0, 0, 0.04);
+        border-radius: 0 0 14px 14px;
+        overflow: hidden;
       }
 
       .toast-progress-bar {
@@ -200,16 +242,16 @@ import { TranslatePipe } from '../i18n/translate.pipe';
       }
 
       .toast-type-error .toast-progress-bar {
-        background: #ef4444;
+        background: linear-gradient(90deg, #ef4444, #f87171);
       }
       .toast-type-success .toast-progress-bar {
-        background: #10b981;
+        background: linear-gradient(90deg, #10b981, #34d399);
       }
       .toast-type-warning .toast-progress-bar {
-        background: #f59e0b;
+        background: linear-gradient(90deg, #f59e0b, #fbbf24);
       }
       .toast-type-info .toast-progress-bar {
-        background: #3b82f6;
+        background: linear-gradient(90deg, #3b82f6, #60a5fa);
       }
 
       @keyframes progress-drain {
@@ -277,8 +319,8 @@ import { TranslatePipe } from '../i18n/translate.pipe';
           <button
             type="button"
             class="toast-close-btn"
-            [attr.aria-label]="'toast.close' | translate: 'Close'"
-            (click)="toastService.dismiss(toast.id)"
+            [attr.aria-label]="'toast.close' | translate: 'Đóng thông báo'"
+            (click)="$event.stopPropagation(); toastService.dismiss(toast.id)"
           >
             <svg
               viewBox="0 0 24 24"
@@ -296,10 +338,7 @@ import { TranslatePipe } from '../i18n/translate.pipe';
           <!-- Auto-drain progress indicator -->
           @if (toast.duration > 0) {
             <div class="toast-progress" aria-hidden="true">
-              <div
-                class="toast-progress-bar"
-                [style.animationDuration.ms]="toast.duration"
-              ></div>
+              <div class="toast-progress-bar" [style.animationDuration.ms]="toast.duration"></div>
             </div>
           }
         </div>
@@ -325,4 +364,3 @@ export class ToastContainerComponent {
     }
   }
 }
-

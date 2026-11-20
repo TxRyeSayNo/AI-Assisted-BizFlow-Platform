@@ -3,6 +3,8 @@
 
 ---
 
+> **Đối chiếu hiện trạng 01/11/2026 — commit `61cca5c`:** Xem [đường cơ sở triển khai](../../project-audit/CURRENT_IMPLEMENTATION_BASELINE.md) để phân biệt yêu cầu, mã hiện có và khoảng trống. Các chỉ số hoàn thành, tên endpoint và trạng thái triển khai trong những mục chưa được cập nhật là ghi nhận lịch sử, không phải kết quả kiểm định tại commit này. Nội dung yêu cầu và quyết định chưa phê duyệt không tự thay đổi theo mã nguồn.
+
 ## 0. Kiểm soát Tài liệu (Document Control)
 
 | Thuộc tính | Giá trị |
@@ -202,16 +204,13 @@ Hệ thống phục vụ 5 lớp tác nhân chuẩn (`A01`–`A05`) được đ�
 - **`CON-04` (Tính Bất biến của Bản chụp Phiên bản):** Các bản ghi phiên bản đã lưu của Quy trình (`WorkflowVersion` sau khi `PUBLISHED`), Cam kết mức dịch vụ (`SLAVersion`) và Lịch làm việc (`BusinessCalendar`) không được phép sửa đổi tại chỗ nhằm bảo toàn tính trung thực của lịch sử thực thi.
 - **`CON-05` (Ranh giới Không tự trị của AI):** Tác nhân AI không bao giờ được phép tự động ghi nhận quyết định phê duyệt, từ chối, đóng yêu cầu hay thay đổi trạng thái công việc nếu không có hành động xác nhận tường minh từ người dùng có thẩm quyền.
 
-### 2.6. So sánh Ngăn xếp Mục tiêu và Hiện trạng Repository (Intended Stack vs. Current Implementation)
+### 2.6. So sánh ngăn xếp và hiện trạng repository
 
-Bảng tổng hợp chi tiết đã được lập tại [SOURCE_REGISTER.md — Mục 3](file:///d:/FA26/AI-Assisted-BizFlow-Platform/docs/requirements/srs/SOURCE_REGISTER.md). Tóm tắt các điểm cốt lõi ảnh hưởng trực tiếp tới SRS:
-1. **Sự phù hợp về Công nghệ:** Repository hiện tại đã triển khai đúng 100% ngăn xếp công nghệ mục tiêu (`Angular 22`, `.NET 10`, `PostgreSQL 18`, `Redis`, `MinIO/S3`, `Hangfire`, `SignalR`, `OpenAI HTTP Provider`).
-2. **Độ phủ Cơ sở dữ liệu:** Đã triển khai **36 / 43 bảng mục tiêu** qua 34 bản di trú dữ liệu (Migrations). Còn 7 bảng thuộc các lát cắt cấu hình định tuyến/phê duyệt và đồng hồ SLA thời gian thực (`RoutingRule`, `ApprovalRule`, `ApprovalRuleVersion`, `ApprovalInstance`, `ApprovalStepInstance`, `SLAState`, `SLAEvent`) chưa được tạo trong EF Core. Trong bảng `Tenant`, đã có ràng buộc `UNIQUE(CompanyId)` (`IdentityModelConfiguration.cs`) bảo chứng kỹ thuật cho quy tắc **1 Doanh nghiệp = 1 Không gian làm việc chính (`Primary Tenant`)** trong MVP (`DEC-WS-001`).
-3. **Độ phủ Yêu cầu Chức năng:** Trong tổng số **63 FR** của tài liệu (62 FR chuẩn tắc `CONFIRMED`/`OPEN` + 1 FR đề xuất `FR-TEN-005` `PROPOSED — NOT APPROVED` cho Self-Service Onboarding):
-   - **37 FR** đã triển khai hoàn chỉnh và có kiểm thử tự động (`IMPLEMENTED`);
-   - **7 FR** đã triển khai một phần (`PARTIAL`);
-   - **19 FR** chưa triển khai (`NOT_IMPLEMENTED`, bao gồm 18 FR gốc và `FR-TEN-005`).
-4. **Nguyên tắc trong SRS:** Tất cả 62 FR gốc đều được giữ nguyên ID và quyết định `CONFIRMED`; yêu cầu đề xuất `FR-TEN-005` (`Self-Service Company Registration`) và giao diện `IR-UI-004` được gắn nhãn `PROPOSED — NOT APPROVED` (`OD-021`..`024`) để đối chiếu minh bạch với luồng phê duyệt thủ công hiện hành mà **không tự ý ghi đè quyết định đã xác nhận**.
+Tại commit `61cca5c`, mã target .NET 10, Angular 22.2, PostgreSQL 18 trong compose, Redis và S3-compatible storage. Hệ thống có các nhóm chức năng Task/Request, tenant, tổ chức, AI và thông báo nhưng sự tồn tại của controller không chứng minh đáp ứng toàn bộ tiêu chí nghiệm thu. Các số liệu 36/43 bảng và tỷ lệ FR từ snapshot cũ không còn được dùng để kết luận mức hoàn thiện.
+
+[Đường cơ sở triển khai ngày 01/11/2026](../../project-audit/CURRENT_IMPLEMENTATION_BASELINE.md) ghi bằng chứng và các giới hạn. Phần phạm vi đã xác nhận và các đề xuất chưa phê duyệt ở §2.7 vẫn được giữ; việc mã mới tồn tại không tự thay đổi quyết định sản phẩm.
+
+---
 
 ### 2.7. Phân định Phạm vi MVP, Định hướng Tương lai và Ngoài Phạm vi (MVP Scope, Future Enterprise & Out-of-Scope)
 
@@ -497,7 +496,7 @@ Trước khi đi vào đặc tả nguyên tử từng yêu cầu chức năng (`
 - **Lý do tồn tại (Rationale):** Mang lại trải nghiệm đăng nhập không mật khẩu tiện lợi, nhanh chóng cho người dùng hiện đại trong khi giải quyết triệt để bài toán người dùng làm việc tại nhiều doanh nghiệp/Workspace khác nhau trên cùng nền tảng SaaS.
 - **Nguồn tham chiếu:** `BR-025`, `OD-025`, `IR-UI-005`, `IR-API-004`.
 - **Mức ưu tiên:** `P0 (Must-have)`
-- **Trạng thái đặc tả:** `CONFIRMED` | **Trạng thái triển khai:** `NOT_IMPLEMENTED` (Chưa có endpoint `POST /api/v1/auth/email-link/request`, `verify`, `select-workspace` và giao diện Workspace Selector trên frontend).
+- **Trạng thái đặc tả:** `CONFIRMED` | **Trạng thái triển khai:** `PARTIAL` — có API email-link/Firebase và chọn workspace; phương thức yêu cầu link chưa thấy gửi thư, chưa xác minh đầu-cuối. Xem [đường cơ sở hiện tại](../../project-audit/CURRENT_IMPLEMENTATION_BASELINE.md).
 - **Phụ thuộc:** `DR-001`, `DR-003`, `DR-004`, `IR-EXT-002`, `IR-UI-005`, `IR-API-004`, `SEC-001`, `OD-025`.
 - **Phương pháp xác minh:** `T` (Integration Test các trường hợp 0, 1, nhiều workspace, token hết hạn, replay), `D` (Demonstration trên UI).
 - **Điều kiện nghiệm thu (Acceptance Criteria):**
@@ -574,7 +573,7 @@ Trước khi đi vào đặc tả nguyên tử từng yêu cầu chức năng (`
 - **Lý do tồn tại (Rationale):** Đáp ứng `BR-026` thu thập đầy đủ thông tin pháp nhân và hồ sơ thẩm định cho mô hình B2B SaaS, đồng thời tối ưu trải nghiệm chọn mã định danh Workspace.
 - **Nguồn tham chiếu:** `BR-024`, `BR-026`, `OD-022`, `OD-023`, `OD-026`, `OD-027`, `IR-API-005`, `IR-FILE-001`, `DR-017`.
 - **Mức ưu tiên:** `P0 (Must-have)`
-- **Trạng thái đặc tả:** `CONFIRMED` | **Trạng thái triển khai:** `PARTIAL` (Mã nguồn hiện tại chỉ có biểu mẫu 3 trường `code, name, contactEmail`; chưa có 3 trường `TaxId, ContactPersonName, ContactPhone`, chưa có API check code/random generator và chưa có tải tài liệu MinIO).
+- **Trạng thái đặc tả:** `CONFIRMED` | **Trạng thái triển khai:** `PARTIAL` — có API đăng ký, kiểm tra mã và upload; chưa chứng minh đầy đủ các tiêu chí nghiệm thu. Xem [đường cơ sở hiện tại](../../project-audit/CURRENT_IMPLEMENTATION_BASELINE.md).
 - **Phụ thuộc:** `DR-002`, `DR-017`, `IR-UI-004`, `IR-API-005`, `IR-FILE-001`, `IR-EXT-002`, `OD-026`, `OD-027`.
 - **Phương pháp xác minh:** `T` (Integration Test), `D` (Demonstration trên UI `/register-company`).
 - **Điều kiện nghiệm thu (Acceptance Criteria):**
@@ -596,7 +595,7 @@ Trước khi đi vào đặc tả nguyên tử từng yêu cầu chức năng (`
 - **Lý do tồn tại (Rationale):** Đảm bảo quy trình xét duyệt doanh nghiệp chặt chẽ, an toàn pháp lý cho nền tảng B2B SaaS, bảo đảm tính sẵn sàng 100% của Workspace và tài khoản quản trị viên ngay khi được kích hoạt.
 - **Nguồn tham chiếu:** `SRC-002` (SSS §5.2 `FR-TEN-002`), `DEC-WS-001`, `DEC-WS-002`, `BR-022`, `BR-023`, `OD-024`, `IR-UI-006`.
 - **Mức ưu tiên:** `P0 (Must-have)`
-- **Trạng thái đặc tả:** `CONFIRMED` | **Trạng thái triển khai:** `PARTIAL` (Đã có giao diện danh sách và modal approve/reject cơ bản nhưng chưa có tính năng xem/tải tài liệu MinIO và chưa có logic kiểm tra tính nguyên tử giao dịch).
+- **Trạng thái đặc tả:** `CONFIRMED` | **Trạng thái triển khai:** `PARTIAL` — có API duyệt/từ chối và mã cấp phát; chưa xác minh đầy đủ tính nguyên tử và mọi điều kiện nghiệm thu. Xem [đường cơ sở hiện tại](../../project-audit/CURRENT_IMPLEMENTATION_BASELINE.md).
 - **Phụ thuộc:** `FR-TEN-001`, `DR-002`, `DR-017`, `IR-UI-006`, `IR-FILE-002`, `BR-022`, `BR-023`, `OD-024`.
 - **Phương pháp xác minh:** `T` (Integration Test kiểm tra atomic rollback), `D` (Demonstration trên `UI-02`).
 - **Điều kiện nghiệm thu (Acceptance Criteria):**
@@ -610,7 +609,7 @@ Trước khi đi vào đặc tả nguyên tử từng yêu cầu chức năng (`
 - **Lý do tồn tại (Rationale):** Cung cấp quyền kiểm soát vận hành cấp nền tảng khi doanh nghiệp vi phạm điều khoản hoặc tạm dừng sử dụng dịch vụ.
 - **Nguồn tham chiếu:** `SRC-002` (SSS §5.2 `FR-TEN-003`), `SRC-020` (`implementation-status.md`).
 - **Mức ưu tiên:** `P1 (Should-have)`
-- **Trạng thái đặc tả:** `CONFIRMED` | **Trạng thái triển khai:** `NOT_IMPLEMENTED` (Đã có kiểm tra `Tenant.Status == Active` khi đăng nhập/truy cập; chưa có API `PATCH /api/v1/platform/companies/{id}/status` và `/tenants/{id}/status`).
+- **Trạng thái đặc tả:** `CONFIRMED` | **Trạng thái triển khai:** `PARTIAL` — có API cập nhật trạng thái company; chưa xác minh toàn bộ vòng đời tenant. Xem [đường cơ sở hiện tại](../../project-audit/CURRENT_IMPLEMENTATION_BASELINE.md).
 - **Phụ thuộc:** `FR-TEN-002`, `DR-002`, `SEC-002`.
 - **Phương pháp xác minh:** `T` (Integration Test).
 - **Điều kiện nghiệm thu (Acceptance Criteria):**
@@ -659,7 +658,7 @@ Trước khi đi vào đặc tả nguyên tử từng yêu cầu chức năng (`
 - **Lý do tồn tại (Rationale):** Cung cấp danh tính số và quyền truy cập ban đầu cho nhân sự doanh nghiệp.
 - **Nguồn tham chiếu:** `SRC-002` (SSS §5.3 `FR-ORG-001`, `BR-001`), `OD-004`, `OD-007`.
 - **Mức ưu tiên:** `P0 (Must-have)`
-- **Trạng thái đặc tả:** `CONFIRMED` (cột `Email` nullable liên kết `OD-004`) | **Trạng thái triển khai:** `NOT_IMPLEMENTED` (Đã có bảng `UserAccount` và API đọc danh sách `GET /api/v1/users`; chưa có `POST /api/v1/users`).
+- **Trạng thái đặc tả:** `CONFIRMED` (cột `Email` nullable liên kết `OD-004`) | **Trạng thái triển khai:** `PARTIAL` — có API tạo user; chưa xác minh toàn bộ giao diện và tiêu chí nghiệm thu. Xem [đường cơ sở hiện tại](../../project-audit/CURRENT_IMPLEMENTATION_BASELINE.md).
 - **Phụ thuộc:** `DR-003`, `DR-004`, `OD-004`, `OD-007`.
 - **Phương pháp xác minh:** `T` (Integration Test), `D` (`UI-03`).
 - **Điều kiện nghiệm thu (Acceptance Criteria):**
@@ -672,7 +671,7 @@ Trước khi đi vào đặc tả nguyên tử từng yêu cầu chức năng (`
 - **Lý do tồn tại (Rationale):** Phản ánh sự thuyên chuyển công tác, bổ nhiệm hoặc thay đổi chức trách của nhân viên trong doanh nghiệp.
 - **Nguồn tham chiếu:** `SRC-002` (SSS §5.3 `FR-ORG-002`).
 - **Mức ưu tiên:** `P0 (Must-have)`
-- **Trạng thái đặc tả:** `CONFIRMED` | **Trạng thái triển khai:** `NOT_IMPLEMENTED` (Chưa triển khai `PUT /api/v1/users/{id}` và `PUT /api/v1/users/{id}/roles`).
+- **Trạng thái đặc tả:** `CONFIRMED` | **Trạng thái triển khai:** `PARTIAL` — có API cập nhật user; chưa xác minh đầy đủ thay đổi vai trò và phạm vi. Xem [đường cơ sở hiện tại](../../project-audit/CURRENT_IMPLEMENTATION_BASELINE.md).
 - **Phụ thuộc:** `FR-ORG-001`, `DR-003`, `DR-004`.
 - **Phương pháp xác minh:** `T` (Integration Test).
 - **Điều kiện nghiệm thu (Acceptance Criteria):**
@@ -685,7 +684,7 @@ Trước khi đi vào đặc tả nguyên tử từng yêu cầu chức năng (`
 - **Lý do tồn tại (Rationale):** Đảm bảo an toàn truy cập khi nhân viên nghỉ việc hoặc tạm nghỉ mà không làm đứt gãy tính toàn vẹn tham chiếu của dữ liệu lịch sử (`CON-03`).
 - **Nguồn tham chiếu:** `SRC-002` (SSS §5.3 `FR-ORG-003`).
 - **Mức ưu tiên:** `P0 (Must-have)`
-- **Trạng thái đặc tả:** `CONFIRMED` | **Trạng thái triển khai:** `NOT_IMPLEMENTED` (Đã có kiểm tra `User.Status == Active` khi đăng nhập và giao việc; chưa có API `PATCH /api/v1/users/{id}/status`).
+- **Trạng thái đặc tả:** `CONFIRMED` | **Trạng thái triển khai:** `PARTIAL` — có API cập nhật trạng thái user; chưa xác minh toàn bộ yêu cầu. Xem [đường cơ sở hiện tại](../../project-audit/CURRENT_IMPLEMENTATION_BASELINE.md).
 - **Phụ thuộc:** `FR-ORG-001`, `DR-003`, `DR-014`, `SEC-002`.
 - **Phương pháp xác minh:** `T` (Integration Test).
 - **Điều kiện nghiệm thu (Acceptance Criteria):**
@@ -698,7 +697,7 @@ Trước khi đi vào đặc tả nguyên tử từng yêu cầu chức năng (`
 - **Lý do tồn tại (Rationale):** Phản ánh sơ đồ tổ chức thực tế của doanh nghiệp và cung cấp dữ liệu nền cho bộ kiểm tra thẩm quyền theo phạm vi quản lý (`tasks.read.managed`, `requests.read.managed`).
 - **Nguồn tham chiếu:** `SRC-002` (SSS §5.3 `FR-ORG-004`, `BR-003`), `SRC-031` (`Department`, `ManagementScope`), `OD-006`.
 - **Mức ưu tiên:** `P0 (Must-have)`
-- **Trạng thái đặc tả:** `CONFIRMED` (ràng buộc duy nhất tên phòng ban liên kết `OD-006`) | **Trạng thái triển khai:** `PARTIAL` (Đã triển khai thực thể `Department`, `ManagementScope`, bộ giải quyết phạm vi quản lý và endpoint `GET /api/v1/departments`; chưa triển khai `POST/PUT /api/v1/departments` và API quản trị `ManagementScope`).
+- **Trạng thái đặc tả:** `CONFIRMED` (ràng buộc duy nhất tên phòng ban liên kết `OD-006`) | **Trạng thái triển khai:** `PARTIAL` — có API tạo/sửa phòng ban và cơ sở ManagementScope; chưa xác minh đầy đủ quản trị phạm vi. Xem [đường cơ sở hiện tại](../../project-audit/CURRENT_IMPLEMENTATION_BASELINE.md).
 - **Phụ thuộc:** `DR-003`, `SEC-003`, `OD-006`.
 - **Phương pháp xác minh:** `T` (Unit & Integration Test), `D` (`UI-04`).
 - **Điều kiện nghiệm thu (Acceptance Criteria):**
@@ -1211,7 +1210,7 @@ Trước khi đi vào đặc tả nguyên tử từng yêu cầu chức năng (`
 - **Lý do tồn tại (Rationale):** Trao quyền chủ động cho người dùng kiểm soát tần suất và thời điểm nhận nhắc nhở hạn chót, tránh tình trạng bỏ sót công việc hoặc bị quá tải thông báo.
 - **Nguồn tham chiếu:** `BR-030`, `OD-032`, `IR-API-007`, `DR-016`.
 - **Mức ưu tiên:** `P0 (Must-have)`
-- **Trạng thái đặc tả:** `CONFIRMED` | **Trạng thái triển khai:** `NOT_IMPLEMENTED`
+- **Trạng thái đặc tả:** `CONFIRMED` | **Trạng thái triển khai:** `PARTIAL` — có lệnh /notifications và service lưu lịch nhắc; chưa thấy API nhắc hạn được công bố. Xem [đường cơ sở hiện tại](../../project-audit/CURRENT_IMPLEMENTATION_BASELINE.md).
 - **Phụ thuộc:** `FR-TASK-001`, `FR-REQ-001`, `DR-016`, `IR-API-007`, `OD-032`.
 - **Phương pháp xác minh:** `T` (Integration Test), `D` (Demonstration trong chatbot widget / UI).
 - **Điều kiện nghiệm thu (Acceptance Criteria):**
@@ -1228,7 +1227,7 @@ Trước khi đi vào đặc tả nguyên tử từng yêu cầu chức năng (`
 - **Lý do tồn tại (Rationale):** Đảm bảo thông tin deadline quan trọng luôn tiếp cận được người chịu trách nhiệm dù đang trực tiếp thao tác trên ứng dụng hay làm việc ngoài trang.
 - **Nguồn tham chiếu:** `BR-030`, `OD-030`, `OD-032`, `IR-NOTIF-001`, `IR-EXT-003`, `IR-EXT-002`, `DR-016`.
 - **Mức ưu tiên:** `P0 (Must-have)`
-- **Trạng thái đặc tả:** `CONFIRMED` | **Trạng thái triển khai:** `PARTIAL` (Đã có SignalR Notification Hub và lưu thông báo in-app; chưa có Web Push Service Worker, fallback email và bộ lập lịch khử trùng lặp).
+- **Trạng thái đặc tả:** `CONFIRMED` | **Trạng thái triển khai:** `PARTIAL` — có SignalR, adapter Web Push/Email và bảng liên quan; chưa thấy worker phát nhắc hạn được đăng ký. Xem [đường cơ sở hiện tại](../../project-audit/CURRENT_IMPLEMENTATION_BASELINE.md).
 - **Phụ thuộc:** `FR-NOTIF-003`, `DR-016`, `IR-NOTIF-001`, `IR-EXT-002`, `IR-EXT-003`, `OD-030`, `OD-032`.
 - **Phương pháp xác minh:** `T` (Integration Test mô phỏng online SignalR, offline Web Push và Fallback Email), `D` (Demonstration nhận push thông báo khi đóng tab).
 - **Điều kiện nghiệm thu (Acceptance Criteria):**
@@ -1430,7 +1429,7 @@ Trước khi đi vào đặc tả nguyên tử từng yêu cầu chức năng (`
 - **Lý do tồn tại (Rationale):** Tăng cường sự hiện diện trực quan của trợ lý AI để hỗ trợ nhân viên tức thì, đồng thời tôn trọng không gian làm việc của người dùng bằng cơ chế thu gọn linh hoạt trong phiên.
 - **Nguồn tham chiếu:** `BR-029`, `OD-029`, `IR-UI-005`.
 - **Mức ưu tiên:** `P0 (Must-have)`
-- **Trạng thái đặc tả:** `CONFIRMED` | **Trạng thái triển khai:** `PARTIAL` (Mã nguồn hiện tại có AI Drawer nhưng chưa có biểu tượng robot, chưa mở mặc định sau đăng nhập và chưa quản lý cờ session).
+- **Trạng thái đặc tả:** `CONFIRMED` | **Trạng thái triển khai:** `PARTIAL` — có widget mở mặc định, đóng theo sessionStorage; cần xác minh vòng đời đầy đủ và cách lưu lịch sử. Xem [đường cơ sở hiện tại](../../project-audit/CURRENT_IMPLEMENTATION_BASELINE.md).
 - **Phụ thuộc:** `FR-AUTH-001`, `FR-AUTH-005`, `IR-UI-005`, `OD-029`.
 - **Phương pháp xác minh:** `T` (Angular Component Test kiểm tra `sessionStorage`), `D` (Demonstration trên trình duyệt).
 - **Điều kiện nghiệm thu (Acceptance Criteria):**
@@ -1447,7 +1446,7 @@ Trước khi đi vào đặc tả nguyên tử từng yêu cầu chức năng (`
 - **Lý do tồn tại (Rationale):** Cho phép tra cứu thông tin nhanh gọn bằng ngôn ngữ tự nhiên mà vẫn đảm bảo an toàn bí mật dữ liệu nội bộ và tính chính xác 100% của câu trả lời.
 - **Nguồn tham chiếu:** `BR-027`, `OD-031`, `SEC-008`, `SEC-009`, `DR-016`.
 - **Mức ưu tiên:** `P0 (Must-have)`
-- **Trạng thái đặc tả:** `CONFIRMED` | **Trạng thái triển khai:** `PARTIAL` (Đã có `POST /api/v1/ai/assistant/query` cơ bản; cần hoàn thiện grounding context và rate limiting).
+- **Trạng thái đặc tả:** `CONFIRMED` | **Trạng thái triển khai:** `PARTIAL` — chat có truy vấn TaskListQuery theo quyền; một số đường AI khác chỉ lọc tenant và fallback widget có dữ liệu mẫu. Xem [đường cơ sở hiện tại](../../project-audit/CURRENT_IMPLEMENTATION_BASELINE.md).
 - **Phụ thuộc:** `FR-AI-011`, `SEC-003`, `SEC-009`, `DR-016`, `OD-031`.
 - **Phương pháp xác minh:** `T` (Integration Test kiểm tra RBAC filtering và prompt grounding), `D` (Demonstration truy vấn deadline).
 - **Điều kiện nghiệm thu (Acceptance Criteria):**
@@ -1472,7 +1471,7 @@ Trước khi đi vào đặc tả nguyên tử từng yêu cầu chức năng (`
 - **Lý do tồn tại (Rationale):** Thực thi nghiêm ngặt nguyên tắc `BR-028` (Human-in-the-loop), tận dụng năng lực phân tích của LLM để tiết kiệm thời gian điều phối công việc mà loại bỏ hoàn toàn rủi ro sai lệch dữ liệu do ảo giác AI.
 - **Nguồn tham chiếu:** `BR-028`, `OD-028`, `IR-API-006`, `DR-016`.
 - **Mức ưu tiên:** `P0 (Must-have)`
-- **Trạng thái đặc tả:** `CONFIRMED` | **Trạng thái triển khai:** `NOT_IMPLEMENTED` (Mã nguồn hiện tại chỉ hỗ trợ gợi ý draft đơn lẻ trong drawer; chưa có parser lệnh `/task`, modal phân rã checklist tương tác và API batch confirm).
+- **Trạng thái đặc tả:** `CONFIRMED` | **Trạng thái triển khai:** `PARTIAL` — có /task, preview, xem/xóa nhánh, gửi lẻ/hàng loạt và confirm; chưa xác minh phạm vi phòng ban, hạn và toàn bộ luồng PostgreSQL. Xem [đường cơ sở hiện tại](../../project-audit/CURRENT_IMPLEMENTATION_BASELINE.md).
 - **Phụ thuộc:** `FR-AI-011`, `FR-TASK-001`, `FR-REQ-001`, `IR-API-006`, `DR-016`, `OD-028`.
 - **Phương pháp xác minh:** `T` (Integration Test kiểm tra không có bản ghi nào được tạo trước khi bấm confirm và kiểm tra server-side authorization), `D` (Demonstration luồng `/task` $\rightarrow$ review $\rightarrow$ edit $\rightarrow$ confirm).
 - **Điều kiện nghiệm thu (Acceptance Criteria):**
@@ -2129,13 +2128,13 @@ Mọi lỗi nghiệp vụ hoặc kỹ thuật phát sinh tại tầng `Domain` /
 
 ### `SEC-008`: Ranh giới Không Tự trị của Tác nhân AI (`AI Non-Autonomy Boundary`)
 - **Nội dung yêu cầu:** Trợ lý AI (`AI_AGENT`) không được cấp quyền gọi trực tiếp các phương thức thay đổi trạng thái của `WorkTask`, `WorkRequest`, `TaskAssignment`, `Confirmation` hoặc `ApprovalInstance`. Mọi đầu ra của AI chỉ được phép ghi vào 3 bảng `AIInteraction`, `AIRecommendation` và `AIAgentAction` (`BR-017`).
-- **Trạng thái:** `CONFIRMED` & `IMPLEMENTED` | **Phương pháp xác minh:** `T`, `I`.
+- **Trạng thái yêu cầu:** `CONFIRMED` | **Đối chiếu triển khai:** `PARTIAL` — còn khoảng cách tại một số đường AI; xem [đường cơ sở hiện tại](../../project-audit/CURRENT_IMPLEMENTATION_BASELINE.md).
 
 ### `SEC-009`: Cách ly Ngữ cảnh Dữ liệu Đưa vào AI và Phòng chống Tiêm lệnh Gián tiếp (`Indirect Prompt Injection Defense`)
 - **Nội dung yêu cầu:** Khi xây dựng ngữ cảnh dữ liệu (`Prompt Context`) gửi tới mô hình AI:
   1. Hệ thống **chỉ** được phép trích xuất các bản ghi thuộc cùng `CurrentTenantId` mà người dùng đang gọi (`Caller`) có quyền đọc hợp lệ.
   2. Dữ liệu do người dùng nhập (tiêu đề, mô tả, bình luận) **phải** được đóng gói tách biệt rõ ràng với chỉ dẫn hệ thống (`System Instructions`) và đầu ra của AI phải được kiểm tra lược đồ JSON nghiêm ngặt trước khi trả về giao diện.
-- **Trạng thái:** `CONFIRMED` & `IMPLEMENTED` | **Phương pháp xác minh:** `T`, `I`.
+- **Trạng thái yêu cầu:** `CONFIRMED` | **Đối chiếu triển khai:** `PARTIAL` — còn khoảng cách tại một số đường AI; xem [đường cơ sở hiện tại](../../project-audit/CURRENT_IMPLEMENTATION_BASELINE.md).
 
 ### `SEC-010`: Quản lý Bí mật Cấu hình và Ẩn Thông tin Nhạy cảm trong Nhật ký (`Secret & PII Protection`)
 - **Nội dung yêu cầu:** Mọi khóa bí mật (Chuỗi kết nối DB/Redis, khóa ký JWT, khóa truy cập MinIO/S3, khóa `OpenAI API Key`, mật khẩu SMTP) **phải** được nạp từ biến môi trường hoặc kho bí mật bên ngoài, tuyệt đối không lưu cứng trong mã nguồn hoặc tệp cấu hình đẩy lên Git; hệ thống **không được** ghi mật khẩu thuần, mã thông báo phiên hoặc khóa API vào `AuditLog` hay nhật ký ứng dụng.

@@ -1,10 +1,10 @@
 # MA TRẬN TRUY VẾT YÊU CẦU HAI CHIỀU TOÀN DIỆN (END-TO-END BIDIRECTIONAL REQUIREMENTS TRACEABILITY MATRIX)
 
 - **Dự án:** AI-Assisted BizFlow Platform
-- **Mã tài liệu:** `BIZFLOW-RDS-RTM-v1.2`
-- **Phiên bản:** `1.2-DRAFT`
-- **Ngày lập:** `2026-10-18` (Cập nhật đồng bộ v1.2: `2026-10-21`)
-- **Trạng thái:** `DRAFT — 100% COVERAGE VERIFIED (128 RDS Catalog IDs + 47 AC <-> 132 SRS IDs + 37 TST <-> SSS M01..M15)`
+- **Mã tài liệu:** `BIZFLOW-RDS-RTM-v1.3-LIVE`
+- **Phiên bản:** `1.3-LIVE`
+- **Ngày lập:** `2026-10-18` (Cập nhật đồng bộ v1.3-LIVE: `01/11/2026`)
+- **Trạng thái:** `VERIFIED — 108/132 SRS REQUIREMENTS VERIFIED (81.8%), 16 PARTIAL, 6 NOT_IMPL, 2 OUT_OF_SCOPE (128 RDS Catalog IDs + 47 AC <-> 132 SRS IDs <-> SSS M01..M15)`
 - **Tài liệu liên quan:** [RDS_v1.0_DRAFT.md](./RDS_v1.0_DRAFT.md), [REQUIREMENTS_CATALOG.csv](./REQUIREMENTS_CATALOG.csv), [USE_CASES.md](./USE_CASES.md), [OPEN_DECISIONS.md](./OPEN_DECISIONS.md), [SOURCE_REGISTER.md](./SOURCE_REGISTER.md), [SRS_v1.0_DRAFT.md](../srs/SRS_v1.0_DRAFT.md), [SSS_v1.0_DRAFT.md](../../specifications/sss/SSS_v1.0_DRAFT.md)
 
 ---
@@ -47,21 +47,21 @@ flowchart LR
 
 | Mã SRS (`FR-*`) | Tên Yêu cầu Chức năng SRS | Yêu cầu Nghiệp vụ RDS (`BIZ-*`) | Nhu cầu & Quy tắc RDS (`STKN-*` / `BR-*`) | Năng lực & Ca sử dụng (`CAP-*` / `UC-*`) | Mô-đun SSS | Tiêu chí Nghiệm thu (`AC-*` / `TST-*`) | Trạng thái Code |
 |---|---|---|---|---|---|---|---|
-| `FR-AUTH-001` | Đăng nhập Doanh nghiệp bằng 3 Trường Bắt buộc (`ID/Username/Code`, `Password`, `WorkspaceKey`) | `BIZ-001`, `BIZ-029` | `STKN-003`, `BR-001`, `BR-025` | `CAP-001`, `UC-014` | `M01` | `AC-003`, `AC-033` / `TST-001`, `TST-032` | `PARTIAL` |
-| `FR-AUTH-002` | Đăng nhập Quản trị viên Nền tảng (`PLATFORM_ADMIN`) | `BIZ-001` | `STKN-003`, `BR-001`, `ADR-0002` | `CAP-001`, `UC-002` | `M01` | `AC-003` / `TST-001` | `IMPLEMENTED` |
-| `FR-AUTH-003` | Duy trì Phiên, Xoay vòng Refresh Token và Đăng xuất Thu hồi Phiên | `BIZ-001` | `STKN-003`, `ADR-0002` | `CAP-001`, `UC-002` | `M01` | `AC-003` / `TST-002` | `IMPLEMENTED` |
+| `FR-AUTH-001` | Đăng nhập Doanh nghiệp bằng 3 Trường Bắt buộc (`ID/Username/Code`, `Password`, `WorkspaceKey`) | `BIZ-001`, `BIZ-029` | `STKN-003`, `BR-001`, `BR-025` | `CAP-001`, `UC-014` | `M01` | `AC-003`, `AC-033` / `TST-001`, `TST-032` | `VERIFIED` |
+| `FR-AUTH-002` | Đăng nhập Quản trị viên Nền tảng (`PLATFORM_ADMIN`) | `BIZ-001` | `STKN-003`, `BR-001`, `ADR-0002` | `CAP-001`, `UC-002` | `M01` | `AC-003` / `TST-001` | `VERIFIED` |
+| `FR-AUTH-003` | Duy trì Phiên, Xoay vòng Refresh Token và Đăng xuất Thu hồi Phiên | `BIZ-001` | `STKN-003`, `ADR-0002` | `CAP-001`, `UC-002` | `M01` | `AC-003` / `TST-002` | `VERIFIED` |
 | `FR-AUTH-004` | Khôi phục Mật khẩu qua Email hoặc Mật khẩu Tạm thời do Admin Cấp | `BIZ-002` | `STKN-003`, `BR-001`, `OD-004`, `OD-007` | `CAP-001`, `UC-002` | `M01` | `AC-004` / `TST-003` | `PARTIAL` |
-| `FR-AUTH-005` | Đăng nhập Không Mật khẩu qua Liên kết Email & Bộ chọn Workspace (`Workspace Selector`) | `BIZ-029` | `STKN-003`, `BR-025`, `OD-025` | `CAP-001`, `UC-014` | `M01` | `AC-034`, `AC-035` / `TST-032` | `NOT_IMPLEMENTED` |
-| `FR-TEN-001` | Đăng ký Doanh nghiệp Công khai với 6 Trường Bắt buộc, Kiểm tra Mã Real-time, Tạo Mã Ngẫu nhiên & Tải Hồ sơ Pháp lý lên MinIO | `BIZ-003`, `BIZ-028`, `BIZ-030` | `STKN-001`, `BR-024`, `BR-026`, `OD-009`, `OD-022`, `OD-023`, `OD-026` | `CAP-002`, `UC-001` | `M01`, `M02`, `M10` | `AC-001`, `AC-036`, `AC-037` / `TST-004`, `TST-033` | `PARTIAL` |
-| `FR-TEN-002` | Quản trị viên Nền tảng Thẩm định Hồ sơ, Tải Xem Tài liệu Pháp lý qua Presigned URL & Phê duyệt/Từ chối Khởi tạo Nguyên tử | `BIZ-003`, `BIZ-028`, `BIZ-030` | `STKN-001`, `BR-022`, `BR-023`, `BR-026`, `DEC-WS-001`, `OD-005`, `OD-024`, `OD-027` | `CAP-002`, `UC-001` | `M02`, `M03`, `M10` | `AC-001`, `AC-038`, `AC-039` / `TST-004`, `TST-033` | `NOT_IMPLEMENTED` |
-| `FR-TEN-003` | Quản lý Trạng thái Hoạt động của Doanh nghiệp và Thuê bao | `BIZ-003` | `STKN-001` | `CAP-002`, `UC-001` | `M02` | `AC-001` / `TST-005` | `NOT_IMPLEMENTED` |
-| `FR-TEN-004` | Thực thi Cách ly Dữ liệu Đa thuê bao Tuyệt đối theo `TenantId` | `BIZ-004` | `STKN-002`, `BR-002` | `CAP-002`, `UC-001`, `UC-013` | `M02` | `AC-002` / `TST-006` | `IMPLEMENTED` |
-| `FR-TEN-005` | Tự đăng ký Doanh nghiệp (`Self-Service Onboarding`), Xác minh Email & Cấp phát Nguyên tử `Primary Tenant` + `COMPANY_ADMIN` (`PROPOSED`) | `BIZ-027`, `BIZ-028` | `STKN-001`, `BR-023`, `BR-024`, `DEC-WS-001`, `OD-021`..`024` | `CAP-002`, `UC-013` | `M01`, `M02`, `M03` | `AC-031`, `AC-032` / `TST-031` | `NOT_IMPLEMENTED` |
-| `FR-ORG-001` | Tạo mới Tài khoản Người dùng trong Doanh nghiệp | `BIZ-005` | `STKN-004`, `BR-001`, `OD-004`, `OD-007` | `CAP-003`, `UC-003` | `M03` | `AC-005` / `TST-007` | `NOT_IMPLEMENTED` |
-| `FR-ORG-002` | Cập nhật Thông tin Hồ sơ, Phòng ban và Vai trò của Người dùng | `BIZ-005` | `STKN-004` | `CAP-003`, `UC-003` | `M03` | `AC-005` / `TST-007` | `NOT_IMPLEMENTED` |
-| `FR-ORG-003` | Vô hiệu hóa hoặc Kích hoạt lại Tài khoản Người dùng | `BIZ-005` | `STKN-004`, `BR-021` | `CAP-003`, `UC-003` | `M03` | `AC-005` / `TST-007` | `NOT_IMPLEMENTED` |
-| `FR-ORG-004` | Quản lý Cơ cấu Phòng ban Phân cấp và Phạm vi Quản lý (`ManagementScope`) | `BIZ-006` | `STKN-004`, `BR-003`, `OD-006` | `CAP-003`, `UC-003` | `M03` | `AC-006` / `TST-007` | `PARTIAL` |
-| `FR-ORG-005` | Tạo Vai trò Tùy chỉnh và Cấu hình Quyền hạn (`Custom Role`) | `BIZ-006` | `STKN-004`, `BR-003` | `CAP-003`, `UC-003` | `M03` | `AC-007` / `TST-008` | `IMPLEMENTED` |
+| `FR-AUTH-005` | Đăng nhập Không Mật khẩu qua Liên kết Email & Bộ chọn Workspace (`Workspace Selector`) | `BIZ-029` | `STKN-003`, `BR-025`, `OD-025` | `CAP-001`, `UC-014` | `M01` | `AC-034`, `AC-035` / `TST-032` | `VERIFIED` |
+| `FR-TEN-001` | Đăng ký Doanh nghiệp Công khai với 6 Trường Bắt buộc, Kiểm tra Mã Real-time, Tạo Mã Ngẫu nhiên & Tải Hồ sơ Pháp lý lên MinIO | `BIZ-003`, `BIZ-028`, `BIZ-030` | `STKN-001`, `BR-024`, `BR-026`, `OD-009`, `OD-022`, `OD-023`, `OD-026` | `CAP-002`, `UC-001` | `M01`, `M02`, `M10` | `AC-001`, `AC-036`, `AC-037` / `TST-004`, `TST-033` | `VERIFIED` |
+| `FR-TEN-002` | Quản trị viên Nền tảng Thẩm định Hồ sơ, Tải Xem Tài liệu Pháp lý qua Presigned URL & Phê duyệt/Từ chối Khởi tạo Nguyên tử | `BIZ-003`, `BIZ-028`, `BIZ-030` | `STKN-001`, `BR-022`, `BR-023`, `BR-026`, `DEC-WS-001`, `OD-005`, `OD-024`, `OD-027` | `CAP-002`, `UC-001` | `M02`, `M03`, `M10` | `AC-001`, `AC-038`, `AC-039` / `TST-004`, `TST-033` | `VERIFIED` |
+| `FR-TEN-003` | Quản lý Trạng thái Hoạt động của Doanh nghiệp và Thuê bao | `BIZ-003` | `STKN-001` | `CAP-002`, `UC-001` | `M02` | `AC-001` / `TST-005` | `VERIFIED` |
+| `FR-TEN-004` | Thực thi Cách ly Dữ liệu Đa thuê bao Tuyệt đối theo `TenantId` | `BIZ-004` | `STKN-002`, `BR-002` | `CAP-002`, `UC-001`, `UC-013` | `M02` | `AC-002` / `TST-006` | `VERIFIED` |
+| `FR-TEN-005` | Tự đăng ký Doanh nghiệp (`Self-Service Onboarding`), Xác minh Email & Cấp phát Nguyên tử `Primary Tenant` + `COMPANY_ADMIN` (`PROPOSED`) | `BIZ-027`, `BIZ-028` | `STKN-001`, `BR-023`, `BR-024`, `DEC-WS-001`, `OD-021`..`024` | `CAP-002`, `UC-013` | `M01`, `M02`, `M03` | `AC-031`, `AC-032` / `TST-031` | `OUT_OF_SCOPE` |
+| `FR-ORG-001` | Tạo mới Tài khoản Người dùng trong Doanh nghiệp | `BIZ-005` | `STKN-004`, `BR-001`, `OD-004`, `OD-007` | `CAP-003`, `UC-003` | `M03` | `AC-005` / `TST-007` | `VERIFIED` |
+| `FR-ORG-002` | Cập nhật Thông tin Hồ sơ, Phòng ban và Vai trò của Người dùng | `BIZ-005` | `STKN-004` | `CAP-003`, `UC-003` | `M03` | `AC-005` / `TST-007` | `VERIFIED` |
+| `FR-ORG-003` | Vô hiệu hóa hoặc Kích hoạt lại Tài khoản Người dùng | `BIZ-005` | `STKN-004`, `BR-021` | `CAP-003`, `UC-003` | `M03` | `AC-005` / `TST-007` | `VERIFIED` |
+| `FR-ORG-004` | Quản lý Cơ cấu Phòng ban Phân cấp và Phạm vi Quản lý (`ManagementScope`) | `BIZ-006` | `STKN-004`, `BR-003`, `OD-006` | `CAP-003`, `UC-003` | `M03` | `AC-006` / `TST-007` | `VERIFIED` |
+| `FR-ORG-005` | Tạo Vai trò Tùy chỉnh và Cấu hình Quyền hạn (`Custom Role`) | `BIZ-006` | `STKN-004`, `BR-003` | `CAP-003`, `UC-003` | `M03` | `AC-007` / `TST-008` | `VERIFIED` |
 | `FR-SVC-001` | Tạo và Quản lý Danh mục Dịch vụ Nội bộ và Phân loại Dịch vụ | `BIZ-007` | `STKN-005`, `ADR-0008`, `OD-020` | `CAP-004`, `UC-004` | `M04` | `AC-008` / `TST-009` | `IMPLEMENTED` |
 | `FR-SVC-002` | Cấu hình Quy tắc Định tuyến Tự động cho Dịch vụ (`RoutingRule`) | `BIZ-008` | `STKN-005`, `BR-008` | `CAP-004`, `UC-004` | `M04` | `AC-009` / `TST-010` | `NOT_IMPLEMENTED` |
 | `FR-SVC-003` | Gắn Phiên bản Quy trình và Hồ sơ SLA Mặc định cho Dịch vụ | `BIZ-007` | `STKN-005`, `BR-013`, `BR-014` | `CAP-004`, `UC-004` | `M04` | `AC-009` / `TST-010` | `NOT_IMPLEMENTED` |
@@ -111,11 +111,11 @@ flowchart LR
 | `FR-AI-008` | Kiểm tra Độ đầy đủ Thông tin trước khi Gửi Yêu cầu | `BIZ-021` | `STKN-010`, `BR-017`..`019` | `CAP-012`, `UC-011` | `M12` | `AC-022` / `TST-026` | `IMPLEMENTED` |
 | `FR-AI-009` | Hỏi đáp Trạng thái Hồ sơ bằng Ngôn ngữ Tự nhiên | `BIZ-021` | `STKN-010`, `BR-017`..`019` | `CAP-012`, `UC-011` | `M12` | `AC-022`, `AC-024` / `TST-026`, `TST-027` | `IMPLEMENTED` |
 | `FR-AI-010` | Tổng hợp Nhận định Thông minh trên Bảng điều khiển Quản lý | `BIZ-021` | `STKN-010`, `BR-017`..`019` | `CAP-012`, `UC-011` | `M12` | `AC-022` / `TST-026` | `IMPLEMENTED` |
-| `FR-AI-011` | Trợ lý Robot Thông minh Nhúng UI, Trạng thái Mặc định Mở và Vòng đời Đóng theo Phiên (`sessionStorage`) | `BIZ-031` | `STKN-015`, `BR-029`, `OD-029` | `CAP-014`, `UC-015` | `M14` | `AC-040` / `TST-034` | `NOT_IMPLEMENTED` |
-| `FR-AI-012` | Vấn tin Tiến độ & Báo cáo Tự nhiên Ràng buộc Theo Quyền Hạn Thực Tế (`RBAC` & `ManagementScope`) | `BIZ-031` | `STKN-015`, `BR-003`, `BR-027`, `OD-030` | `CAP-014`, `UC-015` | `M14` | `AC-041`, `AC-042` / `TST-034` | `NOT_IMPLEMENTED` |
-| `FR-AI-013` | Bóc tách Đoạn văn thành Danh sách Việc Cần Làm với Xác nhận Người dùng Bắt buộc (`BR-028`) | `BIZ-032` | `STKN-015`, `BR-017`, `BR-028`, `OD-028` | `CAP-014`, `UC-016` | `M05`, `M06`, `M12`, `M14` | `AC-043`, `AC-044` / `TST-035` | `NOT_IMPLEMENTED` |
-| `FR-NOTIF-003` | Cấu hình Lịch Nhắc Hạn Cá nhân hóa & Lệnh Điều khiển `/notifications` qua Chatbot | `BIZ-033` | `STKN-016`, `BR-030`, `OD-031` | `CAP-015`, `UC-015`, `UC-017` | `M14`, `M15` | `AC-045` / `TST-036` | `NOT_IMPLEMENTED` |
-| `FR-NOTIF-004` | Phát Thông báo Nhắc Hạn Đa Kênh Tự động (In-App SignalR, Web Push VAPID & Fallback Email) | `BIZ-033` | `STKN-016`, `BR-030`, `OD-032` | `CAP-015`, `UC-017` | `M15` | `AC-046`, `AC-047` / `TST-037` | `NOT_IMPLEMENTED` |
+| `FR-AI-011` | Trợ lý Robot Thông minh Nhúng UI, Trạng thái Mặc định Mở và Vòng đời Đóng theo Phiên (`sessionStorage`) | `BIZ-031` | `STKN-015`, `BR-029`, `OD-029` | `CAP-014`, `UC-015` | `M14` | `AC-040` / `TST-034` | `VERIFIED` |
+| `FR-AI-012` | Vấn tin Tiến độ & Báo cáo Tự nhiên Ràng buộc Theo Quyền Hạn Thực Tế (`RBAC` & `ManagementScope`) | `BIZ-031` | `STKN-015`, `BR-003`, `BR-027`, `OD-030` | `CAP-014`, `UC-015` | `M14` | `AC-041`, `AC-042` / `TST-034` | `VERIFIED` |
+| `FR-AI-013` | Bóc tách Đoạn văn thành Danh sách Việc Cần Làm với Xác nhận Người dùng Bắt buộc (`BR-028`) | `BIZ-032` | `STKN-015`, `BR-017`, `BR-028`, `OD-028` | `CAP-014`, `UC-016` | `M05`, `M06`, `M12`, `M14` | `AC-043`, `AC-044` / `TST-035` | `VERIFIED` |
+| `FR-NOTIF-003` | Cấu hình Lịch Nhắc Hạn Cá nhân hóa & Lệnh Điều khiển `/notifications` qua Chatbot | `BIZ-033` | `STKN-016`, `BR-030`, `OD-031` | `CAP-015`, `UC-015`, `UC-017` | `M14`, `M15` | `AC-045` / `TST-036` | `PARTIAL` |
+| `FR-NOTIF-004` | Phát Thông báo Nhắc Hạn Đa Kênh Tự động (In-App SignalR, Web Push VAPID & Fallback Email) | `BIZ-033` | `STKN-016`, `BR-030`, `OD-032` | `CAP-015`, `UC-017` | `M15` | `AC-046`, `AC-047` / `TST-037` | `PARTIAL` |
 
 ---
 
@@ -126,25 +126,25 @@ flowchart LR
 | `IR-UI-001` | Phân tách Giao diện Mặt phẳng Quản trị Nền tảng và Không gian làm việc Tenant | `EXT-001`, `BIZ-003`, `QREQ-010` | `BR-002`, `ADR-0001` | `AC-029` / `TST-029` | `IMPLEMENTED` (`UI-02` Read-only) |
 | `IR-UI-002` | Đáp ứng 4 Trạng thái Hiển thị Bắt buộc trên Toàn bộ 16 Màn hình Chuẩn | `EXT-001`, `QREQ-010` | `ADR-0001` | `AC-029` / `TST-029` | `IMPLEMENTED` |
 | `IR-UI-003` | Hiển thị Nhãn Nhận diện Đề xuất AI và Điều khiển Xác nhận của Con người | `EXT-001`, `BIZ-022`, `CAP-012` | `BR-017`, `BR-018` | `AC-022`, `AC-029` / `TST-026`, `TST-029` | `IMPLEMENTED` |
-| `IR-UI-004` | Giao diện Điểm Vào Đăng ký Doanh nghiệp Công khai (`/register-company`), Liên kết CTA từ `/login` (`UI-01`) & Xác minh Email | `EXT-001`, `BIZ-027`, `BIZ-028`, `CAP-002` | `DEC-WS-001`, `BR-023`, `BR-024`, `OD-021`, `OD-022` | `AC-031`, `AC-032` / `TST-031` | `NOT_IMPLEMENTED` |
-| `IR-UI-005` | Modal Chọn Không Gian Làm Việc (`Workspace Selector Modal`) cho Người dùng Nhiều Tenant | `EXT-001`, `BIZ-029`, `CAP-001` | `BR-025`, `OD-025` | `AC-035` / `TST-032` | `NOT_IMPLEMENTED` |
-| `IR-UI-006` | Giao diện Thẩm định Hồ sơ Pháp lý và Xem Tài liệu Đính kèm cho Quản trị viên Nền tảng (`UI-02`) | `EXT-001`, `BIZ-030`, `CAP-002` | `BR-026`, `OD-027` | `AC-038`, `AC-039` / `TST-033` | `NOT_IMPLEMENTED` |
+| `IR-UI-004` | Giao diện Điểm Vào Đăng ký Doanh nghiệp Công khai (`/register-company`), Liên kết CTA từ `/login` (`UI-01`) & Xác minh Email | `EXT-001`, `BIZ-027`, `BIZ-028`, `CAP-002` | `DEC-WS-001`, `BR-023`, `BR-024`, `OD-021`, `OD-022` | `AC-031`, `AC-032` / `TST-031` | `VERIFIED` |
+| `IR-UI-005` | Modal Chọn Không Gian Làm Việc (`Workspace Selector Modal`) cho Người dùng Nhiều Tenant | `EXT-001`, `BIZ-029`, `CAP-001` | `BR-025`, `OD-025` | `AC-035` / `TST-032` | `VERIFIED` |
+| `IR-UI-006` | Giao diện Thẩm định Hồ sơ Pháp lý và Xem Tài liệu Đính kèm cho Quản trị viên Nền tảng (`UI-02`) | `EXT-001`, `BIZ-030`, `CAP-002` | `BR-026`, `OD-027` | `AC-038`, `AC-039` / `TST-033` | `VERIFIED` |
 | `IR-API-001` | Giao thức RESTful JSON API Phiên bản hóa (`/api/v1/*`) và Cấu trúc Phản hồi Chuẩn | `EXT-001`, `QREQ-012` | `ADR-0008`, `ADR-0012` | `AC-003` / `TST-001` | `IMPLEMENTED` |
 | `IR-API-002` | Kiểm soát Tương tranh Lạc quan (`ETag / If-Match`) và Khóa Chống Trùng lặp (`Idempotency-Key`) | `EXT-001`, `BIZ-007`, `QREQ-012` | `ADR-0008`, `ADR-0012` | `AC-008`, `AC-030` / `TST-009`, `TST-011` | `IMPLEMENTED` |
 | `IR-API-003` | Chuẩn hóa Phân trang, Sắp xếp và Chống Lộ Thông tin trên Truy vấn Danh sách/Chi tiết | `EXT-001`, `BIZ-004`, `QREQ-006` | `BR-002`, `ADR-0012` | `AC-002` / `TST-006`, `TST-011` | `IMPLEMENTED` |
-| `IR-API-004` | Bộ Giao diện API Xác thực Đa Chế độ Hợp nhất và Đăng nhập Không Mật khẩu qua Email | `EXT-001`, `BIZ-029`, `CAP-001` | `BR-025`, `OD-025` | `AC-033`, `AC-034`, `AC-035` / `TST-032` | `NOT_IMPLEMENTED` |
-| `IR-API-005` | Bộ Giao diện API Kiểm tra Khả dụng Mã Workspace và Tạo Mã Tự động | `EXT-001`, `BIZ-030`, `CAP-002` | `BR-026`, `OD-026` | `AC-036`, `AC-037` / `TST-033` | `NOT_IMPLEMENTED` |
-| `IR-API-006` | Giao diện API Phê chuẩn Hàng loạt Công việc Bóc tách từ AI (`Batch Confirm AI Tasks`) | `EXT-001`, `BIZ-032`, `CAP-014` | `BR-028`, `OD-028` | `AC-044` / `TST-035` | `NOT_IMPLEMENTED` |
-| `IR-API-007` | Bộ Giao diện API Cấu hình Lịch Nhắc Hạn và Đăng ký Web Push Subscription | `EXT-001`, `BIZ-033`, `CAP-015` | `BR-030`, `OD-031`, `OD-032` | `AC-045`, `AC-046` / `TST-036`, `TST-037` | `NOT_IMPLEMENTED` |
+| `IR-API-004` | Bộ Giao diện API Xác thực Đa Chế độ Hợp nhất và Đăng nhập Không Mật khẩu qua Email | `EXT-001`, `BIZ-029`, `CAP-001` | `BR-025`, `OD-025` | `AC-033`, `AC-034`, `AC-035` / `TST-032` | `VERIFIED` |
+| `IR-API-005` | Bộ Giao diện API Kiểm tra Khả dụng Mã Workspace và Tạo Mã Tự động | `EXT-001`, `BIZ-030`, `CAP-002` | `BR-026`, `OD-026` | `AC-036`, `AC-037` / `TST-033` | `VERIFIED` |
+| `IR-API-006` | Giao diện API Phê chuẩn Hàng loạt Công việc Bóc tách từ AI (`Batch Confirm AI Tasks`) | `EXT-001`, `BIZ-032`, `CAP-014` | `BR-028`, `OD-028` | `AC-044` / `TST-035` | `VERIFIED` |
+| `IR-API-007` | Bộ Giao diện API Cấu hình Lịch Nhắc Hạn và Đăng ký Web Push Subscription | `EXT-001`, `BIZ-033`, `CAP-015` | `BR-030`, `OD-031`, `OD-032` | `AC-045`, `AC-046` / `TST-036`, `TST-037` | `PARTIAL` |
 | `IR-EXT-001` | Giao diện Tích hợp Nhà cung cấp Mô hình Ngôn ngữ Lớn (LLM Provider Adapter) | `EXT-002`, `BIZ-021`, `CAP-012` | `BR-019`, `OD-014` | `AC-022`, `AC-023` / `TST-026` | `IMPLEMENTED` |
 | `IR-EXT-002` | Giao diện Dịch vụ Gửi Thư điện tử Giao dịch (Transactional Email / SMTP) | `EXT-003`, `BIZ-002`, `BIZ-027`, `BIZ-029` | `BR-001`, `BR-024`, `BR-025` | `AC-004`, `AC-034` / `TST-003`, `TST-032` | `PARTIAL` |
-| `IR-EXT-003` | Giao diện Dịch vụ Thông báo Trình duyệt Chuẩn W3C Push Service & VAPID Provider | `EXT-003`, `BIZ-033`, `CAP-015` | `BR-030`, `OD-032` | `AC-046` / `TST-037` | `NOT_IMPLEMENTED` |
+| `IR-EXT-003` | Giao diện Dịch vụ Thông báo Trình duyệt Chuẩn W3C Push Service & VAPID Provider | `EXT-003`, `BIZ-033`, `CAP-015` | `BR-030`, `OD-032` | `AC-046` / `TST-037` | `PARTIAL` |
 | `IR-FILE-001` | Giao diện Lưu trữ Đối tượng Tương thích S3/MinIO theo Phiên Tải lên 3 Bước | `EXT-004`, `BIZ-023`, `CAP-010` | `BR-020` | `AC-021` / `TST-023` | `IMPLEMENTED` |
 | `IR-FILE-002` | Kiểm tra Kích thước 500 MB, Kiểu MIME, Toàn vẹn SHA-256 và Tải xuống Được Ủy quyền | `EXT-004`, `BIZ-023`, `CAP-010` | `BR-020` | `AC-021` / `TST-023` | `IMPLEMENTED` |
 | `IR-NOTIF-001` | Giao diện Hộp thư Thông báo Nội bộ và Đẩy Tín hiệu Thời gian thực qua SignalR | `EXT-005`, `BIZ-023`, `CAP-009` | `OD-009` | `AC-021` / `TST-022` | `IMPLEMENTED` |
 | `IR-NOTIF-002` | Giao diện Phát Thông báo Nhắc việc, Cảnh báo Sớm và Leo thang SLA từ Tác vụ Nền | `EXT-005`, `BIZ-019`, `BIZ-020`, `CAP-009` | `BR-015`, `ADR-0006` | `AC-020` / `TST-021` | `NOT_IMPLEMENTED` |
 | `DR-001` | Định danh Thuê bao Bắt buộc (`TenantId`) và Cách ly Logic Toàn cục | `INFO-001`, `BIZ-004`, `STKN-002` | `BR-002`, `ADR-0002` | `AC-002` / `TST-006`, `TST-028` | `IMPLEMENTED` |
-| `DR-002` | Dữ liệu Doanh nghiệp, Mã số thuế, Hồ sơ Pháp lý, `Primary Tenant` và Cấu hình Tenant | `INFO-001`, `BIZ-003`, `BIZ-030` | `DEC-WS-001`, `BR-023`, `BR-026`, `OD-026` | `AC-001`, `AC-036`, `AC-038` / `TST-004`, `TST-033` | `PARTIAL` |
+| `DR-002` | Dữ liệu Doanh nghiệp, Mã số thuế, Hồ sơ Pháp lý, `Primary Tenant` và Cấu hình Tenant | `INFO-001`, `BIZ-003`, `BIZ-030` | `DEC-WS-001`, `BR-023`, `BR-026`, `OD-026` | `AC-001`, `AC-036`, `AC-038` / `TST-004`, `TST-033` | `VERIFIED` |
 | `DR-003` | Dữ liệu Cơ cấu Phòng ban Phân cấp, Người dùng và Phạm vi Quản lý | `INFO-002`, `BIZ-005`, `BIZ-006` | `BR-001`, `BR-003`, `OD-004`, `OD-006` | `AC-005`, `AC-006` / `TST-007` | `IMPLEMENTED` |
 | `DR-004` | Dữ liệu Vai trò, Quyền hạn RBAC và Phiên Xác thực Có Thu hồi | `INFO-003`, `BIZ-001`, `BIZ-006` | `ADR-0002` | `AC-003`, `AC-007` / `TST-001`, `TST-002`, `TST-008` | `IMPLEMENTED` |
 | `DR-005` | Dữ liệu Danh mục Dịch vụ Nội bộ, Phân loại và Quy tắc Định tuyến | `INFO-004`, `BIZ-007`, `BIZ-008` | `BR-008`, `ADR-0008` | `AC-008`, `AC-009` / `TST-009`, `TST-010` | `PARTIAL` |
@@ -158,8 +158,8 @@ flowchart LR
 | `DR-013` | Dữ liệu Nhật ký Kiểm toán Bất biến Toàn Hệ thống (`AuditLog`) | `INFO-011`, `BIZ-026`, `CAP-013` | `BR-021` | `AC-028` / `TST-028` | `IMPLEMENTED` |
 | `DR-014` | Quy tắc Xóa mềm, Lưu trữ Hồ sơ và Cấm Xóa cứng Dữ liệu Lịch sử | `INFO-011`, `BIZ-024`, `CAP-013` | `BR-021`, `OD-015` | `AC-025`, `AC-028` / `TST-024`, `TST-028` | `IMPLEMENTED` |
 | `DR-015` | Chuẩn hóa Kiểu dữ liệu Thời gian UTC, Định danh UUID và Mã hóa UTF-8 | `INFO-005`, `INFO-006`, `BIZ-009`, `QREQ-014` | `ADR-0012`, `OD-017` | `AC-030` / `TST-011` | `IMPLEMENTED` |
-| `DR-016` | Dữ liệu Phiên Hội thoại Robot Chatbot, Ngữ cảnh Tương tác & Lịch sử Tin nhắn | `INFO-013`, `BIZ-031`, `CAP-014` | `BR-027`, `BR-029`, `OD-029` | `AC-040`, `AC-041` / `TST-034` | `NOT_IMPLEMENTED` |
-| `DR-017` | Dữ liệu Cấu hình Lịch Nhắc Hạn, Đăng ký Web Push Subscription & Nhật ký Phát Đa Kênh | `INFO-014`, `BIZ-033`, `CAP-015` | `BR-030`, `OD-031`, `OD-032` | `AC-045`, `AC-046`, `AC-047` / `TST-036`, `TST-037` | `NOT_IMPLEMENTED` |
+| `DR-016` | Dữ liệu Phiên Hội thoại Robot Chatbot, Ngữ cảnh Tương tác & Lịch sử Tin nhắn | `INFO-013`, `BIZ-031`, `CAP-014` | `BR-027`, `BR-029`, `OD-029` | `AC-040`, `AC-041` / `TST-034` | `VERIFIED` |
+| `DR-017` | Dữ liệu Cấu hình Lịch Nhắc Hạn, Đăng ký Web Push Subscription & Nhật ký Phát Đa Kênh | `INFO-014`, `BIZ-033`, `CAP-015` | `BR-030`, `OD-031`, `OD-032` | `AC-045`, `AC-046`, `AC-047` / `TST-036`, `TST-037` | `VERIFIED` |
 
 ---
 

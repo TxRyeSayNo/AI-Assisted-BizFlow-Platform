@@ -145,3 +145,29 @@ internal sealed class AiVectorMemoryModelConfiguration : IEntityTypeConfiguratio
         b.HasIndex(m => new { m.TenantId, m.CreatedAt });
     }
 }
+
+internal sealed class AiLearnedChoiceModelConfiguration : IEntityTypeConfiguration<AiLearnedChoice>
+{
+    public void Configure(EntityTypeBuilder<AiLearnedChoice> b)
+    {
+        b.ToTable("AiLearnedChoice");
+
+        b.HasKey(c => c.Id);
+        b.Property(c => c.Id).HasColumnName("ChoiceId");
+        b.Property(c => c.TenantId).IsRequired();
+        b.Property(c => c.UserId);
+        b.Property(c => c.SemanticKey).HasMaxLength(120).IsRequired();
+        b.Property(c => c.ChoiceValue).HasMaxLength(500).IsRequired();
+        b.Property(c => c.ChoiceLabel).HasMaxLength(255).IsRequired();
+        b.Property(c => c.Scope).HasMaxLength(32).IsRequired().HasDefaultValue("PERSONAL");
+        b.Property(c => c.UsageCount).IsRequired().HasDefaultValue(1);
+        b.Property(c => c.LastUsedAt).IsRequired();
+        b.Property(c => c.CreatedAt).IsRequired();
+
+        b.HasOne<Tenant>().WithMany().HasForeignKey(c => c.TenantId).OnDelete(DeleteBehavior.Cascade);
+        b.HasOne<UserAccount>().WithMany().HasForeignKey(c => c.UserId).OnDelete(DeleteBehavior.Cascade);
+
+        b.HasIndex(c => new { c.TenantId, c.UserId, c.SemanticKey });
+        b.HasIndex(c => new { c.TenantId, c.SemanticKey, c.UsageCount });
+    }
+}

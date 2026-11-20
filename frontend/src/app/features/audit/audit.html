@@ -1,22 +1,12 @@
-<header class="public-header directory-header">
-  <a class="wordmark" routerLink="/workspace">
-    <span class="brand-mark" aria-hidden="true"></span> BizFlow
-  </a>
-  <span class="tenant-badge">{{
-    platform
-      ? ('audit.platformAdmin' | translate: 'Platform administration')
-      : session.identity()?.tenantName
-  }}</span>
-</header>
 <main id="main-content" class="page-content" tabindex="-1">
   <nav aria-label="Breadcrumb">
     <a routerLink="/workspace">{{
       platform
-        ? ('audit.platformHome' | translate: 'Platform home')
-        : ('common.workspace' | translate: 'Workspace')
+        ? ('audit.platformHome' | translate: 'Trang chủ Nền tảng')
+        : ('common.workspace' | translate: 'Không gian làm việc')
     }}</a>
-    /
-    <span>{{ 'audit.breadcrumb' | translate: 'Audit' }}</span>
+    <span aria-hidden="true"> / </span>
+    <span>{{ 'audit.breadcrumb' | translate: 'Kiểm toán' }}</span>
   </nav>
   <h1>
     {{
@@ -128,50 +118,50 @@
           {{ 'audit.empty' | translate: 'No audit events match these filters.' }}
         </p>
       } @else {
-        <table>
-          <caption>
-            {{
-              platform ? 'Platform-level' : 'Workspace'
-            }}
-            audit history
-          </caption>
-          <thead>
-            <tr>
-              <th scope="col">{{ 'audit.col.event' | translate: 'Event' }}</th>
-              <th scope="col">{{ 'audit.col.details' | translate: 'Details' }}</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (row of data.items; track row.auditLogId) {
+        <div class="table-scroll">
+          <table>
+            <caption>
+              {{
+                platform
+                  ? ('audit.platformHistoryCaption' | translate: 'Platform-level audit history')
+                  : ('audit.workspaceHistoryCaption' | translate: 'Workspace audit history')
+              }}
+            </caption>
+            <thead>
               <tr>
-                <th scope="row">
-                  {{ row.action
-                  }}<span class="audit-meta"
-                    >{{ row.createdAt | date: 'yyyy-MM-dd HH:mm:ss' : 'UTC' }} UTC ·
-                    {{
-                      'audit.actor.' + row.actorType | translate: actorLabels[row.actorType]
-                    }}</span
-                  ><span class="audit-meta"
-                    >{{ row.objectType ?? ('audit.noObject' | translate: 'No object') }}
-                    @if (row.objectId) {
-                      · {{ row.objectId }}
-                    }
-                  </span>
-                </th>
-                <td>
-                  <button
-                    mat-stroked-button
-                    type="button"
-                    (click)="open(row)"
-                    [attr.aria-label]="'View audit event ' + row.auditLogId"
-                  >
-                    {{ 'audit.view' | translate: 'View' }}
-                  </button>
-                </td>
+                <th scope="col">{{ 'audit.col.event' | translate: 'Event' }}</th>
+                <th scope="col">{{ 'audit.col.details' | translate: 'Details' }}</th>
               </tr>
-            }
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              @for (row of data.items; track row.auditLogId) {
+                <tr>
+                  <th scope="row">
+                    {{ row.action
+                    }}<span class="audit-meta"
+                      >{{ row.createdAt | date: 'medium' }} ·
+                      {{
+                        'audit.actor.' + row.actorType | translate: actorLabels[row.actorType]
+                      }}</span
+                    ><span class="audit-meta"
+                      >{{ row.objectType ?? ('audit.noObject' | translate: 'No object') }}
+                    </span>
+                  </th>
+                  <td>
+                    <button
+                      mat-stroked-button
+                      type="button"
+                      (click)="open(row)"
+                      [attr.aria-label]="('audit.view' | translate: 'View') + ' ' + row.action"
+                    >
+                      {{ 'audit.view' | translate: 'View' }}
+                    </button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
       }
       <nav class="pagination" aria-label="Audit pages">
         <span role="status"

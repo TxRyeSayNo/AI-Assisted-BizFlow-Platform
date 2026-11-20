@@ -17,39 +17,17 @@ describe('I18nService & TranslatePipe', () => {
     localStorage.clear();
   });
 
-  it('supports en, vi, and ja languages', () => {
+  it('supports pure Vietnamese (vi) language', () => {
     const codes = service.supportedLanguages.map((l) => l.code);
-    expect(codes).toContain('vi');
-    expect(codes).toContain('en');
-    expect(codes).toContain('ja');
-  });
-
-  it('allows switching languages and updates signal', () => {
-    service.setLanguage('en');
-    expect(service.currentLanguage()).toBe('en');
-    expect(service.currentLanguageOption().label).toBe('English');
-
-    service.setLanguage('ja');
-    expect(service.currentLanguage()).toBe('ja');
-    expect(service.currentLanguageOption().label).toBe('Japanese');
-
-    service.setLanguage('vi');
+    expect(codes).toEqual(['vi']);
     expect(service.currentLanguage()).toBe('vi');
     expect(service.currentLanguageOption().label).toBe('Tiếng Việt');
   });
 
-  it('translates keys across languages accurately', () => {
-    service.setLanguage('en');
-    expect(service.t('nav.tasks')).toBe('Tasks');
-    expect(service.t('auth.signIn')).toBe('Sign in');
-
+  it('translates keys accurately in Vietnamese', () => {
     service.setLanguage('vi');
-    expect(service.t('nav.tasks')).toBe('Nhiệm vụ & Công việc');
+    expect(service.t('nav.tasks')).toBe('Nhiệm vụ');
     expect(service.t('auth.signIn')).toBe('Đăng nhập');
-
-    service.setLanguage('ja');
-    expect(service.t('nav.tasks')).toBe('タスク一覧');
-    expect(service.t('auth.signIn')).toBe('サインイン');
   });
 
   it('TranslatePipe transforms keys using I18nService', () => {
@@ -57,12 +35,6 @@ describe('I18nService & TranslatePipe', () => {
       const pipe = new TranslatePipe();
       service.setLanguage('vi');
       expect(pipe.transform('common.search')).toBe('Tìm kiếm');
-
-      service.setLanguage('en');
-      expect(pipe.transform('common.search')).toBe('Search');
-
-      service.setLanguage('ja');
-      expect(pipe.transform('common.search')).toBe('検索');
     });
   });
 
@@ -70,7 +42,7 @@ describe('I18nService & TranslatePipe', () => {
     expect(service.t('unknown.key.random', 'Fallback Text')).toBe('Fallback Text');
   });
 
-  it('covers all feature modules across vi, en, and ja', () => {
+  it('covers all feature modules in Vietnamese', () => {
     const moduleKeys = [
       'tasks.title',
       'taskCreate.title',
@@ -98,13 +70,11 @@ describe('I18nService & TranslatePipe', () => {
       'ai.drawerTitle',
     ];
 
-    for (const lang of ['vi', 'en', 'ja'] as const) {
-      service.setLanguage(lang);
-      for (const key of moduleKeys) {
-        const translated = service.t(key, '__MISSING__');
-        expect(translated).not.toBe('__MISSING__');
-        expect(translated.length).toBeGreaterThan(0);
-      }
+    service.setLanguage('vi');
+    for (const key of moduleKeys) {
+      const translated = service.t(key, '__MISSING__');
+      expect(translated).not.toBe('__MISSING__');
+      expect(translated.length).toBeGreaterThan(0);
     }
   });
 });

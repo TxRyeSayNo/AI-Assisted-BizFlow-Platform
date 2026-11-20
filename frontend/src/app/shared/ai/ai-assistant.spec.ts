@@ -14,12 +14,7 @@ describe('AiAssistantComponent - Master AI Test Suite', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [AiAssistantComponent],
-      providers: [
-        provideHttpClient(),
-        provideHttpClientTesting(),
-        provideRouter([]),
-        I18nService,
-      ],
+      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([]), I18nService],
     }).compileComponents();
 
     fixture = TestBed.createComponent(AiAssistantComponent);
@@ -115,7 +110,8 @@ describe('AiAssistantComponent - Master AI Test Suite', () => {
     req.flush({
       isMultiIntent: true,
       confidence: 0.92,
-      rationale: 'Phát hiện 2 nhu cầu riêng biệt thuộc 2 phòng ban: Hạ tầng IT và Mua sắm bản quyền.',
+      rationale:
+        'Phát hiện 2 nhu cầu riêng biệt thuộc 2 phòng ban: Hạ tầng IT và Mua sắm bản quyền.',
       intents: [
         {
           intentIndex: 1,
@@ -236,7 +232,8 @@ describe('AiAssistantComponent - Master AI Test Suite', () => {
   it('summarizes document, extracts action items, and spawns DRAFT tasks into system', () => {
     component.isOpen = true;
     component.setMode('summarizer');
-    component.promptText = 'Biên bản cuộc họp ban giám đốc: Cần hoàn thành audit bảo mật và nghiệm thu API.';
+    component.promptText =
+      'Biên bản cuộc họp ban giám đốc: Cần hoàn thành audit bảo mật và nghiệm thu API.';
 
     component.generate();
 
@@ -246,7 +243,8 @@ describe('AiAssistantComponent - Master AI Test Suite', () => {
       sourceTitle: 'Biên bản cuộc họp ban giám đốc',
       sourceType: 'DirectText',
       mode: 'COMPREHENSIVE',
-      executiveSummary: 'Ban giám đốc chỉ đạo 2 đầu việc trọng yếu trước ngày phát hành chính thức.',
+      executiveSummary:
+        'Ban giám đốc chỉ đạo 2 đầu việc trọng yếu trước ngày phát hành chính thức.',
       keyPoints: ['Bảo mật hạ tầng', 'Hoàn tất nghiệm thu'],
       risksAndCompliance: ['Nguy cơ chậm tiến độ ra mắt'],
       wordCount: 120,
@@ -302,7 +300,12 @@ describe('AiAssistantComponent - Master AI Test Suite', () => {
     taskSpawnReq.flush({
       totalCreated: 2,
       createdTasks: [
-        { taskId: 'task-1', title: 'Audit bảo mật hệ thống', priority: 'CRITICAL', status: 'DRAFT' },
+        {
+          taskId: 'task-1',
+          title: 'Audit bảo mật hệ thống',
+          priority: 'CRITICAL',
+          status: 'DRAFT',
+        },
         { taskId: 'task-2', title: 'Nghiệm thu API đối tác', priority: 'HIGH', status: 'DRAFT' },
       ],
       createdAt: '2026-10-31T00:00:00Z',

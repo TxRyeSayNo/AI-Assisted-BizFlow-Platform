@@ -13,9 +13,19 @@ export const authInterceptor: HttpInterceptorFn = (request, next) => {
   const router = inject(Router);
   const token = session.accessToken();
   if (!token) return next(request);
+
   const generation = session.sessionGeneration();
   const authenticated = (accessToken: string) =>
     request.clone({ setHeaders: { Authorization: `Bearer ${accessToken}` } });
+
+  // Dev tokens for offline/preview testing should never kick the user out to login
+  if (token.startsWith('dev-')) {
+    return next(authenticated(token)).pipe(
+      catchError((error: unknown) => {
+        return throwError(() => error);
+      }),
+    );
+  }
 
   return next(authenticated(token)).pipe(
     catchError((error: unknown) => {
@@ -39,7 +49,8 @@ export const authInterceptor: HttpInterceptorFn = (request, next) => {
           if (
             generation === session.sessionGeneration() &&
             failure instanceof HttpErrorResponse &&
-            failure.status === 401
+            failure.status === 401 &&
+            !token.startsWith('dev-')
           ) {
             session.clear();
             void router.navigateByUrl('/login');

@@ -65,7 +65,8 @@ public sealed class TaskCreationRequestLinkTests
                     priority = "MEDIUM",
                     deadline = (string?)null,
                     checklist = Array.Empty<string>(),
-                    requestId = (Guid?)Request
+                    requestId = (Guid?)Request,
+                    parentTaskId = (Guid?)null
                 })),
                 new(Guid.NewGuid(), "Existing Linked Task", "DRAFT", DateTimeOffset.UtcNow, Request))
         };

@@ -1,8 +1,21 @@
 .task-form {
   display: grid;
-  gap: var(--tp-space-4);
-  padding: var(--tp-space-6);
-  max-width: 48rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.25rem;
+  padding: 1.75rem 2rem;
+  max-width: 60rem;
+  width: 100%;
+  box-sizing: border-box;
+  background: #ffffff;
+  border: 1px solid var(--bf-border, #dfe8f2);
+  border-radius: 14px;
+  box-shadow: 0 4px 20px -2px rgba(11, 42, 74, 0.05);
+}
+
+.task-form .form-full-width {
+  grid-column: 1 / -1;
+  width: 100%;
+  min-width: 0;
 }
 
 .task-form mat-form-field {
@@ -10,10 +23,50 @@
   min-width: 0;
 }
 
+/* Requirement 7: Description field occupies full available width with comfortable typing height */
+.task-description-field {
+  grid-column: 1 / -1;
+  width: 100%;
+  min-width: 0;
+
+  textarea {
+    min-height: 140px !important;
+    line-height: 1.6;
+    resize: vertical;
+    width: 100%;
+    box-sizing: border-box;
+  }
+}
+
+.task-checklist-field {
+  grid-column: 1 / -1;
+  width: 100%;
+  min-width: 0;
+
+  textarea {
+    min-height: 110px !important;
+    line-height: 1.5;
+    resize: vertical;
+    width: 100%;
+    box-sizing: border-box;
+  }
+}
+
 .actions {
+  grid-column: 1 / -1;
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: var(--tp-space-3);
+  margin-top: 0.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid #f1f5f9;
+}
+
+.submit-task-btn {
+  font-weight: 600;
+  padding: 0.55rem 1.4rem;
+  border-radius: 8px;
 }
 
 .detail-section {
@@ -38,53 +91,16 @@ dd {
   overflow-wrap: anywhere;
 }
 
-@media (max-width: 40rem) {
-  .task-form,
-  .detail-section {
-    padding: var(--tp-space-4);
-  }
-}
-
-.ai-assistant-card {
-  border: 1px solid #bfdbfe;
-  border-left: 4px solid #2563eb;
-  background: linear-gradient(180deg, #f4f9ff 0%, #ffffff 100%);
-  border-radius: 12px;
-  padding: var(--tp-space-5);
-  margin-block: var(--tp-space-5);
-  box-shadow: 0 4px 14px rgba(20, 93, 160, 0.06);
-
-  .ai-header {
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: var(--tp-space-2);
-    margin-bottom: var(--tp-space-2);
-    color: #071b33;
+@media (max-width: 640px) {
+  .task-form {
+    grid-template-columns: 1fr;
+    padding: 1.25rem 1rem;
+    gap: 1rem;
   }
 
-  .ai-badge {
-    font-size: 0.72rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    padding: 3px 10px;
-    border-radius: 9999px;
-    background: linear-gradient(135deg, #145da0 0%, #2563eb 100%);
-    color: #ffffff;
-  }
-
-  .ai-meta {
-    font-size: 0.875rem;
-    color: #475569;
-    margin-top: var(--tp-space-2);
-    line-height: 1.5;
-  }
-
-  .ai-actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--tp-space-2);
-    margin-top: var(--tp-space-3);
+  .task-form .form-full-width,
+  .task-description-field,
+  .task-checklist-field {
+    grid-column: 1;
   }
 }

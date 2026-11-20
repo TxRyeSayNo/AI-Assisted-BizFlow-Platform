@@ -9,6 +9,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { RouterLink } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { SessionService } from '../../core/auth/session';
+import { I18nService } from '../../core/i18n/i18n.service';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
 
 export interface SlaProfileRow {
@@ -52,6 +53,7 @@ export class SlaProfiles {
   readonly busy = signal(false);
   readonly saving = signal(false);
   readonly denied = signal(false);
+  private readonly i18n = inject(I18nService);
   readonly error = signal(false);
   readonly mutationError = signal('');
   readonly uncertain = signal(false);
@@ -131,8 +133,11 @@ export class SlaProfiles {
           this.uncertain.set(failure.status !== 422);
           this.mutationError.set(
             failure.status === 422
-              ? 'Enter a profile name up to 200 characters.'
-              : 'Creation could not be confirmed. Reload profiles and check for your draft before trying again.',
+              ? this.i18n.t('sla.errNameMaxLength', 'Enter a profile name up to 200 characters.')
+              : this.i18n.t(
+                  'sla.errCreateUncertain',
+                  'Creation could not be confirmed. Reload profiles and check for your draft before trying again.',
+                ),
           );
         },
       });

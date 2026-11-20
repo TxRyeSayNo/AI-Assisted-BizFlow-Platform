@@ -56,4 +56,31 @@ public sealed class NotificationInboxStore(BizFlowDbContext db, ITenantContext c
         }
         public ValueTask DisposeAsync() => transaction.DisposeAsync();
     }
+
+    public async Task SubscribePushAsync(Guid tenantId, Guid userId, string endpoint, string p256dh, string auth, CancellationToken cancellationToken)
+    {
+        AssertRecipient(tenantId, userId);
+        var existing = await db.WebPushSubscriptions.FirstOrDefaultAsync(s => s.TenantId == tenantId && s.UserId == userId && s.Endpoint == endpoint, cancellationToken);
+        if (existing is not null)
+        {
+            existing.UpdateActivity(DateTimeOffset.UtcNow);
+        }
+        else
+        {
+            var sub = WebPushSubscription.Create(tenantId, userId, endpoint, p256dh, auth, DateTimeOffset.UtcNow);
+            db.WebPushSubscriptions.Add(sub);
+        }
+        await db.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task UnsubscribePushAsync(Guid tenantId, Guid userId, string endpoint, CancellationToken cancellationToken)
+    {
+        AssertRecipient(tenantId, userId);
+        var existing = await db.WebPushSubscriptions.FirstOrDefaultAsync(s => s.TenantId == tenantId && s.UserId == userId && s.Endpoint == endpoint, cancellationToken);
+        if (existing is not null)
+        {
+            db.WebPushSubscriptions.Remove(existing);
+            await db.SaveChangesAsync(cancellationToken);
+        }
+    }
 }

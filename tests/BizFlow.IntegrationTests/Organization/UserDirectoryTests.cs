@@ -41,7 +41,6 @@ public sealed class UserDirectoryTests(PostgresFixture database)
     }
 
     [Theory]
-    [InlineData("COMPANY_ADMIN")]
     [InlineData("MANAGER")]
     [InlineData("EMPLOYEE")]
     public async Task Approved_system_roles_have_explicit_tenant_directory_read_not_user_mutation(string roleName)
@@ -57,6 +56,26 @@ public sealed class UserDirectoryTests(PostgresFixture database)
             .Join(db.Permissions, rp => rp.PermissionId, p => p.Id, (rp, p) => p.Code).ToListAsync();
         Assert.Contains("users.read", grants);
         Assert.DoesNotContain("users.update", grants); Assert.DoesNotContain("users.create", grants);
+    }
+
+    [Fact]
+    public async Task Company_admin_has_full_user_management_permissions()
+    {
+        var account = await SeedAsync("COMPANY_ADMIN");
+        await using var factory = new AuthenticationFactory(database);
+        using var client = factory.CreateClient();
+        await LoginAsync(client, account);
+        Assert.Equal(HttpStatusCode.OK, (await client.GetAsync(Endpoint)).StatusCode);
+        await using var db = database.Create(account.UserId, account.TenantId);
+        var role = await db.Roles.SingleAsync(r => r.Name == "COMPANY_ADMIN" && r.IsSystem);
+        var grants = await db.RolePermissions.Where(rp => rp.RoleId == role.Id)
+            .Join(db.Permissions, rp => rp.PermissionId, p => p.Id, (rp, p) => p.Code).ToListAsync();
+        Assert.Contains("users.read", grants);
+        Assert.Contains("users.create", grants);
+        Assert.Contains("users.update", grants);
+        Assert.Contains("users.import", grants);
+        Assert.Contains("users.status.update", grants);
+        Assert.Contains("users.roles.assign", grants);
     }
 
     [Fact]
@@ -85,7 +104,7 @@ public sealed class UserDirectoryTests(PostgresFixture database)
         Assert.Null(Assert.Single(page.Items, u => u.UserId == account.UserId).DepartmentName);
         using var json = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
         foreach (var row in json.RootElement.GetProperty("items").EnumerateArray())
-            Assert.Equal(new[] { "departmentId", "departmentName", "email", "employeeCode", "fullName", "status", "userId" }, row.EnumerateObject().Select(p => p.Name).Order().ToArray());
+            Assert.Equal(new[] { "departmentId", "departmentName", "email", "employeeCode", "fullName", "isManager", "roleName", "status", "userId" }, row.EnumerateObject().Select(p => p.Name).Order().ToArray());
         foreach (var query in new[] { "?search=Foreign", "?search=Deleted", $"?departmentId={foreignDepartment.Id}" })
         {
             var empty = (await client.GetFromJsonAsync<UserDirectoryPage>(Endpoint + query))!;

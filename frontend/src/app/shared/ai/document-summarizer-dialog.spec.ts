@@ -12,11 +12,7 @@ describe('DocumentSummarizerDialog - Master AI Document Suite', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [DocumentSummarizerDialog],
-      providers: [
-        provideHttpClient(),
-        provideHttpClientTesting(),
-        I18nService,
-      ],
+      providers: [provideHttpClient(), provideHttpClientTesting(), I18nService],
     }).compileComponents();
 
     fixture = TestBed.createComponent(DocumentSummarizerDialog);
@@ -56,7 +52,8 @@ describe('DocumentSummarizerDialog - Master AI Document Suite', () => {
 
   it('summarizes raw document text and displays executive summary, key points, risks, and action items', () => {
     component.isOpen = true;
-    component.rawText = 'Chỉ thị kiểm toán an ninh mạng: Phải vá lỗ hổng SSL trước ngày 20/11. Đội hạ tầng cấu hình tường lửa mới.';
+    component.rawText =
+      'Chỉ thị kiểm toán an ninh mạng: Phải vá lỗ hổng SSL trước ngày 20/11. Đội hạ tầng cấu hình tường lửa mới.';
     component.selectedMode = 'COMPREHENSIVE';
     fixture.detectChanges();
 
@@ -66,7 +63,8 @@ describe('DocumentSummarizerDialog - Master AI Document Suite', () => {
     const req = http.expectOne('/api/v1/ai/documents/summarize');
     expect(req.request.method).toBe('POST');
     expect(req.request.body).toEqual({
-      rawText: 'Chỉ thị kiểm toán an ninh mạng: Phải vá lỗ hổng SSL trước ngày 20/11. Đội hạ tầng cấu hình tường lửa mới.',
+      rawText:
+        'Chỉ thị kiểm toán an ninh mạng: Phải vá lỗ hổng SSL trước ngày 20/11. Đội hạ tầng cấu hình tường lửa mới.',
       attachmentId: null,
       mode: 'COMPREHENSIVE',
       language: 'vi',
@@ -161,8 +159,18 @@ describe('DocumentSummarizerDialog - Master AI Document Suite', () => {
     req.flush({
       totalCreated: 2,
       createdTasks: [
-        { taskId: 'task-01', title: 'Bàn giao tài liệu thiết kế kiến trúc', priority: 'HIGH', status: 'DRAFT' },
-        { taskId: 'task-02', title: 'Cài đặt môi trường Staging', priority: 'MEDIUM', status: 'DRAFT' },
+        {
+          taskId: 'task-01',
+          title: 'Bàn giao tài liệu thiết kế kiến trúc',
+          priority: 'HIGH',
+          status: 'DRAFT',
+        },
+        {
+          taskId: 'task-02',
+          title: 'Cài đặt môi trường Staging',
+          priority: 'MEDIUM',
+          status: 'DRAFT',
+        },
       ],
       createdAt: '2026-10-31T00:00:00Z',
     });
@@ -222,4 +230,3 @@ describe('DocumentSummarizerDialog - Master AI Document Suite', () => {
     expect(closed).toBe(true);
   });
 });
-

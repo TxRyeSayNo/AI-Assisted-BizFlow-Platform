@@ -1,14 +1,73 @@
 /* ==========================================================================
-   BIZFLOW AUTHENTICATION — UNIFIED PREMIUM OCEAN BLUE DESIGN SYSTEM
-   Harmonized with Theme Pack 164 (GRID) & Apple/Emil Design Engineering:
-   - Deep Ocean & Primary Azure palette (#071b33, #0b2a4a, #145da0, #2563eb)
-   - Crisp translucent white card surface with layered ambient elevation
-   - Custom spring-inspired cubic-bezier(0.16, 1, 0.3, 1) curves
-   - Tactile active press feedback (scale(0.98)) and reduced-motion support
+   BIZFLOW AUTHENTICATION — REFINED WHITE & LIGHT OCEAN BLUE THEME (Requirement 3 & 4)
    ========================================================================== */
+
+@property --border-angle {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
+}
+
+@keyframes rotate-border-angle {
+  0% {
+    --border-angle: 0deg;
+  }
+  100% {
+    --border-angle: 360deg;
+  }
+}
+
+@keyframes rotate-login-border {
+  0% {
+    transform: translate(-50%, -50%) rotate(0deg);
+  }
+  100% {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
+}
 
 :host {
   display: block;
+}
+
+.animated-border-wrapper {
+  width: 100%;
+  position: relative;
+  border-radius: 22px;
+  padding: 2.5px; /* Thin, elegant 2.5px rotating border */
+  overflow: hidden;
+  box-shadow:
+    0 20px 50px -10px rgba(23, 67, 111, 0.14),
+    0 8px 24px -4px rgba(40, 116, 216, 0.1);
+
+  /* Continuous Moving Gradient Border around the outer login container */
+  &::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 1400px;
+    height: 1400px;
+    max-width: none;
+    max-height: none;
+    transform: translate(-50%, -50%) rotate(0deg);
+    transform-origin: center center;
+    background: conic-gradient(
+      from 0deg,
+      #2874d8 0deg,
+      #65afff 60deg,
+      #c8e3ff 120deg,
+      #ffffff 180deg,
+      #c8e3ff 240deg,
+      #65afff 300deg,
+      #2874d8 360deg
+    );
+    animation: rotate-login-border 3.5s linear infinite !important;
+    animation-duration: 3.5s !important;
+    animation-iteration-count: infinite !important;
+    pointer-events: none;
+    z-index: 0;
+  }
 }
 
 .auth-page-clean {
@@ -24,6 +83,7 @@
     linear-gradient(145deg, #eef5fc 0%, #f5f9ff 50%, #e6f0fd 100%);
   font-family: var(
     --bf-font-sans,
+    'Be Vietnam Pro',
     'Plus Jakarta Sans',
     -apple-system,
     BlinkMacSystemFont,
@@ -99,6 +159,92 @@
   }
 }
 
+.auth-card-header {
+  text-align: center;
+  margin-bottom: 1.35rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  .brand-badge-compact {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    background: linear-gradient(
+      135deg,
+      rgba(244, 249, 255, 0.96) 0%,
+      rgba(235, 245, 255, 0.92) 100%
+    );
+    border: 1px solid rgba(195, 222, 252, 0.85);
+    padding: 0.25rem 0.85rem 0.25rem 0.4rem;
+    border-radius: 999px;
+    margin-bottom: 0.75rem;
+    box-shadow: 0 2px 8px rgba(36, 120, 242, 0.08);
+
+    .brand-mark {
+      display: inline-block;
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: url('/assets/brand/bizflow-logo.png') center/contain no-repeat;
+      color: transparent !important;
+      font-size: 0 !important;
+      line-height: 0 !important;
+      object-fit: contain;
+      vertical-align: middle;
+      flex-shrink: 0;
+      filter: drop-shadow(0 2px 4px rgba(18, 76, 196, 0.25));
+    }
+
+    .brand-text {
+      font-weight: 700;
+      font-size: 0.95rem;
+      letter-spacing: -0.015em;
+      color: #17436f;
+    }
+
+    .brand-dot {
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #00d4ff !important;
+      box-shadow: 0 0 8px #00d4ff !important;
+      animation: pulse-dot 2s ease-in-out infinite alternate !important;
+      position: relative;
+      flex-shrink: 0;
+      vertical-align: middle;
+    }
+  }
+
+  h1 {
+    margin: 0 0 0.4rem;
+    font-size: 1.6rem;
+    font-weight: 800;
+    letter-spacing: -0.025em;
+    color: #17436f;
+    line-height: 1.25;
+  }
+
+  .supporting-copy {
+    font-size: 0.95rem;
+    color: #52657c;
+    margin: 0;
+    line-height: 1.45;
+  }
+}
+
+@keyframes pulse-dot {
+  0% {
+    transform: scale(0.9);
+    opacity: 0.7;
+  }
+  100% {
+    transform: scale(1.15);
+    opacity: 1;
+  }
+}
+
 /* Top Ocean Blue Security Badge */
 .auth-badge-wrapper {
   display: flex;
@@ -158,7 +304,7 @@ form {
 /* Material Form Field Customization for Ocean Blue Theme */
 mat-form-field {
   width: 100%;
-  margin-bottom: 1rem;
+  margin-bottom: 0.25rem;
 
   --mdc-outlined-text-field-container-shape: 12px;
   --mdc-outlined-text-field-focus-outline-color: #2563eb;
@@ -169,6 +315,7 @@ mat-form-field {
   --mdc-outlined-text-field-input-text-color: #071b33;
 
   .mat-mdc-text-field-wrapper {
+    min-height: 52px !important;
     background-color: #f8fbff !important;
     border-radius: 12px !important;
     transition:
@@ -183,13 +330,18 @@ mat-form-field {
 
   input.mat-mdc-input-element {
     color: #071b33 !important;
-    font-size: 0.925rem !important;
+    font-size: 1.05rem !important;
     font-weight: 500 !important;
 
     &::placeholder {
       color: #94a3b8 !important;
+      font-size: 1rem !important;
       font-weight: 400;
     }
+  }
+
+  mat-label {
+    font-size: 1.025rem !important;
   }
 }
 
@@ -320,6 +472,121 @@ mat-form-field.mat-focused .leading-icon-wrapper {
   }
 }
 
+/* ==========================================================================
+   PRIMARY LOGIN ACTION BUTTON WITH ANIMATED ROTATING LASER BORDER
+   Matches forgot-password styling with cyan-blue luminous glow & shimmer
+   ========================================================================== */
+.sign-in-btn-animated-border {
+  width: 100%;
+  position: relative;
+  border-radius: 12px;
+  padding: 2px;
+  overflow: hidden;
+  background: rgba(220, 238, 255, 0.95);
+  box-shadow:
+    0 4px 18px -2px rgba(36, 120, 242, 0.32),
+    0 0 14px rgba(0, 212, 255, 0.22);
+  transition: all 250ms cubic-bezier(0.16, 1, 0.3, 1);
+  margin-top: 0.35rem;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 520px;
+    height: 520px;
+    transform: translate(-50%, -50%) rotate(0deg);
+    transform-origin: center center;
+    background: conic-gradient(
+      from 0deg,
+      transparent 0deg,
+      #00f0ff 40deg,
+      #2478f2 85deg,
+      #70b7ff 125deg,
+      #ffffff 155deg,
+      #00e5ff 190deg,
+      #124cc4 240deg,
+      #00f0ff 300deg,
+      transparent 360deg
+    );
+    animation: rotate-login-btn-border 2.8s linear infinite;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow:
+      0 8px 24px rgba(36, 120, 242, 0.45),
+      0 0 20px rgba(0, 240, 255, 0.38);
+  }
+
+  &:active {
+    transform: scale(0.985);
+  }
+
+  .sign-in-button,
+  .btn-primary-crimson {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    min-height: 2.95rem !important;
+    height: 2.95rem !important;
+    margin-top: 0 !important;
+    background: linear-gradient(135deg, #0e44b8 0%, #1e6beb 50%, #2478f2 100%) !important;
+    color: #ffffff !important;
+    font-weight: 600 !important;
+    font-size: 0.95rem !important;
+    letter-spacing: 0.015em !important;
+    border-radius: 10px !important;
+    border: none !important;
+    box-shadow: none !important;
+    overflow: hidden !important;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.55rem;
+    transition: all 200ms cubic-bezier(0.16, 1, 0.3, 1) !important;
+
+    &::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -120%;
+      width: 80%;
+      height: 100%;
+      background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(255, 255, 255, 0.35) 50%,
+        transparent 100%
+      );
+      transition: left 600ms ease;
+    }
+
+    &:hover:not(:disabled)::after {
+      left: 130%;
+    }
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+  }
+}
+
+@keyframes rotate-login-btn-border {
+  0% {
+    transform: translate(-50%, -50%) rotate(0deg);
+  }
+  100% {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
+}
+
 /* Primary Ocean Blue Action Button (preserves .btn-primary-crimson selector for compatibility) */
 .btn-primary-crimson {
   width: 100%;
@@ -399,6 +666,50 @@ mat-form-field.mat-focused .leading-icon-wrapper {
 
   .divider-text {
     padding: 0 0.85rem;
+  }
+}
+
+/* Google Sign In Button */
+.btn-google-signin {
+  width: 100%;
+  height: 46px;
+  border-radius: 12px;
+  background: #ffffff;
+  border: 1px solid #dadce0;
+  color: #3c4043;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  box-shadow: 0 1px 3px rgba(60, 64, 67, 0.08);
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    transform 140ms cubic-bezier(0.16, 1, 0.3, 1);
+
+  &:hover:not(:disabled) {
+    background-color: #f8fafd;
+    border-color: #c2e7ff;
+    box-shadow: 0 2px 6px rgba(60, 64, 67, 0.15);
+    color: #1a73e8;
+  }
+
+  &:active:not(:disabled) {
+    transform: scale(0.98);
+    background-color: #f1f3f4;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .google-g-logo {
+    flex-shrink: 0;
   }
 }
 
@@ -520,8 +831,17 @@ mat-form-field.mat-focused .leading-icon-wrapper {
   .auth-card-clean,
   .btn-primary-crimson,
   .btn-secondary-outline,
+  .btn-google-signin,
   .toggle-group-sub .mat-button-toggle {
     animation: none !important;
     transition: none !important;
   }
+}
+
+::ng-deep .google-dialog-panel .mat-mdc-dialog-container .mdc-dialog__surface {
+  background: transparent !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  border-radius: 16px !important;
+  overflow: visible !important;
 }

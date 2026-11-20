@@ -1,18 +1,10 @@
-<header class="public-header directory-header">
-  <a class="wordmark" routerLink="/workspace">
-    <span class="brand-mark" aria-hidden="true"></span> BizFlow
-  </a>
-  <span class="tenant-badge">{{ session.identity()?.tenantName }}</span>
-</header>
-
 <main id="main-content" class="page-content" tabindex="-1">
   <nav aria-label="Breadcrumb">
-    <a routerLink="/workspace">{{ 'common.workspace' | translate: 'Workspace' }}</a>
+    <a routerLink="/workspace">{{ 'common.workspace' | translate: 'Không gian làm việc' }}</a>
     <span aria-hidden="true"> / </span>
-    <span>{{ 'search.breadcrumb' | translate: 'Unified Record Search' }}</span>
+    <span>{{ 'search.breadcrumb' | translate: 'Tra cứu hồ sơ hợp nhất' }}</span>
   </nav>
 
-  <span class="eyebrow">{{ 'search.eyebrow' | translate: 'Enterprise Intelligence' }}</span>
   <div class="search-header-row">
     <h1>{{ 'search.title' | translate: 'Search Records' }}</h1>
   </div>
@@ -135,17 +127,27 @@
           </p>
         </div>
       } @else {
-        <div class="table-container">
+        <div class="table-container table-scroll">
           <table class="records-table">
             <thead>
               <tr>
-                <th scope="col">{{ 'search.col.type' | translate: 'Type' }}</th>
-                <th scope="col">{{ 'common.title' | translate: 'Title' }}</th>
-                <th scope="col">{{ 'common.status' | translate: 'Status' }}</th>
-                <th scope="col">{{ 'common.priority' | translate: 'Priority' }}</th>
-                <th scope="col">{{ 'search.col.owner' | translate: 'Owner / Requester' }}</th>
-                <th scope="col">{{ 'search.col.created' | translate: 'Created' }}</th>
-                <th scope="col">{{ 'common.actions' | translate: 'Actions' }}</th>
+                <th scope="col" class="col-type">{{ 'search.col.type' | translate: 'Loại' }}</th>
+                <th scope="col" class="col-title">{{ 'common.title' | translate: 'Tiêu đề' }}</th>
+                <th scope="col" class="col-status">
+                  {{ 'common.status' | translate: 'Trạng thái' }}
+                </th>
+                <th scope="col" class="col-priority">
+                  {{ 'common.priority' | translate: 'Độ ưu tiên' }}
+                </th>
+                <th scope="col" class="col-owner">
+                  {{ 'search.col.owner' | translate: 'Người phụ trách / Người tạo' }}
+                </th>
+                <th scope="col" class="col-created">
+                  {{ 'search.col.created' | translate: 'Ngày tạo' }}
+                </th>
+                <th scope="col" class="col-actions">
+                  {{ 'common.actions' | translate: 'Thao tác' }}
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -157,7 +159,13 @@
                       [class.type-task]="item.recordType === 'TASK'"
                       [class.type-request]="item.recordType === 'REQUEST'"
                     >
-                      {{ item.recordType }}
+                      {{
+                        item.recordType === 'TASK'
+                          ? ('recordSearch.typeTask' | translate: 'TASK')
+                          : item.recordType === 'REQUEST'
+                            ? ('recordSearch.typeRequest' | translate: 'REQUEST')
+                            : item.recordType
+                      }}
                     </span>
                   </td>
                   <td>
@@ -179,6 +187,7 @@
                   <td>
                     <span
                       class="status-badge status-{{ item.status.toLowerCase().replace('_', '-') }}"
+                      [attr.data-status]="item.status"
                     >
                       {{ 'reqStatus.' + item.status | translate: item.status }}
                     </span>
@@ -194,7 +203,9 @@
                     </span>
                   </td>
                   <td>
-                    <span class="actor-name">{{ item.creatorOrRequesterName ?? 'Unknown' }}</span>
+                    <span class="actor-name">{{
+                      item.creatorOrRequesterName ?? ('common.unknown' | translate: 'Unknown')
+                    }}</span>
                   </td>
                   <td>
                     <span class="date-text">{{ item.createdAt | date: 'short' }}</span>

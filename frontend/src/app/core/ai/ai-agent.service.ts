@@ -1,7 +1,40 @@
 import { HttpClient } from '@angular/common/http';
-import { Injectable, inject, signal } from '@angular/core';
+import { Injectable, inject, signal, effect } from '@angular/core';
 import { SessionService } from '../auth/session';
 import { I18nService } from '../i18n/i18n.service';
+
+export interface AgentQuestionOption {
+  id: string;
+  label: string;
+  isDefault?: boolean;
+}
+
+export interface AgentQuestion {
+  id: string;
+  title: string;
+  type: 'single_choice' | 'multiple_choice' | 'text';
+  options?: AgentQuestionOption[];
+  required?: boolean;
+  placeholder?: string;
+  helpText?: string;
+  allowCustomInput?: boolean;
+}
+
+export interface AgentClarificationForm {
+  formId: string;
+  topic: string;
+  contextExplanation: string;
+  riskAnalysis?: string;
+  questions: AgentQuestion[];
+  submitButtonText?: string;
+  skipButtonText?: string;
+}
+
+export interface AgentAnswer {
+  questionId: string;
+  selectedOptionIds?: string[];
+  customText?: string;
+}
 
 export interface ChatMessage {
   id: string;
@@ -14,6 +47,11 @@ export interface ChatMessage {
     linkUrl?: string;
     payload?: any;
   }>;
+  questionnaire?: AgentClarificationForm;
+  questionnaireAnswered?: boolean;
+  userAnswersSummary?: string;
+  agentThought?: string;
+  isThoughtExpanded?: boolean;
 }
 
 export interface SubtaskBranch {
@@ -57,6 +95,9 @@ export class AiAgentService {
   readonly isExpanded = signal(false);
   readonly activeTab = signal<'chat' | 'branches' | 'history'>('chat');
 
+  // Dedicated Branching Workspace modal state (rendered in center screen next to chat)
+  readonly isBranchModalOpen = signal(false);
+
   // Branching proposals state
   readonly branches = signal<SubtaskBranch[]>([]);
   readonly selectedBranch = signal<SubtaskBranch | null>(null);
@@ -75,17 +116,67 @@ export class AiAgentService {
   // Toast feedback
   readonly toastMessage = signal<{ text: string; type: 'success' | 'error' | 'info' } | null>(null);
 
+  private currentUserId: string | null = null;
+
   constructor() {
+    this.restoreForCurrentUser();
+
+    // Watch session identity changes (login, logout, switch account)
+    try {
+      effect(() => {
+        const identity =
+          typeof this.session?.identity === 'function' ? this.session.identity() : null;
+        const newUserId = identity?.userId || null;
+        if (newUserId !== this.currentUserId) {
+          if (this.currentUserId) {
+            this.persistCurrentSession();
+          }
+          this.currentUserId = newUserId;
+          this.restoreForCurrentUser();
+        }
+      });
+    } catch {
+      // In case effect is outside reactive context in certain test fixtures
+    }
+  }
+
+  private getStorageKey(baseKey: string): string {
+    const identity = typeof this.session?.identity === 'function' ? this.session.identity() : null;
+    const userId = identity?.userId;
+    return userId ? `${baseKey}_${userId}` : baseKey;
+  }
+
+  private restoreForCurrentUser(): void {
     this.restoreHistoryFromStorage();
     this.restoreCurrentSessionFromStorage();
   }
 
-  loadDepartments(): void {
-    if (this.departments().length > 0) return;
+  loadDepartments(force = false): void {
+    if (!force && this.departments().length > 0) return;
+    // fetch departments
     this.http.get<any>('/api/v1/departments?pageSize=100').subscribe({
       next: (res) => {
         const list = Array.isArray(res) ? res : res?.items || [];
-        this.departments.set(list.map((d: any) => ({ id: d.id, name: d.name })));
+        this.departments.set(list.map((d: any) => ({ id: d.departmentId || d.id, name: d.name })));
+
+        // Re-match existing branches if departmentId was missing
+        const currentBranches = this.branches();
+        if (currentBranches.length > 0 && list.length > 0) {
+          const updated = currentBranches.map((b) => {
+            if (!b.departmentId && b.departmentName) {
+              const match = this.departments().find(
+                (d) =>
+                  d.name.toLowerCase().includes(b.departmentName.toLowerCase()) ||
+                  b.departmentName.toLowerCase().includes(d.name.toLowerCase()),
+              );
+              if (match) {
+                return { ...b, departmentId: match.id, departmentName: match.name };
+              }
+            }
+            return b;
+          });
+          this.branches.set(updated);
+        }
       },
       error: () => {},
     });
@@ -94,6 +185,7 @@ export class AiAgentService {
   open(tab: 'chat' | 'branches' | 'history' = 'chat', expand?: boolean): void {
     if (tab === 'branches') {
       this.loadDepartments();
+      this.openBranchModal();
     }
     this.isOpen.set(true);
     this.activeTab.set(tab);
@@ -101,6 +193,7 @@ export class AiAgentService {
       this.isExpanded.set(expand);
     }
     try {
+      sessionStorage.setItem('bizflow_robot_open', 'true');
       sessionStorage.removeItem('bizflow_robot_dismissed');
     } catch {}
   }
@@ -108,6 +201,7 @@ export class AiAgentService {
   close(): void {
     this.isOpen.set(false);
     try {
+      sessionStorage.removeItem('bizflow_robot_open');
       sessionStorage.setItem('bizflow_robot_dismissed', 'true');
     } catch {}
   }
@@ -117,7 +211,87 @@ export class AiAgentService {
   }
 
   setTab(tab: 'chat' | 'branches' | 'history'): void {
+    if (tab === 'branches') {
+      this.openBranchModal();
+    }
     this.activeTab.set(tab);
+  }
+
+  openBranchModal(): void {
+    if (this.branches().length === 0) {
+      this.initDefaultBranches();
+    }
+    this.selectedBranch.set(null);
+    this.isBranchModalOpen.set(true);
+  }
+
+  closeBranchModal(): void {
+    this.isBranchModalOpen.set(false);
+  }
+
+  initDefaultBranches(): void {
+    this.setProposals([
+      {
+        title: 'Khảo sát và xác minh yêu cầu kỹ thuật',
+        description: 'Kiểm tra hiện trạng, xác định nguyên nhân và thiết bị cần thay thế.',
+        type: 'Assignment',
+        priority: 'HIGH',
+        departmentName: 'Phòng Kỹ thuật & CNTT',
+        checklistItems: [
+          'Kiểm tra kết nối và phần cứng',
+          'Ghi nhận mã lỗi',
+          'Lập biên bản khảo sát',
+        ],
+        reasoning: 'Bước đầu tiên bắt buộc để làm rõ phạm vi xử lý.',
+      },
+      {
+        title: 'Cung cấp linh kiện và vật tư thay thế',
+        description: 'Đề xuất tạm ứng và cấp phát linh kiện từ kho nội bộ.',
+        type: 'SupportRequest',
+        priority: 'MEDIUM',
+        departmentName: 'Phòng Hành chính - Quản trị',
+        checklistItems: [
+          'Kiểm tra tồn kho vật tư',
+          'Trình phê duyệt xuất kho',
+          'Bàn giao vật tư cho kỹ thuật',
+        ],
+        reasoning: 'Yêu cầu phối hợp liên phòng ban để chuẩn bị vật tư.',
+      },
+      {
+        title: 'Triển khai sửa chữa và kiểm thử vận hành',
+        description: 'Tiến hành khắc phục sự cố và chạy thử nghiệm chức năng.',
+        type: 'Assignment',
+        priority: 'MEDIUM',
+        departmentName: 'Phòng Kỹ thuật & CNTT',
+        checklistItems: [
+          'Lắp đặt linh kiện mới',
+          'Cấu hình và in thử',
+          'Bàn giao người dùng nghiệm thu',
+        ],
+        reasoning: 'Hoàn thành hạng mục công việc chính.',
+      },
+    ]);
+  }
+
+  addCustomBranch(title?: string): void {
+    const list = [...this.branches()];
+    const newIdx = list.length + 1;
+    const newBranch: SubtaskBranch = {
+      id: crypto.randomUUID(),
+      branchIndex: newIdx,
+      title: title || `Nhiệm vụ phân nhánh #${newIdx}`,
+      description: 'Nhiệm vụ được tạo bổ sung từ không gian phân rã công việc.',
+      type: 'Assignment',
+      priority: 'MEDIUM',
+      departmentName: 'Phòng Kỹ thuật & CNTT',
+      suggestedDurationDays: 2,
+      checklistItems: ['Tiếp nhận yêu cầu', 'Thực hiện xử lý', 'Nghiệm thu kết quả'],
+      reasoning: 'Nhánh công việc bổ sung theo yêu cầu người dùng.',
+      status: 'pending',
+    };
+    list.push(newBranch);
+    this.branches.set(list);
+    this.showToast(`Đã thêm nhánh #${newIdx}`, 'info');
   }
 
   selectBranch(branch: SubtaskBranch | null): void {
@@ -137,25 +311,32 @@ export class AiAgentService {
 
   private restoreHistoryFromStorage(): void {
     try {
-      const raw = localStorage.getItem(this.HISTORY_STORAGE_KEY);
+      const key = this.getStorageKey(this.HISTORY_STORAGE_KEY);
+      const raw = localStorage.getItem(key);
       if (raw) {
         const parsed = JSON.parse(raw);
         if (Array.isArray(parsed)) {
           this.chatSessions.set(parsed);
+          return;
         }
       }
-    } catch {}
+      this.chatSessions.set([]);
+    } catch {
+      this.chatSessions.set([]);
+    }
   }
 
   private persistHistoryToStorage(): void {
     try {
-      localStorage.setItem(this.HISTORY_STORAGE_KEY, JSON.stringify(this.chatSessions()));
+      const key = this.getStorageKey(this.HISTORY_STORAGE_KEY);
+      localStorage.setItem(key, JSON.stringify(this.chatSessions()));
     } catch {}
   }
 
   private restoreCurrentSessionFromStorage(): void {
     try {
-      const raw = localStorage.getItem(this.CURRENT_STORAGE_KEY);
+      const key = this.getStorageKey(this.CURRENT_STORAGE_KEY);
+      const raw = localStorage.getItem(key);
       if (raw) {
         const parsed = JSON.parse(raw);
         if (parsed?.messages?.length) {
@@ -174,11 +355,14 @@ export class AiAgentService {
   }
 
   private initWelcomeMessage(): void {
+    const identity = typeof this.session?.identity === 'function' ? this.session.identity() : null;
+    const userName = identity?.fullName;
+    const greeting = userName ? `Xin chào ${userName}! ` : 'Xin chào! ';
     this.messages.set([
       {
         id: 'welcome',
         sender: 'robot',
-        text: 'Xin chào! Tôi là Trợ lý AI Agent BizFlow 🤖.\nTôi có thể hỗ trợ bạn mọi tác vụ: kiểm tra deadline, phân rã kế hoạch công việc thành các nhánh nhiệm vụ, tra cứu quy định và trực tiếp tạo task vào hệ thống.',
+        text: `${greeting}Tôi là Trợ lý AI Agent BizFlow 🤖.\nTôi có thể hỗ trợ bạn mọi tác vụ: kiểm tra deadline, phân rã kế hoạch công việc thành các nhánh nhiệm vụ, tra cứu quy định và trực tiếp tạo task vào hệ thống.`,
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       },
     ]);
@@ -201,7 +385,8 @@ export class AiAgentService {
         branches: this.branches(),
       };
 
-      localStorage.setItem(this.CURRENT_STORAGE_KEY, JSON.stringify(sessionData));
+      const key = this.getStorageKey(this.CURRENT_STORAGE_KEY);
+      localStorage.setItem(key, JSON.stringify(sessionData));
 
       // Also update or add in history list if user interacted
       if (firstUserMsg) {
@@ -228,7 +413,8 @@ export class AiAgentService {
     this.initWelcomeMessage();
     this.activeTab.set('chat');
     try {
-      localStorage.removeItem(this.CURRENT_STORAGE_KEY);
+      const key = this.getStorageKey(this.CURRENT_STORAGE_KEY);
+      localStorage.removeItem(key);
     } catch {}
     this.showToast('Đã bắt đầu cuộc trò chuyện mới', 'info');
   }
@@ -273,7 +459,9 @@ export class AiAgentService {
     const trimmed = text.trim();
 
     // 1. Delete branch: "Xóa nhánh X", "Bỏ nhánh X", "Hủy nhánh X"
-    const deleteMatch = trimmed.match(/(?:xóa|bỏ|hủy)\s+(?:nhánh|task|nhiệm\s*vụ)\s*(?:số\s*)?(\d+)/i);
+    const deleteMatch = trimmed.match(
+      /(?:xóa|bỏ|hủy)\s+(?:nhánh|task|nhiệm\s*vụ)\s*(?:số\s*)?(\d+)/i,
+    );
     if (deleteMatch) {
       const idx = parseInt(deleteMatch[1], 10) - 1;
       if (idx >= 0 && idx < list.length) {
@@ -295,8 +483,12 @@ export class AiAgentService {
 
     // 2. Change department: "Đổi phòng ban nhánh X thành Y", "Chuyển nhánh X cho phòng Y"
     const deptMatch =
-      trimmed.match(/(?:đổi|chuyển|sửa)\s+(?:phòng\s*ban|bộ\s*phận|phòng)\s+(?:của\s+)?(?:nhánh\s*)?(\d+)\s+(?:thành|cho|sang)\s+(.+)/i) ||
-      trimmed.match(/(?:nhánh\s*)(\d+)\s+(?:đổi|chuyển)\s+(?:phòng\s*ban|phòng)\s+(?:thành|cho|sang)\s+(.+)/i);
+      trimmed.match(
+        /(?:đổi|chuyển|sửa)\s+(?:phòng\s*ban|bộ\s*phận|phòng)\s+(?:của\s+)?(?:nhánh\s*)?(\d+)\s+(?:thành|cho|sang)\s+(.+)/i,
+      ) ||
+      trimmed.match(
+        /(?:nhánh\s*)(\d+)\s+(?:đổi|chuyển)\s+(?:phòng\s*ban|phòng)\s+(?:thành|cho|sang)\s+(.+)/i,
+      );
     if (deptMatch) {
       const idx = parseInt(deptMatch[1], 10) - 1;
       const targetDeptName = deptMatch[2].trim();
@@ -327,7 +519,9 @@ export class AiAgentService {
 
     // 3. Change title: "Đổi tiêu đề nhánh X thành Y", "Đổi tên nhánh X thành Y"
     const titleMatch =
-      trimmed.match(/(?:đổi|sửa)\s+(?:tiêu\s*đề|tên)\s+(?:của\s+)?(?:nhánh\s*)?(\d+)\s+(?:thành|là)\s+(.+)/i) ||
+      trimmed.match(
+        /(?:đổi|sửa)\s+(?:tiêu\s*đề|tên)\s+(?:của\s+)?(?:nhánh\s*)?(\d+)\s+(?:thành|là)\s+(.+)/i,
+      ) ||
       trimmed.match(/(?:nhánh\s*)(\d+)\s+(?:đổi|sửa)\s+(?:tiêu\s*đề|tên)\s+(?:thành|là)\s+(.+)/i);
     if (titleMatch) {
       const idx = parseInt(titleMatch[1], 10) - 1;
@@ -351,13 +545,22 @@ export class AiAgentService {
 
     // 4. Change priority: "Đổi ưu tiên nhánh X thành HIGH/MEDIUM/LOW/Cao/Thấp"
     const prioMatch =
-      trimmed.match(/(?:đổi|sửa)\s+(?:mức\s+)?ưu\s*tiên\s+(?:của\s+)?(?:nhánh\s*)?(\d+)\s+(?:thành|là)\s+(.+)/i) ||
-      trimmed.match(/(?:nhánh\s*)(\d+)\s+(?:đổi|sửa)\s+(?:mức\s+)?ưu\s*tiên\s+(?:thành|là)\s+(.+)/i);
+      trimmed.match(
+        /(?:đổi|sửa)\s+(?:mức\s+)?ưu\s*tiên\s+(?:của\s+)?(?:nhánh\s*)?(\d+)\s+(?:thành|là)\s+(.+)/i,
+      ) ||
+      trimmed.match(
+        /(?:nhánh\s*)(\d+)\s+(?:đổi|sửa)\s+(?:mức\s+)?ưu\s*tiên\s+(?:thành|là)\s+(.+)/i,
+      );
     if (prioMatch) {
       const idx = parseInt(prioMatch[1], 10) - 1;
       const rawPrio = prioMatch[2].trim().toLowerCase();
       let prio: 'LOW' | 'MEDIUM' | 'HIGH' = 'MEDIUM';
-      if (rawPrio.includes('cao') || rawPrio.includes('high') || rawPrio.includes('gấp') || rawPrio.includes('khẩn')) {
+      if (
+        rawPrio.includes('cao') ||
+        rawPrio.includes('high') ||
+        rawPrio.includes('gấp') ||
+        rawPrio.includes('khẩn')
+      ) {
         prio = 'HIGH';
       } else if (rawPrio.includes('thấp') || rawPrio.includes('low')) {
         prio = 'LOW';
@@ -383,7 +586,9 @@ export class AiAgentService {
     }
 
     // 5. Add new branch: "Thêm nhánh mới: Y", "Bổ sung nhánh Y"
-    const addMatch = trimmed.match(/(?:thêm|tạo\s*thêm|bổ\s*sung)\s+nhánh(?:\s+mới)?(?::|\s+là)\s+(.+)/i);
+    const addMatch = trimmed.match(
+      /(?:thêm|tạo\s*thêm|bổ\s*sung)\s+nhánh(?:\s+mới)?(?::|\s+là)\s+(.+)/i,
+    );
     if (addMatch) {
       const desc = addMatch[1].trim();
       const newBranch: SubtaskBranch = {
@@ -441,29 +646,90 @@ export class AiAgentService {
     if (!Array.isArray(proposals) || proposals.length === 0) return;
     const canCreateTasks = this.session.hasPermission('tasks.create');
 
-    const mapped: SubtaskBranch[] = proposals.map((p, idx) => ({
-      id: crypto.randomUUID(),
-      branchIndex: idx + 1,
-      title: p.title || `Nhiệm vụ #${idx + 1}`,
-      description: p.description || p.title || '',
-      // If user lacks tasks.create permission, default to SupportRequest so server confirms smoothly
-      type: (!canCreateTasks ? 'SupportRequest' : (p.type === 'SupportRequest' ? 'SupportRequest' : 'Assignment')),
-      departmentId: p.departmentId || null,
-      departmentName: p.departmentName || 'Phòng ban chuyên trách',
-      priority: (p.priority === 'HIGH' || p.priority === 'LOW' ? p.priority : 'MEDIUM'),
-      suggestedDurationDays: p.suggestedDurationDays || 3,
-      checklistItems: Array.isArray(p.checklistItems) && p.checklistItems.length ? p.checklistItems : [
-        `Bước 1: Chuẩn bị nội dung và kế hoạch`,
-        `Bước 2: Thực hiện công việc`,
-        `Bước 3: Hoàn tất và báo cáo`,
-      ],
-      reasoning: p.reasoning || 'Được bóc tách tự động bởi AI Agent dựa trên mục tiêu tổng thể.',
-      status: 'pending',
-    }));
+    const mapped: SubtaskBranch[] = proposals.map((p, idx) => {
+      const title = p.title || p.Title || `Nhiệm vụ #${idx + 1}`;
+      const description = p.description || p.Description || title;
+      const rawType = p.type || p.Type;
+      const type = !canCreateTasks
+        ? 'SupportRequest'
+        : rawType === 'SupportRequest'
+          ? 'SupportRequest'
+          : 'Assignment';
+      const deptName = p.departmentName || p.DepartmentName || 'Phòng ban chuyên trách';
+      let deptId = p.departmentId || p.DepartmentId || null;
+      if (!deptId && deptName) {
+        const match = this.departments().find(
+          (d) =>
+            d.name.toLowerCase().includes(deptName.toLowerCase()) ||
+            deptName.toLowerCase().includes(d.name.toLowerCase()),
+        );
+        if (match) deptId = match.id;
+      }
+      const rawPriority = p.priority || p.Priority;
+      const priority = rawPriority === 'HIGH' || rawPriority === 'LOW' ? rawPriority : 'MEDIUM';
+      const suggestedDurationDays = p.suggestedDurationDays || p.SuggestedDurationDays || 3;
+      const rawChecklist = p.checklistItems || p.ChecklistItems;
+      const checklistItems =
+        Array.isArray(rawChecklist) && rawChecklist.length
+          ? rawChecklist
+          : [
+              `Bước 1: Chuẩn bị nội dung và kế hoạch`,
+              `Bước 2: Thực hiện công việc`,
+              `Bước 3: Hoàn tất và báo cáo`,
+            ];
+      const reasoning =
+        p.reasoning ||
+        p.Reasoning ||
+        'Được bóc tách tự động bởi AI Agent dựa trên mục tiêu tổng thể.';
+
+      return {
+        id: crypto.randomUUID(),
+        branchIndex: idx + 1,
+        title,
+        description,
+        type,
+        departmentId: deptId,
+        departmentName: deptName,
+        priority,
+        suggestedDurationDays,
+        checklistItems,
+        reasoning,
+        status: 'pending',
+      };
+    });
 
     this.branches.set(mapped);
     this.selectedBranch.set(null);
     this.persistCurrentSession();
+  }
+
+  updateBranch(branchId: string, updates: Partial<SubtaskBranch>): void {
+    const list = [...this.branches()];
+    const idx = list.findIndex((b) => b.id === branchId);
+    if (idx >= 0) {
+      const updated: SubtaskBranch = { ...list[idx], ...updates };
+      if (updates.departmentId !== undefined) {
+        const found = this.departments().find((d) => d.id === updates.departmentId);
+        if (found) {
+          updated.departmentName = found.name;
+        }
+      } else if (updates.departmentName !== undefined && !updates.departmentId) {
+        const match = this.departments().find(
+          (d) =>
+            d.name.toLowerCase().includes(updates.departmentName!.toLowerCase()) ||
+            updates.departmentName!.toLowerCase().includes(d.name.toLowerCase()),
+        );
+        if (match) {
+          updated.departmentId = match.id;
+        }
+      }
+      list[idx] = updated;
+      this.branches.set(list);
+      if (this.selectedBranch()?.id === branchId) {
+        this.selectedBranch.set(updated);
+      }
+      this.persistCurrentSession();
+    }
   }
 
   deleteBranch(branchIndex: number): void {
@@ -476,14 +742,21 @@ export class AiAgentService {
         this.selectedBranch.set(null);
       }
       this.persistCurrentSession();
-      this.showToast(`Đã xóa nhánh: "${removed.title}"`, 'info');
+      this.showToast(`Đã xóa nhánh #${branchIndex + 1}: "${removed.title}"`, 'info');
     }
   }
 
   // --- Submitting Single Branch or All Branches ---
 
-  submitSingleBranch(branch: SubtaskBranch): void {
-    if (branch.status === 'created' || branch.status === 'submitting') return;
+  submitSingleBranch(branch: SubtaskBranch, force: boolean = false): void {
+    if (branch.status === 'submitting') return;
+    if (!this.session.hasPermission('tasks.create')) {
+      this.showToast(
+        'Tài khoản Nhân viên không thể tạo nhiệm vụ cho cấp dưới. Vui lòng tạo Yêu cầu nếu cần đề xuất công việc.',
+        'error',
+      );
+      return;
+    }
 
     // Optimistic UI status
     const currentList = this.branches();
@@ -502,6 +775,8 @@ export class AiAgentService {
           description: branch.description?.trim() || branch.title.trim(),
           type: branch.type,
           departmentId: branch.departmentId || null,
+          departmentName: branch.departmentName || null,
+          suggestedDurationDays: branch.suggestedDurationDays || null,
           priority: branch.priority,
           checklistItems: branch.checklistItems?.length ? branch.checklistItems : null,
         },
@@ -532,16 +807,29 @@ export class AiAgentService {
           this.branches.set(list);
           this.selectedBranch.set(list[bIdx]);
         }
-        const errMsg = err?.error?.message || err?.message || 'Không thể tạo nhiệm vụ. Vui lòng thử lại.';
+        const errMsg =
+          err?.error?.message ||
+          err?.message ||
+          'Không thể tạo nhiệm vụ. Vui lòng kiểm tra lại dịch vụ máy chủ.';
         this.showToast(`❌ Lỗi tạo nhiệm vụ: ${errMsg}`, 'error');
       },
     });
   }
 
   submitAllBranches(): void {
-    const pendingBranches = this.branches().filter((b) => b.status !== 'created');
+    if (!this.session.hasPermission('tasks.create')) {
+      this.showToast(
+        'Tài khoản Nhân viên không thể tạo nhiệm vụ cho cấp dưới. Vui lòng tạo Yêu cầu nếu cần đề xuất công việc.',
+        'error',
+      );
+      return;
+    }
+    let pendingBranches = this.branches().filter((b) => b.status !== 'created');
+    if (pendingBranches.length === 0 && this.branches().length > 0) {
+      pendingBranches = this.branches();
+    }
     if (pendingBranches.length === 0) {
-      this.showToast('Tất cả các nhánh nhiệm vụ đã được tạo thành công!', 'info');
+      this.showToast('Chưa có nhánh nhiệm vụ nào để gửi vào hệ thống.', 'info');
       return;
     }
 
@@ -553,6 +841,8 @@ export class AiAgentService {
         description: b.description?.trim() || b.title.trim(),
         type: b.type,
         departmentId: b.departmentId || null,
+        departmentName: b.departmentName || null,
+        suggestedDurationDays: b.suggestedDurationDays || null,
         priority: b.priority,
         checklistItems: b.checklistItems?.length ? b.checklistItems : null,
       })),
@@ -580,9 +870,105 @@ export class AiAgentService {
       },
       error: (err) => {
         this.busy.set(false);
-        const errMsg = err?.error?.message || err?.message || 'Không thể tạo hàng loạt. Vui lòng thử lại.';
+        const errMsg =
+          err?.error?.message ||
+          err?.message ||
+          'Không thể tạo hàng loạt. Vui lòng kiểm tra lại dịch vụ máy chủ.';
         this.showToast(`❌ Lỗi tạo hàng loạt: ${errMsg}`, 'error');
       },
     });
+  }
+
+  sendFormAnswers(
+    formId: string,
+    answers: AgentAnswer[],
+    summaryText: string,
+    messageId: string,
+  ): void {
+    // 1. Mark questionnaire in the original robot message as answered
+    this.messages.update((msgs) =>
+      msgs.map((m) =>
+        m.id === messageId
+          ? { ...m, questionnaireAnswered: true, userAnswersSummary: summaryText }
+          : m,
+      ),
+    );
+
+    // 2. Append user message showing the selected answers
+    const userMsg: ChatMessage = {
+      id: crypto.randomUUID(),
+      sender: 'user',
+      text: summaryText,
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    };
+    this.messages.update((list) => [...list, userMsg]);
+    this.busy.set(true);
+
+    // Prior conversation history for multi-turn context
+    const priorHistory = this.messages()
+      .slice(0, -1)
+      .filter((m) => m.id !== 'welcome')
+      .slice(-8)
+      .map((m) => ({ sender: m.sender, text: m.text }));
+
+    const payload = {
+      message: summaryText,
+      locale: this.i18n.currentLanguage(),
+      history: priorHistory,
+      formId,
+      formAnswers: answers,
+    };
+
+    this.http
+      .post<{
+        response: string;
+        recognizedCommand?: string;
+        actionCards?: any[];
+        questionnaire?: any;
+        agentThought?: string;
+      }>('/api/v1/ai/chat', payload)
+      .subscribe({
+        next: (res) => {
+          this.busy.set(false);
+
+          let actionCards = res.actionCards;
+          const decompCard = res.actionCards?.find(
+            (c) =>
+              c.actionType === 'OPEN_DECOMPOSITION' ||
+              c.actionType === 'OPEN_BRANCHES' ||
+              c.actionType === 'VIEW_BRANCHES',
+          );
+
+          if (decompCard?.payload?.proposals) {
+            this.setProposals(decompCard.payload.proposals);
+            actionCards = [
+              {
+                actionType: 'VIEW_BRANCHES',
+                title: `🌿 Xem các nhánh phân rã (${decompCard.payload.proposals.length} nhánh)`,
+              },
+            ];
+          }
+
+          const robotMsg: ChatMessage = {
+            id: crypto.randomUUID(),
+            sender: 'robot',
+            text: res.response,
+            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            actionCards,
+            questionnaire: res.questionnaire,
+            agentThought: res.agentThought,
+            isThoughtExpanded: !!res.agentThought,
+          };
+
+          this.messages.update((list) => [...list, robotMsg]);
+          this.persistCurrentSession();
+        },
+        error: (err) => {
+          this.busy.set(false);
+          const errMsg =
+            err?.error?.message || err?.message || 'Không thể gửi phản hồi. Vui lòng thử lại.';
+          this.showToast(`❌ Lỗi kết nối: ${errMsg}`, 'error');
+        },
+      });
   }
 }

@@ -71,6 +71,8 @@ public sealed class NotificationAuthorizationTests
             Opened = true; return Task.FromResult<INotificationReceiptTransaction?>(Transaction);
         }
         public Task<NotificationPage> ListAsync(Guid tenantId, Guid recipientId, NotificationFilter filter, CancellationToken cancellationToken) => throw new NotSupportedException();
+        public Task SubscribePushAsync(Guid tenantId, Guid userId, string endpoint, string p256dh, string auth, CancellationToken cancellationToken) => Task.CompletedTask;
+        public Task UnsubscribePushAsync(Guid tenantId, Guid userId, string endpoint, CancellationToken cancellationToken) => Task.CompletedTask;
     }
     private sealed class Transaction : INotificationReceiptTransaction
     {

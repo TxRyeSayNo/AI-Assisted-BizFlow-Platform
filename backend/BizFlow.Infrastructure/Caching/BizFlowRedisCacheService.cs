@@ -180,16 +180,23 @@ public sealed class BizFlowRedisCacheService : IBizFlowCacheService
             try
             {
                 var pattern = $"{prefix}*";
-                var keysResponse = await ExecuteRedisCommandAsync(["KEYS", pattern], cancellationToken);
-                if (!string.IsNullOrEmpty(keysResponse))
+                var cursor = "0";
+                do
                 {
-                    var lines = keysResponse.Split(["\r\n", "\n"], StringSplitOptions.RemoveEmptyEntries);
-                    foreach (var k in lines)
+                    var scanResponse = await ExecuteRedisCommandAsync(["SCAN", cursor, "MATCH", pattern, "COUNT", "100"], cancellationToken);
+                    if (string.IsNullOrEmpty(scanResponse)) break;
+
+                    var lines = scanResponse.Split(["\r\n", "\n"], StringSplitOptions.RemoveEmptyEntries);
+                    if (lines.Length == 0) break;
+
+                    cursor = lines[0].Trim();
+                    for (var i = 1; i < lines.Length; i++)
                     {
+                        var k = lines[i].Trim();
                         if (!string.IsNullOrWhiteSpace(k))
                             await ExecuteRedisCommandAsync(["DEL", k], cancellationToken);
                     }
-                }
+                } while (cursor != "0" && !cancellationToken.IsCancellationRequested);
             }
             catch (Exception ex)
             {
@@ -294,22 +301,40 @@ public sealed class BizFlowRedisCacheService : IBizFlowCacheService
             {
                 if (count <= 0) return null;
                 var items = new List<string>();
-                for (var i = 0; i < count; i++)
-                {
-                    var itemLine = await reader.ReadLineAsync(ct);
-                    if (itemLine is not null && itemLine.StartsWith('$') && int.TryParse(itemLine[1..], out var itemLen))
-                    {
-                        if (itemLen < 0) continue;
-                        var buf = new char[itemLen];
-                        var r = await reader.ReadBlockAsync(buf, 0, itemLen);
-                        await reader.ReadLineAsync(ct);
-                        items.Add(new string(buf, 0, r));
-                    }
-                }
+                await ReadRespArrayItemsAsync(reader, count, items, ct);
                 return string.Join("\n", items);
             }
         }
 
         return null;
+    }
+
+    private static async Task ReadRespArrayItemsAsync(StreamReader reader, int count, List<string> items, CancellationToken ct)
+    {
+        for (var i = 0; i < count; i++)
+        {
+            var itemLine = await reader.ReadLineAsync(ct);
+            if (itemLine is null) break;
+
+            if (itemLine.StartsWith('$') && int.TryParse(itemLine[1..], out var itemLen))
+            {
+                if (itemLen < 0) continue;
+                var buf = new char[itemLen];
+                var r = await reader.ReadBlockAsync(buf, 0, itemLen);
+                await reader.ReadLineAsync(ct);
+                items.Add(new string(buf, 0, r));
+            }
+            else if (itemLine.StartsWith('*') && int.TryParse(itemLine[1..], out var subCount))
+            {
+                if (subCount > 0)
+                {
+                    await ReadRespArrayItemsAsync(reader, subCount, items, ct);
+                }
+            }
+            else if (itemLine.StartsWith('+') || itemLine.StartsWith(':'))
+            {
+                items.Add(itemLine[1..]);
+            }
+        }
     }
 }

@@ -61,6 +61,14 @@ public sealed class TaskConfirmationStore(BizFlowDbContext db, ITenantContext co
                     root.GetProperty("status").GetString()!, root.GetProperty("confirmedAt").GetDateTimeOffset()));
         }
 
+        public async Task<bool> HasIncompleteChildTasksAsync(CancellationToken cancellationToken)
+        {
+            if (task is null) return false;
+            return await db.WorkTasks.AnyAsync(st => st.TenantId == tenantId && st.ParentTaskId == task.Id
+                && st.Status != TaskState.Completed && st.Status != TaskState.Confirmed && st.Status != TaskState.Cancelled
+                && st.DeletedAt == null, cancellationToken);
+        }
+
         public async Task CommitAsync(Confirmation confirmation, AuditLog audit, Notification notification, CancellationToken cancellationToken)
         {
             if (task is null || assignment is null || task.TenantId != tenantId ||

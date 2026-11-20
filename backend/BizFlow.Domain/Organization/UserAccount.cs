@@ -107,4 +107,9 @@ public sealed class UserAccount
         UpdatedAt = now.ToUniversalTime();
         SecurityStamp = Guid.NewGuid().ToString("N");
     }
+
+    public void RequirePasswordChange()
+    {
+        MustChangePassword = true;
+    }
 }

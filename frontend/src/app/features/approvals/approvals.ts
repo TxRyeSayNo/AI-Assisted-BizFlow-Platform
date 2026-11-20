@@ -41,15 +41,12 @@ export interface PendingApprovalItem {
 
       <div class="approval-header-row">
         <div>
-          <span class="eyebrow">{{
-            'approvals.eyebrow' | translate: 'Governance & Milestones'
-          }}</span>
-          <h1>{{ 'approvals.title' | translate: 'Approval Center' }}</h1>
+          <h1>{{ 'approvals.title' | translate: 'Trung tâm phê duyệt' }}</h1>
           <p class="subtitle-text">
             {{
               'approvals.subtitle'
                 | translate
-                  : 'Centralized hub for authorized managers to review task deliverables, milestone confirmations, and service request resolutions.'
+                  : 'Trung tâm tập trung dành cho cấp quản lý để đánh giá kết quả bàn giao công việc, cột mốc xác nhận và giải quyết yêu cầu dịch vụ.'
             }}
           </p>
         </div>
@@ -135,14 +132,15 @@ export interface PendingApprovalItem {
                   }}
                 </span>
                 <span class="status-chip" [attr.data-status]="item.status">
-                  {{ item.status }}
+                  {{ formatStatus(item.status) }}
                 </span>
                 <span class="priority-tag" [ngClass]="'priority-' + item.priority.toLowerCase()">
                   {{ 'priority.' + item.priority | translate: item.priority }}
                 </span>
               </div>
               <time class="card-time" [attr.datetime]="item.submittedAt">
-                Submitted {{ item.submittedAt | date: 'medium' }}
+                {{ 'approvals.submittedAt' | translate: 'Đã gửi:' }}
+                {{ item.submittedAt | date: 'dd/MM/yyyy HH:mm' }}
               </time>
             </div>
 
@@ -442,7 +440,9 @@ export class Approvals implements OnInit {
   }
 
   loadApprovals(): void {
-    // Queries active tasks awaiting confirmation (status: SUBMITTED) and requests awaiting confirmation (status: RESOLVED)
+    const list: PendingApprovalItem[] = [];
+
+    // 1. Fetch submitted tasks awaiting manager/admin confirmation
     this.http
       .get<{
         items: Array<{
@@ -452,6 +452,7 @@ export class Approvals implements OnInit {
           priority: string;
           createdAt: string;
           assignedUserName?: string;
+          assignedDepartmentName?: string;
         }>;
       }>('/api/v1/tasks?status=SUBMITTED&pageSize=20')
       .subscribe({
@@ -461,45 +462,69 @@ export class Approvals implements OnInit {
             type: 'TASK_CONFIRMATION',
             title: t.title,
             sourceId: t.taskId,
-            requesterOrPerformer: t.assignedUserName || 'Assigned Member',
+            requesterOrPerformer: t.assignedUserName || 'Nhân sự thực hiện',
+            departmentName: t.assignedDepartmentName,
             priority: t.priority,
             submittedAt: t.createdAt,
-            summary: 'Result deliverables submitted for formal confirmation and completion review.',
+            summary:
+              'Đã nộp kết quả công việc. Đang chờ cấp quản lý xem xét và nghiệm thu hoàn thành.',
             status: t.status,
           }));
-          this.pendingList.set(taskItems);
-        },
-        error: () => {
-          // Fallback demo items if backend database has no submitted tasks currently
-          this.pendingList.set([
-            {
-              id: 'demo-1',
-              type: 'TASK_CONFIRMATION',
-              title: 'Q3 Financial Reconciliation & Ledger Audit',
-              sourceId: 'demo-1',
-              requesterOrPerformer: 'Finance Team Lead',
-              departmentName: 'Finance & Accounting',
-              priority: 'HIGH',
-              submittedAt: new Date(Date.now() - 3600000 * 4).toISOString(),
-              summary:
-                'Reconciliation reports and proof attachments uploaded. Requires manager sign-off.',
-              status: 'SUBMITTED',
-            },
-            {
-              id: 'demo-2',
-              type: 'REQUEST_RESOLUTION',
-              title: 'High-Performance Workstation Hardware Replacement',
-              sourceId: 'demo-2',
-              requesterOrPerformer: 'IT Infrastructure Lead',
-              departmentName: 'IT Operations',
-              priority: 'MEDIUM',
-              submittedAt: new Date(Date.now() - 3600000 * 8).toISOString(),
-              summary: 'Hardware deployed and configured. Requester confirmation pending.',
-              status: 'RESOLVED',
-            },
-          ]);
+          list.push(...taskItems);
+          this.pendingList.set([...list]);
         },
       });
+
+    // 2. Fetch requests awaiting first-level review or escalated approval
+    this.http
+      .get<{
+        items: Array<{
+          requestId: string;
+          title: string;
+          status: string;
+          priority: string;
+          createdAt: string;
+          requesterName?: string;
+          currentRoutingDepartmentName?: string;
+        }>;
+      }>('/api/v1/requests?status=SUBMITTED&pageSize=20')
+      .subscribe({
+        next: (res) => {
+          const reqItems: PendingApprovalItem[] = (res.items || []).map((r) => ({
+            id: r.requestId,
+            type: 'REQUEST_RESOLUTION',
+            title: r.title,
+            sourceId: r.requestId,
+            requesterOrPerformer: r.requesterName || 'Người gửi yêu cầu',
+            departmentName: r.currentRoutingDepartmentName,
+            priority: r.priority,
+            submittedAt: r.createdAt,
+            summary:
+              'Yêu cầu nội bộ mới được gửi. Đang chờ Trưởng phòng duyệt phân luồng hoặc leo thang cấp Công ty.',
+            status: r.status,
+          }));
+          list.push(...reqItems);
+          this.pendingList.set([...list]);
+        },
+        error: () => {},
+      });
+  }
+
+  formatStatus(status: string): string {
+    switch (status) {
+      case 'SUBMITTED':
+        return 'ĐÃ NỘP';
+      case 'RESOLVED':
+        return 'ĐÃ GIẢI QUYẾT';
+      case 'PENDING':
+        return 'CHỜ DUYỆT';
+      case 'APPROVED':
+        return 'ĐÃ DUYỆT';
+      case 'REJECTED':
+        return 'TỪ CHỐI';
+      default:
+        return status;
+    }
   }
 
   setFilter(type: 'ALL' | 'TASK' | 'REQUEST'): void {

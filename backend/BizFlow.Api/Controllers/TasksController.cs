@@ -68,14 +68,14 @@ public sealed class TasksController(TaskListQuery tasks, TaskCreation creation, 
     }
 
     [JsonUnmappedMemberHandling(JsonUnmappedMemberHandling.Disallow)]
-    public sealed record CreateInput(string Title, string? Description, string? Priority, string? Deadline, string[]? Checklist, Guid? RequestId = null);
+    public sealed record CreateInput(string Title, string? Description = null, string? Priority = null, string? Deadline = null, string[]? Checklist = null, Guid? RequestId = null, Guid? ParentTaskId = null);
 
     [HttpPost]
     public async Task<IActionResult> Create(CreateInput input, CancellationToken cancellationToken)
     {
         var keys = Request.Headers["Idempotency-Key"];
         if (keys.Count > 1) throw new ApplicationFault(FaultKind.Validation, "IDEMPOTENCY.INVALID_KEY", "Supply at most one Idempotency-Key header.");
-        var result = await creation.CreateAsync(new(input.Title, input.Description, input.Priority, input.Deadline, input.Checklist, input.RequestId),
+        var result = await creation.CreateAsync(new(input.Title, input.Description, input.Priority, input.Deadline, input.Checklist, input.RequestId, input.ParentTaskId),
             keys.Count == 0 ? null : keys[0], cancellationToken);
         return Created($"/api/v1/tasks/{result.TaskId}", result);
     }
@@ -88,9 +88,9 @@ public sealed class TasksController(TaskListQuery tasks, TaskCreation creation, 
     [HttpGet]
     public Task<TaskListPage> List([FromQuery] int page = 1, [FromQuery] int pageSize = 25,
         [FromQuery] string? search = null, [FromQuery] string? status = null, [FromQuery] string? priority = null,
-        [FromQuery] Guid? requestId = null,
+        [FromQuery] Guid? requestId = null, [FromQuery] Guid? parentTaskId = null, [FromQuery] bool? isParentOnly = null,
         CancellationToken cancellationToken = default) =>
-        tasks.ListAsync(new(page, pageSize, search, status, priority, requestId), cancellationToken);
+        tasks.ListAsync(new(page, pageSize, search, status, priority, requestId, parentTaskId, isParentOnly), cancellationToken);
 
     [JsonUnmappedMemberHandling(JsonUnmappedMemberHandling.Disallow)]
     public sealed record TaskCommentInput(string Content);

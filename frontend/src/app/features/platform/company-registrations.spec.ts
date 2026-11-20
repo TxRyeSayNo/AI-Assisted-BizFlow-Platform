@@ -21,7 +21,7 @@ describe('platform registration queue', () => {
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).toContain('Loading company registrations');
     const request = pending();
-    expect(request.request.params.get('status')).toBe('PENDING');
+    expect(request.request.params.get('status')).toBeNull();
     request.flush({ items: [], total: 0, page: 1, pageSize: 25 });
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).toContain('No company registrations match');

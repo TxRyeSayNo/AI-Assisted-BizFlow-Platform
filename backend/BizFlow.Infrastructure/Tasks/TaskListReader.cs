@@ -29,12 +29,22 @@ public sealed class TaskListReader(BizFlowDbContext db) : ITaskListReader
         {
             query = query.Where(t => t.RequestId == reqId);
         }
+        if (filter.ParentTaskId is { } parentId)
+        {
+            query = query.Where(t => t.ParentTaskId == parentId);
+        }
+        else if (filter.IsParentOnly == true)
+        {
+            query = query.Where(t => t.ParentTaskId == null);
+        }
         var total = await query.LongCountAsync(cancellationToken);
         var rows = await query.OrderByDescending(t => t.CreatedAt).ThenBy(t => t.Id)
             .Skip(checked((filter.Page - 1) * filter.PageSize)).Take(filter.PageSize)
             .Select(t => new
             {
-                t.Id, t.Title, t.Status, t.Priority, t.Deadline, t.CreatedAt, t.CreatorId, t.RequestId,
+                t.Id, t.Title, t.Status, t.Priority, t.Deadline, t.CreatedAt, t.CreatorId, t.RequestId, t.ParentTaskId,
+                SubtaskCount = db.WorkTasks.Count(st => st.TenantId == scope.TenantId && st.ParentTaskId == t.Id && st.DeletedAt == null),
+                CompletedSubtaskCount = db.WorkTasks.Count(st => st.TenantId == scope.TenantId && st.ParentTaskId == t.Id && (st.Status == TaskState.Completed || st.Status == TaskState.Confirmed) && st.DeletedAt == null),
                 Assignment = db.TaskAssignments.Where(a => a.TaskId == t.Id && a.EndedAt == null)
                     .Select(a => new
                     {
@@ -45,6 +55,6 @@ public sealed class TaskListReader(BizFlowDbContext db) : ITaskListReader
             }).ToListAsync(cancellationToken);
         return new(rows.Select(t => new TaskListRow(t.Id, t.Title, TaskListCodes.State(t.Status), TaskListCodes.Priority(t.Priority),
             t.Deadline, t.CreatedAt, t.CreatorId, t.RequestId, t.Assignment?.UserId, t.Assignment?.UserName,
-            t.Assignment?.DepartmentId, t.Assignment?.DepartmentName)).ToArray(), filter.Page, filter.PageSize, total);
+            t.Assignment?.DepartmentId, t.Assignment?.DepartmentName, t.ParentTaskId, t.SubtaskCount, t.CompletedSubtaskCount)).ToArray(), filter.Page, filter.PageSize, total);
     }
 }

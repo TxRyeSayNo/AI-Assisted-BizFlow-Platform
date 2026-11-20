@@ -14,6 +14,7 @@ import { TaskSubmissionEditor } from './task-submission';
 import { TaskConfirmationEditor } from './task-confirmation';
 import { WorkItemComments } from '../collaboration/work-item-comments';
 import { WorkItemAttachments } from '../collaboration/work-item-attachments';
+import { I18nService } from '../../core/i18n/i18n.service';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
 
 interface Evidence {
@@ -43,7 +44,14 @@ interface Detail {
     assignedUserName: string | null;
     assignedUserId: string | null;
     assignedDepartmentName: string | null;
+    assignedDepartmentId?: string | null;
+    parentTaskId?: string | null;
+    subtaskCount?: number;
+    completedSubtaskCount?: number;
   };
+  parentTaskId?: string | null;
+  parentTaskTitle?: string | null;
+  subtasks?: Array<any>;
   description: string | null;
   creatorName: string | null;
   checklist: EvidencePage;
@@ -64,7 +72,29 @@ interface Detail {
   styleUrls: ['../organization/departments.scss', './task-editor.scss'],
 })
 export class TaskDetail {
+  canCreateSubtask(): boolean {
+    const d = this.data();
+    if (!d?.task) return false;
+    // Only Managers and Company Admins can decompose/create subtasks for subordinates
+    const isManagerOrAdmin =
+      this.session.hasPermission('tasks.assign') && this.session.hasPermission('tasks.create');
+    return isManagerOrAdmin && d.task.status !== 'CANCELLED' && d.task.status !== 'COMPLETED';
+  }
+
+  completedSubtasksCount(): number {
+    const subs = this.data()?.subtasks;
+    if (!subs || !subs.length) return 0;
+    return subs.filter((s: any) => s.status === 'COMPLETED' || s.status === 'CONFIRMED').length;
+  }
+
+  subtasksProgressPercent(): number {
+    const subs = this.data()?.subtasks;
+    if (!subs || !subs.length) return 0;
+    return Math.round((this.completedSubtasksCount() / subs.length) * 100);
+  }
+
   readonly session = inject(SessionService);
+  private readonly i18n = inject(I18nService);
   private readonly dialog = inject(MatDialog);
   private assigning = false;
   archiving = false;
@@ -77,9 +107,27 @@ export class TaskDetail {
   readonly busy = signal(false);
   readonly error = signal('');
   readonly sections = [
-    { key: 'checklist', name: 'Checklist' },
-    { key: 'reports', name: 'Progress reports' },
-    { key: 'results', name: 'Results' },
+    {
+      key: 'checklist',
+      nameKey: 'taskDetail.checklistSection',
+      fallback: 'Checklist',
+      emptyKey: 'taskDetail.noChecklist',
+      emptyFallback: 'Chưa có mục kiểm tra nào trong trang này.',
+    },
+    {
+      key: 'reports',
+      nameKey: 'taskDetail.progressSection',
+      fallback: 'Progress reports',
+      emptyKey: 'taskDetail.noReports',
+      emptyFallback: 'Chưa có báo cáo tiến độ nào trong trang này.',
+    },
+    {
+      key: 'results',
+      nameKey: 'taskDetail.resultsSection',
+      fallback: 'Results',
+      emptyKey: 'taskDetail.noResults',
+      emptyFallback: 'Chưa có kết quả nộp nào trong trang này.',
+    },
   ] as const;
   constructor() {
     inject(ActivatedRoute)
@@ -265,7 +313,10 @@ export class TaskDetail {
         },
         error: (failure: HttpErrorResponse) => {
           this.archiving = false;
-          alert(failure?.error?.message ?? 'Failed to archive task.');
+          alert(
+            failure?.error?.message ??
+              this.i18n.t('taskDetail.errArchive', 'Failed to archive task.'),
+          );
         },
       });
   }
@@ -290,8 +341,14 @@ export class TaskDetail {
           this.busy.set(false);
           this.error.set(
             failure.status === 404
-              ? 'This task is unavailable or outside your access scope.'
-              : 'Task details could not be loaded. Please try again.',
+              ? this.i18n.t(
+                  'taskDetail.errUnavailable',
+                  'This task is unavailable or outside your access scope.',
+                )
+              : this.i18n.t(
+                  'taskDetail.errLoad',
+                  'Task details could not be loaded. Please try again.',
+                ),
           );
         },
       });
@@ -318,7 +375,6 @@ export class TaskDetail {
           this.aiBusy.set(false);
           this.aiError.set(err?.error?.message ?? 'Không thể đánh giá rủi ro.');
         },
-
       });
   }
 
@@ -338,7 +394,6 @@ export class TaskDetail {
           this.aiBusy.set(false);
           this.aiError.set(err?.error?.message ?? 'Không thể tạo tóm tắt tiến độ.');
         },
-
       });
   }
 }

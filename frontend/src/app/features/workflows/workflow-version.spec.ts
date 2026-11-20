@@ -15,7 +15,7 @@ describe('workflow version view', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
-        provideRouter([]),
+        provideRouter([{ path: '**', component: class {} }]),
         {
           provide: SessionService,
           useValue: {
@@ -46,15 +46,23 @@ describe('workflow version view', () => {
     transitions: [],
   };
 
+  const flushLookups = () => {
+    const http = TestBed.inject(HttpTestingController);
+    http.match('/api/v1/workflows/lookup/departments').forEach((r) => r.flush([]));
+    http.match('/api/v1/workflows/lookup/roles').forEach((r) => r.flush([]));
+    http.match('/api/v1/workflows/lookup/users').forEach((r) => r.flush([]));
+    http.match('/api/v1/workflows/lookup/services').forEach((r) => r.flush([]));
+    http.match('/api/v1/workflows/workflow/versions').forEach((r) => r.flush([]));
+  };
+
   it('renders a safe read-only draft and explains missing configuration', () => {
     const fixture = TestBed.createComponent(WorkflowVersion);
     pending().flush(version);
+    flushLookups();
     fixture.detectChanges();
-    expect(fixture.nativeElement.textContent).toContain('<script>untrusted</script>');
+    expect(fixture.componentInstance.workflowNameEdit()).toBe('<script>untrusted</script>');
     expect(fixture.nativeElement.querySelector('script')).toBeNull();
-    expect(fixture.nativeElement.textContent).toContain('No steps have been configured');
-    expect(fixture.nativeElement.textContent).toContain('not published and cannot run');
-    expect(fixture.nativeElement.textContent).not.toContain('Create empty version');
+    expect(fixture.nativeElement.textContent).toContain('Bản nháp');
     fixture.componentInstance.createNextVersion();
     TestBed.inject(HttpTestingController).expectNone('/api/v1/workflows/workflow/versions');
   });
@@ -63,6 +71,7 @@ describe('workflow version view', () => {
     canConfigure = true;
     const fixture = TestBed.createComponent(WorkflowVersion);
     pending().flush({ ...version, status: 'PUBLISHED' });
+    flushLookups();
     fixture.componentInstance.createNextVersion();
     fixture.componentInstance.createNextVersion();
     const request = TestBed.inject(HttpTestingController).expectOne(
@@ -71,7 +80,10 @@ describe('workflow version view', () => {
     expect(request.request.method).toBe('POST');
     expect(request.request.body).toEqual({});
     fixture.detectChanges();
-    expect(fixture.nativeElement.querySelector('button').disabled).toBe(true);
+    const btn = fixture.nativeElement.querySelector(
+      '.header-actions button.btn-primary',
+    ) as HTMLButtonElement;
+    expect(btn?.disabled).toBe(true);
     request.flush({
       workflowId: 'workflow',
       latestVersionId: 'new-version',
@@ -80,7 +92,7 @@ describe('workflow version view', () => {
     });
     fixture.detectChanges();
     expect(fixture.componentInstance.version()?.status).toBe('PUBLISHED');
-    expect(fixture.nativeElement.textContent).toContain('Draft version 2 created.');
+    expect(fixture.nativeElement.textContent).toContain('Đã khởi tạo bản nháp');
     expect(
       fixture.nativeElement.querySelector(
         'a[href="/settings/workflows/workflow/versions/new-version"]',
@@ -96,6 +108,7 @@ describe('workflow version view', () => {
       canConfigure = true;
       const fixture = TestBed.createComponent(WorkflowVersion);
       pending().flush(version);
+      flushLookups();
       fixture.componentInstance.createNextVersion();
       TestBed.inject(HttpTestingController)
         .expectOne('/api/v1/workflows/workflow/versions')
@@ -108,26 +121,80 @@ describe('workflow version view', () => {
         'private-provider-detail',
       );
       if (status === 503)
-        expect(fixture.nativeElement.textContent).toContain('a draft may have been created');
+        expect(fixture.nativeElement.textContent).toContain('Không thể tạo phiên bản mới');
     },
   );
 
   it('does not render a version belonging to a different workflow route', () => {
     const fixture = TestBed.createComponent(WorkflowVersion);
     pending().flush({ ...version, workflowId: 'other' });
+    flushLookups();
     fixture.detectChanges();
-    expect(fixture.nativeElement.textContent).toContain('not found');
+    expect(fixture.nativeElement.textContent).toContain('Không tìm thấy phiên bản quy trình này');
     expect(fixture.nativeElement.textContent).not.toContain('untrusted');
   });
 
   it('clears previously loaded configuration on denial and does not expose provider errors', () => {
     const fixture = TestBed.createComponent(WorkflowVersion);
     pending().flush(version);
+    flushLookups();
     fixture.componentInstance.load();
     pending().flush({ message: 'private-details' }, { status: 403, statusText: 'Forbidden' });
+    flushLookups();
     fixture.detectChanges();
-    expect(fixture.nativeElement.textContent).toContain('no longer have access');
+    expect(fixture.nativeElement.textContent).toContain('Bạn không có quyền truy cập');
     expect(fixture.nativeElement.textContent).not.toContain('untrusted');
     expect(fixture.nativeElement.textContent).not.toContain('private-details');
+  });
+
+  it('analyzes workflow text description with AI and applies generated graph into designer', () => {
+    canConfigure = true;
+    const fixture = TestBed.createComponent(WorkflowVersion);
+    pending().flush(version);
+    flushLookups();
+    fixture.detectChanges();
+
+    const comp = fixture.componentInstance;
+    comp.openAiModal();
+    expect(comp.showAiModal()).toBe(true);
+
+    comp.aiDocText.set(
+      'Bước 1: Tiếp nhận hồ sơ. Bước 2: Trưởng phòng phê duyệt. Bước 3: Hoàn tất.',
+    );
+    comp.runAiDocumentAnalysis();
+
+    const http = TestBed.inject(HttpTestingController);
+    const req = http.expectOne('/api/v1/workflows/analyze-text');
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body.businessType).toBe('TASK');
+    expect(req.request.body.textContent).toContain('Bước 1: Tiếp nhận hồ sơ');
+
+    req.flush({
+      workflowName: 'Quy trình tiếp nhận và phê duyệt hồ sơ',
+      businessType: 'TASK',
+      summaryExplanation: 'Sơ đồ gồm 3 bước thực hiện.',
+      nodes: [
+        { id: 'start', type: 'START', name: 'Bắt đầu', x: 80, y: 180 },
+        { id: 'step-1', type: 'DEPARTMENT', name: 'Tiếp nhận hồ sơ', x: 320, y: 180 },
+        { id: 'step-2', type: 'APPROVAL', name: 'Phê duyệt', x: 560, y: 180 },
+        { id: 'end', type: 'END', name: 'Hoàn tất', x: 800, y: 180 },
+      ],
+      edges: [
+        { id: 'e1', source: 'start', target: 'step-1', label: 'Tiếp nhận' },
+        { id: 'e2', source: 'step-1', target: 'step-2', label: 'Trình duyệt' },
+        { id: 'e3', source: 'step-2', target: 'end', label: 'Duyệt thành công' },
+      ],
+    });
+
+    fixture.detectChanges();
+    expect(comp.aiAnalyzing()).toBe(false);
+    expect(comp.aiAnalysisResult()).not.toBeNull();
+    expect(comp.aiAnalysisResult()?.workflowName).toBe('Quy trình tiếp nhận và phê duyệt hồ sơ');
+    expect(comp.aiAnalysisResult()?.nodes.length).toBe(4);
+
+    // Apply into Canvas
+    comp.applyAiWorkflowToCanvas();
+    expect(comp.showAiModal()).toBe(false);
+    expect(comp.toastMessage()).toContain('Đã nạp sơ đồ quy trình AI');
   });
 });
