@@ -17,7 +17,15 @@ describe('request creation component', () => {
     }),
   );
 
-  afterEach(() => TestBed.inject(HttpTestingController).verify());
+  afterEach(() => {
+    const http = TestBed.inject(HttpTestingController);
+    http
+      .match((r) => r.url === '/api/v1/requests/recipient-options')
+      .forEach((r) => {
+        if (!r.cancelled) r.flush({ myLevel: 0, departments: [], users: [] });
+      });
+    http.verify();
+  });
 
   const mockServices = [
     {

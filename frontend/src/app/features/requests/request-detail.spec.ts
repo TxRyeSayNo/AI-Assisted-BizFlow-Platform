@@ -64,8 +64,15 @@ describe('request detail component', () => {
 
   afterEach(() => {
     const http = TestBed.inject(HttpTestingController);
-    http.match((r) => r.url === '/api/v1/comments').forEach((r) => r.flush([]));
-    http.match((r) => r.url === '/api/v1/attachments').forEach((r) => r.flush([]));
+    http.match((r) => r.url === '/api/v1/comments').forEach((r) => {
+      if (!r.cancelled) r.flush([]);
+    });
+    http.match((r) => r.url === '/api/v1/attachments').forEach((r) => {
+      if (!r.cancelled) r.flush([]);
+    });
+    http.match((r) => r.url.endsWith('/escalation')).forEach((r) => {
+      if (!r.cancelled) r.flush(null);
+    });
     http.verify();
   });
 
