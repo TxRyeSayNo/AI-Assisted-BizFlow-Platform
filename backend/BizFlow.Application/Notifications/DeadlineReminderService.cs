@@ -41,16 +41,18 @@ public sealed class DeadlineReminderService(
                 _ => "Overdue"
             };
 
-            var schedule = DeadlineReminderSchedule.Create(
-                tenantId,
-                task.Id,
-                userId,
-                minutes,
-                task.Deadline.Value,
-                triggerType,
-                now);
-
-            await store.SaveScheduleAsync(schedule, cancellationToken);
+            // The store returns the row that now holds this mark, which is the existing one when
+            // the caller is reconfiguring, so the response always describes a real row.
+            var schedule = await store.SaveScheduleAsync(
+                DeadlineReminderSchedule.Create(
+                    tenantId,
+                    task.Id,
+                    userId,
+                    minutes,
+                    task.Deadline.Value,
+                    triggerType,
+                    now),
+                cancellationToken);
 
             createdList.Add(new DeadlineReminderDto(
                 schedule.Id,

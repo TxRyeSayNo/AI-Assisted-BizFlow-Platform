@@ -1,0 +1,143 @@
+<main id="main-content" class="page-content" tabindex="-1">
+  <nav aria-label="Breadcrumb">
+    <a routerLink="/workspace">{{ 'common.workspace' | translate: 'Workspace' }}</a>
+    <span aria-hidden="true"> / </span>
+    <a routerLink="/settings">{{ 'nav.settings' | translate: 'Settings' }}</a>
+    <span aria-hidden="true"> / </span>
+    <span>{{ 'labels.title' | translate: 'Labels' }}</span>
+  </nav>
+  <h1>{{ 'labels.title' | translate: 'Labels' }}</h1>
+  <p>
+    {{
+      'labels.subtitle'
+        | translate
+          : 'Tags shared across this workspace. Retiring a label keeps it on the items that already carry it.'
+    }}
+  </p>
+
+  <section aria-label="Label catalogue" class="directory-panel" [attr.aria-busy]="busy()">
+    @if (canManage()) {
+      <form [formGroup]="form" (ngSubmit)="submit()" class="filters">
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>{{ 'labels.name' | translate: 'Label name' }}</mat-label>
+          <input matInput formControlName="name" maxlength="60" [readonly]="busy()" />
+        </mat-form-field>
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>{{ 'labels.colour' | translate: 'Colour (#RRGGBB)' }}</mat-label>
+          <input matInput formControlName="colour" maxlength="7" [readonly]="busy()" />
+        </mat-form-field>
+        <button mat-flat-button type="submit" [disabled]="busy()">
+          @if (editingId()) {
+            {{ 'common.save' | translate: 'Save' }}
+          } @else {
+            {{ 'labels.create' | translate: 'Create label' }}
+          }
+        </button>
+        @if (editingId()) {
+          <button mat-stroked-button type="button" [disabled]="busy()" (click)="cancelEdit()">
+            {{ 'common.cancel' | translate: 'Cancel' }}
+          </button>
+        }
+      </form>
+    }
+
+    <button mat-stroked-button type="button" [disabled]="busy()" (click)="toggleArchivedView()">
+      @if (includeArchived()) {
+        {{ 'labels.hideArchived' | translate: 'Hide retired' }}
+      } @else {
+        {{ 'labels.showArchived' | translate: 'Show retired' }}
+      }
+    </button>
+
+    @if (busy()) {
+      <p role="status" class="directory-feedback">{{ 'common.loading' | translate: 'Loading…' }}</p>
+    } @else if (denied()) {
+      <p role="alert" class="directory-feedback">
+        {{ 'labels.denied' | translate: 'You no longer have access to the label catalogue.' }}
+      </p>
+    } @else if (unavailable()) {
+      <p role="status" class="directory-feedback">
+        {{ 'labels.unavailable' | translate: 'Labels are not enabled on this deployment.' }}
+      </p>
+    } @else if (error()) {
+      <div class="directory-feedback">
+        <p role="alert">{{ 'labels.loadError' | translate: 'Labels could not be loaded.' }}</p>
+        <button mat-stroked-button type="button" (click)="load()">
+          {{ 'common.retry' | translate: 'Retry' }}
+        </button>
+      </div>
+    } @else if (items().length === 0) {
+      <p role="status" class="directory-feedback">
+        {{ 'labels.empty' | translate: 'No labels in this workspace yet.' }}
+      </p>
+    } @else {
+      <div class="table-scroll">
+        <table>
+          <caption>
+            {{
+              'labels.tableCaption' | translate: 'Labels in this workspace'
+            }}
+          </caption>
+          <thead>
+            <tr>
+              <th scope="col">{{ 'labels.name' | translate: 'Label name' }}</th>
+              <th scope="col">{{ 'labels.usage' | translate: 'In use' }}</th>
+              <th scope="col">{{ 'common.status' | translate: 'Status' }}</th>
+              @if (canManage()) {
+                <th scope="col">{{ 'common.actions' | translate: 'Actions' }}</th>
+              }
+            </tr>
+          </thead>
+          <tbody>
+            @for (label of items(); track label.labelId) {
+              <tr>
+                <th scope="row">
+                  <span class="label-chip" [style.border-color]="label.colour">
+                    <span
+                      class="label-dot"
+                      [style.background]="label.colour"
+                      aria-hidden="true"
+                    ></span>
+                    {{ label.name }}
+                  </span>
+                </th>
+                <td>{{ label.usageCount }}</td>
+                <td>
+                  @if (label.archived) {
+                    {{ 'labels.archived' | translate: 'Retired' }}
+                  } @else {
+                    {{ 'labels.active' | translate: 'Active' }}
+                  }
+                </td>
+                @if (canManage()) {
+                  <td>
+                    <button
+                      mat-stroked-button
+                      type="button"
+                      [disabled]="busy()"
+                      (click)="startEdit(label)"
+                    >
+                      {{ 'common.edit' | translate: 'Edit' }}
+                    </button>
+                    <button
+                      mat-stroked-button
+                      type="button"
+                      [disabled]="busy()"
+                      (click)="setArchived(label, !label.archived)"
+                    >
+                      @if (label.archived) {
+                        {{ 'labels.restore' | translate: 'Restore' }}
+                      } @else {
+                        {{ 'labels.archive' | translate: 'Retire' }}
+                      }
+                    </button>
+                  </td>
+                }
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </section>
+</main>

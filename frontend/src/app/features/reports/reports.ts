@@ -1,6 +1,6 @@
 import { CommonModule, DecimalPipe } from '@angular/common';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
+import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -10,8 +10,10 @@ import { MatSelectModule } from '@angular/material/select';
 import { RouterLink } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { SessionService } from '../../core/auth/session';
+import { FeatureFlagsService } from '../../core/features/feature-flags.service';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
+import { ChartSlice, ReportChart } from './report-chart';
 
 export interface TaskMetricsView {
   totalTasks: number;
@@ -135,6 +137,7 @@ export interface DepartmentOption {
     MatSelectModule,
     RouterLink,
     TranslatePipe,
+    ReportChart,
   ],
   templateUrl: './reports.html',
   styleUrls: ['../organization/departments.scss', '../requests/requests.scss', './reports.scss'],
@@ -157,6 +160,165 @@ export class Reports implements OnInit {
   readonly departments = signal<DepartmentOption[]>([]);
 
   private activeSub?: Subscription;
+
+  // -------------------------------------------------------------------------------------------
+  // F5, additive: downloads and charts. Both are inert unless the ReportExport feature is on, so
+  // a deployment with the flag off renders this page exactly as it did before.
+  // -------------------------------------------------------------------------------------------
+  readonly features = inject(FeatureFlagsService);
+  readonly exporting = signal(false);
+
+  /** The tabs that have a download endpoint; the manager dashboard has none. */
+  canExport(): boolean {
+    return this.features.reportExport() && this.activeTab() !== 'manager';
+  }
+
+  /** Chart series for the tab on screen, derived from data already loaded. */
+  readonly chartSeries = computed<
+    { title: string; kind: 'bar' | 'line' | 'pie'; data: ChartSlice[] }[]
+  >(() => {
+    switch (this.activeTab()) {
+      case 'company': {
+        const report = this.companyData();
+        if (!report) return [];
+        return [
+          {
+            title: this.i18n.t('reports.chartDeptTasks', 'Nhiệm vụ theo phòng ban'),
+            kind: 'bar',
+            data: report.departmentMetrics.map((d) => ({
+              label: d.departmentName,
+              value: d.totalTasks,
+            })),
+          },
+          {
+            title: this.i18n.t('reports.chartCompletion', 'Hoàn thành so với tổng'),
+            kind: 'pie',
+            data: [
+              {
+                label: this.i18n.t('reports.chartCompleted', 'Hoàn thành'),
+                value: report.totalTasksCompleted,
+              },
+              {
+                label: this.i18n.t('reports.chartRemaining', 'Còn lại'),
+                value: Math.max(0, report.totalTasksCreated - report.totalTasksCompleted),
+              },
+            ],
+          },
+        ];
+      }
+      case 'workload': {
+        const report = this.workloadData();
+        if (!report) return [];
+        return [
+          {
+            title: this.i18n.t('reports.chartActiveByPerson', 'Đang làm theo nhân sự'),
+            kind: 'bar',
+            data: report.items.map((i) => ({ label: i.fullName, value: i.activeTasks })),
+          },
+          {
+            title: this.i18n.t('reports.chartAvgPerMember', 'Trung bình mỗi thành viên'),
+            kind: 'line',
+            data: report.departmentBreakdown.map((d) => ({
+              label: d.departmentName,
+              value: Math.round(d.avgTasksPerMember * 10) / 10,
+            })),
+          },
+        ];
+      }
+      case 'sla': {
+        const report = this.slaData();
+        if (!report) return [];
+        return [
+          {
+            title: this.i18n.t('reports.chartCompliance', 'Tuân thủ SLA'),
+            kind: 'pie',
+            data: [
+              {
+                label: this.i18n.t('reports.chartCompliant', 'Đúng hạn'),
+                value: report.compliantCount,
+              },
+              {
+                label: this.i18n.t('reports.chartBreached', 'Vi phạm'),
+                value: report.breachedCount,
+              },
+            ],
+          },
+          {
+            title: this.i18n.t('reports.chartByService', 'Yêu cầu theo dịch vụ'),
+            kind: 'bar',
+            data: report.serviceBreakdown.map((s) => ({
+              label: s.serviceName,
+              value: s.totalRequests,
+            })),
+          },
+        ];
+      }
+      default: {
+        const report = this.managerData();
+        if (!report) return [];
+        return [
+          {
+            title: this.i18n.t('reports.chartTasksByStatus', 'Nhiệm vụ theo trạng thái'),
+            kind: 'bar',
+            data: Object.entries(report.taskMetrics.byStatus).map(([label, value]) => ({
+              label,
+              value,
+            })),
+          },
+        ];
+      }
+    }
+  });
+
+  /** Downloads the report on screen, reusing the filters already applied. */
+  exportCurrent(format: 'xlsx' | 'csv' | 'pdf'): void {
+    if (this.exporting() || !this.canExport()) return;
+    const tab = this.activeTab();
+    const raw = this.filters.getRawValue();
+    let params = new HttpParams().set('format', format);
+    if (raw.from) params = params.set('from', new Date(raw.from).toISOString());
+    if (raw.to) params = params.set('to', new Date(raw.to).toISOString());
+    if (tab === 'workload' && raw.departmentId)
+      params = params.set('departmentId', raw.departmentId);
+    this.exporting.set(true);
+    this.http
+      .get(`/api/v1/reports/${tab}/export`, { params, observe: 'response', responseType: 'blob' })
+      .pipe(takeUntilDestroyed(this.destroy))
+      .subscribe({
+        next: (response) => {
+          this.exporting.set(false);
+          this.save(
+            response.body,
+            this.fileNameOf(response.headers.get('content-disposition'), tab, format),
+          );
+        },
+        error: () => {
+          this.exporting.set(false);
+          this.error.set(
+            this.i18n.t('reports.errExport', 'Không xuất được báo cáo. Vui lòng thử lại.'),
+          );
+        },
+      });
+  }
+
+  private fileNameOf(disposition: string | null, tab: string, format: string): string {
+    const match = /filename\*?=(?:UTF-8'')?"?([^";]+)"?/i.exec(disposition ?? '');
+    return match ? decodeURIComponent(match[1]) : `${tab}-report.${format}`;
+  }
+
+  private save(blob: Blob | null, fileName: string): void {
+    if (!blob) return;
+    try {
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement('a');
+      anchor.href = url;
+      anchor.download = fileName;
+      anchor.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      // A host without object URLs (or a headless test) simply gets no download prompt.
+    }
+  }
 
   readonly filters = new FormGroup({
     departmentId: new FormControl('', { nonNullable: true }),

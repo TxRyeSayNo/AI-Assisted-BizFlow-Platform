@@ -23,6 +23,30 @@
         </p>
       </div>
       <div class="task-nav-container" aria-label="Task navigation">
+        @if (features.kanban()) {
+          <span class="task-nav-btn is-current" aria-current="page">
+            <span class="nav-btn-icon" aria-hidden="true">≡</span>
+            <span>{{ 'taskBoard.viewList' | translate: 'List' }}</span>
+          </span>
+          <a
+            class="task-nav-btn"
+            routerLink="/tasks/board"
+            [title]="'taskBoard.viewBoardHint' | translate: 'Open the Kanban board'"
+          >
+            <span class="nav-btn-icon" aria-hidden="true">▦</span>
+            <span>{{ 'taskBoard.viewBoard' | translate: 'Board' }}</span>
+          </a>
+        }
+        @if (features.calendar()) {
+          <a
+            class="task-nav-btn"
+            routerLink="/tasks/calendar"
+            [title]="'taskCalendar.viewCalendarHint' | translate: 'Open the deadline calendar'"
+          >
+            <span class="nav-btn-icon" aria-hidden="true">▤</span>
+            <span>{{ 'taskCalendar.viewCalendar' | translate: 'Calendar' }}</span>
+          </a>
+        }
         @if (session.hasPermission('tasks.create')) {
           <a
             class="task-nav-btn primary-nav-btn"

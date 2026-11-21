@@ -1,0 +1,128 @@
+// Deadline calendar. The grid uses equal fractional columns so it reflows at phone width
+// without ever widening the document, which the task-page end-to-end suite asserts.
+.calendar-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.calendar-nav,
+.calendar-modes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.calendar-heading {
+  margin-left: 0.5rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.calendar-modes button[aria-pressed='true'] {
+  font-weight: 700;
+  text-decoration: underline;
+}
+
+.calendar-weekdays,
+.calendar-days {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 0.25rem;
+}
+
+.calendar-weekdays {
+  margin-bottom: 0.25rem;
+}
+
+.calendar-weekday {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  opacity: 0.7;
+  text-align: center;
+}
+
+.calendar-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-height: 6.5rem;
+  padding: 0.3rem;
+  border: 1px solid rgb(0 0 0 / 8%);
+  border-radius: 0.375rem;
+  background: rgb(0 0 0 / 2%);
+  overflow: hidden;
+
+  &.out-of-focus {
+    opacity: 0.45;
+  }
+
+  &.is-today {
+    border-color: #1a73e8;
+    border-width: 2px;
+  }
+}
+
+.calendar-day-number {
+  font-size: 0.75rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.8;
+}
+
+.calendar-entry {
+  display: flex;
+  flex-direction: column;
+  gap: 0.05rem;
+  padding: 0.2rem 0.3rem;
+  border-radius: 0.25rem;
+  border-left: 3px solid rgb(0 0 0 / 25%);
+  background: #fff;
+  text-decoration: none;
+  font-size: 0.75rem;
+
+  &[data-priority='HIGH'] {
+    border-left-color: #e8710a;
+  }
+
+  &[data-priority='CRITICAL'] {
+    border-left-color: #b3261e;
+  }
+}
+
+.calendar-entry-title {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.calendar-entry-meta {
+  opacity: 0.7;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 40rem) {
+  .calendar-cell {
+    min-height: 4.5rem;
+    font-size: 0.7rem;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  .calendar-cell {
+    background: rgb(255 255 255 / 4%);
+    border-color: rgb(255 255 255 / 10%);
+  }
+
+  .calendar-entry {
+    background: #1f1f23;
+  }
+}

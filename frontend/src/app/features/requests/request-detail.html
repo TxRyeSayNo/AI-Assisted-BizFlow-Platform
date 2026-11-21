@@ -264,8 +264,8 @@
         <div style="margin-top: 4px; color: #475569">
           {{ esc.escalatedByName }} chuyển lên: "{{ esc.reason }}"
           @if (esc.decidedByName) {
-            <br />{{ esc.decidedByName }}
-            {{ esc.state === 'APPROVED' ? 'đã duyệt' : 'đã từ chối' }}@if (esc.decisionNote) {
+            <br />{{ esc.decidedByName }} {{ esc.state === 'APPROVED' ? 'đã duyệt' : 'đã từ chối' }}
+            @if (esc.decisionNote) {
               : "{{ esc.decisionNote }}"
             }
           }
@@ -1365,6 +1365,10 @@
     }
 
     <!-- Comments and Collaboration Section -->
+    <!-- F3: renders nothing unless the Mentions feature is enabled. -->
+    <bf-work-item-watch [objectType]="'REQUEST'" [objectId]="detail.requestId" />
+    <!-- F6: renders nothing unless the Labels feature is enabled. -->
+    <bf-work-item-labels [objectType]="'REQUEST'" [objectId]="detail.requestId" />
     <bf-work-item-comments [objectType]="'REQUEST'" [objectId]="detail.requestId" />
 
     <!-- Attachments and Evidence Section -->

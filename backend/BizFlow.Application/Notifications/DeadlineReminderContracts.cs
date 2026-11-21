@@ -42,7 +42,12 @@ public interface IDeadlineReminderStore
     Task<Domain.Tasks.WorkTask?> GetTaskAsync(Guid tenantId, Guid taskId, CancellationToken cancellationToken);
     Task<IReadOnlyList<Domain.Notifications.DeadlineReminderSchedule>> GetSchedulesForTaskAsync(Guid tenantId, Guid taskId, CancellationToken cancellationToken);
     Task<Domain.Notifications.DeadlineReminderSchedule?> GetScheduleByIdAsync(Guid tenantId, Guid reminderId, CancellationToken cancellationToken);
-    Task SaveScheduleAsync(Domain.Notifications.DeadlineReminderSchedule schedule, CancellationToken cancellationToken);
+    /// <summary>
+    /// Stores the mark and returns the row that now holds it. When a mark for the same
+    /// (tenant, task, user, trigger) already exists it is re-armed in place and returned, so the
+    /// caller always describes a row that really exists.
+    /// </summary>
+    Task<Domain.Notifications.DeadlineReminderSchedule> SaveScheduleAsync(Domain.Notifications.DeadlineReminderSchedule schedule, CancellationToken cancellationToken);
     Task SaveChangesAsync(CancellationToken cancellationToken);
     Task<Domain.Notifications.WebPushSubscription?> GetPushSubscriptionAsync(Guid tenantId, Guid userId, string endpoint, CancellationToken cancellationToken);
     Task AddPushSubscriptionAsync(Domain.Notifications.WebPushSubscription subscription, CancellationToken cancellationToken);

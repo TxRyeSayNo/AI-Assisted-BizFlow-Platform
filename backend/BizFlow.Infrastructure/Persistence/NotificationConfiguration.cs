@@ -12,7 +12,9 @@ internal sealed class NotificationConfiguration : IEntityTypeConfiguration<Notif
     {
         b.ToTable("Notification", table =>
         {
-            table.HasCheckConstraint("CK_Notification_Type", "\"Type\" IN ('TaskAssigned','TaskAccepted','TaskRejected','ProgressSubmitted','ResultSubmitted','TaskConfirmed','RequestSubmitted','RequestRouted','RequestReceived','RequestResolved','RequestRejected','RequestRevised','DeadlineWarning','Overdue','Escalation','ApprovalRequired')");
+            // F3 widens this list with 'Mentioned' and 'WatchedItemActivity'. Widening only ever
+            // admits more values, so every row that was valid before is still valid.
+            table.HasCheckConstraint("CK_Notification_Type", "\"Type\" IN ('TaskAssigned','TaskAccepted','TaskRejected','ProgressSubmitted','ResultSubmitted','TaskConfirmed','RequestSubmitted','RequestRouted','RequestReceived','RequestResolved','RequestRejected','RequestRevised','DeadlineWarning','Overdue','Escalation','ApprovalRequired','Mentioned','WatchedItemActivity')");
             table.HasCheckConstraint("CK_Notification_Text", "length(btrim(\"Title\")) > 0 AND length(btrim(\"Content\")) > 0 AND length(btrim(\"IdempotencyKey\")) > 0");
         });
         b.HasKey(x => x.Id); b.Property(x => x.Id).HasColumnName("NotificationId");

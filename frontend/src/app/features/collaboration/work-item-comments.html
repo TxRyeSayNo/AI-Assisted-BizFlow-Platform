@@ -113,6 +113,7 @@
         <textarea
           matInput
           [(ngModel)]="newCommentText"
+          (ngModelChange)="onCommentInput($event)"
           rows="3"
           maxlength="4000"
           [placeholder]="
@@ -121,6 +122,34 @@
         ></textarea>
         <mat-hint align="end">{{ newCommentText.length }} / 4000</mat-hint>
       </mat-form-field>
+
+      <!-- F3: "@" mentions. Rendered only where the feature is enabled. -->
+      @if (features.mentions()) {
+        @if (mentionSuggestions().length > 0) {
+          <ul class="mention-suggestions" role="listbox">
+            @for (candidate of mentionSuggestions(); track candidate.userId) {
+              <li>
+                <button type="button" role="option" (click)="pickMention(candidate)">
+                  {{ candidate.fullName }}
+                  @if (candidate.employeeCode) {
+                    <span class="mention-code">{{ candidate.employeeCode }}</span>
+                  }
+                </button>
+              </li>
+            }
+          </ul>
+        }
+        @if (picked().length > 0) {
+          <p class="mention-picked">
+            <span>{{ 'comments.willNotify' | translate: 'Will notify' }}:</span>
+            @for (person of picked(); track person.userId) {
+              <button type="button" class="mention-chip" (click)="removeMention(person.userId)">
+                {{ person.fullName }} ×
+              </button>
+            }
+          </p>
+        }
+      }
 
       <div class="form-actions">
         <button

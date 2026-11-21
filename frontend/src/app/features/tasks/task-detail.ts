@@ -14,6 +14,9 @@ import { TaskSubmissionEditor } from './task-submission';
 import { TaskConfirmationEditor } from './task-confirmation';
 import { WorkItemComments } from '../collaboration/work-item-comments';
 import { WorkItemAttachments } from '../collaboration/work-item-attachments';
+import { WorkItemWatch } from '../collaboration/work-item-watch';
+import { WorkItemLabels } from '../collaboration/work-item-labels';
+import { TaskReminders } from './task-reminders';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
 
@@ -66,6 +69,9 @@ interface Detail {
     RouterLink,
     WorkItemComments,
     WorkItemAttachments,
+    WorkItemWatch,
+    WorkItemLabels,
+    TaskReminders,
     TranslatePipe,
   ],
   templateUrl: './task-detail.html',

@@ -45,4 +45,16 @@ public sealed class DeadlineReminderSchedule
 
     public void MarkSent() => Status = "Sent";
     public void Cancel() => Status = "Cancelled";
+
+    /// <summary>
+    /// Re-arms this mark in place, keeping its identity, owner and creation time. Reconfiguring a
+    /// reminder has to reuse the existing row: the table allows one row per
+    /// (tenant, task, user, trigger) and the platform forbids hard-deleting history.
+    /// </summary>
+    public void Reschedule(int leadTimeMinutes, DateTimeOffset remindAt)
+    {
+        LeadTimeMinutes = leadTimeMinutes;
+        RemindAt = remindAt;
+        Status = "Scheduled";
+    }
 }

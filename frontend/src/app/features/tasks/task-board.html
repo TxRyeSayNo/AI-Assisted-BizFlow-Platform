@@ -1,0 +1,216 @@
+<header class="public-header directory-header">
+  <a class="wordmark" routerLink="/workspace">
+    <span class="brand-mark" aria-hidden="true"></span> BizFlow
+  </a>
+  <span class="tenant-badge">{{ identity()?.tenantName }}</span>
+</header>
+<main id="main-content" class="page-content" tabindex="-1">
+  <div class="task-page-header">
+    <nav class="compact-breadcrumb" aria-label="Breadcrumb">
+      <a routerLink="/workspace">{{ 'common.workspace' | translate: 'Workspace' }}</a>
+      <span class="sep" aria-hidden="true">/</span>
+      <a routerLink="/tasks">{{ 'tasks.title' | translate: 'Tasks' }}</a>
+      <span class="sep" aria-hidden="true">/</span>
+      <span class="breadcrumb-current">{{ 'taskBoard.title' | translate: 'Task board' }}</span>
+    </nav>
+    <div class="task-header-row">
+      <div class="header-titles">
+        <h1 class="task-header-title">{{ 'taskBoard.title' | translate: 'Task board' }}</h1>
+        <p class="task-header-subtitle">
+          {{
+            'taskBoard.subtitle'
+              | translate
+                : 'Drag a card to move work forward. Only transitions the server already allows are accepted.'
+          }}
+        </p>
+      </div>
+      <div class="task-nav-container" aria-label="Task view switch">
+        <a class="task-nav-btn" routerLink="/tasks">
+          <span class="nav-btn-icon" aria-hidden="true">≡</span>
+          <span>{{ 'taskBoard.viewList' | translate: 'List' }}</span>
+        </a>
+        <span class="task-nav-btn primary-nav-btn is-current" aria-current="page">
+          <span class="nav-btn-icon" aria-hidden="true">▦</span>
+          <span>{{ 'taskBoard.viewBoard' | translate: 'Board' }}</span>
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <section aria-label="Task board" class="directory-panel" [attr.aria-busy]="busy()">
+    <form [formGroup]="filters" (ngSubmit)="apply()" class="filters">
+      <mat-form-field appearance="outline" subscriptSizing="dynamic"
+        ><mat-label>{{ 'tasks.searchPlaceholder' | translate: 'Search task title' }}</mat-label
+        ><input matInput formControlName="search" maxlength="200" [readonly]="busy()"
+      /></mat-form-field>
+      <mat-form-field appearance="outline" subscriptSizing="dynamic"
+        ><mat-label>{{ 'common.priority' | translate: 'Priority' }}</mat-label
+        ><mat-select formControlName="priority"
+          ><mat-option value="">{{
+            'common.allPriorities' | translate: 'All priorities'
+          }}</mat-option>
+          @for (option of priorityOptions; track option[0]) {
+            <mat-option [value]="option[0]">{{
+              'priority.' + option[0] | translate: option[1]
+            }}</mat-option>
+          }
+        </mat-select></mat-form-field
+      >
+      <mat-form-field appearance="outline" subscriptSizing="dynamic"
+        ><mat-label>{{ 'taskBoard.filterAssignee' | translate: 'Assignee' }}</mat-label
+        ><mat-select formControlName="assignedUserId"
+          ><mat-option value="">{{ 'taskBoard.allAssignees' | translate: 'Everyone' }}</mat-option>
+          @for (option of assigneeOptions(); track option[0]) {
+            <mat-option [value]="option[0]">{{ option[1] }}</mat-option>
+          }
+        </mat-select></mat-form-field
+      >
+      <mat-form-field appearance="outline" subscriptSizing="dynamic"
+        ><mat-label>{{ 'taskBoard.filterDepartment' | translate: 'Department' }}</mat-label
+        ><mat-select formControlName="assignedDepartmentId"
+          ><mat-option value="">{{
+            'taskBoard.allDepartments' | translate: 'All departments'
+          }}</mat-option>
+          @for (option of departmentOptions(); track option[0]) {
+            <mat-option [value]="option[0]">{{ option[1] }}</mat-option>
+          }
+        </mat-select></mat-form-field
+      >
+      @if (features.labels() && labelOptions().length > 0) {
+        <mat-form-field appearance="outline" subscriptSizing="dynamic"
+          ><mat-label>{{ 'labels.onItem' | translate: 'Labels' }}</mat-label
+          ><mat-select formControlName="labelId"
+            ><mat-option value="">{{ 'labels.all' | translate: 'All labels' }}</mat-option>
+            @for (label of labelOptions(); track label.labelId) {
+              <mat-option [value]="label.labelId">{{ label.name }}</mat-option>
+            }
+          </mat-select></mat-form-field
+        >
+      }
+      <mat-form-field appearance="outline" subscriptSizing="dynamic"
+        ><mat-label>{{ 'taskBoard.deadlineFrom' | translate: 'Deadline from' }}</mat-label
+        ><input matInput type="date" formControlName="deadlineFrom" [readonly]="busy()"
+      /></mat-form-field>
+      <mat-form-field appearance="outline" subscriptSizing="dynamic"
+        ><mat-label>{{ 'taskBoard.deadlineTo' | translate: 'Deadline to' }}</mat-label
+        ><input matInput type="date" formControlName="deadlineTo" [readonly]="busy()"
+      /></mat-form-field>
+      <button mat-flat-button type="submit" [disabled]="busy()">
+        {{ 'common.applyFilters' | translate: 'Apply filters' }}
+      </button>
+      <button mat-stroked-button type="button" [disabled]="busy()" (click)="reset()">
+        {{ 'common.reset' | translate: 'Reset' }}
+      </button>
+    </form>
+
+    @if (busy()) {
+      <p role="status" class="directory-feedback">
+        {{ 'taskBoard.loading' | translate: 'Loading board…' }}
+      </p>
+    } @else if (denied()) {
+      <p role="alert" class="directory-feedback">
+        {{ 'tasks.denied' | translate: 'You no longer have access to this task list.' }}
+      </p>
+    } @else if (unavailable()) {
+      <p role="status" class="directory-feedback">
+        {{ 'taskBoard.unavailable' | translate: 'The board is not enabled on this deployment.' }}
+        <a routerLink="/tasks">{{ 'taskBoard.viewList' | translate: 'List' }}</a>
+      </p>
+    } @else if (error()) {
+      <div class="directory-feedback">
+        <p role="alert">
+          {{
+            'taskBoard.loadError' | translate: 'The board could not be loaded. Please try again.'
+          }}
+        </p>
+        <button mat-stroked-button type="button" (click)="load()">
+          {{ 'common.retry' | translate: 'Retry' }}
+        </button>
+      </div>
+    } @else if (result(); as data) {
+      <!-- The horizontal scroll lives here, never on the page, so the document never overflows. -->
+      <div class="board-scroll">
+        <div class="board">
+          @for (column of data.columns; track column.status) {
+            <section
+              class="board-lane"
+              [attr.data-status]="column.status"
+              [attr.aria-label]="'status.' + column.status | translate: states[column.status]"
+            >
+              <header class="lane-header">
+                <h2 class="lane-title">
+                  {{ 'status.' + column.status | translate: states[column.status] }}
+                </h2>
+                <span class="lane-count" role="status">
+                  @if (column.total > column.items.length) {
+                    {{ column.items.length }}/{{ column.total }}
+                  } @else {
+                    {{ column.total }}
+                  }
+                </span>
+              </header>
+              <div
+                class="lane-cards"
+                cdkDropList
+                [id]="'lane-' + column.status"
+                [cdkDropListData]="column"
+                [cdkDropListConnectedTo]="laneIds"
+                (cdkDropListDropped)="drop($event, column.status)"
+              >
+                @for (card of column.items; track card.taskId) {
+                  <article class="board-card" cdkDrag [cdkDragData]="card">
+                    <div class="card-drag-handle" cdkDragHandle aria-hidden="true">⋮⋮</div>
+                    <a class="task-title" [routerLink]="['/tasks', card.taskId]">{{
+                      card.title
+                    }}</a>
+                    <span class="task-meta">
+                      {{
+                        'priorityBadge.' + card.priority
+                          | translate: priorities[card.priority] + ' priority'
+                      }}
+                    </span>
+                    <span class="task-meta">
+                      @if (card.assignedUserId) {
+                        {{
+                          card.assignedUserName ?? ('tasks.unassigned' | translate: 'Unassigned')
+                        }}
+                      } @else if (card.assignedDepartmentId) {
+                        {{ 'tasks.departmentQueue' | translate: 'Department queue' }}
+                        @if (card.assignedDepartmentName) {
+                          · {{ card.assignedDepartmentName }}
+                        }
+                      } @else {
+                        {{ 'tasks.unassigned' | translate: 'Unassigned' }}
+                      }
+                    </span>
+                    @if (card.deadline) {
+                      <time
+                        class="task-meta"
+                        [attr.datetime]="card.deadline"
+                        [class.overdue]="card.status === 'OVERDUE'"
+                        >{{ card.deadline | date: 'short' }}</time
+                      >
+                    } @else {
+                      <span class="task-meta">{{
+                        'tasks.noDeadline' | translate: 'No deadline'
+                      }}</span>
+                    }
+                    @if (card.subtaskCount && card.subtaskCount > 0) {
+                      <span class="task-meta"
+                        >{{ card.completedSubtaskCount }}/{{ card.subtaskCount }}
+                        {{ 'taskBoard.subtasks' | translate: 'subtasks' }}</span
+                      >
+                    }
+                  </article>
+                }
+                @if (column.items.length === 0) {
+                  <p class="lane-empty">{{ 'taskBoard.laneEmpty' | translate: 'Nothing here' }}</p>
+                }
+              </div>
+            </section>
+          }
+        </div>
+      </div>
+    }
+  </section>
+</main>

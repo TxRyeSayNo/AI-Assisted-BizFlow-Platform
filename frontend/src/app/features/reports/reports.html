@@ -107,8 +107,52 @@
       >
         {{ 'reports.applyFilters' | translate: 'Apply Filters' }}
       </button>
+
+      <!-- F5: downloads. Hidden entirely unless the ReportExport feature is enabled. -->
+      @if (canExport()) {
+        <div
+          class="export-actions"
+          role="group"
+          [attr.aria-label]="'reports.export' | translate: 'Export'"
+        >
+          <span class="export-label">{{ 'reports.export' | translate: 'Export' }}:</span>
+          <button
+            type="button"
+            mat-stroked-button
+            [disabled]="exporting()"
+            (click)="exportCurrent('xlsx')"
+          >
+            Excel
+          </button>
+          <button
+            type="button"
+            mat-stroked-button
+            [disabled]="exporting()"
+            (click)="exportCurrent('csv')"
+          >
+            CSV
+          </button>
+          <button
+            type="button"
+            mat-stroked-button
+            [disabled]="exporting()"
+            (click)="exportCurrent('pdf')"
+          >
+            PDF
+          </button>
+        </div>
+      }
     </div>
   </div>
+
+  <!-- F5: charts over the data already on screen. -->
+  @if (features.reportExport() && !busy() && chartSeries().length > 0) {
+    <div class="chart-grid">
+      @for (series of chartSeries(); track series.title) {
+        <bf-report-chart [title]="series.title" [kind]="series.kind" [data]="series.data" />
+      }
+    </div>
+  }
 
   <!-- Error Alert -->
   <div class="error-banner" *ngIf="error()">
