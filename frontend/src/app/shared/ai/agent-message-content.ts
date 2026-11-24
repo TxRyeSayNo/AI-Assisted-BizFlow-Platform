@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
+import { readableIsoDate } from '../formatting/readable-date';
 
 export interface MessageToken {
   text: string;
@@ -14,24 +15,6 @@ export interface MessageBlock {
   ordered?: boolean;
 }
 
-// Preserve the offset's wall-clock time, rather than silently converting to the viewer's zone.
-function readableDate(value: string): MessageToken | null {
-  const match =
-    /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::\d{2}(?:\.\d+)?)?(Z|[+-]\d{2}:\d{2})$/.exec(value);
-  if (!match || !Number.isFinite(Date.parse(value))) return null;
-  const [, year, month, day, hour, minute, offset] = match;
-  const date = new Date(Date.UTC(+year, +month - 1, +day));
-  if (date.getUTCMonth() !== +month - 1 || date.getUTCDate() !== +day) return null;
-  const weekday = new Intl.DateTimeFormat('vi-VN', { weekday: 'long', timeZone: 'UTC' }).format(
-    date,
-  );
-  return {
-    text: `${hour}:${minute} · ${weekday[0].toUpperCase()}${weekday.slice(1)}, ${day}/${month}/${year}`,
-    dateTime: value,
-    zone: offset === 'Z' ? 'UTC' : `UTC${offset}`,
-  };
-}
-
 function tokens(text: string, strong = false): MessageToken[] {
   const pattern =
     /\*\*([^*\n]+)\*\*|\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:\d{2})/g;
@@ -40,7 +23,7 @@ function tokens(text: string, strong = false): MessageToken[] {
   for (const match of text.matchAll(pattern)) {
     if (match.index! > end) result.push({ text: text.slice(end, match.index), strong });
     if (match[1]) result.push(...tokens(match[1], true));
-    else result.push({ ...(readableDate(match[0]) ?? { text: match[0] }), strong });
+    else result.push({ ...(readableIsoDate(match[0], true) ?? { text: match[0] }), strong });
     end = match.index! + match[0].length;
   }
   if (end < text.length) result.push({ text: text.slice(end), strong });

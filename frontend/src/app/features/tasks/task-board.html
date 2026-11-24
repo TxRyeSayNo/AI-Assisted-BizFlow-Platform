@@ -87,14 +87,16 @@
           </mat-select></mat-form-field
         >
       }
-      <mat-form-field appearance="outline" subscriptSizing="dynamic"
-        ><mat-label>{{ 'taskBoard.deadlineFrom' | translate: 'Deadline from' }}</mat-label
-        ><input matInput type="date" formControlName="deadlineFrom" [readonly]="busy()"
-      /></mat-form-field>
-      <mat-form-field appearance="outline" subscriptSizing="dynamic"
-        ><mat-label>{{ 'taskBoard.deadlineTo' | translate: 'Deadline to' }}</mat-label
-        ><input matInput type="date" formControlName="deadlineTo" [readonly]="busy()"
-      /></mat-form-field>
+      <bf-date-picker
+        [label]="'taskBoard.deadlineFrom' | translate: 'Deadline from'"
+        formControlName="deadlineFrom"
+        [readonly]="busy()"
+      />
+      <bf-date-picker
+        [label]="'taskBoard.deadlineTo' | translate: 'Deadline to'"
+        formControlName="deadlineTo"
+        [readonly]="busy()"
+      />
       <button mat-flat-button type="submit" [disabled]="busy()">
         {{ 'common.applyFilters' | translate: 'Apply filters' }}
       </button>
@@ -188,7 +190,7 @@
                         class="task-meta"
                         [attr.datetime]="card.deadline"
                         [class.overdue]="card.status === 'OVERDUE'"
-                        >{{ card.deadline | date: 'short' }}</time
+                        >{{ card.deadline | date: 'HH:mm, dd/MM/yyyy' }}</time
                       >
                     } @else {
                       <span class="task-meta">{{

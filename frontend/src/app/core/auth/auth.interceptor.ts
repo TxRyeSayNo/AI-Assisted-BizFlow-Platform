@@ -4,9 +4,21 @@ import { Router } from '@angular/router';
 import { catchError, map, of, switchMap, throwError } from 'rxjs';
 import { SessionService } from './session';
 
+const publicCredentialEndpoints = new Set([
+  '/api/v1/auth/login',
+  '/api/v1/auth/refresh',
+  '/api/v1/auth/forgot-password',
+  '/api/v1/auth/reset-password',
+  '/api/v1/auth/email-link/request',
+  '/api/v1/auth/email-link/verify',
+  '/api/v1/auth/email-link/verify-firebase',
+  '/api/v1/auth/email-link/select-workspace',
+]);
+
 export const authInterceptor: HttpInterceptorFn = (request, next) => {
   // Never attach a bearer token to external URLs, assets, or credential endpoints.
-  if (!request.url.startsWith('/api/v1/') || request.url.startsWith('/api/v1/auth/')) {
+  const path = request.url.split(/[?#]/, 1)[0].replace(/\/+$/, '');
+  if (!request.url.startsWith('/api/v1/') || publicCredentialEndpoints.has(path)) {
     return next(request);
   }
   const session = inject(SessionService);

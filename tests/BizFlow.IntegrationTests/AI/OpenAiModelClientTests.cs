@@ -25,8 +25,10 @@ public sealed class OpenAiModelClientTests
         }
     }
 
-    [Fact]
-    public async Task Sol_uses_responses_reasoning_and_parses_typed_output_and_usage()
+    [Theory]
+    [InlineData("gpt-6-sol")]
+    [InlineData("gpt-6.2-sol")]
+    public async Task Sol_uses_responses_reasoning_and_parses_typed_output_and_usage(string model)
     {
         System.Text.Json.JsonElement captured = default;
         var handler = new MockHttpMessageHandler(async request =>
@@ -34,12 +36,13 @@ public sealed class OpenAiModelClientTests
             Assert.Equal("https://api.openai.com/v1/responses", request.RequestUri!.ToString());
             captured = System.Text.Json.JsonDocument.Parse(await request.Content!.ReadAsStringAsync()).RootElement.Clone();
             return new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(
-                """{"model":"gpt-6-sol","status":"completed","output":[{"type":"reasoning","summary":[]},{"type":"message","content":[{"type":"output_text","text":"{\"reply\":\"Understood\"}"}]}],"usage":{"input_tokens":120,"output_tokens":40}}""") };
+                """{"model":"gpt-6-sol","status":"completed","output":[{"type":"reasoning","summary":[]},{"type":"message","content":[{"type":"output_text","text":"{\"reply\":\"Understood\"}"}]}],"usage":{"input_tokens":120,"output_tokens":40}}""".Replace("gpt-6-sol", model)) };
         });
         var config = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string,string?> {
-            ["OpenAI:ApiKey"] = "test-only", ["OpenAI:Model"] = "gpt-6-sol", ["OpenAI:ReasoningEffort"] = "medium" }).Build();
+            ["OpenAI:ApiKey"] = "test-only", ["OpenAI:Model"] = model, ["OpenAI:ReasoningEffort"] = "medium" }).Build();
         var result = await new OpenAiModelClient(new HttpClient(handler), config).CompleteConversationAsync("{}", "Return JSON", [new("user", "Earlier"), new("robot", "Noted")], "Follow-up");
-        Assert.Equal("gpt-6-sol", result.ModelName);
+        Assert.Equal(model, result.ModelName);
+        Assert.Equal(model, captured.GetProperty("model").GetString());
         Assert.Equal("{\"reply\":\"Understood\"}", result.Content);
         Assert.Equal(120, result.PromptTokens); Assert.Equal(40, result.CompletionTokens);
         Assert.False(captured.GetProperty("store").GetBoolean());

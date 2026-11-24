@@ -22,6 +22,54 @@ public sealed class CommentApiTests(PostgresFixture database)
     private const string RequestsEndpoint = "/api/v1/requests";
 
     [Fact]
+    public async Task Nicknames_are_used_for_discussion_but_official_names_remain_in_tasks_and_requests()
+    {
+        var env = await SeedEnvironmentAsync();
+        await using (var setup = database.Create(env.Manager.User, env.TenantId))
+        {
+            var actor = await setup.Users.SingleAsync(u => u.Id == env.Manager.User);
+            setup.ManagementScopes.Add(ManagementScope.Create(env.TenantId, actor.Id, actor.DepartmentId!.Value, true, actor.Id, DateTimeOffset.UtcNow));
+            await setup.SaveChangesAsync();
+        }
+        await using var factory = new AuthenticationFactory(database);
+        using var manager = factory.CreateClient(); using var requester = factory.CreateClient();
+        await LoginAsync(manager, env.Manager); await LoginAsync(requester, env.Requester);
+        Assert.Equal(HttpStatusCode.NoContent, (await manager.PatchAsJsonAsync("/api/v1/auth/profile", new { nickname = "BossAlias", fullName = "Spoofed name", roles = new[] { "PLATFORM_ADMIN" } })).StatusCode);
+        Assert.Equal(HttpStatusCode.NoContent, (await requester.PatchAsJsonAsync("/api/v1/auth/profile", new { nickname = "SupportAlias" })).StatusCode);
+        var profile = (await manager.GetFromJsonAsync<PersonalProfile>("/api/v1/auth/profile"))!;
+        Assert.Equal("Manager User", profile.FullName); Assert.Equal("BossAlias", profile.Nickname); Assert.Contains("MANAGER", profile.Roles); Assert.DoesNotContain("PLATFORM_ADMIN", profile.Roles);
+        var created = await manager.PostAsJsonAsync(TasksEndpoint, new { title = "Identity regression", priority = "MEDIUM" });
+        Assert.Equal(HttpStatusCode.Created, created.StatusCode);
+        var task = (await created.Content.ReadFromJsonAsync<TaskCreatedView>())!;
+        Assert.Equal(HttpStatusCode.OK, (await manager.PostAsJsonAsync($"{TasksEndpoint}/{task.TaskId}/assign", new { targetType = "USER", targetId = env.Requester.User })).StatusCode);
+        var detail = (await manager.GetFromJsonAsync<TaskDetailView>($"{TasksEndpoint}/{task.TaskId}"))!;
+        Assert.Equal("Manager User", detail.CreatorName); Assert.Equal("Requester User", detail.Task.AssignedUserName);
+        var key = Guid.NewGuid().ToString("N");
+        async Task<CommentItemView> SendAsync()
+        {
+            using var input = new HttpRequestMessage(HttpMethod.Post, CommentsEndpoint) { Content = JsonContent.Create(new { objectType = "TASK", objectId = task.TaskId, content = "Nickname discussion" }) };
+            input.Headers.Add("Idempotency-Key", key);
+            using var result = await manager.SendAsync(input); Assert.Equal(HttpStatusCode.Created, result.StatusCode);
+            return (await result.Content.ReadFromJsonAsync<CommentItemView>())!;
+        }
+        foreach (var comment in new[] { await SendAsync(), await SendAsync() })
+        { Assert.Equal("BossAlias", comment.AuthorNickname); Assert.Equal("Manager User", comment.AuthorName); Assert.Contains("MANAGER", comment.AuthorRoles!); }
+        var listed = Assert.Single((await manager.GetFromJsonAsync<List<CommentItemView>>($"{TasksEndpoint}/{task.TaskId}/comments"))!);
+        Assert.Equal("BossAlias", listed.AuthorNickname); Assert.Equal("Manager User", listed.AuthorName);
+        await using var db = database.Create(env.Requester.User, env.TenantId);
+        var now = DateTimeOffset.UtcNow;
+        var service = InternalService.Create(env.TenantId, "IDENTITY", "Identity service", null, true, now);
+        var category = ServiceCategory.Create(service.Id, "SUPPORT", "Support");
+        db.Services.Add(service); db.ServiceCategories.Add(category); await db.SaveChangesAsync();
+        using var requestResult = await requester.PostAsJsonAsync(RequestsEndpoint, new { serviceId = service.Id, categoryId = category.Id, title = "Official requester", description = "Keep official identity", priority = "MEDIUM" });
+        Assert.Equal(HttpStatusCode.Created, requestResult.StatusCode);
+        var requestJson = await requestResult.Content.ReadFromJsonAsync<System.Text.Json.JsonElement>();
+        var requestId = requestJson.GetProperty("requestId").GetGuid();
+        var requestDetail = await requester.GetFromJsonAsync<System.Text.Json.JsonElement>($"{RequestsEndpoint}/{requestId}");
+        Assert.Equal("Requester User", requestDetail.GetProperty("requesterName").GetString());
+    }
+
+    [Fact]
     public async Task Comment_lifecycle_creation_replay_editing_and_soft_delete_flow()
     {
         var env = await SeedEnvironmentAsync();

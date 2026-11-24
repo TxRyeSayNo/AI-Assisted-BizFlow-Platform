@@ -47,7 +47,7 @@
               {{ att.uploaderName }}</span
             >
             <time class="upload-time" [attr.datetime]="att.createdAt">
-              {{ att.createdAt | date: 'medium' }}
+              {{ att.createdAt | date: 'HH:mm, dd/MM/yyyy' }}
             </time>
             <span class="hash-tag" [title]="'SHA-256: ' + att.hash">
               SHA: {{ att.hash.substring(0, 8) }}…

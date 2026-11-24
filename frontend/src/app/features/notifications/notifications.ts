@@ -1,3 +1,4 @@
+import { ReadableDatesPipe } from '../../shared/formatting/readable-date';
 import { DatePipe } from '@angular/common';
 import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
 import { Component, DestroyRef, inject, signal } from '@angular/core';
@@ -33,7 +34,14 @@ export interface NotificationPage {
 @Component({
   selector: 'bf-notifications',
   providers: [InboxUpdates],
-  imports: [RouterLink, DatePipe, MatButtonModule, MatCheckboxModule, TranslatePipe],
+  imports: [
+    ReadableDatesPipe,
+    RouterLink,
+    DatePipe,
+    MatButtonModule,
+    MatCheckboxModule,
+    TranslatePipe,
+  ],
   templateUrl: './notifications.html',
   styleUrls: ['../organization/departments.scss', './notifications.scss'],
 })

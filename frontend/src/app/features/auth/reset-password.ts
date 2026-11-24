@@ -22,27 +22,15 @@ import { ToastService } from '../../core/toast/toast.service';
     RouterLink,
     TranslatePipe,
   ],
+  styleUrl: './reset-password.scss',
   template: `
-    <div class="auth-page">
-      <header class="public-header">
-        <a class="wordmark" routerLink="/login">
-          <span class="brand-mark" aria-hidden="true"></span> BizFlow
-        </a>
-      </header>
-      <main id="main-content" class="auth-content" tabindex="-1">
-        <section class="auth-intro">
-          <span class="eyebrow">{{ 'reset.eyebrow' | translate: 'Bảo mật Tài khoản' }}</span>
-          <h1>{{ 'reset.title' | translate: 'Đặt lại mật khẩu mới' }}</h1>
-          <p>
-            {{
-              'reset.subtitle'
-                | translate
-                  : 'Liên kết đặt lại có thời hạn ngắn và chỉ dùng một lần. Đổi mật khẩu sẽ đăng xuất khỏi tất cả phiên đăng nhập hiện tại.'
-            }}
-          </p>
-        </section>
+    <div class="auth-page reset-page">
+      <main id="main-content" class="reset-content" tabindex="-1">
         <section class="auth-card" aria-labelledby="reset-title">
-          <h2 id="reset-title">{{ 'reset.title' | translate: 'Đặt lại mật khẩu mới' }}</h2>
+          <a class="wordmark reset-brand" routerLink="/login" aria-label="BizFlow">
+            <img class="brand-mark" src="/assets/brand/bizflow-logo.png" alt="" width="40" height="40" /><span>BizFlow</span>
+          </a>
+          <h1 id="reset-title">{{ 'reset.title' | translate: 'Đặt lại mật khẩu mới' }}</h1>
           @if (complete()) {
             <p class="inline-alert" role="status">
               {{
@@ -66,7 +54,7 @@ import { ToastService } from '../../core/toast/toast.service';
               }}
             </p>
             <form [formGroup]="form" (ngSubmit)="submit()" [attr.aria-busy]="busy()">
-              <mat-form-field appearance="outline"
+              <mat-form-field appearance="outline" subscriptSizing="dynamic"
                 ><mat-label>{{
                   'forgot.identifier' | translate: 'Mã nhân viên hoặc email công ty'
                 }}</mat-label>
@@ -93,14 +81,15 @@ import { ToastService } from '../../core/toast/toast.service';
                 />
                 <mat-hint>{{
                   'forgot.workspaceKeyHint'
-                    | translate: 'Không bắt buộc; liên kết khôi phục đã gắn với tài khoản của bạn.'
+                    | translate
+                      : 'Bắt buộc. Nhập workspace-key đã dùng khi yêu cầu đặt lại mật khẩu.'
                 }}</mat-hint
                 ><mat-error>{{
                   'forgot.workspaceKeyInvalid'
                     | translate: 'Vui lòng nhập mã không gian làm việc hợp lệ.'
                 }}</mat-error></mat-form-field
               >
-              <mat-form-field appearance="outline"
+              <mat-form-field appearance="outline" subscriptSizing="dynamic"
                 ><mat-label>{{ 'reset.newPassword' | translate: 'Mật khẩu mới' }}</mat-label>
                 <input
                   matInput
@@ -113,7 +102,7 @@ import { ToastService } from '../../core/toast/toast.service';
                   'reset.passwordLength' | translate: 'Sử dụng từ 12 đến 1024 ký tự.'
                 }}</mat-error></mat-form-field
               >
-              <mat-form-field appearance="outline"
+              <mat-form-field appearance="outline" subscriptSizing="dynamic"
                 ><mat-label>{{
                   'reset.confirmPassword' | translate: 'Xác nhận mật khẩu mới'
                 }}</mat-label>
@@ -165,8 +154,15 @@ export class ResetPassword {
   readonly complete = signal(false);
   readonly error = signal('');
   readonly form = inject(FormBuilder).nonNullable.group({
-    identifier: ['', [Validators.required, Validators.maxLength(320)]],
-    tenantKey: ['', [Validators.maxLength(80), Validators.pattern(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)]],
+    identifier: ['', [Validators.required, Validators.maxLength(320), Validators.pattern(/\S/)]],
+    tenantKey: [
+      '',
+      [
+        Validators.required,
+        Validators.maxLength(80),
+        Validators.pattern(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+      ],
+    ],
     newPassword: ['', [Validators.required, Validators.minLength(12), Validators.maxLength(1024)]],
     confirmPassword: ['', [Validators.required, Validators.maxLength(1024)]],
   });
@@ -196,7 +192,7 @@ export class ResetPassword {
         identifier: values.identifier.trim(),
         resetToken: this.token,
         newPassword: values.newPassword,
-        ...(values.tenantKey.trim() ? { tenantKey: values.tenantKey.trim() } : {}),
+        tenantKey: values.tenantKey.trim().toLowerCase(),
       })
       .pipe(finalize(() => this.busy.set(false)))
       .subscribe({

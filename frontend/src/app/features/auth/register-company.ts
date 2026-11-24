@@ -83,7 +83,7 @@ interface UploadDocumentResponse {
         backdrop-filter: blur(16px);
         -webkit-backdrop-filter: blur(16px);
         border-radius: 20px;
-        padding: 2.35rem 2.25rem;
+        padding: 2rem;
         box-shadow:
           0 20px 44px -12px rgba(7, 27, 51, 0.1),
           0 4px 16px -2px rgba(20, 93, 160, 0.06),
@@ -112,7 +112,7 @@ interface UploadDocumentResponse {
         }
       }
       .card-header {
-        margin-bottom: 1.75rem;
+        margin-bottom: 1.25rem;
         text-align: center;
       }
       .brand-badge {
@@ -145,23 +145,24 @@ interface UploadDocumentResponse {
       .form-grid {
         display: flex;
         flex-direction: column;
-        gap: 1.1rem;
+        gap: 0.875rem;
       }
       .field-row-split {
         display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 1rem;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        gap: 0.875rem;
       }
       @media (max-width: 580px) {
         .field-row-split {
           grid-template-columns: 1fr;
         }
         .register-card {
-          padding: 1.75rem 1.35rem;
+          padding: 1.5rem 1.25rem;
         }
       }
       mat-form-field {
         width: 100%;
+        min-width: 0;
         --mdc-outlined-text-field-container-shape: 12px;
         --mdc-outlined-text-field-focus-outline-color: #2563eb;
         --mdc-outlined-text-field-hover-outline-color: #60a5fa;
@@ -363,12 +364,12 @@ interface UploadDocumentResponse {
         font-weight: 700;
       }
       .card-footer {
-        margin-top: 1.65rem;
+        margin-top: 1.25rem;
         text-align: center;
         font-size: 0.86rem;
         color: #52657c;
         border-top: 1px solid #e8f0fa;
-        padding-top: 1.15rem;
+        padding-top: 1rem;
       }
       .card-footer a {
         color: #145da0;
@@ -409,7 +410,7 @@ interface UploadDocumentResponse {
           <form [formGroup]="form" (ngSubmit)="submit()" class="form-grid">
             <!-- 1. Tax ID & 2. Company Name -->
             <div class="field-row-split">
-              <mat-form-field appearance="outline">
+              <mat-form-field appearance="outline" subscriptSizing="dynamic">
                 <mat-label>{{ 'register.taxId' | translate: 'Tax ID' }}</mat-label>
                 <input
                   matInput
@@ -425,7 +426,7 @@ interface UploadDocumentResponse {
                 }
               </mat-form-field>
 
-              <mat-form-field appearance="outline">
+              <mat-form-field appearance="outline" subscriptSizing="dynamic">
                 <mat-label>{{ 'register.companyName' | translate: 'Company name' }}</mat-label>
                 <input
                   matInput
@@ -447,7 +448,7 @@ interface UploadDocumentResponse {
             <!-- 3. Workspace Code with Random Generation & Real-time Check -->
             <div>
               <div class="code-action-row">
-                <mat-form-field appearance="outline">
+                <mat-form-field appearance="outline" subscriptSizing="dynamic">
                   <mat-label>{{
                     'register.workspaceCode' | translate: 'Workspace Code'
                   }}</mat-label>
@@ -461,10 +462,6 @@ interface UploadDocumentResponse {
                     maxlength="50"
                     required
                   />
-                  <mat-hint>{{
-                    'register.workspaceCodeHint'
-                      | translate: 'Unique URL slug (3-50 chars: letters, numbers, hyphens)'
-                  }}</mat-hint>
                   @if (form.controls.code.hasError('required')) {
                     <mat-error>{{
                       'register.workspaceCodeReq' | translate: 'Workspace code is required.'
@@ -517,7 +514,7 @@ interface UploadDocumentResponse {
 
             <!-- 4. Contact Person Name & 5. Contact Phone -->
             <div class="field-row-split">
-              <mat-form-field appearance="outline">
+              <mat-form-field appearance="outline" subscriptSizing="dynamic">
                 <mat-label>{{
                   'register.contactPerson' | translate: 'Authorized Representative'
                 }}</mat-label>
@@ -535,7 +532,7 @@ interface UploadDocumentResponse {
                 }
               </mat-form-field>
 
-              <mat-form-field appearance="outline">
+              <mat-form-field appearance="outline" subscriptSizing="dynamic">
                 <mat-label>{{ 'register.contactPhone' | translate: 'Contact Phone' }}</mat-label>
                 <input
                   matInput
@@ -553,7 +550,7 @@ interface UploadDocumentResponse {
             </div>
 
             <!-- 6. Corporate Contact Email -->
-            <mat-form-field appearance="outline">
+            <mat-form-field appearance="outline" subscriptSizing="dynamic">
               <mat-label>{{
                 'register.contactEmail' | translate: 'Corporate Contact Email'
               }}</mat-label>

@@ -157,8 +157,8 @@ export class TaskCalendar {
   readonly heading = computed(() => {
     const { start, end } = this.window();
     return this.mode() === 'week'
-      ? `${dayKey(start)} → ${dayKey(end)}`
-      : `${this.anchor().getFullYear()}-${`${this.anchor().getMonth() + 1}`.padStart(2, '0')}`;
+      ? `${start.toLocaleDateString('vi-VN')} → ${end.toLocaleDateString('vi-VN')}`
+      : `Tháng ${this.anchor().getMonth() + 1} năm ${this.anchor().getFullYear()}`;
   });
 
   constructor() {

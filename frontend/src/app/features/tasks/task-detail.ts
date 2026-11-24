@@ -1,3 +1,4 @@
+import { ReadableDatesPipe } from '../../shared/formatting/readable-date';
 import { DatePipe } from '@angular/common';
 import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
 import { Component, DestroyRef, inject, signal } from '@angular/core';
@@ -64,6 +65,7 @@ interface Detail {
 @Component({
   selector: 'bf-task-detail',
   imports: [
+    ReadableDatesPipe,
     DatePipe,
     MatButtonModule,
     RouterLink,

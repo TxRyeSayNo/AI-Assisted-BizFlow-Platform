@@ -34,6 +34,6 @@ describe('audit event details', () => {
     expect(fixture.nativeElement.textContent).toContain('<img src=x onerror=alert(1)>');
     expect(fixture.nativeElement.textContent).toContain('No actor ID recorded');
     expect(fixture.nativeElement.textContent).toContain('No previous values recorded');
-    expect(fixture.nativeElement.textContent).toContain('2026-10-01 09:00:00');
+    expect(fixture.nativeElement.textContent).toContain('09:00:00, 01/10/2026');
   });
 });

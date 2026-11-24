@@ -108,7 +108,7 @@
                     : ('notifications.unread' | translate: 'Unread')
                 }}</span>
                 <h2>{{ displayTitle(row.title) }}</h2>
-                <p class="notification-content">{{ row.content }}</p>
+                <p class="notification-content">{{ row.content | readableDates }}</p>
                 <p class="notification-meta">{{ displayType(row.type) }}</p>
                 @if (row.objectType) {
                   <p class="notification-meta">
@@ -156,7 +156,7 @@
                 @if (row.readAt) {
                   <p class="notification-meta read-timestamp">
                     {{ 'notifications.readAt' | translate: 'Đã đọc lúc' }}
-                    {{ row.readAt | date: 'medium' }}
+                    {{ row.readAt | date: 'HH:mm, dd/MM/yyyy' }}
                   </p>
                 }
               </article>

@@ -1,3 +1,4 @@
+import { ReadableDatesPipe } from '../formatting/readable-date';
 import { Component, EventEmitter, Input, Output, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -120,7 +121,7 @@ export interface CreateTasksFromSummaryResponse {
 @Component({
   selector: 'bf-ai-assistant',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslatePipe],
+  imports: [ReadableDatesPipe, CommonModule, FormsModule, TranslatePipe],
   template: `
     <div *ngIf="isOpen" class="ai-overlay" (click)="closeOnBackdrop($event)">
       <div class="ai-drawer" role="dialog" aria-labelledby="ai-drawer-title" aria-modal="true">
@@ -385,7 +386,7 @@ export interface CreateTasksFromSummaryResponse {
                 <div class="intent-number">Part {{ idx + 1 }}</div>
                 <div class="intent-details">
                   <h4>{{ intent.title }}</h4>
-                  <p>{{ intent.description }}</p>
+                  <p>{{ intent.description | readableDates }}</p>
                   <span class="service-tag" *ngIf="intent.suggestedServiceName">
                     Recommended Service: {{ intent.suggestedServiceName }}
                   </span>
@@ -493,7 +494,7 @@ export interface CreateTasksFromSummaryResponse {
                 <div class="ai-split-title">
                   <strong>{{ node.title }}</strong>
                 </div>
-                <p class="ai-split-desc">{{ node.description }}</p>
+                <p class="ai-split-desc">{{ node.description | readableDates }}</p>
                 <div
                   *ngIf="node.dependsOnBranchIndexes?.length"
                   style="margin-top:0.35rem; font-size:0.8rem; color:#b45309; background:#fffbeb; padding:0.25rem 0.5rem; border-radius:4px;"
@@ -639,7 +640,7 @@ export interface CreateTasksFromSummaryResponse {
                         >⏱ {{ item.suggestedDurationDays }} ngày</span
                       >
                     </div>
-                    <p class="ai-split-desc">{{ item.description }}</p>
+                    <p class="ai-split-desc">{{ item.description | readableDates }}</p>
                   </div>
                 </div>
               </div>

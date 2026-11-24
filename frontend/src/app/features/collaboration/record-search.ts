@@ -1,3 +1,4 @@
+import { ReadableDatesPipe } from '../../shared/formatting/readable-date';
 import { CommonModule, DatePipe } from '@angular/common';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
@@ -41,6 +42,7 @@ export interface RecordSearchPagedResult {
   selector: 'bf-record-search',
   standalone: true,
   imports: [
+    ReadableDatesPipe,
     CommonModule,
     DatePipe,
     ReactiveFormsModule,

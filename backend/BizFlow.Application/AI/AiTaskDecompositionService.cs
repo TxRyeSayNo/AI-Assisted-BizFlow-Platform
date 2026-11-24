@@ -2,6 +2,7 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using BizFlow.Application.Common;
 using BizFlow.Application.Security;
+using BizFlow.Domain.Tasks;
 
 namespace BizFlow.Application.AI;
 
@@ -198,6 +199,20 @@ public sealed class AiTaskDecompositionService(
                 !string.Equals(item.Type, "SupportRequest", StringComparison.OrdinalIgnoreCase))
             {
                 throw new ApplicationFault(FaultKind.Validation, "VALIDATION.FAILED", "Task type must be either 'Assignment' or 'SupportRequest'.");
+            }
+            if (item.SuggestedDurationDays is <= 0 or > 3650)
+                throw new ApplicationFault(FaultKind.Validation, "VALIDATION.FAILED", "Thời hạn đề xuất phải từ 1 đến 3650 ngày.");
+            if (item.Priority != null && (!Enum.TryParse<TaskPriority>(item.Priority, true, out var priority) || !Enum.IsDefined(priority)))
+                throw new ApplicationFault(FaultKind.Validation, "VALIDATION.FAILED", "Mức ưu tiên công việc không hợp lệ.");
+            try
+            {
+                var prototype = WorkTask.CreateDraft(tenantId, userId, item.Title, clock.GetUtcNow(), item.Description);
+                foreach (var (title, index) in (item.ChecklistItems ?? []).Select((title, index) => (title, index)))
+                    _ = TaskChecklistItem.Create(prototype.Id, title, index + 1);
+            }
+            catch (ArgumentException)
+            {
+                throw new ApplicationFault(FaultKind.Validation, "VALIDATION.FAILED", "Tiêu đề và checklist phải là văn bản không trống, tối đa 300 ký tự; mô tả không chứa ký tự điều khiển.");
             }
         }
 

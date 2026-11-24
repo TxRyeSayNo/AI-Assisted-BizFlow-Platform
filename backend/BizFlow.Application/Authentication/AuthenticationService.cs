@@ -127,7 +127,7 @@ public sealed class AuthenticationService(IAuthenticationStore store, ICredentia
         var user = transaction.User;
         var token = accessTokens.Issue(new(user.Id, user.TenantId, familyId, user.SecurityStamp), now);
         return new(token.Secret, refreshToken, token.ExpiresAt,
-            new(user.Id, user.FullName, user.TenantId, transaction.TenantName, access.Grants.Select(x => x.Code).Distinct().Order().ToArray()));
+            new(user.Id, user.FullName, user.TenantId, transaction.TenantName, access.Grants.Select(x => x.Code).Distinct().Order().ToArray(), user.Nickname ?? user.FullName));
     }
     private static ApplicationFault InvalidCredentials() => new(FaultKind.Unauthenticated, "AUTH.INVALID_CREDENTIALS", "The credentials or workspace are invalid.");
     private static ApplicationFault InvalidRefresh() => new(FaultKind.Unauthenticated, "AUTH.INVALID_REFRESH", "Sign in again to continue.");

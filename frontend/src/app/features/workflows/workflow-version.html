@@ -65,7 +65,7 @@
             Bản nháp đang được thiết kế. Sau khi hoàn tất và kiểm tra hợp lệ, bạn có thể xuất bản để
             áp dụng chính thức vào hệ thống.
           } @else {
-            Phiên bản chính thức đã ban hành vào {{ data.publishedAt | date: 'dd/MM/yyyy HH:mm' }}.
+            Phiên bản chính thức đã ban hành vào {{ data.publishedAt | date: 'HH:mm, dd/MM/yyyy' }}.
             Cấu hình bất biến để đảm bảo tính toàn vẹn nghiệp vụ.
           }
         </p>
@@ -286,7 +286,7 @@
                         </span>
                       </td>
                       <td>
-                        {{ v.publishedAt ? (v.publishedAt | date: 'dd/MM/yyyy HH:mm') : '—' }}
+                        {{ v.publishedAt ? (v.publishedAt | date: 'HH:mm, dd/MM/yyyy') : '—' }}
                       </td>
                       <td>
                         @if (v.versionId !== data.versionId) {

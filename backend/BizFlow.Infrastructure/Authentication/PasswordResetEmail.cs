@@ -14,6 +14,7 @@ public sealed class ResetEmailSettings
     public bool AllowInsecureLoopback { get; init; }
     public string? Username { get; init; }
     public string? Password { get; init; }
+    public string FromName { get; init; } = "BizFlow";
     public string FromAddress { get; init; } = "";
     public string FrontendOrigin { get; init; } = "";
     public bool IsValid => !Enabled || (!string.IsNullOrWhiteSpace(Host) && Port is > 0 and <= 65535 &&
@@ -32,13 +33,18 @@ public sealed class PasswordResetEmailSender(ResetEmailSettings settings) : IPas
         if (!settings.Enabled || !settings.IsValid) throw new InvalidOperationException("Password reset email is not configured.");
         var link = new Uri(new Uri(settings.FrontendOrigin), "/reset-password").AbsoluteUri + "#token=" + Uri.EscapeDataString(token);
         var message = new MimeMessage();
-        message.From.Add(MailboxAddress.Parse(settings.FromAddress));
+        var from = MailboxAddress.Parse(settings.FromAddress);
+        from.Name = string.IsNullOrWhiteSpace(settings.FromName) ? "BizFlow" : settings.FromName.Trim();
+        message.From.Add(from);
         message.To.Add(MailboxAddress.Parse(address));
-        message.Subject = "Reset your BizFlow password";
+        message.Subject = "Đặt lại mật khẩu tài khoản BizFlow";
         message.Body = new TextPart("plain")
         {
-            Text = "A password reset was requested for your BizFlow account.\n\nOpen this single-use link to choose a new password:\n" +
-                link + "\n\nIf you did not request this, ignore this message. Your password has not changed."
+            Text = "Bạn vừa yêu cầu đặt lại mật khẩu tài khoản BizFlow.\n\n" +
+                "Mở liên kết dưới đây, nhập workspace-key và tài khoản/email đã dùng để yêu cầu, sau đó chọn mật khẩu mới:\n" +
+                link + "\n\nLiên kết có thời hạn ngắn và chỉ dùng được một lần. Nếu đã hết hạn, hãy yêu cầu liên kết mới.\n" +
+                "Đặt lại thành công sẽ đăng xuất các phiên đăng nhập hiện tại.\n\n" +
+                "Nếu không yêu cầu đặt lại mật khẩu, bạn có thể bỏ qua thư này. Mật khẩu hiện tại chưa bị thay đổi."
         };
         try
         {

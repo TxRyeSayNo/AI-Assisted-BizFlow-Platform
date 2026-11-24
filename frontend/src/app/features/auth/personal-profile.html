@@ -1,0 +1,201 @@
+<main id="main-content" class="profile-page" tabindex="-1">
+  <a class="back-link" routerLink="/workspace">← Không gian làm việc</a>
+  <h1>Hồ sơ cá nhân</h1>
+  <p class="page-description">Quản lý thông tin cá nhân, ảnh đại diện và mật khẩu của bạn.</p>
+  @if (state.failure()) {
+    <div class="profile-card" role="alert">
+      Không tải được hồ sơ. <button type="button" (click)="state.refresh()">Thử lại</button>
+    </div>
+  } @else if (!state.profile()) {
+    <p role="status">Đang tải thông tin cá nhân…</p>
+  } @else if (state.profile(); as profile) {
+    <div class="profile-grid">
+      <section class="profile-card identity-card" aria-labelledby="identity-heading">
+        <h2 id="identity-heading">Thông tin tài khoản</h2>
+        <div class="avatar-area">
+          @if (state.avatarUrl(); as url) {
+            <img [src]="url" alt="Ảnh đại diện của bạn" class="profile-avatar" />
+          } @else {
+            <div class="profile-avatar avatar-placeholder" aria-hidden="true">
+              {{ profile.fullName.slice(0, 1).toUpperCase() }}
+            </div>
+          }
+          <div class="avatar-actions">
+            <label
+              class="secondary-button"
+              [class.disabled]="savingAvatar()"
+              for="profile-avatar-input"
+              >{{ savingAvatar() ? 'Đang cập nhật…' : 'Chọn ảnh đại diện' }}</label
+            >
+            <input
+              id="profile-avatar-input"
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              [disabled]="savingAvatar()"
+              (change)="chooseAvatar($event)"
+            />
+            @if (profile.hasAvatar) {
+              <button
+                type="button"
+                class="text-button"
+                [disabled]="savingAvatar()"
+                (click)="removeAvatar()"
+              >
+                Xóa ảnh
+              </button>
+            }
+          </div>
+        </div>
+        <p class="hint">PNG, JPEG hoặc WebP, tối đa 5 MB. Ảnh được thu gọn trước khi lưu.</p>
+        @if (avatarError()) {
+          <p class="field-error" role="alert">{{ avatarError() }}</p>
+        }
+        <form
+          [formGroup]="nameForm"
+          (ngSubmit)="saveName()"
+          class="profile-form"
+          [attr.aria-busy]="savingName()"
+        >
+          <label for="profile-name">Biệt danh</label>
+          <p class="hint">
+            Biệt danh dùng trong chat. Họ tên chính thức và vai trò do doanh nghiệp quản lý; nhiệm
+            vụ và yêu cầu luôn hiển thị họ tên chính thức.
+          </p>
+          <input
+            id="profile-name"
+            formControlName="nickname"
+            autocomplete="nickname"
+            maxlength="200"
+            [readOnly]="savingName()"
+            [attr.aria-invalid]="
+              nameForm.controls.nickname.touched && nameForm.controls.nickname.invalid
+            "
+            aria-describedby="profile-name-error"
+          />
+          @if (nameForm.controls.nickname.touched && nameForm.controls.nickname.invalid) {
+            <p id="profile-name-error" class="field-error">Nhập biệt danh từ 1 đến 200 ký tự.</p>
+          }
+          @if (nameError()) {
+            <p class="field-error" role="alert">{{ nameError() }}</p>
+          }
+          <button class="primary-button" type="submit" [disabled]="savingName() || !nameForm.dirty">
+            {{ savingName() ? 'Đang lưu…' : 'Lưu thông tin' }}
+          </button>
+        </form>
+        <dl class="account-details">
+          <div>
+            <dt>Họ và tên chính thức</dt>
+            <dd class="official-full-name">{{ profile.fullName }}</dd>
+          </div>
+          <div>
+            <dt>Mã tài khoản</dt>
+            <dd>{{ profile.employeeCode }}</dd>
+          </div>
+          <div>
+            <dt>Email liên kết</dt>
+            <dd>{{ profile.email }}</dd>
+          </div>
+          <div>
+            <dt>Doanh nghiệp</dt>
+            <dd>{{ profile.tenantName || 'Quản trị nền tảng BizFlow' }}</dd>
+          </div>
+          @if (profile.tenantKey) {
+            <div>
+              <dt>Workspace-key</dt>
+              <dd>{{ profile.tenantKey }}</dd>
+            </div>
+          }
+          <div>
+            <dt>Phòng ban</dt>
+            <dd>{{ profile.departmentName || 'Chưa phân phòng ban' }}</dd>
+          </div>
+          <div>
+            <dt>Vai trò</dt>
+            <dd>{{ roleLabels(profile.roles) }}</dd>
+          </div>
+          <div>
+            <dt>Ngày tạo tài khoản</dt>
+            <dd>{{ profile.createdAt | date: 'HH:mm, dd/MM/yyyy' }}</dd>
+          </div>
+        </dl>
+        <p class="hint">
+          Liên hệ quản trị viên để thay đổi email, mã tài khoản, phòng ban hoặc quyền truy cập.
+        </p>
+      </section>
+      <section class="profile-card password-card" aria-labelledby="password-heading">
+        <h2 id="password-heading">Thay đổi mật khẩu</h2>
+        <p class="hint">
+          Dùng ít nhất {{ profile.minimumPasswordLength }} ký tự và kết hợp nhiều ký tự khác nhau.
+          Sau khi đổi, bạn cần đăng nhập lại trên các thiết bị.
+        </p>
+        <form
+          class="profile-form"
+          [formGroup]="passwordForm"
+          (ngSubmit)="changePassword()"
+          [attr.aria-busy]="savingPassword()"
+        >
+          <label for="profile-current-password">Mật khẩu hiện tại</label>
+          <input
+            id="profile-current-password"
+            [type]="showPasswords() ? 'text' : 'password'"
+            formControlName="currentPassword"
+            autocomplete="current-password"
+            required
+            [readOnly]="savingPassword()"
+          />
+          @if (
+            passwordForm.controls.currentPassword.touched &&
+            passwordForm.controls.currentPassword.invalid
+          ) {
+            <p class="field-error">Nhập mật khẩu hiện tại.</p>
+          }
+          <label for="profile-new-password">Mật khẩu mới</label>
+          <input
+            id="profile-new-password"
+            [type]="showPasswords() ? 'text' : 'password'"
+            formControlName="newPassword"
+            autocomplete="new-password"
+            required
+            [readOnly]="savingPassword()"
+          />
+          @if (
+            passwordForm.controls.newPassword.touched && passwordForm.controls.newPassword.invalid
+          ) {
+            <p class="field-error">
+              Mật khẩu mới phải có từ {{ profile.minimumPasswordLength }} đến 1024 ký tự.
+            </p>
+          }
+          <label for="profile-confirm-password">Xác nhận mật khẩu mới</label>
+          <input
+            id="profile-confirm-password"
+            [type]="showPasswords() ? 'text' : 'password'"
+            formControlName="confirmPassword"
+            autocomplete="new-password"
+            required
+            [readOnly]="savingPassword()"
+          />
+          @if (
+            passwordForm.controls.confirmPassword.touched &&
+            passwordForm.controls.confirmPassword.invalid
+          ) {
+            <p class="field-error">Nhập lại mật khẩu mới.</p>
+          }
+          <label class="show-passwords"
+            ><input
+              type="checkbox"
+              [checked]="showPasswords()"
+              (change)="showPasswords.set(!showPasswords())"
+            />Hiện mật khẩu</label
+          >
+          @if (passwordError()) {
+            <p class="field-error" role="alert">{{ passwordError() }}</p>
+          }
+          <button class="primary-button" type="submit" [disabled]="savingPassword()">
+            {{ savingPassword() ? 'Đang cập nhật…' : 'Đổi mật khẩu' }}
+          </button>
+        </form>
+        <a class="back-link" routerLink="/forgot-password">Quên mật khẩu hiện tại?</a>
+      </section>
+    </div>
+  }
+</main>

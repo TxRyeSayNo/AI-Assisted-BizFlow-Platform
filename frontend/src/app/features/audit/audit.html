@@ -69,14 +69,14 @@
             ><mat-label>{{ 'audit.objectId' | translate: 'Object ID' }}</mat-label
             ><input matInput formControlName="objectId" maxlength="36"
           /></mat-form-field>
-          <mat-form-field appearance="outline" subscriptSizing="dynamic"
-            ><mat-label>{{ 'audit.fromDate' | translate: 'From date (UTC)' }}</mat-label
-            ><input matInput type="date" formControlName="fromDate"
-          /></mat-form-field>
-          <mat-form-field appearance="outline" subscriptSizing="dynamic"
-            ><mat-label>{{ 'audit.throughDate' | translate: 'Through date (UTC)' }}</mat-label
-            ><input matInput type="date" formControlName="throughDate"
-          /></mat-form-field>
+          <bf-date-picker
+            [label]="'audit.fromDate' | translate: 'From date (UTC)'"
+            formControlName="fromDate"
+          />
+          <bf-date-picker
+            [label]="'audit.throughDate' | translate: 'Through date (UTC)'"
+            formControlName="throughDate"
+          />
         </div>
         <p>
           {{
@@ -139,7 +139,7 @@
                   <th scope="row">
                     {{ row.action
                     }}<span class="audit-meta"
-                      >{{ row.createdAt | date: 'medium' }} ·
+                      >{{ row.createdAt | date: 'HH:mm, dd/MM/yyyy' : 'UTC' }} ·
                       {{
                         'audit.actor.' + row.actorType | translate: actorLabels[row.actorType]
                       }}</span

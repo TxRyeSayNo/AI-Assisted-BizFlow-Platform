@@ -845,3 +845,20 @@ mat-form-field.mat-focused .leading-icon-wrapper {
   border-radius: 16px !important;
   overflow: visible !important;
 }
+
+// Compact spacing for the active login template.
+.auth-card {
+  padding: 32px;
+
+  .auth-card-header { margin-bottom: 20px; }
+  form { gap: 14px; }
+  mat-form-field { margin-bottom: 0; }
+  .remember-forgot-row { margin: 0; }
+  .sign-in-btn-animated-border { margin-top: 0; }
+  .clean-divider { margin: 2px 0; }
+  .auth-card-footer { margin-top: 20px; }
+}
+
+@media (max-width: 480px) {
+  .auth-card { padding: 24px 20px; }
+}

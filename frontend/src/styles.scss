@@ -2202,3 +2202,6 @@ td .company-code {
     }
   }
 }
+body:has(.mobile-menu-layer) {
+  overflow: hidden;
+}

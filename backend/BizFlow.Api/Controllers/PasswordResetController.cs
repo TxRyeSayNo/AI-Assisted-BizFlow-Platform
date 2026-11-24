@@ -14,7 +14,7 @@ public sealed class PasswordResetController(PasswordResetService reset) : Contro
     public IActionResult Forgot(ForgotPasswordInput input)
     {
         reset.Request(input.Identifier, input.TenantKey);
-        return Accepted(new { message = "If a matching account can receive email, reset instructions will be sent. Include your workspace key if your identifier is shared across companies." });
+        return Accepted(new { message = "If an eligible account matches this workspace and identifier, reset instructions will be sent to its linked email address." });
     }
     [HttpPost("reset-password")]
     public async Task<IActionResult> Reset(ResetPasswordInput input, CancellationToken cancellationToken)
@@ -23,8 +23,8 @@ public sealed class PasswordResetController(PasswordResetService reset) : Contro
         return Ok(new { message = "Your password has been changed. Sign in with your new password." });
     }
 }
-public sealed record ForgotPasswordInput([Required, StringLength(320)] string Identifier, [StringLength(80)] string? TenantKey);
-public sealed record ResetPasswordInput([Required, StringLength(320)] string Identifier, [StringLength(80)] string? TenantKey,
+public sealed record ForgotPasswordInput([Required, StringLength(320)] string Identifier, [Required, StringLength(80)] string TenantKey);
+public sealed record ResetPasswordInput([Required, StringLength(320)] string Identifier, [Required, StringLength(80)] string TenantKey,
     [Required, StringLength(4096)] string ResetToken, [Required, StringLength(1024)] string NewPassword)
 {
     public override string ToString() => "[REDACTED PASSWORD RESET INPUT]";

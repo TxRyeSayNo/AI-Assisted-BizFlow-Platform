@@ -495,10 +495,10 @@
                         </span>
                       </td>
                       <td>
-                        {{ v.publishedAt ? (v.publishedAt | date: 'dd/MM/yyyy HH:mm') : '—' }}
+                        {{ v.publishedAt ? (v.publishedAt | date: 'HH:mm, dd/MM/yyyy') : '—' }}
                       </td>
                       <td>
-                        {{ v.createdAt | date: 'dd/MM/yyyy HH:mm' }}
+                        {{ v.createdAt | date: 'HH:mm, dd/MM/yyyy' }}
                       </td>
                       <td style="text-align: right">
                         <a

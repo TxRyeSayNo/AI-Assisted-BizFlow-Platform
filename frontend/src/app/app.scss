@@ -1,3 +1,182 @@
+.mobile-account-trigger {
+  display: none;
+}
+
+.mobile-account-control {
+  display: none;
+}
+.user-chip {
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+}
+
+@media (max-width: 768px) {
+  .app-topbar .mobile-account-control {
+    display: flex;
+    align-items: center;
+    min-width: 0;
+    max-width: calc(100% - 52px);
+    min-height: 44px;
+    border: 1px solid #dfe8f2;
+    border-radius: 12px;
+    background: #f8fbff;
+    overflow: hidden;
+  }
+
+  .mobile-profile-link {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    padding: 4px 0 4px 4px;
+    color: #17436f;
+    text-decoration: none;
+    font-weight: 600;
+
+    .user-avatar,
+    .user-avatar-img {
+      flex-shrink: 0;
+    }
+  }
+
+  .app-topbar .mobile-account-trigger {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 40px;
+    min-height: 44px;
+    padding: 0;
+    border: 0;
+    border-left: 1px solid #dfe8f2;
+    border-radius: 0;
+    margin-left: 8px;
+  }
+
+  .mobile-profile-link:focus-visible {
+    outline: 2px solid #2563eb;
+    outline-offset: -2px;
+  }
+}
+
+@media (max-width: 480px) {
+  .mobile-profile-link {
+    padding: 8px 0 8px 8px;
+  }
+  .mobile-profile-link .user-avatar,
+  .mobile-profile-link .user-avatar-img {
+    display: none;
+  }
+}
+
+.mobile-menu-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+}
+
+.mobile-menu-backdrop {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  padding: 0;
+  background: rgba(7, 27, 51, 0.42);
+}
+
+.mobile-account-panel {
+  position: absolute;
+  inset: 12px 12px 12px auto;
+  width: min(340px, calc(100% - 24px));
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid #dfe8f2;
+  border-radius: 20px;
+  background: #f8fbff;
+  box-shadow: 0 16px 48px rgba(7, 27, 51, 0.2);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.mobile-menu-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 20px;
+  border-bottom: 1px solid #dfe8f2;
+
+  h2 {
+    margin: 0 0 6px;
+    font-size: 18px;
+    overflow-wrap: anywhere;
+  }
+  p {
+    margin: 4px 0 0;
+    font-size: 13px;
+    color: #63758b;
+  }
+  .mobile-tenant-name {
+    overflow-wrap: anywhere;
+  }
+}
+
+.mobile-menu-close {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border: 1px solid #dfe8f2;
+  border-radius: 12px;
+  background: white;
+  color: #17436f;
+  font-size: 26px;
+  cursor: pointer;
+}
+
+.mobile-menu-navigation {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 12px;
+
+  .sidebar-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .sidebar-item {
+    min-height: 44px;
+    margin: 0;
+    padding: 12px;
+    font-size: 14px;
+  }
+  .nav-label {
+    display: block;
+    white-space: normal;
+  }
+}
+
+.mobile-menu-footer {
+  padding: 16px 20px;
+  border-top: 1px solid #dfe8f2;
+  background: white;
+}
+
+.mobile-menu-signout {
+  width: 100%;
+  min-height: 44px;
+  border: 1px solid #fecaca;
+  border-radius: 12px;
+  background: #fff5f5;
+  color: #b91c1c;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
 .global-floating-lang-switch {
   position: fixed;
   top: 14px;
@@ -541,6 +720,88 @@
    RESPONSIVE DESIGN (MOBILE & TABLET)
    ========================================================================== */
 @media (max-width: 768px) {
+  .app-topbar .user-chip,
+  .app-topbar .btn-signout,
+  .app-sidebar {
+    display: none;
+  }
+
+  .app-topbar .topbar-right {
+    min-width: 0;
+    gap: 8px;
+    justify-content: flex-end;
+  }
+
+  .app-topbar .topbar-left {
+    min-width: 0;
+    flex-shrink: 0;
+  }
+
+  .app-topbar {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 12px;
+  }
+
+  .app-topbar .notify-btn {
+    width: 44px;
+    height: 44px;
+    flex-shrink: 0;
+  }
+
+  .mobile-account-trigger {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    max-width: calc(100% - 52px);
+    min-height: 44px;
+    padding: 4px 10px 4px 4px;
+    border: 1px solid #dfe8f2;
+    border-radius: 12px;
+    background: #f8fbff;
+    color: #17436f;
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    transition:
+      background-color 160ms ease,
+      border-color 160ms ease;
+
+    &:hover,
+    &[aria-expanded='true'] {
+      background: #eaf4ff;
+      border-color: #93baf2;
+    }
+
+    &:focus-visible {
+      outline: 2px solid #2563eb;
+      outline-offset: 2px;
+    }
+
+    .user-avatar,
+    .user-avatar-img {
+      flex-shrink: 0;
+    }
+  }
+
+  .mobile-account-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 14px;
+  }
+
+  .account-chevron {
+    flex-shrink: 0;
+    color: #63758b;
+    transition: transform 160ms ease;
+  }
+
+  .mobile-account-trigger[aria-expanded='true'] .account-chevron {
+    transform: rotate(180deg);
+  }
+
   .app-topbar {
     height: 68px;
     padding: 0 1rem;
@@ -584,45 +845,31 @@
   }
 
   .app-body-layout {
-    flex-direction: column-reverse;
+    flex-direction: column;
   }
+}
 
-  .app-sidebar {
-    width: 100%;
-    height: 60px;
-    position: sticky;
-    bottom: 0;
-    top: auto;
-    border-right: none;
-    border-top: 1px solid rgba(191, 219, 254, 0.85);
-    background:
-      radial-gradient(circle at 50% 0%, rgba(214, 233, 255, 0.8) 0%, transparent 60%),
-      linear-gradient(180deg, #f8fbff 0%, #eaf4ff 100%);
-    padding: 0.35rem 0.5rem;
-    overflow-x: auto;
-    overflow-y: hidden;
+@media (max-width: 480px) {
+  .app-topbar {
+    padding: 0 12px;
+    gap: 10px;
+    height: 64px;
   }
-
-  .sidebar-nav {
-    flex-direction: row;
-    justify-content: flex-start;
-    gap: 0.25rem;
+  .app-topbar .wordmark {
+    font-size: 18px;
+    gap: 6px;
   }
+  .app-topbar .brand-logo-img {
+    width: 30px !important;
+    height: 30px !important;
+  }
+  .mobile-account-trigger {
+    padding: 8px;
+    gap: 6px;
 
-  .sidebar-item {
-    margin: 0;
-    padding: 0.4rem 0.65rem;
-    gap: 0.4rem;
-    font-size: 0.78rem;
-
-    &.active::before {
-      width: 200px;
-      height: 200px;
-    }
-
-    &.active::after {
-      inset: 1.5px;
-      border-radius: 7px;
+    .user-avatar,
+    .user-avatar-img {
+      display: none;
     }
   }
 }

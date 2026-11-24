@@ -19,7 +19,9 @@ public sealed record CommentItemView(
     DateTimeOffset CreatedAt,
     DateTimeOffset? EditedAt,
     bool IsOwner,
-    bool CanDelete);
+    bool CanDelete,
+    string? AuthorNickname = null,
+    string[]? AuthorRoles = null);
 
 public sealed record CreateCommentCommand(
     string ObjectType,

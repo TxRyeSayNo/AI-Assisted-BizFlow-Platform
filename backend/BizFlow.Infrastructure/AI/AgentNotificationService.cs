@@ -36,7 +36,9 @@ public sealed class AgentNotificationService(BizFlowDbContext db, IResourceAutho
             .Select(u => u.Id).Distinct().ToListAsync(cancellationToken);
         if (recipients.Count == 0) throw new ApplicationFault(FaultKind.Validation, "AI.NO_RECIPIENTS", "Không có người nhận đang hoạt động trong phạm vi đã chọn.");
         var title = args["title"]?.ToString() ?? "Thông báo họp: " + args["topic"]!.GetValue<string>();
-        var content = args["content"]?.ToString() ?? "Nội dung: " + args["topic"] + "\nThời gian: " + args["startsAt"] +
+        var content = args["content"]?.ToString() ?? "Nội dung: " + args["topic"] + "\nThời gian: " +
+            DateTimeOffset.Parse(args["startsAt"]!.GetValue<string>(), CultureInfo.InvariantCulture)
+                .ToOffset(TimeSpan.FromHours(7)).ToString("HH:mm, dd/MM/yyyy", CultureInfo.InvariantCulture) + " (giờ Việt Nam)" +
             "\nĐịa điểm: " + args["location"] + (args["preparation"] == null ? "" : "\nCần chuẩn bị: " + args["preparation"]);
         if (title.Length > 200 || content.Length > 10000) throw new ApplicationFault(FaultKind.Validation, "AI.NOTIFICATION_TOO_LONG", "Tiêu đề tối đa 200 ký tự, nội dung tối đa 10000 ký tự.");
         return (new(recipients.Count, allCompany ? ["Toàn thể công ty"] : departments.Select(d => d.Name).ToList(), title, content, recipients), recipients);

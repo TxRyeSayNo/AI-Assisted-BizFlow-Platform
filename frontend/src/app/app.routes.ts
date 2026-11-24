@@ -4,6 +4,11 @@ import { permissionGuard, sessionGuard, tenantGuard } from './core/auth/session.
 
 export const routes: Routes = [
   {
+    path: 'profile',
+    canActivate: [sessionGuard],
+    loadComponent: () => import('./features/auth/personal-profile').then((m) => m.PersonalProfile),
+  },
+  {
     path: 'requests/new',
     canActivate: [tenantGuard, permissionGuard],
     data: { permission: 'requests.create' },

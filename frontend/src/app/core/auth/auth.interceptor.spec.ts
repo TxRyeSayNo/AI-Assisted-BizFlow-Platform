@@ -77,6 +77,45 @@ describe('authenticated HTTP requests', () => {
     expect(session.accessToken()).toBe('access-2');
   });
 
+  it('authenticates every protected profile operation under the auth namespace', () => {
+    for (const [method, url] of [
+      ['GET', '/api/v1/auth/profile'],
+      ['PATCH', '/api/v1/auth/profile'],
+      ['GET', '/api/v1/auth/profile/avatar'],
+      ['PUT', '/api/v1/auth/profile/avatar'],
+      ['DELETE', '/api/v1/auth/profile/avatar'],
+      ['POST', '/api/v1/auth/profile/change-password'],
+    ]) {
+      http.request(method, url).subscribe();
+      const pending = controller.expectOne({ method, url });
+      expect(pending.request.headers.get('Authorization')).toBe('Bearer access-1');
+      pending.flush({});
+    }
+  });
+
+  it('leaves public credential endpoints unauthenticated, including query strings', () => {
+    for (const path of ['login', 'refresh', 'forgot-password', 'reset-password',
+      'email-link/request', 'email-link/verify', 'email-link/verify-firebase',
+      'email-link/select-workspace']) {
+      const url = `/api/v1/auth/${path}/?source=test`;
+      http.post(url, {}).subscribe();
+      const pending = controller.expectOne(url);
+      expect(pending.request.headers.has('Authorization')).toBe(false);
+      pending.flush({});
+    }
+  });
+
+  it('refreshes an expired token and retries the protected profile request', () => {
+    http.get('/api/v1/auth/profile').subscribe();
+    controller.expectOne('/api/v1/auth/profile').flush({}, { status: 401, statusText: 'Unauthorized' });
+    const refresh = controller.expectOne('/api/v1/auth/refresh');
+    expect(refresh.request.headers.has('Authorization')).toBe(false);
+    refresh.flush(response('access-2', 'refresh-2'));
+    const retry = controller.expectOne('/api/v1/auth/profile');
+    expect(retry.request.headers.get('Authorization')).toBe('Bearer access-2');
+    retry.flush({});
+  });
+
   it('uses an already rotated token when an older request returns a delayed 401', () => {
     http.get('/api/v1/tasks').subscribe();
     const original = controller.expectOne('/api/v1/tasks');

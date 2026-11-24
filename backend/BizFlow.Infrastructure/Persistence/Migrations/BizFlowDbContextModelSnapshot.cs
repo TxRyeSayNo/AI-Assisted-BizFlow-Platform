@@ -1066,6 +1066,10 @@ namespace BizFlow.Infrastructure.Persistence.Migrations
                     b.Property<int>("AccessFailedCount")
                         .HasColumnType("integer");
 
+                    b.Property<string>("AvatarObjectKey")
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)");
+
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -1101,6 +1105,10 @@ namespace BizFlow.Infrastructure.Persistence.Migrations
 
                     b.Property<bool>("MustChangePassword")
                         .HasColumnType("boolean");
+
+                    b.Property<string>("Nickname")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
 
                     b.Property<string>("NormalizedEmail")
                         .IsRequired()

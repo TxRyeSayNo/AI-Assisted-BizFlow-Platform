@@ -152,7 +152,7 @@ public sealed class BizFlowDbContext(DbContextOptions<BizFlowDbContext> options,
                 case AuditLog audit:
                     var authenticationEvent = audit.ActorType == AuditActorType.System && audit.ActorId is null &&
                         CurrentUserId is not null && audit.ObjectType == "User" && audit.ObjectId == CurrentUserId &&
-                        audit.Action is "AUTH.LOGIN_SUCCEEDED" or "AUTH.LOGIN_FAILED" or "AUTH.REFRESH_SUCCEEDED" or "AUTH.REFRESH_DENIED" or "AUTH.REPLAY_DETECTED" or "AUTH.PASSWORD_RESET_REQUESTED" or "AUTH.PASSWORD_RESET_SUCCEEDED";
+                        audit.Action is "AUTH.LOGIN_SUCCEEDED" or "AUTH.LOGIN_FAILED" or "AUTH.REFRESH_SUCCEEDED" or "AUTH.REFRESH_DENIED" or "AUTH.REPLAY_DETECTED" or "AUTH.PASSWORD_RESET_REQUESTED" or "AUTH.PASSWORD_RESET_SUCCEEDED" or "AUTH.PROFILE_UPDATED" or "AUTH.PASSWORD_CHANGED" or "AUTH.PASSWORD_CHANGE_FAILED";
                     if (entry.State != EntityState.Added || audit.TenantId != CurrentTenantId || (audit.ActorId != CurrentUserId && !authenticationEvent))
                         throw Denied();
                     break;

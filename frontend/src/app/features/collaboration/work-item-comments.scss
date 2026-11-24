@@ -244,3 +244,11 @@
   font: inherit;
   font-size: 0.75rem;
 }
+.author-role {
+  color: var(--tp-mute, #63758b);
+  font-size: 0.75rem;
+  padding: 2px 6px;
+  border-radius: 6px;
+  background: var(--tp-surf-2, #edf5ff);
+  overflow-wrap: anywhere;
+}

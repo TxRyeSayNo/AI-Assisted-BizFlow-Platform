@@ -57,6 +57,21 @@ describe('WorkItemComments component', () => {
 
   afterEach(() => TestBed.inject(HttpTestingController).verify());
 
+  it('shows nickname and role in discussion, with the official name in the tooltip', () => {
+    const fixture = TestBed.createComponent(WorkItemComments);
+    fixture.componentRef.setInput('objectType', 'TASK');
+    fixture.componentRef.setInput('objectId', 'task-100');
+    fixture.detectChanges();
+    TestBed.inject(HttpTestingController).expectOne(r => r.url === '/api/v1/comments').flush([
+      { ...mockComments[0], authorNickname: 'HappyAlice', authorRoles: ['EMPLOYEE'] },
+    ]);
+    fixture.detectChanges();
+    const author = fixture.nativeElement.querySelector('.author-name') as HTMLElement;
+    expect(author.textContent?.trim()).toBe('HappyAlice');
+    expect(author.title).toBe('Alice Developer');
+    expect(fixture.nativeElement.querySelector('.author-role').textContent).toContain('Nhân viên');
+  });
+
   it('loads and renders comments for the target object', () => {
     const fixture = TestBed.createComponent(WorkItemComments);
     fixture.componentRef.setInput('objectType', 'TASK');

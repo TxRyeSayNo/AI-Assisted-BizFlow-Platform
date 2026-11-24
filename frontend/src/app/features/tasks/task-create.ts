@@ -1,3 +1,4 @@
+import { DateTimePickerComponent } from '../../shared/forms/date-time-picker';
 import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
 import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -14,6 +15,7 @@ import { TranslatePipe } from '../../core/i18n/translate.pipe';
 @Component({
   selector: 'bf-task-create',
   imports: [
+    DateTimePickerComponent,
     FormsModule,
     ReactiveFormsModule,
     MatButtonModule,

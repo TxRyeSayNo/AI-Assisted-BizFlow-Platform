@@ -11,7 +11,7 @@
 @if (signedIn()) {
   <div class="app-authenticated-shell">
     <!-- Top Horizontal Utility Header -->
-    <header class="app-topbar" role="banner">
+    <header class="app-topbar" role="banner" [attr.inert]="mobileMenuOpen() ? '' : null">
       <div class="topbar-left">
         <a class="wordmark" routerLink="/workspace" title="Trang chủ BizFlow">
           <img
@@ -40,7 +40,8 @@
         </a>
 
         <!-- Current User Profile / Avatar -->
-        <div
+        <a
+          routerLink="/profile"
           class="user-chip"
           [title]="(identity()?.fullName || 'User') + ' (' + currentRoleLabel() + ')'"
         >
@@ -58,6 +59,50 @@
             <span class="user-name">{{ welcomeName() }}</span>
             <span class="user-role">{{ currentRoleLabel() }}</span>
           </div>
+        </a>
+
+        <div class="mobile-account-control">
+          <a
+            routerLink="/profile"
+            class="mobile-profile-link"
+            [title]="identity()?.fullName || welcomeName()"
+          >
+            @if (profilePhotoUrl() && !avatarFailed()) {
+              <img
+                [src]="profilePhotoUrl()"
+                alt=""
+                class="user-avatar-img"
+                (error)="onAvatarError()"
+              />
+            } @else {
+              <span class="user-avatar" aria-hidden="true">{{ userInitials() }}</span>
+            }
+            <span class="mobile-account-name">{{ welcomeName() }}</span>
+          </a>
+          <button
+            type="button"
+            class="mobile-account-trigger"
+            [attr.aria-expanded]="mobileMenuOpen()"
+            aria-controls="mobile-account-menu"
+            aria-haspopup="dialog"
+            aria-label="Mở menu điều hướng"
+            (click)="mobileMenuOpen.set(true)"
+          >
+            <svg
+              class="account-chevron"
+              aria-hidden="true"
+              viewBox="0 0 24 24"
+              width="18"
+              height="18"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="m6 9 6 6 6-6" />
+            </svg>
+          </button>
         </div>
 
         <!-- Sign Out Action -->
@@ -73,8 +118,423 @@
       </div>
     </header>
 
+    @if (mobileMenuOpen()) {
+      <div
+        class="mobile-menu-layer"
+        (keydown.escape)="mobileMenuOpen.set(false); $event.stopPropagation()"
+      >
+        <button
+          class="mobile-menu-backdrop"
+          type="button"
+          tabindex="-1"
+          aria-label="Đóng menu"
+          (click)="mobileMenuOpen.set(false)"
+        ></button>
+        <section
+          id="mobile-account-menu"
+          class="mobile-account-panel"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="mobile-menu-title"
+          cdkTrapFocus
+          [cdkTrapFocusAutoCapture]="true"
+        >
+          <div class="mobile-menu-header">
+            <div>
+              <h2 id="mobile-menu-title">{{ welcomeName() }}</h2>
+              <p>{{ currentRoleLabel() }}</p>
+              @if (identity()?.tenantName) {
+                <p class="mobile-tenant-name">{{ identity()?.tenantName }}</p>
+              }
+            </div>
+            <button
+              type="button"
+              class="mobile-menu-close"
+              cdkFocusInitial
+              aria-label="Đóng menu"
+              (click)="mobileMenuOpen.set(false)"
+            >
+              ×
+            </button>
+          </div>
+          <div class="mobile-menu-navigation" (click)="onMobileNavigation($event)">
+            <ng-container *ngTemplateOutlet="mainNavigation" />
+          </div>
+          <div class="mobile-menu-footer">
+            <button type="button" class="mobile-menu-signout" (click)="signOut()">
+              {{ 'common.signOut' | translate: 'Đăng xuất' }}
+            </button>
+          </div>
+        </section>
+      </div>
+    }
+
+    <ng-template #mainNavigation>
+      <nav class="sidebar-nav" aria-label="Main application">
+        <a
+          routerLink="/profile"
+          routerLinkActive="active"
+          class="sidebar-item"
+          aria-label="Hồ sơ cá nhân"
+          title="Hồ sơ cá nhân"
+        >
+          <svg
+            class="nav-icon"
+            viewBox="0 0 24 24"
+            width="20"
+            height="20"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            aria-hidden="true"
+          >
+            <circle cx="12" cy="8" r="4" />
+            <path d="M4 22v-3a8 8 0 0 1 16 0v3" />
+          </svg>
+          <span class="nav-label">Hồ sơ cá nhân</span>
+        </a>
+
+        @if (identity()?.tenantId) {
+          <!-- 1. Home / Dashboard -->
+          <a
+            routerLink="/workspace"
+            routerLinkActive="active"
+            [routerLinkActiveOptions]="{ exact: true }"
+            class="sidebar-item"
+            title="Trang chủ"
+            aria-label="Trang chủ"
+          >
+            <svg
+              class="nav-icon"
+              viewBox="0 0 24 24"
+              width="20"
+              height="20"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+              <polyline points="9 22 9 12 15 12 15 22" />
+            </svg>
+            <span class="nav-label">{{ 'nav.home' | translate: 'Home' }}</span>
+          </a>
+
+          <!-- 2. Tasks -->
+          @if (
+            hasPermission('tasks.read.tenant') ||
+            hasPermission('tasks.read.managed') ||
+            hasPermission('tasks.read.own') ||
+            hasPermission('tasks.read.assigned')
+          ) {
+            <a
+              routerLink="/tasks"
+              routerLinkActive="active"
+              class="sidebar-item"
+              title="Nhiệm vụ"
+              aria-label="Nhiệm vụ"
+            >
+              <svg
+                class="nav-icon"
+                viewBox="0 0 24 24"
+                width="20"
+                height="20"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M9 11l3 3L22 4" />
+                <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
+              </svg>
+              <span class="nav-label">{{ 'nav.tasks' | translate: 'Tasks' }}</span>
+            </a>
+          }
+
+          <!-- 3. Requests -->
+          @if (
+            hasPermission('requests.read.tenant') ||
+            hasPermission('requests.read.managed') ||
+            hasPermission('requests.read.own')
+          ) {
+            <a
+              routerLink="/requests"
+              routerLinkActive="active"
+              class="sidebar-item"
+              title="Yêu cầu"
+              aria-label="Yêu cầu"
+            >
+              <svg
+                class="nav-icon"
+                viewBox="0 0 24 24"
+                width="20"
+                height="20"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <path
+                  d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"
+                />
+                <polyline points="22,6 12,13 2,6" />
+              </svg>
+              <span class="nav-label">{{ 'nav.requests' | translate: 'Requests' }}</span>
+            </a>
+          }
+
+          <!-- 4. Approvals -->
+          @if (
+            hasPermission('tasks.confirm') ||
+            hasPermission('tasks.read.managed') ||
+            hasPermission('roles.configure')
+          ) {
+            <a
+              routerLink="/approvals"
+              routerLinkActive="active"
+              class="sidebar-item"
+              title="Phê duyệt"
+              aria-label="Phê duyệt"
+            >
+              <svg
+                class="nav-icon"
+                viewBox="0 0 24 24"
+                width="20"
+                height="20"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <circle cx="12" cy="12" r="10" />
+                <path d="m9 12 2 2 4-4" />
+              </svg>
+              <span class="nav-label">{{ 'nav.approvals' | translate: 'Approvals' }}</span>
+            </a>
+          }
+
+          <!-- 5. Reports -->
+          @if (
+            hasPermission('reports.manager') ||
+            hasPermission('reports.company') ||
+            hasPermission('reports.workload') ||
+            hasPermission('reports.sla')
+          ) {
+            <a
+              routerLink="/reports"
+              routerLinkActive="active"
+              class="sidebar-item"
+              title="Báo cáo"
+              aria-label="Báo cáo"
+            >
+              <svg
+                class="nav-icon"
+                viewBox="0 0 24 24"
+                width="20"
+                height="20"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <line x1="18" y1="20" x2="18" y2="10" />
+                <line x1="12" y1="20" x2="12" y2="4" />
+                <line x1="6" y1="20" x2="6" y2="14" />
+              </svg>
+              <span class="nav-label">{{ 'nav.reports' | translate: 'Reports' }}</span>
+            </a>
+          }
+
+          <!-- 6. SLA Monitor -->
+          @if (
+            hasPermission('sla.read') ||
+            hasPermission('reports.sla') ||
+            hasPermission('tasks.read.managed') ||
+            hasPermission('roles.configure')
+          ) {
+            <a
+              routerLink="/sla-monitor"
+              routerLinkActive="active"
+              class="sidebar-item"
+              title="Giám sát SLA"
+              aria-label="Giám sát SLA"
+            >
+              <svg
+                class="nav-icon"
+                viewBox="0 0 24 24"
+                width="20"
+                height="20"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <circle cx="12" cy="12" r="10" />
+                <polyline points="12 6 12 12 16 14" />
+              </svg>
+              <span class="nav-label">{{ 'nav.slaMonitor' | translate: 'SLA Monitor' }}</span>
+            </a>
+          }
+
+          <!-- 7. Search -->
+          @if (hasPermission('records.search')) {
+            <a
+              routerLink="/records/search"
+              routerLinkActive="active"
+              class="sidebar-item"
+              title="Tra cứu"
+              aria-label="Tra cứu hồ sơ"
+            >
+              <svg
+                class="nav-icon"
+                viewBox="0 0 24 24"
+                width="20"
+                height="20"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <circle cx="11" cy="11" r="8" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+              </svg>
+              <span class="nav-label">{{ 'nav.search' | translate: 'Search' }}</span>
+            </a>
+          }
+
+          <!-- 8. Settings -->
+          @if (
+            hasPermission('roles.configure') ||
+            hasPermission('users.read') ||
+            hasPermission('departments.read') ||
+            hasPermission('workflows.configure') ||
+            hasPermission('sla.configure') ||
+            hasPermission('service.create')
+          ) {
+            <a
+              routerLink="/settings"
+              routerLinkActive="active"
+              class="sidebar-item"
+              title="Cài đặt hệ thống"
+              aria-label="Cài đặt hệ thống"
+            >
+              <svg
+                class="nav-icon"
+                viewBox="0 0 24 24"
+                width="20"
+                height="20"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <circle cx="12" cy="12" r="3" />
+                <path
+                  d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"
+                />
+              </svg>
+              <span class="nav-label">{{ 'nav.settings' | translate: 'Settings' }}</span>
+            </a>
+          }
+        } @else {
+          <!-- Platform Administrator Nav Links -->
+          <a
+            routerLink="/workspace"
+            routerLinkActive="active"
+            [routerLinkActiveOptions]="{ exact: true }"
+            class="sidebar-item"
+            title="Trang chủ"
+            aria-label="Trang chủ"
+          >
+            <svg
+              class="nav-icon"
+              viewBox="0 0 24 24"
+              width="20"
+              height="20"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+              <polyline points="9 22 9 12 15 12 15 22" />
+            </svg>
+            <span class="nav-label">{{ 'nav.home' | translate: 'Home' }}</span>
+          </a>
+          <a
+            routerLink="/platform/companies"
+            routerLinkActive="active"
+            class="sidebar-item"
+            title="Quản lý Doanh nghiệp"
+            aria-label="Quản lý Doanh nghiệp"
+          >
+            <svg
+              class="nav-icon"
+              viewBox="0 0 24 24"
+              width="20"
+              height="20"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <rect x="2" y="7" width="20" height="14" rx="2" ry="2" />
+              <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
+            </svg>
+            <span class="nav-label">{{ 'nav.companies' | translate: 'Companies' }}</span>
+          </a>
+          <a
+            routerLink="/platform/audit"
+            routerLinkActive="active"
+            class="sidebar-item"
+            title="Kiểm toán Hệ thống"
+            aria-label="Kiểm toán Hệ thống"
+          >
+            <svg
+              class="nav-icon"
+              viewBox="0 0 24 24"
+              width="20"
+              height="20"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+              <polyline points="14 2 14 8 20 8" />
+              <line x1="16" y1="13" x2="8" y2="13" />
+              <line x1="16" y1="17" x2="8" y2="17" />
+            </svg>
+            <span class="nav-label">{{ 'nav.platformAudit' | translate: 'Platform Audit' }}</span>
+          </a>
+        }
+      </nav>
+    </ng-template>
+
     <!-- Main Shell with Left Sidebar & Viewport -->
-    <div class="app-body-layout">
+    <div class="app-body-layout" [attr.inert]="mobileMenuOpen() ? '' : null">
       <!-- Left Distinct Light-Ocean Sidebar with Resizable Width and Luminous Moving Border -->
       <aside class="app-sidebar" [style.width.px]="sidebarWidth()" aria-label="Primary navigation">
         <!-- Interactive Resizer Handle (Allows adjusting between 230px and 320px) -->
@@ -84,344 +544,7 @@
           title="Kéo sang trái/phải để điều chỉnh độ rộng menu"
           aria-hidden="true"
         ></div>
-        <nav class="sidebar-nav" aria-label="Main application">
-          @if (identity()?.tenantId) {
-            <!-- 1. Home / Dashboard -->
-            <a
-              routerLink="/workspace"
-              routerLinkActive="active"
-              [routerLinkActiveOptions]="{ exact: true }"
-              class="sidebar-item"
-              title="Trang chủ"
-              aria-label="Trang chủ"
-            >
-              <svg
-                class="nav-icon"
-                viewBox="0 0 24 24"
-                width="20"
-                height="20"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                aria-hidden="true"
-              >
-                <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-                <polyline points="9 22 9 12 15 12 15 22" />
-              </svg>
-              <span class="nav-label">{{ 'nav.home' | translate: 'Home' }}</span>
-            </a>
-
-            <!-- 2. Tasks -->
-            @if (
-              hasPermission('tasks.read.tenant') ||
-              hasPermission('tasks.read.managed') ||
-              hasPermission('tasks.read.own') ||
-              hasPermission('tasks.read.assigned')
-            ) {
-              <a
-                routerLink="/tasks"
-                routerLinkActive="active"
-                class="sidebar-item"
-                title="Nhiệm vụ"
-                aria-label="Nhiệm vụ"
-              >
-                <svg
-                  class="nav-icon"
-                  viewBox="0 0 24 24"
-                  width="20"
-                  height="20"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  aria-hidden="true"
-                >
-                  <path d="M9 11l3 3L22 4" />
-                  <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
-                </svg>
-                <span class="nav-label">{{ 'nav.tasks' | translate: 'Tasks' }}</span>
-              </a>
-            }
-
-            <!-- 3. Requests -->
-            @if (
-              hasPermission('requests.read.tenant') ||
-              hasPermission('requests.read.managed') ||
-              hasPermission('requests.read.own')
-            ) {
-              <a
-                routerLink="/requests"
-                routerLinkActive="active"
-                class="sidebar-item"
-                title="Yêu cầu"
-                aria-label="Yêu cầu"
-              >
-                <svg
-                  class="nav-icon"
-                  viewBox="0 0 24 24"
-                  width="20"
-                  height="20"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  aria-hidden="true"
-                >
-                  <path
-                    d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"
-                  />
-                  <polyline points="22,6 12,13 2,6" />
-                </svg>
-                <span class="nav-label">{{ 'nav.requests' | translate: 'Requests' }}</span>
-              </a>
-            }
-
-            <!-- 4. Approvals -->
-            @if (
-              hasPermission('tasks.confirm') ||
-              hasPermission('tasks.read.managed') ||
-              hasPermission('roles.configure')
-            ) {
-              <a
-                routerLink="/approvals"
-                routerLinkActive="active"
-                class="sidebar-item"
-                title="Phê duyệt"
-                aria-label="Phê duyệt"
-              >
-                <svg
-                  class="nav-icon"
-                  viewBox="0 0 24 24"
-                  width="20"
-                  height="20"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  aria-hidden="true"
-                >
-                  <circle cx="12" cy="12" r="10" />
-                  <path d="m9 12 2 2 4-4" />
-                </svg>
-                <span class="nav-label">{{ 'nav.approvals' | translate: 'Approvals' }}</span>
-              </a>
-            }
-
-            <!-- 5. Reports -->
-            @if (
-              hasPermission('reports.manager') ||
-              hasPermission('reports.company') ||
-              hasPermission('reports.workload') ||
-              hasPermission('reports.sla')
-            ) {
-              <a
-                routerLink="/reports"
-                routerLinkActive="active"
-                class="sidebar-item"
-                title="Báo cáo"
-                aria-label="Báo cáo"
-              >
-                <svg
-                  class="nav-icon"
-                  viewBox="0 0 24 24"
-                  width="20"
-                  height="20"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  aria-hidden="true"
-                >
-                  <line x1="18" y1="20" x2="18" y2="10" />
-                  <line x1="12" y1="20" x2="12" y2="4" />
-                  <line x1="6" y1="20" x2="6" y2="14" />
-                </svg>
-                <span class="nav-label">{{ 'nav.reports' | translate: 'Reports' }}</span>
-              </a>
-            }
-
-            <!-- 6. SLA Monitor -->
-            @if (
-              hasPermission('sla.read') ||
-              hasPermission('reports.sla') ||
-              hasPermission('tasks.read.managed') ||
-              hasPermission('roles.configure')
-            ) {
-              <a
-                routerLink="/sla-monitor"
-                routerLinkActive="active"
-                class="sidebar-item"
-                title="Giám sát SLA"
-                aria-label="Giám sát SLA"
-              >
-                <svg
-                  class="nav-icon"
-                  viewBox="0 0 24 24"
-                  width="20"
-                  height="20"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  aria-hidden="true"
-                >
-                  <circle cx="12" cy="12" r="10" />
-                  <polyline points="12 6 12 12 16 14" />
-                </svg>
-                <span class="nav-label">{{ 'nav.slaMonitor' | translate: 'SLA Monitor' }}</span>
-              </a>
-            }
-
-            <!-- 7. Search -->
-            @if (hasPermission('records.search')) {
-              <a
-                routerLink="/records/search"
-                routerLinkActive="active"
-                class="sidebar-item"
-                title="Tra cứu"
-                aria-label="Tra cứu hồ sơ"
-              >
-                <svg
-                  class="nav-icon"
-                  viewBox="0 0 24 24"
-                  width="20"
-                  height="20"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  aria-hidden="true"
-                >
-                  <circle cx="11" cy="11" r="8" />
-                  <line x1="21" y1="21" x2="16.65" y2="16.65" />
-                </svg>
-                <span class="nav-label">{{ 'nav.search' | translate: 'Search' }}</span>
-              </a>
-            }
-
-            <!-- 8. Settings -->
-            @if (
-              hasPermission('roles.configure') ||
-              hasPermission('users.read') ||
-              hasPermission('departments.read') ||
-              hasPermission('workflows.configure') ||
-              hasPermission('sla.configure') ||
-              hasPermission('service.create')
-            ) {
-              <a
-                routerLink="/settings"
-                routerLinkActive="active"
-                class="sidebar-item"
-                title="Cài đặt hệ thống"
-                aria-label="Cài đặt hệ thống"
-              >
-                <svg
-                  class="nav-icon"
-                  viewBox="0 0 24 24"
-                  width="20"
-                  height="20"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  aria-hidden="true"
-                >
-                  <circle cx="12" cy="12" r="3" />
-                  <path
-                    d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"
-                  />
-                </svg>
-                <span class="nav-label">{{ 'nav.settings' | translate: 'Settings' }}</span>
-              </a>
-            }
-          } @else {
-            <!-- Platform Administrator Nav Links -->
-            <a
-              routerLink="/workspace"
-              routerLinkActive="active"
-              [routerLinkActiveOptions]="{ exact: true }"
-              class="sidebar-item"
-              title="Trang chủ"
-              aria-label="Trang chủ"
-            >
-              <svg
-                class="nav-icon"
-                viewBox="0 0 24 24"
-                width="20"
-                height="20"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                aria-hidden="true"
-              >
-                <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-                <polyline points="9 22 9 12 15 12 15 22" />
-              </svg>
-              <span class="nav-label">{{ 'nav.home' | translate: 'Home' }}</span>
-            </a>
-            <a
-              routerLink="/platform/companies"
-              routerLinkActive="active"
-              class="sidebar-item"
-              title="Quản lý Doanh nghiệp"
-              aria-label="Quản lý Doanh nghiệp"
-            >
-              <svg
-                class="nav-icon"
-                viewBox="0 0 24 24"
-                width="20"
-                height="20"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                aria-hidden="true"
-              >
-                <rect x="2" y="7" width="20" height="14" rx="2" ry="2" />
-                <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
-              </svg>
-              <span class="nav-label">{{ 'nav.companies' | translate: 'Companies' }}</span>
-            </a>
-            <a
-              routerLink="/platform/audit"
-              routerLinkActive="active"
-              class="sidebar-item"
-              title="Kiểm toán Hệ thống"
-              aria-label="Kiểm toán Hệ thống"
-            >
-              <svg
-                class="nav-icon"
-                viewBox="0 0 24 24"
-                width="20"
-                height="20"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                aria-hidden="true"
-              >
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                <polyline points="14 2 14 8 20 8" />
-                <line x1="16" y1="13" x2="8" y2="13" />
-                <line x1="16" y1="17" x2="8" y2="17" />
-              </svg>
-              <span class="nav-label">{{ 'nav.platformAudit' | translate: 'Platform Audit' }}</span>
-            </a>
-          }
-        </nav>
+        <ng-container *ngTemplateOutlet="mainNavigation" />
       </aside>
 
       <!-- Main Content Viewport -->

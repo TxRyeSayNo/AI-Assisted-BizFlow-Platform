@@ -140,7 +140,7 @@ export interface PendingApprovalItem {
               </div>
               <time class="card-time" [attr.datetime]="item.submittedAt">
                 {{ 'approvals.submittedAt' | translate: 'Đã gửi:' }}
-                {{ item.submittedAt | date: 'dd/MM/yyyy HH:mm' }}
+                {{ item.submittedAt | date: 'HH:mm, dd/MM/yyyy' }}
               </time>
             </div>
 

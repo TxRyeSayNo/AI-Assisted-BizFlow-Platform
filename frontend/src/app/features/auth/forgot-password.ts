@@ -86,7 +86,7 @@ export interface ToastAlert {
                     {{
                       'forgot.successMessage'
                         | translate
-                          : 'Nếu tài khoản khớp và có thể nhận thư, hướng dẫn đặt lại sẽ được gửi tới bạn. Vui lòng kèm theo mã không gian làm việc nếu tài khoản của bạn thuộc nhiều công ty.'
+                          : 'Nếu tài khoản hợp lệ trong workspace này, liên kết đặt lại sẽ được gửi tới email đã liên kết với tài khoản. Vui lòng kiểm tra cả thư rác.'
                     }}
                   </p>
                 </div>
@@ -100,9 +100,11 @@ export interface ToastAlert {
                       matInput
                       formControlName="identifier"
                       autocomplete="username"
+                      required
                       [readonly]="busy()"
                       placeholder="Ví dụ: EMP001 hoặc ten@congty.com"
                     />
+                    <mat-error>Nhập tài khoản hoặc email đã liên kết.</mat-error>
                   </mat-form-field>
 
                   <mat-form-field appearance="outline" subscriptSizing="dynamic">
@@ -113,9 +115,14 @@ export interface ToastAlert {
                       matInput
                       formControlName="tenantKey"
                       autocomplete="organization"
+                      required
                       [readonly]="busy()"
                       placeholder="Ví dụ: bizflow-corp"
                     />
+                    <mat-hint
+                      >Nhập workspace-key đã dùng khi đăng nhập, ví dụ: bizflow-corp.</mat-hint
+                    >
+                    <mat-error>Vui lòng nhập workspace-key hợp lệ.</mat-error>
                   </mat-form-field>
 
                   <!-- Accessible alert announcement without layout displacement -->
@@ -176,8 +183,15 @@ export class ForgotPassword implements OnDestroy {
   private toastFadeTimer?: ReturnType<typeof setTimeout>;
 
   readonly form = inject(FormBuilder).nonNullable.group({
-    identifier: ['', [Validators.required, Validators.maxLength(320)]],
-    tenantKey: ['', [Validators.maxLength(80), Validators.pattern(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)]],
+    identifier: ['', [Validators.required, Validators.maxLength(320), Validators.pattern(/\S/)]],
+    tenantKey: [
+      '',
+      [
+        Validators.required,
+        Validators.maxLength(80),
+        Validators.pattern(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+      ],
+    ],
   });
 
   constructor() {
@@ -202,6 +216,7 @@ export class ForgotPassword implements OnDestroy {
     this.clearToastTimers();
     this.toastService.clear();
     this.toast.set({ title, message });
+    this.toastService.error(message, title);
     this.toastFading.set(false);
 
     this.toastTimer = setTimeout(() => {
@@ -229,7 +244,7 @@ export class ForgotPassword implements OnDestroy {
       const tenantCtrl = this.form.controls.tenantKey;
 
       if (idCtrl.invalid) {
-        if (idCtrl.errors?.['required']) {
+        if (idCtrl.errors?.['required'] || !idCtrl.value.trim()) {
           this.showToast(
             'Thiếu thông tin tài khoản',
             'Vui lòng nhập mã nhân viên hoặc email công ty của bạn.',
@@ -245,8 +260,10 @@ export class ForgotPassword implements OnDestroy {
 
       if (tenantCtrl.invalid) {
         this.showToast(
-          'Mã không gian làm việc không hợp lệ',
-          'Mã không gian làm việc chỉ bao gồm chữ thường, chữ số và dấu gạch ngang (ví dụ: bizflow-corp).',
+          tenantCtrl.hasError('required')
+            ? 'Thiếu workspace-key'
+            : 'Mã không gian làm việc không hợp lệ',
+          'Vui lòng nhập workspace-key gồm chữ thường, chữ số và dấu gạch ngang (ví dụ: bizflow-corp).',
         );
         return;
       }
@@ -266,19 +283,19 @@ export class ForgotPassword implements OnDestroy {
     this.http
       .post('/api/v1/auth/forgot-password', {
         identifier: values.identifier.trim(),
-        ...(values.tenantKey.trim() ? { tenantKey: values.tenantKey.trim() } : {}),
+        tenantKey: values.tenantKey.trim().toLowerCase(),
       })
       .pipe(finalize(() => this.busy.set(false)))
       .subscribe({
         next: () => {
           this.sent.set(true);
+          this.dismissToast();
           this.toastService.success(
             this.i18n.t(
               'forgot.successToast',
-              'Đã gửi liên kết khôi phục mật khẩu. Vui lòng kiểm tra email của bạn.',
+              'Đã tiếp nhận yêu cầu. Nếu thông tin khớp, liên kết sẽ được gửi tới email đã liên kết.',
             ),
           );
-          this.dismissToast();
         },
         error: (failure: HttpErrorResponse) => {
           const title = failure.status === 429 ? 'Quá nhiều yêu cầu' : 'Dịch vụ tạm thời gián đoạn';

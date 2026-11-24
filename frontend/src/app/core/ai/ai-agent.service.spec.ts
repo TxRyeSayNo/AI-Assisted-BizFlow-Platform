@@ -226,6 +226,61 @@ describe('AiAgentService - Unified AI Agent Workspace', () => {
     expect(service.branches()[0].departmentName).toBe('IT');
   });
 
+  it('shows creation failures in modal state and allows retry without losing the proposal', () => {
+    service.addCustomBranch('Nhiệm vụ cần lưu');
+    service.updateBranch(service.branches()[0].id, { departmentId: 'dept-it', departmentName: 'Phòng IT' });
+    const branch = service.branches()[0];
+    service.submitSingleBranch(branch);
+    service.submitSingleBranch(branch);
+    const request = http.expectOne('/api/v1/tasks/ai-decomposition/confirm');
+    request.flush(
+      { code: 'INTERNAL.ERROR', message: 'An unexpected error occurred.' },
+      { status: 500, statusText: 'Server error' },
+    );
+    expect(service.busy()).toBe(false);
+    expect(service.branches()[0].status).toBe('pending');
+    expect(service.branchError()).toContain('Máy chủ gặp lỗi');
+    service.submitSingleBranch(service.branches()[0]);
+    expect(service.branchError()).toBeNull();
+    http
+      .expectOne('/api/v1/tasks/ai-decomposition/confirm')
+      .flush({ totalCreated: 1, items: [{ id: 'created-task' }] });
+    expect(service.branches()[0].status).toBe('created');
+    expect(service.busy()).toBe(false);
+    service.submitAllBranches();
+    http.expectNone('/api/v1/tasks/ai-decomposition/confirm');
+  });
+
+  it('opens a blank new branch for configuration and blocks incomplete single and bulk submission', () => {
+    service.branchError.set('Previous error');
+    service.addCustomBranch();
+    const branch = service.branches()[0];
+    expect(service.selectedBranch()).toEqual(branch);
+    expect(service.isBranchModalOpen()).toBe(true);
+    expect(service.branchError()).toBeNull();
+    expect(branch.title).toBe('');
+    expect(branch.departmentId).toBeNull();
+    expect(branch.departmentName).toBe('');
+    expect(branch.checklistItems).toEqual([]);
+    service.submitSingleBranch(branch);
+    expect(service.branchError()).toContain('tiêu đề');
+    service.updateBranch(branch.id, { title: 'Chuẩn bị báo cáo' });
+    service.selectBranch(null);
+    service.submitAllBranches();
+    expect(service.branchError()).toContain('phòng ban');
+    expect(service.selectedBranch()?.id).toBe(branch.id);
+    expect(service.busy()).toBe(false);
+    http.expectNone('/api/v1/tasks/ai-decomposition/confirm');
+    service.departments.set([{ id: 'dept-it', name: 'Phòng IT' }]);
+    service.updateBranch(branch.id, { departmentId: 'dept-it' });
+    expect(service.branchConfigurationError(service.branches()[0])).toBeNull();
+    service.updateBranch(branch.id, { departmentId: null, departmentName: '' });
+    expect(service.branches()[0].departmentId).toBeNull();
+    expect(service.branches()[0].departmentName).toBe('');
+    service.updateBranch(branch.id, { departmentName: '' });
+    expect(service.branches()[0].departmentId).toBeNull();
+  });
+
   it('updates branch title through the explicit editor', () => {
     const branches: SubtaskBranch[] = [
       {

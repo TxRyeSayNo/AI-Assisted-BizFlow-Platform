@@ -1,6 +1,16 @@
-import { Component, computed, effect, inject, signal } from '@angular/core';
+import {
+  Component,
+  HostListener,
+  computed,
+  effect,
+  inject,
+  signal,
+  untracked,
+} from '@angular/core';
+import { A11yModule } from '@angular/cdk/a11y';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { PersonalProfileService } from './core/auth/personal-profile.service';
 import { SessionService } from './core/auth/session';
 import { I18nService } from './core/i18n/i18n.service';
 import { TranslatePipe } from './core/i18n/translate.pipe';
@@ -15,6 +25,7 @@ import { NotificationCountService } from './core/notifications/notification-coun
   standalone: true,
   imports: [
     CommonModule,
+    A11yModule,
     RouterOutlet,
     RouterLink,
     RouterLinkActive,
@@ -26,6 +37,7 @@ import { NotificationCountService } from './core/notifications/notification-coun
   styleUrl: './app.scss',
 })
 export class App {
+  readonly personalProfile = inject(PersonalProfileService);
   readonly session = inject(SessionService, { optional: true });
   readonly i18n = inject(I18nService);
   readonly aiAgent = inject(AiAgentService);
@@ -34,6 +46,17 @@ export class App {
   readonly unreadNotifications = computed(() => this.notifCount.unreadCount());
   private readonly router = inject(Router);
 
+  readonly mobileMenuOpen = signal(false);
+
+  @HostListener('window:resize')
+  onViewportResize(): void {
+    if (window.innerWidth > 768) this.mobileMenuOpen.set(false);
+  }
+
+  onMobileNavigation(event: MouseEvent): void {
+    if ((event.target as HTMLElement).closest('a')) this.mobileMenuOpen.set(false);
+  }
+
   readonly avatarFailed = signal(false);
   readonly sidebarWidth = signal<number>(this.getInitialSidebarWidth());
   private isResizing = false;
@@ -41,6 +64,13 @@ export class App {
   constructor() {
     try {
       effect(() => {
+        this.personalProfile.avatarUrl();
+        this.avatarFailed.set(false);
+      });
+      effect(() => {
+        const id = this.identity()?.userId;
+        if (id) untracked(() => this.personalProfile.load(id));
+        else untracked(() => this.personalProfile.clear());
         if (this.signedIn()) {
           this.notifCount.refresh();
           // Deployment feature flags, loaded once so feature pages need no request of their own.
@@ -97,7 +127,13 @@ export class App {
 
   readonly profilePhotoUrl = computed(() => {
     const id = this.identity();
-    return id?.avatarUrl || (id as any)?.picture || (id as any)?.photoUrl || null;
+    return (
+      this.personalProfile.avatarUrl() ||
+      id?.avatarUrl ||
+      (id as any)?.picture ||
+      (id as any)?.photoUrl ||
+      null
+    );
   });
 
   onAvatarError(): void {
@@ -105,7 +141,7 @@ export class App {
   }
 
   userInitials(): string {
-    const name = this.identity()?.fullName || 'User';
+    const name = this.welcomeName();
     const parts = name.trim().split(' ');
     if (parts.length >= 2) {
       return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
@@ -114,6 +150,8 @@ export class App {
   }
 
   welcomeName(): string {
+    const nickname = this.personalProfile.profile()?.nickname ?? this.identity()?.nickname;
+    if (nickname?.trim()) return nickname.trim();
     const raw = this.identity()?.fullName?.trim();
     if (!raw) return 'Quản trị viên Hệ thống';
     if (
@@ -152,6 +190,7 @@ export class App {
   }
 
   signOut(): void {
+    this.mobileMenuOpen.set(false);
     this.session?.clear();
     this.router.navigate(['/login']);
   }

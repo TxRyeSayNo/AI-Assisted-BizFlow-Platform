@@ -40,7 +40,7 @@
     </div>
   </div>
 
-  <section aria-label="Deadline calendar" class="directory-panel" [attr.aria-busy]="busy()">
+  <section aria-label="Lịch thời hạn" class="directory-panel" [attr.aria-busy]="busy()">
     <div class="calendar-toolbar">
       <div class="calendar-nav">
         <button
@@ -184,7 +184,7 @@
                   <span class="calendar-entry-meta">
                     {{ 'status.' + item.status | translate: states[item.status] }}
                     @if (item.deadline) {
-                      · {{ item.deadline | date: 'shortTime' }}
+                      · {{ item.deadline | date: 'HH:mm' }}
                     }
                   </span>
                 </a>

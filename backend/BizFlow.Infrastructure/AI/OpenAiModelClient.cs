@@ -39,7 +39,7 @@ public sealed class OpenAiModelClient : IAiModelClient
 
         _model = configuration["OpenAI:Model"]
             ?? configuration["OPENAI_MODEL"]
-            ?? "gpt-6-sol";
+            ?? "gpt-6.2-sol";
 
         var apiMode = configuration["OpenAI:ApiMode"] ?? configuration["OPENAI_API_MODE"] ?? "auto";
         if (apiMode.ToLowerInvariant() is not ("auto" or "responses" or "chat"))

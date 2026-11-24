@@ -10,6 +10,7 @@ public sealed class PasswordResetService(IAuthenticationStore store, IPasswordRe
     public void Request(string identifier, string? tenantKey)
     {
         ValidateIdentifier(identifier, tenantKey);
+        RequireWorkspace(tenantKey);
         // Queue every valid-shaped request, including nonexistent/ambiguous identities. The public
         // response and queue-availability behavior must not reveal account existence.
         queue.Enqueue(identifier.Trim().ToUpperInvariant(), NormalizeTenant(tenantKey), clock.GetUtcNow());
@@ -18,6 +19,7 @@ public sealed class PasswordResetService(IAuthenticationStore store, IPasswordRe
     public async Task ResetAsync(string identifier, string? tenantKey, string token, string newPassword, CancellationToken cancellationToken)
     {
         ValidateIdentifier(identifier, tenantKey);
+        RequireWorkspace(tenantKey);
         if (string.IsNullOrEmpty(token) || token.Length > 4096) throw InvalidToken();
         var ticket = await tokens.ValidateAsync(token, cancellationToken);
         if (ticket is null) throw InvalidToken();
@@ -31,7 +33,7 @@ public sealed class PasswordResetService(IAuthenticationStore store, IPasswordRe
         if (clock.GetUtcNow() >= ticket.ExpiresAt || !user.CanResetPassword || access?.IsTenantActive != true || user.SecurityStamp != ticket.SecurityStamp ||
             user.NormalizedEmail != ticket.NormalizedEmail ||
             (normalized != user.NormalizedEmployeeCode && normalized != user.NormalizedEmail)) throw InvalidToken();
-        // If a caller supplies workspace context, it must resolve to this exact signed identity.
+        // Workspace context must resolve to this exact signed identity.
         if (NormalizeTenant(tenantKey) is { } key)
         {
             var matches = await store.FindCandidatesAsync(normalized, key, cancellationToken);
@@ -53,6 +55,12 @@ public sealed class PasswordResetService(IAuthenticationStore store, IPasswordRe
             throw new ApplicationFault(FaultKind.Validation, "VALIDATION.FAILED", "Please correct the invalid fields.");
     }
     internal static string? NormalizeTenant(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim().ToLowerInvariant();
+    private static void RequireWorkspace(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value) || !System.Text.RegularExpressions.Regex.IsMatch(value.Trim(), "^[a-zA-Z0-9]+(?:-[a-zA-Z0-9]+)*$"))
+            throw new ApplicationFault(FaultKind.Validation, "VALIDATION.FAILED", "Enter a valid workspace key.",
+                new Dictionary<string, string[]> { ["tenantKey"] = ["Workspace key is required."] });
+    }
     private static ApplicationFault InvalidToken() => new(FaultKind.Unauthenticated, "AUTH.INVALID_RESET", "The reset link is invalid or expired. Request a new one.");
 }
 

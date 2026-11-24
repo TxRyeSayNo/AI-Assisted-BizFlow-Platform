@@ -38,6 +38,11 @@ describe('password recovery', () => {
     TestBed.inject(HttpTestingController).expectNone('/api/v1/auth/forgot-password');
     expect(component.toast()?.title).toBe('Thiếu thông tin tài khoản');
 
+    component.form.setValue({ identifier: 'EMP1', tenantKey: '' });
+    component.submit();
+    TestBed.inject(HttpTestingController).expectNone('/api/v1/auth/forgot-password');
+    expect(component.toast()?.title).toBe('Thiếu workspace-key');
+
     component.form.setValue({ identifier: 'EMP1', tenantKey: 'INVALID_UPPERCASE!' });
     component.submit();
     TestBed.inject(HttpTestingController).expectNone('/api/v1/auth/forgot-password');
@@ -77,7 +82,7 @@ describe('password recovery', () => {
     const password = ' Long-password!123 ';
     component.form.setValue({
       identifier: ' EMP1 ',
-      tenantKey: '',
+      tenantKey: 'company-a',
       newPassword: password,
       confirmPassword: password,
     });
@@ -85,6 +90,7 @@ describe('password recovery', () => {
     const request = TestBed.inject(HttpTestingController).expectOne('/api/v1/auth/reset-password');
     expect(request.request.body).toEqual({
       identifier: 'EMP1',
+      tenantKey: 'company-a',
       resetToken: 'test-reset-token',
       newPassword: password,
     });

@@ -48,6 +48,20 @@ describe('RobotWidgetComponent', () => {
     expect(component.isOpen()).toBe(false);
   });
 
+  it('displays a task creation error inside the open workspace dialog', () => {
+    fixture.detectChanges();
+    component.agent.openBranchModal();
+    component.agent.branchError.set('Phòng ban nhận việc không hợp lệ.');
+    fixture.detectChanges();
+    const error: HTMLElement = fixture.nativeElement.querySelector(
+      '.branch-modal-dialog [role="alert"]',
+    );
+    expect(error.textContent).toContain('Phòng ban nhận việc không hợp lệ.');
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    fixture.detectChanges();
+    expect(component.agent.isBranchModalOpen()).toBe(false);
+  });
+
   it('restores open state if bizflow_robot_open was set in current session', () => {
     sessionStorage.setItem('bizflow_robot_open', 'true');
     component.ngOnInit();

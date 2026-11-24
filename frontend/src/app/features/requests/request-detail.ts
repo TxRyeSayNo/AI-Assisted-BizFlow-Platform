@@ -1,3 +1,5 @@
+import { DateTimePickerComponent } from '../../shared/forms/date-time-picker';
+import { ReadableDatesPipe } from '../../shared/formatting/readable-date';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { DatePipe, NgClass } from '@angular/common';
 import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
@@ -110,6 +112,8 @@ export interface UserOption {
 @Component({
   selector: 'bf-request-detail',
   imports: [
+    DateTimePickerComponent,
+    ReadableDatesPipe,
     RouterLink,
     DatePipe,
     NgClass,

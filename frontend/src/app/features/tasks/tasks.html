@@ -213,7 +213,7 @@
                     >
                     @if (item.deadline) {
                       <time class="task-meta" [attr.datetime]="item.deadline">{{
-                        item.deadline | date: 'medium'
+                        item.deadline | date: 'HH:mm, dd/MM/yyyy'
                       }}</time>
                     } @else {
                       <span class="task-meta">{{

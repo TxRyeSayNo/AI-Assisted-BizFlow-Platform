@@ -216,6 +216,9 @@ builder.Services.AddSingleton<BizFlow.Application.Notifications.IRealtimePresenc
 builder.Services.AddScoped<BizFlow.Application.Notifications.INotificationUpdates, BizFlow.Api.Realtime.SignalRNotificationUpdates>();
 builder.Services.AddOpenApi();
 
+builder.Services.AddScoped<PersonalProfileService>();
+builder.Services.AddScoped<IPersonalProfileReader, BizFlow.Infrastructure.Authentication.PersonalProfileReader>();
+
 var app = builder.Build();
 app.UseSerilogRequestLogging(options => options.EnrichDiagnosticContext = (diagnostics, context) =>
     diagnostics.Set("TraceId", System.Diagnostics.Activity.Current?.TraceId.ToString() ?? context.TraceIdentifier));

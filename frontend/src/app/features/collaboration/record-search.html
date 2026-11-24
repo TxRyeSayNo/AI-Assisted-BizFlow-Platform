@@ -180,7 +180,7 @@
                         }}</a>
                       }
                       @if (item.description) {
-                        <span class="record-desc-preview">{{ item.description }}</span>
+                        <span class="record-desc-preview">{{ item.description | readableDates }}</span>
                       }
                     </div>
                   </td>
@@ -208,7 +208,7 @@
                     }}</span>
                   </td>
                   <td>
-                    <span class="date-text">{{ item.createdAt | date: 'short' }}</span>
+                    <span class="date-text">{{ item.createdAt | date: 'HH:mm, dd/MM/yyyy' }}</span>
                   </td>
                   <td>
                     @if (item.recordType === 'TASK') {

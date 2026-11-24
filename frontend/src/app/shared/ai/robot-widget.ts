@@ -1,4 +1,6 @@
-import { CommonModule } from '@angular/common';
+import { ReadableDatesPipe } from '../formatting/readable-date';
+import { CommonModule, DOCUMENT } from '@angular/common';
+import { A11yModule } from '@angular/cdk/a11y';
 import { HttpClient } from '@angular/common/http';
 import {
   Component,
@@ -7,12 +9,15 @@ import {
   OnInit,
   ViewChild,
   computed,
+  effect,
   inject,
   signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { PersonalProfileService } from '../../core/auth/personal-profile.service';
+import { roleLabels } from '../../core/auth/user-display';
 import { SessionService } from '../../core/auth/session';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
@@ -27,17 +32,42 @@ import {
 @Component({
   selector: 'bf-robot-widget',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslatePipe, AgentMessageContentComponent],
+  imports: [
+    ReadableDatesPipe,
+    CommonModule,
+    FormsModule,
+    TranslatePipe,
+    AgentMessageContentComponent,
+    A11yModule,
+  ],
   templateUrl: './robot-widget.html',
   styleUrls: ['./robot-widget.scss', './robot-branching.scss'],
+  host: { '(document:keydown.escape)': 'onWorkspaceEscape($event)' },
 })
 export class RobotWidgetComponent implements OnInit {
   readonly agent = inject(AiAgentService);
+  readonly personalProfile = inject(PersonalProfileService);
+  readonly roleLabels = roleLabels;
   readonly session = inject(SessionService);
   readonly i18n = inject(I18nService);
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
   private readonly destroy = inject(DestroyRef);
+  private readonly document = inject(DOCUMENT);
+
+  private readonly modalScrollLock = effect((onCleanup) => {
+    if (!this.agent.isBranchModalOpen()) return;
+    const surfaces = [this.document.documentElement, this.document.body];
+    const previous = surfaces.map((surface) => surface.style.overflow);
+    surfaces.forEach((surface) => (surface.style.overflow = 'hidden'));
+    onCleanup(() =>
+      surfaces.forEach((surface, index) => (surface.style.overflow = previous[index])),
+    );
+  });
+
+  @ViewChild('branchTitle') set branchTitle(ref: ElementRef<HTMLInputElement> | undefined) {
+    ref?.nativeElement.focus();
+  }
 
   @ViewChild('chatBody') chatBodyRef?: ElementRef<HTMLDivElement>;
 
@@ -51,6 +81,9 @@ export class RobotWidgetComponent implements OnInit {
   readonly isBranchModalOpen = computed(() => this.agent.isBranchModalOpen());
   readonly messages = computed(() => this.agent.messages());
   readonly branches = computed(() => this.agent.branches());
+  readonly pendingBranchCount = computed(
+    () => this.branches().filter((branch) => branch.status === 'pending').length,
+  );
   readonly selectedBranch = computed(() => this.agent.selectedBranch());
   readonly chatSessions = computed(() => this.agent.chatSessions());
   readonly busy = computed(() => this.agent.busy());
@@ -118,15 +151,21 @@ export class RobotWidgetComponent implements OnInit {
     this.agent.closeBranchModal();
   }
 
+  onWorkspaceEscape(event: Event) {
+    if (!this.agent.isBranchModalOpen()) return;
+    event.preventDefault();
+    this.agent.closeBranchModal();
+  }
+
   selectBranch(branch: SubtaskBranch | null) {
     this.agent.selectBranch(branch);
   }
 
-  onBranchDepartmentChange(id: string, deptId: string) {
+  onBranchDepartmentChange(id: string, deptId: string | null) {
     const dept = this.agent.departments().find((d) => d.id === deptId);
     this.agent.updateBranch(id, {
       departmentId: deptId,
-      departmentName: dept ? dept.name : undefined,
+      departmentName: dept?.name ?? '',
     });
   }
 
@@ -213,7 +252,11 @@ export class RobotWidgetComponent implements OnInit {
       id: crypto.randomUUID(),
       sender: 'user',
       text,
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      time: new Date().toLocaleTimeString('vi-VN', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+      }),
     };
 
     // Append user message
@@ -283,7 +326,11 @@ export class RobotWidgetComponent implements OnInit {
             id: crypto.randomUUID(),
             sender: 'robot',
             text: this.cleanText(res.response),
-            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            time: new Date().toLocaleTimeString('vi-VN', {
+              hour: '2-digit',
+              minute: '2-digit',
+              hour12: false,
+            }),
             actionCards,
             questionnaire: res.questionnaire,
             agentThought: res.agentThought ? this.cleanText(res.agentThought) : undefined,
@@ -311,7 +358,11 @@ export class RobotWidgetComponent implements OnInit {
             id: crypto.randomUUID(),
             sender: 'robot',
             text: errorText,
-            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            time: new Date().toLocaleTimeString('vi-VN', {
+              hour: '2-digit',
+              minute: '2-digit',
+              hour12: false,
+            }),
           };
           this.agent.messages.update((list) => [...list, robotMsg]);
           this.agent.persistCurrentSession();
@@ -388,7 +439,11 @@ export class RobotWidgetComponent implements OnInit {
               id: crypto.randomUUID(),
               sender: 'robot',
               text: resultText,
-              time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+              time: new Date().toLocaleTimeString('vi-VN', {
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false,
+              }),
             };
             this.agent.messages.update((list) => [...list, msg]);
             this.agent.persistCurrentSession();
@@ -401,7 +456,11 @@ export class RobotWidgetComponent implements OnInit {
               id: crypto.randomUUID(),
               sender: 'robot',
               text: `Lỗi thực thi hành động: ${err?.error?.message || err.message}`,
-              time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+              time: new Date().toLocaleTimeString('vi-VN', {
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false,
+              }),
             };
             this.agent.messages.update((list) => [...list, msg]);
             this.scrollToBottom();

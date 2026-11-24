@@ -40,7 +40,9 @@ public sealed class PersonalAgentWorkflowTests(PostgresFixture database)
         var model = new ScriptedModel();
         model.Replies.Enqueue("""{"plan":{"goal":"Gửi thông báo chuẩn bị cuộc họp ngày mai","toolName":"send_meeting_notification","arguments":{}}}""");
         model.Replies.Enqueue("""{"plan":{"toolName":"send_meeting_notification","arguments":{"topic":"Báo cáo tổng kết công ty Quý 4","recipientScope":"ALL_COMPANY"}},"questions":[{"field":"topic","question":"Nội dung là gì?"},{"field":"recipientScope","question":"Phòng ban nào?"},{"field":"startsAt","question":"Họp lúc mấy giờ?"}]}""");
-        var startsAt = new DateTimeOffset(DateTimeOffset.UtcNow.ToOffset(TimeSpan.FromHours(7)).Date.AddDays(1).AddHours(9), TimeSpan.FromHours(7)).ToString("O");
+        var meetingTime = new DateTimeOffset(DateTimeOffset.UtcNow.ToOffset(TimeSpan.FromHours(7)).Date.AddDays(1).AddHours(9), TimeSpan.FromHours(7));
+        // Equivalent instants from UTC and Vietnam must both display 09:00 locally.
+        var startsAt = (naturalLanguageApproval ? meetingTime.ToUniversalTime() : meetingTime).ToString("O");
         model.Replies.Enqueue(JsonSerializer.Serialize(new { plan = new { toolName = "send_meeting_notification", arguments = new { startsAt, location = "Phòng họp tầng 3" } } }));
         if (naturalLanguageApproval) model.Replies.Enqueue("""{"confirmAction":true}""");
         await using var factory = Factory(model);
@@ -80,6 +82,10 @@ public sealed class PersonalAgentWorkflowTests(PostgresFixture database)
         var delivered = await db.Notifications.IgnoreQueryFilters().Where(n => n.TenantId == account.Tenant).ToListAsync();
         Assert.Equal(2, delivered.Count);
         Assert.All(delivered, n => { Assert.Equal("MeetingInvitation", n.Type); Assert.Contains("Quý 4", n.Content); Assert.Contains("Phòng họp tầng 3", n.Content); });
+        Assert.All(delivered, n => {
+            Assert.Contains(meetingTime.ToString("HH:mm, dd/MM/yyyy", System.Globalization.CultureInfo.InvariantCulture) + " (giờ Việt Nam)", n.Content);
+            Assert.DoesNotContain(startsAt, n.Content);
+        });
         Assert.Empty(await db.Notifications.IgnoreQueryFilters().Where(n => n.TenantId == foreign.Tenant).ToListAsync());
         using var replay = await client.PostAsJsonAsync("/api/v1/ai/actions/execute", command);
         Assert.Equal(HttpStatusCode.Conflict, replay.StatusCode);

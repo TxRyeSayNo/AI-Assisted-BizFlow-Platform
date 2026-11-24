@@ -38,6 +38,22 @@ describe('recipient notification inbox', () => {
     expect(fixture.nativeElement.querySelector('script,img')).toBeNull();
     expect(fixture.nativeElement.textContent).toContain('1 unread notification');
   });
+  it('renders ISO times in old notification content as readable text and keeps HTML escaped', () => {
+    const fixture = TestBed.createComponent(Notifications);
+    list().flush({
+      ...data,
+      items: [
+        { ...row, content: 'Thời gian: 2026-11-25T09:00:00+07:00\n<img src=x onerror=alert(1)>' },
+      ],
+    });
+    fixture.detectChanges();
+    const body = fixture.nativeElement.querySelector('.notification-content');
+    expect(body.textContent).toContain('Thời gian: 09:00, 25/11/2026');
+    expect(body.textContent).not.toContain('T09:00:00');
+    expect(body.textContent).toContain('<img src=x onerror=alert(1)>');
+    expect(body.querySelector('img')).toBeNull();
+  });
+
   it('marks read once while pending and refreshes authoritative counts with an empty command', () => {
     const fixture = TestBed.createComponent(Notifications);
     list().flush(data);

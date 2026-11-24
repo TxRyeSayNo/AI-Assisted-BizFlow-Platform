@@ -19,7 +19,7 @@ import { TranslatePipe } from '../../core/i18n/translate.pipe';
         <dt>{{ 'audit.eventId' | translate: 'Event ID' }}</dt>
         <dd>{{ data.event.auditLogId }}</dd>
         <dt>{{ 'audit.timeUtc' | translate: 'Time (UTC)' }}</dt>
-        <dd>{{ data.event.createdAt | date: 'yyyy-MM-dd HH:mm:ss' : 'UTC' }}</dd>
+        <dd>{{ data.event.createdAt | date: 'HH:mm:ss, dd/MM/yyyy' : 'UTC' }}</dd>
         <dt>{{ 'audit.actor' | translate: 'Actor' }}</dt>
         <dd>
           {{ data.event.actorType }} ·

@@ -1,3 +1,4 @@
+import { DatePickerComponent } from '../../shared/forms/date-picker';
 import { DatePipe } from '@angular/common';
 import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
 import { Component, DestroyRef, inject, signal } from '@angular/core';
@@ -19,6 +20,7 @@ import { TranslatePipe } from '../../core/i18n/translate.pipe';
 @Component({
   selector: 'bf-audit',
   imports: [
+    DatePickerComponent,
     DatePipe,
     RouterLink,
     ReactiveFormsModule,

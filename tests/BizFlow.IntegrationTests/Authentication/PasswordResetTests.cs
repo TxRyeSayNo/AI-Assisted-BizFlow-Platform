@@ -108,6 +108,44 @@ public sealed class PasswordResetTests(PostgresFixture database)
     }
 
     [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData(" ")]
+    [InlineData("bad/workspace")]
+    public async Task Missing_or_invalid_workspace_is_rejected_before_queueing(string? key)
+    {
+        var queue = new ResetQueue(); var email = new ResetInbox();
+        await using var factory = CreateFactory(queue, email);
+        using var client = factory.CreateClient();
+        using var request = await client.PostAsJsonAsync("/api/v1/auth/forgot-password", new { identifier = "EMP001", tenantKey = key });
+        Assert.False(request.IsSuccessStatusCode);
+        Assert.Empty(queue.Items);
+        using var reset = await client.PostAsJsonAsync("/api/v1/auth/reset-password", new { identifier = "EMP001", tenantKey = key, resetToken = "invalid", newPassword = NewPassword });
+        Assert.False(reset.IsSuccessStatusCode);
+    }
+
+    [Fact]
+    public async Task Email_identifier_delivers_only_to_the_linked_mailbox_in_the_requested_workspace()
+    {
+        var account = await SeedAsync();
+        var other = await SeedAsync();
+        await using var db = database.Create(account.UserId, account.TenantId);
+        var address = (await db.Users.SingleAsync()).Email;
+        await db.Database.ExecuteSqlInterpolatedAsync($"UPDATE \"User\" SET \"Email\" = 'other@example.test', \"NormalizedEmail\" = 'OTHER@EXAMPLE.TEST' WHERE \"UserId\" = {other.UserId} AND \"TenantId\" = {other.TenantId}");
+        var queue = new ResetQueue(); var email = new ResetInbox();
+        await using var factory = CreateFactory(queue, email);
+        using var client = factory.CreateClient();
+        using var correct = await client.PostAsJsonAsync("/api/v1/auth/forgot-password", new { identifier = "  " + address.ToUpperInvariant() + "  ", tenantKey = account.Key });
+        using var wrongWorkspace = await client.PostAsJsonAsync("/api/v1/auth/forgot-password", new { identifier = address, tenantKey = other.Key });
+        Assert.Equal(HttpStatusCode.Accepted, correct.StatusCode);
+        Assert.Equal(await correct.Content.ReadAsStringAsync(), await wrongWorkspace.Content.ReadAsStringAsync());
+        using var scope = factory.Services.CreateScope();
+        foreach (var job in queue.Items)
+            await scope.ServiceProvider.GetRequiredService<PasswordResetDeliveryService>().DeliverAsync(job.Identifier, job.Key, job.Time, default);
+        Assert.Equal(address, Assert.Single(email.Messages).Address);
+    }
+
+    [Theory]
     [InlineData("inactive")]
     [InlineData("locked")]
     [InlineData("deleted")]

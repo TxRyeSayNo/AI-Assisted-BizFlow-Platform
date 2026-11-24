@@ -1,3 +1,4 @@
+import { DatePickerComponent } from '../../shared/forms/date-picker';
 import { CommonModule, DecimalPipe } from '@angular/common';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
@@ -128,6 +129,7 @@ export interface DepartmentOption {
   selector: 'bf-reports',
   standalone: true,
   imports: [
+    DatePickerComponent,
     CommonModule,
     DecimalPipe,
     ReactiveFormsModule,

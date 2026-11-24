@@ -1,3 +1,4 @@
+import { DatePickerComponent } from '../../shared/forms/date-picker';
 import { CdkDragDrop, DragDropModule } from '@angular/cdk/drag-drop';
 import { DatePipe } from '@angular/common';
 import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
@@ -93,6 +94,7 @@ const transitions: Record<string, TransitionPlan> = {
 @Component({
   selector: 'bf-task-board',
   imports: [
+    DatePickerComponent,
     RouterLink,
     DatePipe,
     DragDropModule,

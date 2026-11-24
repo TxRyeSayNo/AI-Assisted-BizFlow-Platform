@@ -16,6 +16,8 @@ public sealed class UserAccount
     public string NormalizedEmail { get; private set; } = "";
     public string PasswordHash { get; private set; } = "";
     public string SecurityStamp { get; private set; } = "";
+    public string? Nickname { get; private set; }
+    public string? AvatarObjectKey { get; private set; }
     public string FullName { get; private set; } = "";
     public Guid? DepartmentId { get; private set; }
     public UserStatus Status { get; private set; }
@@ -79,6 +81,7 @@ public sealed class UserAccount
             NormalizedEmail = address.ToUpperInvariant(), FullName = EntityRules.Text(fullName, 200, nameof(fullName)),
             PasswordHash = EntityRules.Text(passwordHash, 2048, nameof(passwordHash)),
             SecurityStamp = Guid.NewGuid().ToString("N"),
+            Nickname = EntityRules.Text(fullName, 200, nameof(fullName)),
             DepartmentId = departmentId is { } id ? EntityRules.Id(id, nameof(departmentId)) : null,
             Status = UserStatus.Active, CreatedAt = now.ToUniversalTime(), UpdatedAt = now.ToUniversalTime()
         };
@@ -88,6 +91,18 @@ public sealed class UserAccount
     {
         FullName = EntityRules.Text(fullName, 200, nameof(fullName));
         DepartmentId = departmentId is { } id ? EntityRules.Id(id, nameof(departmentId)) : null;
+        UpdatedAt = now.ToUniversalTime();
+    }
+
+    public void SetNickname(string nickname, DateTimeOffset now)
+    {
+        Nickname = EntityRules.Text(nickname, 200, nameof(nickname));
+        UpdatedAt = now.ToUniversalTime();
+    }
+
+    public void SetAvatar(string? objectKey, DateTimeOffset now)
+    {
+        AvatarObjectKey = objectKey is null ? null : EntityRules.Text(objectKey, 512, nameof(objectKey));
         UpdatedAt = now.ToUniversalTime();
     }
 

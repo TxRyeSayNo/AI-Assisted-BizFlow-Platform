@@ -612,6 +612,9 @@ public sealed class AuditLog
             AuthenticationEvent.ReplayDetected => "AUTH.REPLAY_DETECTED",
             AuthenticationEvent.PasswordResetRequested => "AUTH.PASSWORD_RESET_REQUESTED",
             AuthenticationEvent.PasswordResetSucceeded => "AUTH.PASSWORD_RESET_SUCCEEDED",
+            AuthenticationEvent.ProfileUpdated => "AUTH.PROFILE_UPDATED",
+            AuthenticationEvent.PasswordChanged => "AUTH.PASSWORD_CHANGED",
+            AuthenticationEvent.PasswordChangeFailed => "AUTH.PASSWORD_CHANGE_FAILED",
             _ => throw new ArgumentOutOfRangeException(nameof(action))
         },
         MetadataJson = JsonSerializer.Serialize(new { familyId }), CreatedAt = now.ToUniversalTime()

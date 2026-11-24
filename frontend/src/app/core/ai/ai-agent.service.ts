@@ -106,6 +106,7 @@ export class AiAgentService {
   readonly currentSessionId = signal<string>(crypto.randomUUID());
   readonly messages = signal<ChatMessage[]>([]);
   readonly busy = signal<boolean>(false);
+  readonly branchError = signal<string | null>(null);
 
   // Session history list
   readonly chatSessions = signal<AiChatSession[]>([]);
@@ -146,6 +147,7 @@ export class AiAgentService {
   }
 
   private restoreForCurrentUser(): void {
+    this.branchError.set(null);
     this.currentSessionId.set(crypto.randomUUID());
     this.branches.set([]);
     this.selectedBranch.set(null);
@@ -224,6 +226,7 @@ export class AiAgentService {
   }
 
   openBranchModal(): void {
+    this.branchError.set(null);
     this.selectedBranch.set(null);
     this.isBranchModalOpen.set(true);
   }
@@ -238,19 +241,22 @@ export class AiAgentService {
     const newBranch: SubtaskBranch = {
       id: crypto.randomUUID(),
       branchIndex: newIdx,
-      title: title || `Nhiệm vụ phân nhánh #${newIdx}`,
-      description: 'Nhiệm vụ được tạo bổ sung từ không gian phân rã công việc.',
+      title: title || '',
+      description: '',
       type: 'Assignment',
       priority: 'MEDIUM',
-      departmentName: 'Phòng Kỹ thuật & CNTT',
+      departmentId: null,
+      departmentName: '',
       suggestedDurationDays: 2,
-      checklistItems: ['Tiếp nhận yêu cầu', 'Thực hiện xử lý', 'Nghiệm thu kết quả'],
-      reasoning: 'Nhánh công việc bổ sung theo yêu cầu người dùng.',
+      checklistItems: [],
       status: 'pending',
     };
     list.push(newBranch);
     this.branches.set(list);
-    this.showToast(`Đã thêm nhánh #${newIdx}`, 'info');
+    this.branchError.set(null);
+    this.selectedBranch.set(newBranch);
+    this.isBranchModalOpen.set(true);
+    this.persistCurrentSession();
   }
 
   selectBranch(branch: SubtaskBranch | null): void {
@@ -322,7 +328,7 @@ export class AiAgentService {
         id: 'welcome',
         sender: 'robot',
         text: `${greeting}Tôi là AI Agent cá nhân của bạn. Hãy chia sẻ mục tiêu, trở ngại hoặc cách làm việc bạn muốn tôi ghi nhớ. Tôi có thể tra cứu công việc theo quyền của bạn, đề xuất kế hoạch và chuẩn bị hành động để bạn xác nhận.`,
-        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        time: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', hour12: false }),
       },
     ]);
   }
@@ -416,7 +422,7 @@ export class AiAgentService {
       id: crypto.randomUUID(),
       sender: 'robot',
       text,
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      time: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', hour12: false }),
       actionCards: withActionCard
         ? [
             {
@@ -502,7 +508,7 @@ export class AiAgentService {
         if (found) {
           updated.departmentName = found.name;
         }
-      } else if (updates.departmentName !== undefined && !updates.departmentId) {
+      } else if (updates.departmentName?.trim() && !updates.departmentId) {
         const match = this.departments().find(
           (d) =>
             d.name.toLowerCase().includes(updates.departmentName!.toLowerCase()) ||
@@ -537,8 +543,29 @@ export class AiAgentService {
 
   // --- Submitting Single Branch or All Branches ---
 
+  branchConfigurationError(branch: SubtaskBranch): string | null {
+    if (!branch.title.trim()) return 'Nhập tiêu đề nhiệm vụ trước khi tạo.';
+    if (!branch.departmentId && !branch.departmentName.trim())
+      return 'Chọn phòng ban nhận việc trước khi tạo.';
+    return null;
+  }
+
+  private reviewBranchConfiguration(branch: SubtaskBranch): boolean {
+    const error = this.branchConfigurationError(branch);
+    if (!error) return true;
+    this.selectedBranch.set(branch);
+    this.branchError.set(error);
+    return false;
+  }
+
   submitSingleBranch(branch: SubtaskBranch, force: boolean = false): void {
-    if (branch.status === 'submitting') return;
+    const current = this.branches().find((item) => item.id === branch.id);
+    if (
+      this.busy() ||
+      current?.status === 'submitting' ||
+      (current?.status === 'created' && !force)
+    )
+      return;
     if (!this.session.hasPermission('tasks.create')) {
       this.showToast(
         'Tài khoản Nhân viên không thể tạo nhiệm vụ cho cấp dưới. Vui lòng tạo Yêu cầu nếu cần đề xuất công việc.',
@@ -547,6 +574,10 @@ export class AiAgentService {
       return;
     }
 
+    branch = current ?? branch;
+    if (!this.reviewBranchConfiguration(branch)) return;
+    this.branchError.set(null);
+    this.busy.set(true);
     // Optimistic UI status
     const currentList = this.branches();
     const idx = currentList.findIndex((b) => b.id === branch.id);
@@ -574,6 +605,7 @@ export class AiAgentService {
 
     this.http.post<any>('/api/v1/tasks/ai-decomposition/confirm', payload).subscribe({
       next: () => {
+        this.busy.set(false);
         const list = [...this.branches()];
         const bIdx = list.findIndex((b) => b.id === branch.id);
         if (bIdx >= 0) {
@@ -589,6 +621,7 @@ export class AiAgentService {
         this.persistCurrentSession();
       },
       error: (err) => {
+        this.busy.set(false);
         const list = [...this.branches()];
         const bIdx = list.findIndex((b) => b.id === branch.id);
         if (bIdx >= 0) {
@@ -596,16 +629,15 @@ export class AiAgentService {
           this.branches.set(list);
           this.selectedBranch.set(list[bIdx]);
         }
-        const errMsg =
-          err?.error?.message ||
-          err?.message ||
-          'Không thể tạo nhiệm vụ. Vui lòng kiểm tra lại dịch vụ máy chủ.';
+        const errMsg = this.branchCreationError(err);
+        this.branchError.set(errMsg);
         this.showToast(`❌ Lỗi tạo nhiệm vụ: ${errMsg}`, 'error');
       },
     });
   }
 
   submitAllBranches(): void {
+    if (this.busy()) return;
     if (!this.session.hasPermission('tasks.create')) {
       this.showToast(
         'Tài khoản Nhân viên không thể tạo nhiệm vụ cho cấp dưới. Vui lòng tạo Yêu cầu nếu cần đề xuất công việc.',
@@ -613,15 +645,16 @@ export class AiAgentService {
       );
       return;
     }
-    let pendingBranches = this.branches().filter((b) => b.status !== 'created');
-    if (pendingBranches.length === 0 && this.branches().length > 0) {
-      pendingBranches = this.branches();
-    }
+    const pendingBranches = this.branches().filter((b) => b.status === 'pending');
     if (pendingBranches.length === 0) {
       this.showToast('Chưa có nhánh nhiệm vụ nào để gửi vào hệ thống.', 'info');
       return;
     }
 
+    for (const branch of pendingBranches) {
+      if (!this.reviewBranchConfiguration(branch)) return;
+    }
+    this.branchError.set(null);
     this.busy.set(true);
 
     const payload = {
@@ -641,10 +674,15 @@ export class AiAgentService {
       next: (resp) => {
         this.busy.set(false);
         const count = resp?.totalCreated ?? pendingBranches.length;
-        const list = this.branches().map((b) => ({
-          ...b,
-          status: 'created' as const,
-        }));
+        const submittedIds = new Set(pendingBranches.map((b) => b.id));
+        const list = this.branches().map((b) =>
+          submittedIds.has(b.id)
+            ? {
+                ...b,
+                status: 'created' as const,
+              }
+            : b,
+        );
         this.branches.set(list);
         if (this.selectedBranch()) {
           const updatedSelected = list.find((b) => b.id === this.selectedBranch()?.id);
@@ -659,13 +697,22 @@ export class AiAgentService {
       },
       error: (err) => {
         this.busy.set(false);
-        const errMsg =
-          err?.error?.message ||
-          err?.message ||
-          'Không thể tạo hàng loạt. Vui lòng kiểm tra lại dịch vụ máy chủ.';
+        const errMsg = this.branchCreationError(err);
+        this.branchError.set(errMsg);
         this.showToast(`❌ Lỗi tạo hàng loạt: ${errMsg}`, 'error');
       },
     });
+  }
+
+  private branchCreationError(error: any): string {
+    if (error?.status === 0)
+      return 'Không kết nối được máy chủ. Các đề xuất vẫn được giữ lại để bạn thử lại.';
+    if (error?.status >= 500)
+      return 'Máy chủ gặp lỗi khi lưu nhiệm vụ. Các đề xuất chưa được đánh dấu là đã tạo; vui lòng thử lại.';
+    return (
+      error?.error?.message ||
+      'Không thể tạo nhiệm vụ. Vui lòng kiểm tra nội dung, phòng ban và quyền truy cập.'
+    );
   }
 
   sendFormAnswers(
@@ -688,7 +735,7 @@ export class AiAgentService {
       id: crypto.randomUUID(),
       sender: 'user',
       text: summaryText,
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      time: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', hour12: false }),
     };
     this.messages.update((list) => [...list, userMsg]);
     this.busy.set(true);
@@ -744,7 +791,7 @@ export class AiAgentService {
             id: crypto.randomUUID(),
             sender: 'robot',
             text: res.response,
-            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            time: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', hour12: false }),
             actionCards,
             questionnaire: res.questionnaire,
             agentThought: res.agentThought,

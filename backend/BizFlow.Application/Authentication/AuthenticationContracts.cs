@@ -5,7 +5,7 @@ using BizFlow.Domain.Security;
 namespace BizFlow.Application.Authentication;
 
 public sealed record AuthenticationCandidate(Guid UserId, Guid? TenantId, string? TenantName, string? TenantKey = null);
-public sealed record SessionIdentity(Guid UserId, string FullName, Guid? TenantId, string? TenantName, string[] Permissions);
+public sealed record SessionIdentity(Guid UserId, string FullName, Guid? TenantId, string? TenantName, string[] Permissions, string? Nickname = null);
 public sealed record AuthenticationResponse(string AccessToken, string RefreshToken, DateTimeOffset ExpiresAt, SessionIdentity Session)
 {
     public override string ToString() => "[REDACTED AUTHENTICATION RESPONSE]";

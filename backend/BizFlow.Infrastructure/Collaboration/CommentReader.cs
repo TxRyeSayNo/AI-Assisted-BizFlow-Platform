@@ -29,10 +29,12 @@ public sealed class CommentReader(BizFlowDbContext db) : ICommentReader
                 c.CreatedAt,
                 c.EditedAt,
                 AuthorName = db.Users.Where(u => u.Id == c.AuthorId).Select(u => u.FullName).FirstOrDefault(),
+                AuthorNickname = db.Users.Where(u => u.Id == c.AuthorId).Select(u => u.Nickname ?? u.FullName).FirstOrDefault(),
                 AuthorEmail = db.Users.Where(u => u.Id == c.AuthorId).Select(u => u.Email).FirstOrDefault()
             })
             .ToListAsync(cancellationToken);
 
+        var roles = await ChatAuthorRoles.ReadAsync(db, rawRows.Select(r => r.AuthorId).Distinct().ToArray(), cancellationToken);
         return rawRows.Select(r => new CommentItemView(
             r.Id,
             r.ObjectType.ToString().ToUpperInvariant(),
@@ -44,7 +46,9 @@ public sealed class CommentReader(BizFlowDbContext db) : ICommentReader
             r.CreatedAt,
             r.EditedAt,
             IsOwner: r.AuthorId == currentUserId,
-            CanDelete: r.AuthorId == currentUserId || isAdmin
+            CanDelete: r.AuthorId == currentUserId || isAdmin,
+            AuthorNickname: r.AuthorNickname ?? r.AuthorName ?? "User",
+            AuthorRoles: roles.GetValueOrDefault(r.AuthorId, [])
         )).ToArray();
     }
 
@@ -67,11 +71,13 @@ public sealed class CommentReader(BizFlowDbContext db) : ICommentReader
                 c.CreatedAt,
                 c.EditedAt,
                 AuthorName = db.Users.Where(u => u.Id == c.AuthorId).Select(u => u.FullName).FirstOrDefault(),
+                AuthorNickname = db.Users.Where(u => u.Id == c.AuthorId).Select(u => u.Nickname ?? u.FullName).FirstOrDefault(),
                 AuthorEmail = db.Users.Where(u => u.Id == c.AuthorId).Select(u => u.Email).FirstOrDefault()
             })
             .SingleOrDefaultAsync(cancellationToken);
 
         if (r is null) return null;
+        var roles = await ChatAuthorRoles.ReadAsync(db, [r.AuthorId], cancellationToken);
 
         return new CommentItemView(
             r.Id,
@@ -84,7 +90,9 @@ public sealed class CommentReader(BizFlowDbContext db) : ICommentReader
             r.CreatedAt,
             r.EditedAt,
             IsOwner: r.AuthorId == currentUserId,
-            CanDelete: r.AuthorId == currentUserId || isAdmin
+            CanDelete: r.AuthorId == currentUserId || isAdmin,
+            AuthorNickname: r.AuthorNickname ?? r.AuthorName ?? "User",
+            AuthorRoles: roles.GetValueOrDefault(r.AuthorId, [])
         );
     }
 }

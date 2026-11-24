@@ -12,7 +12,15 @@ services:
       Jwt__Issuer: ${JWT_ISSUER:-BizFlow}
       Jwt__Audience: ${JWT_AUDIENCE:-BizFlow.Web}
       Jwt__SigningKeyBase64: ${JWT_SIGNING_KEY_BASE64:?Set a cryptographically random base64 signing key}
-      ResetEmail__Enabled: "false"
+      ResetEmail__Enabled: ${ResetEmail__Enabled:-false}
+      ResetEmail__Host: ${ResetEmail__Host:-}
+      ResetEmail__Port: ${ResetEmail__Port:-587}
+      ResetEmail__SslOnConnect: ${ResetEmail__SslOnConnect:-false}
+      ResetEmail__Username: ${ResetEmail__Username:-}
+      ResetEmail__Password: ${ResetEmail__Password:-}
+      ResetEmail__FromName: ${ResetEmail__FromName:-BizFlow}
+      ResetEmail__FromAddress: ${ResetEmail__FromAddress:-}
+      ResetEmail__FrontendOrigin: ${ResetEmail__FrontendOrigin:-}
     depends_on:
       postgres:
         condition: service_healthy

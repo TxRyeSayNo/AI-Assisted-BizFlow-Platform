@@ -232,8 +232,8 @@ interface RegistrationPage {
                         }}</span>
                       </td>
                       <td>
-                        {{ item.createdAt | date: 'mediumDate' }}
-                        <span class="company-code">{{ item.createdAt | date: 'shortTime' }}</span>
+                        {{ item.createdAt | date: 'dd/MM/yyyy' }}
+                        <span class="company-code">{{ item.createdAt | date: 'HH:mm' }}</span>
                       </td>
                       <td style="text-align: right;">
                         <div class="action-buttons">

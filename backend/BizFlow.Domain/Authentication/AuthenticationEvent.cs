@@ -1,3 +1,3 @@
 namespace BizFlow.Domain.Authentication;
 
-public enum AuthenticationEvent { LoginSucceeded, LoginFailed, RefreshSucceeded, RefreshDenied, ReplayDetected, PasswordResetRequested, PasswordResetSucceeded }
+public enum AuthenticationEvent { LoginSucceeded, LoginFailed, RefreshSucceeded, RefreshDenied, ReplayDetected, PasswordResetRequested, PasswordResetSucceeded, ProfileUpdated, PasswordChanged, PasswordChangeFailed }

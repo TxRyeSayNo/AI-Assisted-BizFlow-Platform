@@ -148,15 +148,15 @@
         <dd>
           {{
             detail.task.deadline
-              ? (detail.task.deadline | date: 'medium')
+              ? (detail.task.deadline | date: 'HH:mm, dd/MM/yyyy')
               : ('tasks.noDeadline' | translate: 'No deadline')
           }}
         </dd>
         <dt>{{ 'taskDetail.created' | translate: 'Created' }}</dt>
-        <dd>{{ detail.task.createdAt | date: 'medium' }}</dd>
+        <dd>{{ detail.task.createdAt | date: 'HH:mm, dd/MM/yyyy' }}</dd>
       </dl>
       <p>Ngày giờ hiển thị theo giờ địa phương.</p>
-      <p>{{ detail.description ?? ('taskDetail.noDescription' | translate: 'No description') }}</p>
+      <p>{{ (detail.description ?? ('taskDetail.noDescription' | translate: 'No description')) | readableDates }}</p>
       @if (detail.task.requestId) {
         <p>
           {{ 'taskDetail.sourceRequest' | translate: 'Linked request' }}:
@@ -492,7 +492,7 @@
                     ? item.percent + ('taskDetail.progressSuffix' | translate: '% progress')
                     : ('taskDetail.revisionPrefix' | translate: 'Revision ') + item.revisionNo
                 }}
-                · {{ item.submittedAt | date: 'medium' }}
+                · {{ item.submittedAt | date: 'HH:mm, dd/MM/yyyy' }}
               </p>
               <p>
                 {{ item.content ?? ('taskDetail.noTextContent' | translate: 'No text content') }}

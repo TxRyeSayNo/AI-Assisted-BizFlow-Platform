@@ -297,7 +297,7 @@
           <span class="routing-target-label">Phân công & Điều phối hiện tại</span>
           @if (detail.routedAt) {
             <span class="routing-time"
-              >Đã điều phối {{ detail.routedAt | date: 'dd/MM/yyyy HH:mm' }}</span
+              >Đã điều phối {{ detail.routedAt | date: 'HH:mm, dd/MM/yyyy' }}</span
             >
           }
         </div>
@@ -317,7 +317,7 @@
           @if (detail.receivedAt) {
             <span class="badge badge-received"
               >{{ 'requestDetail.receivedBadge' | translate: 'Received' }}
-              {{ detail.receivedAt | date: 'medium' }}</span
+              {{ detail.receivedAt | date: 'HH:mm, dd/MM/yyyy' }}</span
             >
           }
         </div>
@@ -834,12 +834,11 @@
             </mat-select>
           </mat-form-field>
 
-          <mat-form-field appearance="outline">
-            <mat-label>{{
-              'requestDetail.taskDeadlineLabel' | translate: 'Deadline (Optional)'
-            }}</mat-label>
-            <input matInput type="datetime-local" [(ngModel)]="taskDeadline" />
-          </mat-form-field>
+          <bf-date-time-picker
+            [(ngModel)]="taskDeadline"
+            #taskDeadlineControl="ngModel"
+            [label]="'requestDetail.taskDeadlineLabel' | translate: 'Hạn chót (tùy chọn)'"
+          />
         </div>
 
         <mat-form-field appearance="outline" class="full-width">
@@ -907,7 +906,7 @@
             mat-flat-button
             color="primary"
             type="button"
-            [disabled]="actionInProgress() || !taskTitle().trim()"
+            [disabled]="actionInProgress() || !taskTitle().trim() || taskDeadlineControl.invalid"
             (click)="executeCreateTask()"
           >
             {{
@@ -1135,19 +1134,19 @@
         <dd>{{ detail.categoryName }}</dd>
 
         <dt>{{ 'requestDetail.created' | translate: 'Created' }}</dt>
-        <dd>{{ detail.createdAt | date: 'medium' }}</dd>
+        <dd>{{ detail.createdAt | date: 'HH:mm, dd/MM/yyyy' }}</dd>
 
         <dt>{{ 'requestDetail.updated' | translate: 'Updated' }}</dt>
-        <dd>{{ detail.updatedAt | date: 'medium' }}</dd>
+        <dd>{{ detail.updatedAt | date: 'HH:mm, dd/MM/yyyy' }}</dd>
 
         @if (detail.resolvedAt) {
           <dt>{{ 'requestDetail.resolved' | translate: 'Resolved' }}</dt>
-          <dd>{{ detail.resolvedAt | date: 'medium' }}</dd>
+          <dd>{{ detail.resolvedAt | date: 'HH:mm, dd/MM/yyyy' }}</dd>
         }
 
         @if (detail.closedAt) {
           <dt>{{ 'requestDetail.closed' | translate: 'Closed' }}</dt>
-          <dd>{{ detail.closedAt | date: 'medium' }}</dd>
+          <dd>{{ detail.closedAt | date: 'HH:mm, dd/MM/yyyy' }}</dd>
         }
 
         @if (detail.parentRequestId) {
@@ -1175,7 +1174,7 @@
         }}</span>
         <div class="description-box">
           {{
-            detail.description || ('requestDetail.noDesc' | translate: 'No description provided.')
+            (detail.description || ('requestDetail.noDesc' | translate: 'No description provided.')) | readableDates
           }}
         </div>
       </div>
@@ -1258,7 +1257,7 @@
                   </td>
                   <td>
                     @if (task.deadline) {
-                      <span>{{ task.deadline | date: 'short' }}</span>
+                      <span>{{ task.deadline | date: 'HH:mm, dd/MM/yyyy' }}</span>
                     } @else {
                       <span class="no-deadline">{{ 'common.none' | translate: 'None' }}</span>
                     }
@@ -1302,7 +1301,7 @@
                   >{{ 'requestDetail.resolvedBy' | translate: 'Resolved by' }}
                   <strong>{{ res.resolverName }}</strong></span
                 >
-                <span class="history-date">{{ res.resolvedAt | date: 'medium' }}</span>
+                <span class="history-date">{{ res.resolvedAt | date: 'HH:mm, dd/MM/yyyy' }}</span>
               </div>
               <div class="history-item-body">
                 {{ res.content }}
@@ -1351,7 +1350,7 @@
                   >{{ 'requestDetail.reviewedBy' | translate: 'Reviewed by' }}
                   <strong>{{ conf.actorName }}</strong></span
                 >
-                <span class="history-date">{{ conf.decidedAt | date: 'medium' }}</span>
+                <span class="history-date">{{ conf.decidedAt | date: 'HH:mm, dd/MM/yyyy' }}</span>
               </div>
               @if (conf.note) {
                 <div class="history-item-body">

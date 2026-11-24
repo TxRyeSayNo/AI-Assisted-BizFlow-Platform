@@ -1,3 +1,5 @@
+import { roleLabels } from '../../core/auth/user-display';
+import { ReadableDatesPipe } from '../../shared/formatting/readable-date';
 import { Component, Input, OnInit, effect, inject, signal } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -24,6 +26,8 @@ export interface CommentItem {
   objectId: string;
   authorId: string;
   authorName: string;
+  authorNickname?: string;
+  authorRoles?: string[];
   authorEmail: string;
   content: string;
   createdAt: string;
@@ -36,6 +40,7 @@ export interface CommentItem {
   selector: 'bf-work-item-comments',
   standalone: true,
   imports: [
+    ReadableDatesPipe,
     CommonModule,
     FormsModule,
     DatePipe,
@@ -48,6 +53,7 @@ export interface CommentItem {
   styleUrls: ['./work-item-comments.scss'],
 })
 export class WorkItemComments implements OnInit {
+  readonly roleLabels = roleLabels;
   @Input({ required: true }) objectType!: 'TASK' | 'REQUEST';
   @Input({ required: true }) objectId!: string;
 

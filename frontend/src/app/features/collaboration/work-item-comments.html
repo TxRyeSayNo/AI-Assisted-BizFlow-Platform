@@ -18,16 +18,25 @@
     @for (comment of comments(); track comment.commentId) {
       <article class="comment-item" [class.is-owner]="comment.isOwner">
         <div class="comment-avatar" aria-hidden="true">
-          {{ comment.authorName.charAt(0).toUpperCase() }}
+          {{ (comment.authorNickname || comment.authorName).charAt(0).toUpperCase() }}
         </div>
         <div class="comment-content-box">
           <div class="comment-meta">
-            <span class="author-name">{{ comment.authorName }}</span>
+            <span
+              class="author-name"
+              [title]="comment.authorName"
+              tabindex="0"
+              [attr.aria-label]="
+                (comment.authorNickname || comment.authorName) + ' — ' + comment.authorName
+              "
+              >{{ comment.authorNickname || comment.authorName }}</span
+            >
+            <span class="author-role">{{ roleLabels(comment.authorRoles) }}</span>
             @if (comment.isOwner) {
               <span class="owner-pill">{{ 'comments.you' | translate: 'You' }}</span>
             }
             <time class="comment-time" [attr.datetime]="comment.createdAt">
-              {{ comment.createdAt | date: 'medium' }}
+              {{ comment.createdAt | date: 'HH:mm, dd/MM/yyyy' }}
             </time>
             @if (comment.editedAt) {
               <span
@@ -35,7 +44,7 @@
                 [title]="
                   ('comments.editedAtPrefix' | translate: 'Chỉnh sửa lúc') +
                   ' ' +
-                  (comment.editedAt | date: 'medium')
+                  (comment.editedAt | date: 'HH:mm, dd/MM/yyyy')
                 "
                 >{{ 'comments.edited' | translate: '(edited)' }}</span
               >
@@ -93,7 +102,7 @@
               </div>
             </div>
           } @else {
-            <p class="comment-text">{{ comment.content }}</p>
+            <p class="comment-text">{{ comment.content | readableDates }}</p>
           }
         </div>
       </article>

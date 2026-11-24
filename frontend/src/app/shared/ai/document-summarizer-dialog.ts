@@ -1,3 +1,4 @@
+import { ReadableDatesPipe } from '../formatting/readable-date';
 import { Component, EventEmitter, Input, Output, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -44,7 +45,7 @@ export interface CreateTasksFromSummaryResponse {
 @Component({
   selector: 'bf-document-summarizer-dialog',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslatePipe],
+  imports: [ReadableDatesPipe, CommonModule, FormsModule, TranslatePipe],
   template: `
     <div *ngIf="isOpen" class="dialog-backdrop" (click)="onBackdropClick($event)">
       <div class="dialog-card" role="dialog" aria-modal="true" aria-labelledby="summarizer-title">
@@ -189,7 +190,7 @@ export interface CreateTasksFromSummaryResponse {
               <h3 class="result-card-title">
                 <span>📑</span> {{ 'ai.executiveSummary' | translate: 'Tóm tắt điều hành' }}
               </h3>
-              <p class="summary-text">{{ summaryResult()!.executiveSummary }}</p>
+              <p class="summary-text">{{ summaryResult()!.executiveSummary | readableDates }}</p>
             </div>
 
             <!-- Key Points -->
@@ -198,7 +199,9 @@ export interface CreateTasksFromSummaryResponse {
                 <span>🎯</span> {{ 'ai.keyPoints' | translate: 'Điểm then chốt' }}
               </h3>
               <ul class="key-points-list">
-                <li *ngFor="let point of summaryResult()!.keyPoints">{{ point }}</li>
+                <li *ngFor="let point of summaryResult()!.keyPoints">
+                  {{ point | readableDates }}
+                </li>
               </ul>
             </div>
 
@@ -208,7 +211,9 @@ export interface CreateTasksFromSummaryResponse {
                 <span>⚠️</span> {{ 'ai.risksCompliance' | translate: 'Cảnh báo Rủi ro & Tuân thủ' }}
               </h3>
               <ul class="risks-list">
-                <li *ngFor="let risk of summaryResult()!.risksAndCompliance">{{ risk }}</li>
+                <li *ngFor="let risk of summaryResult()!.risksAndCompliance">
+                  {{ risk | readableDates }}
+                </li>
               </ul>
             </div>
 
@@ -262,7 +267,7 @@ export interface CreateTasksFromSummaryResponse {
                         ⏱ {{ item.suggestedDurationDays }} {{ 'common.days' | translate: 'ngày' }}
                       </span>
                     </div>
-                    <p class="action-desc">{{ item.description }}</p>
+                    <p class="action-desc">{{ item.description | readableDates }}</p>
                   </div>
                 </div>
               </div>

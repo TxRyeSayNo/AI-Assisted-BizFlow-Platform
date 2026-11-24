@@ -89,6 +89,7 @@ public sealed class CommentStore(BizFlowDbContext db, ITenantContext context) : 
             var createdAt = root.GetProperty("createdAt").GetDateTimeOffset();
 
             var fingerprint = metadataDoc.RootElement.GetProperty("idempotency").GetProperty("fingerprint").GetString()!;
+            var roles = await ChatAuthorRoles.ReadAsync(db, [authorId], cancellationToken);
             var view = new CommentItemView(
                 commentId,
                 objectType,
@@ -100,7 +101,9 @@ public sealed class CommentStore(BizFlowDbContext db, ITenantContext context) : 
                 createdAt,
                 EditedAt: null,
                 IsOwner: true,
-                CanDelete: true);
+                CanDelete: true,
+                AuthorNickname: author?.Nickname ?? author?.FullName ?? "User",
+                AuthorRoles: roles.GetValueOrDefault(authorId, []));
 
             return new StoredCommentCreation(fingerprint, view);
         }

@@ -76,15 +76,17 @@
         </mat-select>
       </mat-form-field>
 
-      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="filter-field">
-        <mat-label>{{ 'reports.fromDate' | translate: 'From Date' }}</mat-label>
-        <input matInput type="date" formControlName="from" />
-      </mat-form-field>
+      <bf-date-picker
+        class="filter-field"
+        [label]="'reports.fromDate' | translate: 'From Date'"
+        formControlName="from"
+      />
 
-      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="filter-field">
-        <mat-label>{{ 'reports.toDate' | translate: 'To Date' }}</mat-label>
-        <input matInput type="date" formControlName="to" />
-      </mat-form-field>
+      <bf-date-picker
+        class="filter-field"
+        [label]="'reports.toDate' | translate: 'To Date'"
+        formControlName="to"
+      />
 
       <div class="preset-buttons">
         <button type="button" mat-stroked-button (click)="setPreset(7)">

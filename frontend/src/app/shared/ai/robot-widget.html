@@ -159,6 +159,21 @@
                   <span class="msg-avatar" aria-hidden="true">🤖</span>
                 }
                 <div class="message-bubble">
+                  @if (msg.sender === 'user') {
+                    <div
+                      class="chat-user-identity"
+                      [title]="session.identity()?.fullName"
+                      tabindex="0"
+                    >
+                      <strong>{{
+                        personalProfile.profile()?.nickname ||
+                          session.identity()?.nickname ||
+                          session.identity()?.fullName
+                      }}</strong>
+                      <span>{{ roleLabels(personalProfile.profile()?.roles) }}</span>
+                    </div>
+                  }
+
                   @if (msg.agentThought) {
                     <div class="agent-thought-container" [class.collapsed]="!msg.isThoughtExpanded">
                       <button
@@ -200,7 +215,9 @@
                   @if (msg.sender === 'robot') {
                     <bf-agent-message-content [text]="msg.text" />
                   } @else {
-                    <div class="message-text" style="white-space: pre-wrap">{{ msg.text }}</div>
+                    <div class="message-text" style="white-space: pre-wrap">
+                      {{ msg.text | readableDates }}
+                    </div>
                   }
 
                   <!-- Interactive Clarification Questionnaire Card (ChatGPT Agent style) -->
@@ -505,7 +522,7 @@
                       </div>
                       <div class="session-meta">
                         <span class="session-time">{{
-                          s.updatedAt | date: 'dd/MM/yyyy HH:mm'
+                          s.updatedAt | date: 'HH:mm, dd/MM/yyyy'
                         }}</span>
                         <span class="meta-dot">•</span>
                         <span class="session-msg-count">{{ s.messageCount }} tin nhắn</span>
@@ -553,7 +570,7 @@
   </aside>
 
   <!-- ========================================================================
-       DEDICATED BRANCHING WORKSPACE MODAL (CENTER SCREEN NEXT TO CHAT)
+       CENTERED TASK REVIEW WORKSPACE
        ======================================================================== -->
   @if (isBranchModalOpen()) {
     <div class="branch-modal-overlay" (click)="closeBranchModal()">
@@ -563,6 +580,9 @@
         role="dialog"
         aria-modal="true"
         aria-labelledby="branch-modal-title"
+        cdkTrapFocus
+        [cdkTrapFocusAutoCapture]="true"
+        (keydown.escape)="closeBranchModal(); $event.stopPropagation()"
       >
         <!-- MODAL HEADER -->
         <div class="branch-modal-header">
@@ -583,10 +603,8 @@
               </svg>
             </div>
             <div>
-              <h3 id="branch-modal-title" class="modal-title">Không gian Phân rã Nhiệm vụ AI</h3>
-              <p class="modal-subtitle">
-                Bóc tách kế hoạch thành các nhánh công việc độc lập theo từng phòng ban
-              </p>
+              <h3 id="branch-modal-title" class="modal-title">Phân chia nhiệm vụ</h3>
+              <p class="modal-subtitle">Rà soát, chỉnh sửa và tạo nhiệm vụ từ đề xuất của AI.</p>
             </div>
           </div>
 
@@ -597,6 +615,8 @@
               class="btn-close-modal"
               (click)="closeBranchModal()"
               title="Đóng không gian phân nhánh"
+              aria-label="Đóng phân chia nhiệm vụ"
+              cdkFocusInitial
             >
               ✕
             </button>
@@ -604,6 +624,9 @@
         </div>
 
         <!-- MODAL BODY -->
+        @if (agent.branchError(); as error) {
+          <div class="branch-operation-error" role="alert">{{ error }}</div>
+        }
         <div class="branch-modal-body">
           <!-- SCREEN 2A: BRANCH OVERVIEW SCREEN -->
           @if (!selectedBranch()) {
@@ -611,12 +634,11 @@
               <div class="branch-overview-header">
                 <div class="overview-title-group">
                   <h4 class="overview-title">
-                    Danh sách các nhánh nhiệm vụ
+                    Các nhiệm vụ đề xuất
                     <span class="overview-count">({{ branches().length }} nhánh)</span>
                   </h4>
                   <p class="overview-subtitle">
-                    Kiểm tra các nhánh nhiệm vụ được AI phân rã. Bấm vào từng nhánh để xem chi tiết
-                    hoặc bấm <strong>"Gửi tất cả nhiệm vụ"</strong> để tạo trực tiếp vào hệ thống.
+                    Kiểm tra nội dung, phòng ban và thời hạn trước khi tạo nhiệm vụ.
                   </p>
                 </div>
               </div>
@@ -656,17 +678,25 @@
               } @else {
                 <div class="branch-cards-list">
                   @for (b of branches(); track b.id; let idx = $index) {
-                    <div
+                    <article
                       class="branch-summary-card"
                       [class.created]="b.status === 'created'"
                       (click)="selectBranch(b)"
-                      role="button"
-                      tabindex="0"
                     >
                       <div class="branch-card-left">
-                        <span class="branch-index-badge">Nhánh #{{ idx + 1 }}</span>
+                        <span class="branch-index-badge" [attr.aria-label]="'Nhiệm vụ ' + (idx + 1)"
+                          >#{{ idx + 1 }}</span
+                        >
                         <div class="branch-main-info">
-                          <h5 class="branch-item-title">{{ b.title }}</h5>
+                          <h5 class="branch-item-title">
+                            <button
+                              type="button"
+                              class="branch-title-button"
+                              (click)="$event.stopPropagation(); selectBranch(b)"
+                            >
+                              {{ b.title || 'Nhánh mới — chưa đặt tiêu đề' }}
+                            </button>
+                          </h5>
                           <div class="branch-item-meta">
                             <span class="dept-badge">
                               <svg
@@ -683,7 +713,7 @@
                                   clip-rule="evenodd"
                                 />
                               </svg>
-                              {{ b.departmentName }}
+                              {{ b.departmentName || 'Chưa chọn phòng ban' }}
                             </span>
                             <span class="prio-tag" [class]="'prio-' + b.priority.toLowerCase()">
                               <span class="prio-dot" aria-hidden="true"></span>
@@ -756,6 +786,7 @@
                           <button
                             type="button"
                             class="btn-card-quick-submit btn-recreate"
+                            [disabled]="busy()"
                             (click)="$event.stopPropagation(); agent.submitSingleBranch(b, true)"
                             title="Tạo thêm nhiệm vụ từ nhánh này vào hệ thống"
                           >
@@ -779,11 +810,12 @@
                             Đang gửi...
                           </span>
                         } @else {
-                          <span class="status-badge-pending">Chờ gửi</span>
+                          <span class="status-badge-pending">Chưa tạo</span>
                           @if (canCreateTasks()) {
                             <button
                               type="button"
                               class="btn-card-quick-submit"
+                              [disabled]="busy()"
                               (click)="$event.stopPropagation(); agent.submitSingleBranch(b)"
                               title="Tạo nhanh nhánh này thành nhiệm vụ"
                             >
@@ -827,11 +859,16 @@
                           <span>Xóa</span>
                         </button>
 
-                        <span class="view-detail-hint"
-                          >Chi tiết <span class="arrow-glyph" aria-hidden="true">→</span></span
+                        <button
+                          type="button"
+                          class="view-detail-hint"
+                          (click)="$event.stopPropagation(); selectBranch(b)"
+                          [attr.aria-label]="'Chi tiết nhiệm vụ ' + (idx + 1)"
                         >
+                          Chi tiết <span class="arrow-glyph" aria-hidden="true">→</span>
+                        </button>
                       </div>
-                    </div>
+                    </article>
                   }
                 </div>
 
@@ -843,7 +880,7 @@
                         type="button"
                         class="btn-submit-all"
                         (click)="agent.submitAllBranches()"
-                        [disabled]="busy() || branches().length === 0"
+                        [disabled]="busy() || pendingBranchCount() === 0"
                         title="Gửi tất cả các nhánh nhiệm vụ để tạo vào hệ thống"
                       >
                         <svg
@@ -856,7 +893,7 @@
                             d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z"
                           />
                         </svg>
-                        <span>Gửi tất cả nhiệm vụ vào hệ thống</span>
+                        <span>Tạo tất cả nhiệm vụ</span>
                       </button>
                       <button
                         type="button"
@@ -927,10 +964,12 @@
                 <!-- Title with direct edit capability -->
                 <div class="detail-header-block">
                   <div class="title-edit-container">
-                    <label class="edit-field-label">Tiêu đề nhiệm vụ:</label>
+                    <label class="edit-field-label" for="branch-title">Tiêu đề nhiệm vụ:</label>
                     <input
                       type="text"
                       class="detail-title-input"
+                      id="branch-title"
+                      #branchTitle
                       [ngModel]="branch.title"
                       (ngModelChange)="onBranchTitleChange(branch.id, $event)"
                       placeholder="Nhập tiêu đề nhiệm vụ..."
@@ -941,15 +980,17 @@
                   <div class="detail-meta-grid">
                     <!-- Item 1: Editable Department Select -->
                     <div class="meta-item edit-field">
-                      <label class="meta-label">Phòng ban nhận việc:</label>
+                      <label class="meta-label" for="branch-department">Phòng ban nhận việc:</label>
                       <div class="meta-input-wrap">
                         <select
                           class="meta-select-input"
-                          [ngModel]="branch.departmentId"
+                          id="branch-department"
+                          [ngModel]="branch.departmentId || null"
                           (ngModelChange)="onBranchDepartmentChange(branch.id, $event)"
                         >
+                          <option [ngValue]="null">Chọn phòng ban nhận việc</option>
                           @for (dept of agent.departments(); track dept.id) {
-                            <option [value]="dept.id">{{ dept.name }}</option>
+                            <option [ngValue]="dept.id">{{ dept.name }}</option>
                           }
                         </select>
                       </div>
@@ -1086,6 +1127,9 @@
                 }
               </div>
 
+              @if (agent.branchConfigurationError(branch); as error) {
+                <p class="branch-configuration-hint" role="status">{{ error }}</p>
+              }
               <!-- Detail Action Buttons -->
               <div class="detail-actions-footer">
                 <div class="detail-actions-left">
@@ -1094,7 +1138,11 @@
                       type="button"
                       class="btn-submit-single"
                       (click)="agent.submitSingleBranch(branch, true)"
-                      [disabled]="branch.status === 'submitting'"
+                      [disabled]="
+                        busy() ||
+                        branch.status === 'submitting' ||
+                        !!agent.branchConfigurationError(branch)
+                      "
                       title="Gửi tạo nhiệm vụ nhánh này vào hệ thống"
                     >
                       @if (branch.status === 'created') {

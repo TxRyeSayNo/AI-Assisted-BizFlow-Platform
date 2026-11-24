@@ -147,7 +147,7 @@
                   <td>
                     <span>{{ item.requesterName }}</span>
                     <time class="request-meta" [attr.datetime]="item.createdAt">{{
-                      item.createdAt | date: 'medium'
+                      item.createdAt | date: 'HH:mm, dd/MM/yyyy'
                     }}</time>
                   </td>
                   <td>

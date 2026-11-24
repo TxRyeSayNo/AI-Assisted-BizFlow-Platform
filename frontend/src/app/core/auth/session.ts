@@ -20,6 +20,7 @@ export interface LoginRequest {
 export interface SessionIdentity {
   userId: string;
   fullName: string;
+  nickname?: string;
   tenantId: string | null;
   tenantName: string | null;
   permissions: string[];
@@ -78,6 +79,11 @@ export class SessionService {
         this.saveSession(res);
       };
     }
+  }
+
+  updateNickname(nickname: string): void {
+    const current = this.response();
+    if (current) this.saveSession({ ...current, session: { ...current.session, nickname } });
   }
 
   private saveSession(res: LoginResponse | null): void {

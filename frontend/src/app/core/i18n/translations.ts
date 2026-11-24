@@ -310,15 +310,15 @@ export const TRANSLATIONS: Record<LanguageCode, Record<string, string>> = {
     'forgot.eyebrow': 'Khôi phục tài khoản',
     'forgot.title': 'Quên mật khẩu',
     'forgot.subtitle':
-      'Nhập email doanh nghiệp của bạn. Nếu tài khoản tồn tại, hệ thống sẽ gửi hướng dẫn đặt lại mật khẩu.',
+      'Nhập workspace-key và tài khoản hoặc email. Nếu thông tin khớp, hệ thống sẽ gửi liên kết tới email đã liên kết với tài khoản.',
     'forgot.supportingCopy': 'Nhập mã nhân viên hoặc email doanh nghiệp của bạn.',
     'forgot.identifier': 'Mã nhân viên hoặc email doanh nghiệp',
     'forgot.identifierReq': 'Vui lòng nhập mã nhân viên hoặc email doanh nghiệp.',
     'forgot.workspaceKey': 'Mã không gian làm việc',
-    'forgot.workspaceKeyHint': 'Sử dụng mã công ty của bạn nếu biết.',
+    'forgot.workspaceKeyHint': 'Bắt buộc. Nhập workspace-key đã dùng khi đăng nhập.',
     'forgot.workspaceKeyInvalid': 'Vui lòng nhập mã không gian làm việc hợp lệ.',
     'forgot.successMessage':
-      'Nếu tài khoản khớp và có thể nhận thư, liên kết đặt lại mật khẩu sẽ được gửi đến hộp thư của bạn.',
+      'Nếu tài khoản hợp lệ trong workspace này, liên kết đặt lại sẽ được gửi tới email đã liên kết với tài khoản. Vui lòng kiểm tra cả thư rác.',
     'forgot.submit': 'Gửi yêu cầu đặt lại mật khẩu',
     'forgot.submitting': 'Đang gửi…',
     'forgot.errTooMany': 'Quá nhiều yêu cầu. Vui lòng đợi trong giây lát trước khi thử lại.',
@@ -1528,7 +1528,7 @@ export const TRANSLATIONS: Record<LanguageCode, Record<string, string>> = {
     'workflows.createDraftBtn': 'Tạo bản thảo',
     'ai.promptBranchingLabel': 'Nhập hướng dẫn dự án hoặc chỉ thị cần phân nhánh đa luồng:',
     'attachments.file': 'Tài liệu nguồn:',
-    'forgot.successToast': 'Yêu cầu đặt lại mật khẩu đã được gửi thành công!',
+    'forgot.successToast': 'Đã tiếp nhận yêu cầu. Nếu thông tin khớp, liên kết sẽ được gửi tới email đã liên kết.',
 
     // Missing & Normalized UI Keys
     'app.logoAlt': 'Biểu trưng BizFlow',

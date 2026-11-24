@@ -23,7 +23,11 @@ public sealed class ResetEmailTests
         });
         await sender.SendAsync("employee@example.test", "test-only-reset-token", deadline.Token);
         var message = await receive;
+        Assert.Equal("BizFlow", Assert.Single(message.From.Mailboxes).Name);
+        Assert.Equal("no-reply@example.test", Assert.Single(message.From.Mailboxes).Address);
         Assert.Equal("employee@example.test", Assert.Single(message.To.Mailboxes).Address);
+        Assert.Equal("Đặt lại mật khẩu tài khoản BizFlow", message.Subject);
+        Assert.Contains("workspace-key", message.TextBody);
         Assert.Contains("https://bizflow.example.test/reset-password#token=test-only-reset-token", message.TextBody);
         Assert.DoesNotContain("?token=", message.TextBody);
     }

@@ -62,6 +62,8 @@ internal sealed class IdentityModelConfiguration :
         b.Property(x => x.TenantId).IsConcurrencyToken();
         b.Property(x => x.EmployeeCode).HasMaxLength(50); b.Property(x => x.NormalizedEmployeeCode).HasMaxLength(50);
         b.Property(x => x.Email).HasMaxLength(320); b.Property(x => x.NormalizedEmail).HasMaxLength(320);
+        b.Property(x => x.Nickname).HasMaxLength(200);
+        b.Property(x => x.AvatarObjectKey).HasMaxLength(512);
         b.Property(x => x.FullName).HasMaxLength(200); b.Property(x => x.SecurityStamp).HasMaxLength(64);
         b.HasIndex(x => new { x.TenantId, x.NormalizedEmployeeCode }).IsUnique().AreNullsDistinct(false);
         b.HasIndex(x => new { x.TenantId, x.NormalizedEmail }).IsUnique().AreNullsDistinct(false);
