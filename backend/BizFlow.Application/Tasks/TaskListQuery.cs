@@ -11,7 +11,10 @@ public sealed record TaskListFilter(int Page = 1, int PageSize = 25, string? Sea
 public sealed record TaskListRow(Guid TaskId, string Title, string Status, string Priority,
     DateTimeOffset? Deadline, DateTimeOffset CreatedAt, Guid CreatorId, Guid? RequestId,
     Guid? AssignedUserId, string? AssignedUserName, Guid? AssignedDepartmentId, string? AssignedDepartmentName,
-    Guid? ParentTaskId = null, int SubtaskCount = 0, int CompletedSubtaskCount = 0);
+    Guid? ParentTaskId = null, int SubtaskCount = 0, int CompletedSubtaskCount = 0,
+    int ProgressPercent = 0, string? AccountableManagerName = null, int ParticipantCount = 0,
+    int InProgressSubtaskCount = 0, int OverdueSubtaskCount = 0, string? ParentTaskTitle = null,
+    string? TaskKind = null);
 public sealed record TaskListPage(IReadOnlyList<TaskListRow> Items, int Page, int PageSize, long Total);
 public interface ITaskListReader
 {

@@ -120,14 +120,10 @@ export class WorkItemAttachments implements OnInit {
           this.loading.set(false);
         },
         error: (err) => {
-<<<<<<<< <Temporary merge branch 1
-          this.error.set(err?.error?.message ?? this.i18n.t('attachments.errLoad', 'Failed to load attachments.'));
-=========
           this.error.set(
             err?.error?.message ??
               this.i18n.t('attachments.errLoad', 'Failed to load attachments.'),
           );
->>>>>>>>> Temporary merge branch 2
           this.loading.set(false);
         },
       });
@@ -235,14 +231,10 @@ export class WorkItemAttachments implements OnInit {
         this.toast.success('Đã xóa tệp đính kèm thành công.', 'Đã xóa');
       },
       error: (err) => {
-<<<<<<<<< Temporary merge branch 1
-        this.error.set(err?.error?.message ?? this.i18n.t('attachments.errDelete', 'Failed to delete attachment.'));
-=========
         this.error.set(
           err?.error?.message ??
             this.i18n.t('attachments.errDelete', 'Failed to delete attachment.'),
         );
->>>>>>>>> Temporary merge branch 2
       },
     });
   }

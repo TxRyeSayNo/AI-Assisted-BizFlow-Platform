@@ -126,25 +126,43 @@
       <!-- F3: "@" mentions. Rendered only where the feature is enabled. -->
       @if (features.mentions()) {
         @if (mentionSuggestions().length > 0) {
-          <ul class="mention-suggestions" role="listbox">
-            @for (candidate of mentionSuggestions(); track candidate.userId) {
-              <li>
-                <button type="button" role="option" (click)="pickMention(candidate)">
-                  {{ candidate.fullName }}
-                  @if (candidate.employeeCode) {
-                    <span class="mention-code">{{ candidate.employeeCode }}</span>
-                  }
-                </button>
-              </li>
-            }
-          </ul>
+          <div class="mention-popover" role="region" aria-label="Gợi ý nhắc tên đồng nghiệp">
+            <div class="mention-popover-header">
+              <span>Nhắc tên đồng nghiệp có quyền truy cập (@mention)</span>
+              <button type="button" class="mention-close-btn" (click)="mentionQuery.set(null)">✕</button>
+            </div>
+            <ul class="mention-suggestions" role="listbox">
+              @for (candidate of mentionSuggestions(); track candidate.userId) {
+                <li>
+                  <button type="button" role="option" (click)="pickMention(candidate)">
+                    <span class="mention-candidate-left">
+                      <span class="mention-avatar">{{ (candidate.fullName || 'U').charAt(0).toUpperCase() }}</span>
+                      <span class="mention-name">{{ candidate.fullName }}</span>
+                    </span>
+                    <span class="mention-candidate-right">
+                      @if (candidate.employeeCode) {
+                        <span class="mention-code">{{ candidate.employeeCode }}</span>
+                      }
+                      @if (candidate.departmentName) {
+                        <span class="mention-dept">{{ candidate.departmentName }}</span>
+                      }
+                    </span>
+                  </button>
+                </li>
+              }
+            </ul>
+          </div>
         }
         @if (picked().length > 0) {
           <p class="mention-picked">
-            <span>{{ 'comments.willNotify' | translate: 'Will notify' }}:</span>
+            <span class="mention-picked-label">{{ 'comments.willNotify' | translate: 'Sẽ gửi thông báo nhắc tên tới' }}:</span>
             @for (person of picked(); track person.userId) {
               <button type="button" class="mention-chip" (click)="removeMention(person.userId)">
-                {{ person.fullName }} ×
+                <span class="chip-at">@</span>{{ person.fullName }}
+                @if (person.employeeCode) {
+                  <span class="chip-code">({{ person.employeeCode }})</span>
+                }
+                <span class="chip-remove">×</span>
               </button>
             }
           </p>
@@ -152,6 +170,17 @@
       }
 
       <div class="form-actions">
+        @if (features.mentions()) {
+          <button
+            mat-stroked-button
+            type="button"
+            class="btn-mention-trigger"
+            (click)="triggerMentionPicker()"
+            title="Nhắc tên đồng nghiệp trong thảo luận (@mention)"
+          >
+            @ Nhắc tên đồng nghiệp
+          </button>
+        }
         <button
           mat-flat-button
           color="primary"

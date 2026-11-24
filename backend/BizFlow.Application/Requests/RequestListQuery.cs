@@ -27,7 +27,12 @@ public sealed record RequestListRow(
     Guid RequesterId,
     string? RequesterName,
     DateTimeOffset CreatedAt,
-    DateTimeOffset UpdatedAt);
+    DateTimeOffset UpdatedAt,
+    string? RequesterDepartmentName = null,
+    string? CurrentRoutingDepartmentName = null,
+    string? CurrentRoutingUserName = null,
+    string? EscalationState = null,
+    string? EscalatedByName = null);
 
 public sealed record RequestListPage(IReadOnlyList<RequestListRow> Items, int Page, int PageSize, long Total);
 

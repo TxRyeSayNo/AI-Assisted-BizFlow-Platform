@@ -158,6 +158,7 @@ public sealed class ProjectDashboardReader(BizFlowDbContext db) : IProjectDashbo
         var visible = TaskReadQueries.Visible(db, scope);
         return db.WorkTasks.AsNoTracking()
             .Where(t => t.TenantId == tenantId && t.ParentTaskId == null && t.DeletedAt == null &&
+                (t.TaskKind == null || t.TaskKind == "PROJECT") &&
                 db.WorkTasks.Any(st => st.TenantId == tenantId && st.DeletedAt == null && st.ParentTaskId == t.Id) &&
                 (visible.Any(v => v.Id == t.Id) || visible.Any(v => v.ParentTaskId == t.Id)));
     }

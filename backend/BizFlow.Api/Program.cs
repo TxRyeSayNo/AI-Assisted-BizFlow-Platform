@@ -55,6 +55,7 @@ builder.Services.AddScoped<BizFlow.Application.Tasks.ITaskCreationStore, BizFlow
 builder.Services.AddScoped<BizFlow.Application.Tasks.TaskDetailQuery>();
 builder.Services.AddScoped<BizFlow.Application.Tasks.ITaskDetailReader, BizFlow.Infrastructure.Tasks.TaskDetailReader>();
 builder.Services.AddScoped<BizFlow.Application.Tasks.ITaskListReader, BizFlow.Infrastructure.Tasks.TaskListReader>();
+builder.Services.AddScoped<BizFlow.Application.Tasks.ICompanyAssignmentService, BizFlow.Infrastructure.Tasks.CompanyAssignmentService>();
 // Kanban board (F1). Read-only projection over the existing task storage behind the same
 // TaskReadPolicy gate; it adds no entity, no migration and no permission.
 builder.Services.Configure<BizFlow.Api.Configuration.FeatureFlagOptions>(

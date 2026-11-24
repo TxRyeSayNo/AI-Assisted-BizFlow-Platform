@@ -67,6 +67,25 @@ public sealed class RequestListReader(BizFlowDbContext db) : IRequestListReader
                 CategoryName = db.ServiceCategories.Where(c => c.Id == r.CategoryId).Select(c => c.Name).FirstOrDefault(),
                 r.RequesterId,
                 RequesterName = db.Users.Where(u => u.TenantId == scope.TenantId && u.Id == r.RequesterId).Select(u => u.FullName).FirstOrDefault(),
+                RequesterDepartmentName = db.Users.Where(u => u.TenantId == scope.TenantId && u.Id == r.RequesterId)
+                    .SelectMany(u => db.Departments.Where(d => d.TenantId == scope.TenantId && d.Id == u.DepartmentId).Select(d => d.Name))
+                    .FirstOrDefault(),
+                LatestRouting = db.RequestRoutings.Where(rt => rt.TenantId == scope.TenantId && rt.RequestId == r.Id)
+                    .OrderByDescending(rt => rt.RoutedAt)
+                    .Select(rt => new
+                    {
+                        DepartmentName = db.Departments.Where(d => d.TenantId == scope.TenantId && d.Id == rt.ToDepartmentId).Select(d => d.Name).FirstOrDefault(),
+                        UserName = db.Users.Where(u => u.TenantId == scope.TenantId && u.Id == rt.ToUserId).Select(u => u.FullName).FirstOrDefault()
+                    })
+                    .FirstOrDefault(),
+                LatestEscalation = db.RequestEscalations.Where(e => e.TenantId == scope.TenantId && e.RequestId == r.Id)
+                    .OrderByDescending(e => e.EscalatedAt)
+                    .Select(e => new
+                    {
+                        e.State,
+                        EscalatedByName = db.Users.Where(u => u.TenantId == scope.TenantId && u.Id == e.EscalatedById).Select(u => u.FullName).FirstOrDefault()
+                    })
+                    .FirstOrDefault(),
                 r.CreatedAt,
                 r.UpdatedAt
             }).ToListAsync(cancellationToken);
@@ -84,7 +103,12 @@ public sealed class RequestListReader(BizFlowDbContext db) : IRequestListReader
                 r.RequesterId,
                 r.RequesterName,
                 r.CreatedAt,
-                r.UpdatedAt)).ToArray(),
+                r.UpdatedAt,
+                r.RequesterDepartmentName,
+                r.LatestRouting?.DepartmentName,
+                r.LatestRouting?.UserName,
+                r.LatestEscalation?.State.ToString().ToUpperInvariant(),
+                r.LatestEscalation?.EscalatedByName)).ToArray(),
             filter.Page,
             filter.PageSize,
             total);

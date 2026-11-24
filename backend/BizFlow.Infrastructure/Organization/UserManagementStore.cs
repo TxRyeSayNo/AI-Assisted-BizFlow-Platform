@@ -75,13 +75,18 @@ public sealed class UserManagementStore(BizFlowDbContext db) : IUserManagementSt
         {
             var validRoles = await db.Roles
                 .Where(r => roleIds.Contains(r.Id) && r.Status == RecordStatus.Active && (r.IsSystem || r.TenantId == user.TenantId))
-                .Select(r => r.Id)
+                .Select(r => new { r.Id, r.Name })
                 .ToListAsync(cancellationToken);
 
-            foreach (var roleId in validRoles)
+            foreach (var role in validRoles)
             {
-                db.UserRoles.Add(new UserRole(user.Id, roleId));
-                assignedRoleIds.Add(roleId);
+                db.UserRoles.Add(new UserRole(user.Id, role.Id));
+                assignedRoleIds.Add(role.Id);
+            }
+
+            if (user.TenantId is { } tId && user.DepartmentId is { } dId && validRoles.Any(r => r.Name == "MANAGER") && audit.ActorId is { } creatorActorId)
+            {
+                db.ManagementScopes.Add(ManagementScope.Create(tId, user.Id, dId, true, creatorActorId, user.CreatedAt));
             }
         }
 

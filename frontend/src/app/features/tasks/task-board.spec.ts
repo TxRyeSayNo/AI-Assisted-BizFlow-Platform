@@ -125,7 +125,6 @@ describe('task kanban board', () => {
       assignedDepartmentId: '',
       deadlineFrom: '2026-11-01',
       deadlineTo: '2026-11-30',
-      labelId: 'label-3',
     });
     fixture.componentInstance.apply();
 
@@ -135,7 +134,6 @@ describe('task kanban board', () => {
     expect(filtered.request.params.get('assignedUserId')).toBe('user-7');
     expect(filtered.request.params.get('deadlineFrom')).toBe('2026-11-01');
     expect(filtered.request.params.get('deadlineTo')).toBe('2026-11-30');
-    expect(filtered.request.params.get('labelId')).toBe('label-3');
     expect(filtered.request.params.has('assignedDepartmentId')).toBe(false);
     filtered.flush(view([]));
 

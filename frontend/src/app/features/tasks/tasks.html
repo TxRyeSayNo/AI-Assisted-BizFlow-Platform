@@ -159,18 +159,20 @@
                     <a class="task-title" [routerLink]="['/tasks', item.taskId]">{{
                       item.title
                     }}</a>
-                    <span class="task-meta"
-                      >{{
-                        'priorityBadge.' + item.priority
-                          | translate: priorities[item.priority] + ' priority'
-                      }}
+                    <span class="task-meta">
+                      <span class="priority-badge" [attr.data-priority]="item.priority">
+                        {{
+                          'priorityBadge.' + item.priority
+                            | translate: priorities[item.priority] + ' priority'
+                        }}
+                      </span>
                       ·
                       {{
                         item.requestId
                           ? ('tasks.linkedToRequest' | translate: 'Linked to a request')
                           : ('tasks.independentTask' | translate: 'Independent task')
-                      }}</span
-                    >
+                      }}
+                    </span>
                     <span class="task-meta">
                       @if (item.assignedUserId) {
                         {{

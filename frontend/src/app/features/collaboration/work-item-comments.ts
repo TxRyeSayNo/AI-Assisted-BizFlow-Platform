@@ -16,6 +16,7 @@ export interface MentionCandidate {
   userId: string;
   fullName: string;
   employeeCode: string;
+  departmentName?: string | null;
 }
 
 export interface CommentItem {
@@ -81,7 +82,7 @@ export class WorkItemComments implements OnInit {
   readonly mentionSuggestions = () => {
     const query = this.mentionQuery();
     if (query === null) return [];
-    const needle = query.toLowerCase();
+    const needle = query.trim().toLowerCase();
     const chosen = new Set(this.picked().map((p) => p.userId));
     return this.mentionCandidates()
       .filter((candidate) => !chosen.has(candidate.userId))
@@ -89,7 +90,8 @@ export class WorkItemComments implements OnInit {
         (candidate) =>
           needle.length === 0 ||
           candidate.fullName.toLowerCase().includes(needle) ||
-          candidate.employeeCode.toLowerCase().includes(needle),
+          candidate.employeeCode.toLowerCase().includes(needle) ||
+          (candidate.departmentName ?? '').toLowerCase().includes(needle),
       )
       .slice(0, 8);
   };
@@ -98,15 +100,26 @@ export class WorkItemComments implements OnInit {
   onCommentInput(value: string) {
     this.newCommentText = value;
     if (!this.features.mentions()) return;
-    const match = /@([\p{L}\p{N}._-]*)$/u.exec(value);
+    const match = /@([\p{L}\p{N}._-]*(?:\s[\p{L}\p{N}._-]+){0,2})$/u.exec(value);
     this.mentionQuery.set(match ? match[1] : null);
     if (match) this.loadCandidates();
+  }
+
+  /** Triggered by the "@ Nhắc tên đồng nghiệp" toolbar button. */
+  triggerMentionPicker() {
+    if (!this.features.mentions()) return;
+    if (!this.newCommentText.endsWith('@')) {
+      const prefix = this.newCommentText && !this.newCommentText.endsWith(' ') ? ' @' : '@';
+      this.newCommentText = this.newCommentText + prefix;
+    }
+    this.mentionQuery.set('');
+    this.loadCandidates();
   }
 
   pickMention(candidate: MentionCandidate) {
     // Replace the "@fragment" being typed with the person's name, and remember the id.
     this.newCommentText = this.newCommentText.replace(
-      /@([\p{L}\p{N}._-]*)$/u,
+      /@([\p{L}\p{N}._-]*(?:\s[\p{L}\p{N}._-]+){0,2})$/u,
       `@${candidate.fullName} `,
     );
     this.picked.update((prev) =>
@@ -120,30 +133,49 @@ export class WorkItemComments implements OnInit {
   }
 
   private loadCandidates() {
-    if (this.candidatesLoaded) return;
+    if (this.candidatesLoaded || !this.objectId) return;
     this.candidatesLoaded = true;
-    // The directory endpoint already limits itself to what the caller may read.
-    this.http
-      .get<{
-        items: { userId: string; fullName: string; employeeCode: string }[];
-      }>('/api/v1/users', { params: { pageSize: 100 } })
-      .subscribe({
-        next: (page) =>
+    const scopedUrl = `/api/v1/work-items/${this.objectType}/${encodeURIComponent(this.objectId)}/mention-candidates`;
+    this.http.get<MentionCandidate[]>(scopedUrl).subscribe({
+      next: (items) => {
+        if (Array.isArray(items)) {
           this.mentionCandidates.set(
-            (page?.items ?? [])
+            items
               .filter((item) => item.userId && item.userId !== this.session.identity()?.userId)
               .map((item) => ({
                 userId: item.userId,
                 fullName: item.fullName ?? item.employeeCode,
                 employeeCode: item.employeeCode ?? '',
+                departmentName: item.departmentName ?? null,
               })),
-          ),
-        error: () => {
-          // Allow another attempt later; the composer keeps working without suggestions.
-          this.candidatesLoaded = false;
-          this.mentionCandidates.set([]);
-        },
-      });
+          );
+        }
+      },
+      error: () => {
+        // Fallback to directory endpoint if available
+        this.http
+          .get<{
+            items: { userId: string; fullName: string; employeeCode: string; departmentName?: string }[];
+          }>('/api/v1/users', { params: { pageSize: 100 } })
+          .subscribe({
+            next: (page) =>
+              this.mentionCandidates.set(
+                (page?.items ?? [])
+                  .filter((item) => item.userId && item.userId !== this.session.identity()?.userId)
+                  .map((item) => ({
+                    userId: item.userId,
+                    fullName: item.fullName ?? item.employeeCode,
+                    employeeCode: item.employeeCode ?? '',
+                    departmentName: item.departmentName ?? null,
+                  })),
+              ),
+            error: () => {
+              this.candidatesLoaded = false;
+              this.mentionCandidates.set([]);
+            },
+          });
+      },
+    });
   }
 
   private recordMentions(commentId: string) {

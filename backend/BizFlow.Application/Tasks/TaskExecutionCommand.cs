@@ -14,6 +14,8 @@ public sealed record StoredTaskExecution(string Fingerprint, TaskStartedView Res
 public interface ITaskExecutionStore
 {
     Task<ITaskExecutionTransaction> BeginAsync(Guid tenantId, Guid actorId, Guid taskId, string? keyHash, CancellationToken cancellationToken);
+    Task<TaskReportView> RecordProgressReportAsync(Guid tenantId, Guid actorId, Guid taskId, short percent, string content, DateTimeOffset now, CancellationToken cancellationToken)
+        => throw new NotSupportedException();
 }
 public interface ITaskExecutionTransaction : IAsyncDisposable
 {
@@ -56,5 +58,20 @@ public sealed class TaskExecutionCommand(ITenantContext context, IResourceAuthor
         if (!decision.Allowed) throw new ApplicationFault(FaultKind.Conflict, "TASK.TRANSITION_DENIED", "This task cannot start or resume in its current state or configuration.");
         await transaction.CommitAsync(AuditLog.TaskStarted(task, assignment, keyHash, keyHash is null ? null : fingerprint), cancellationToken);
         return new(task.Id, assignment.Id, "IN_PROGRESS", task.UpdatedAt);
+    }
+
+    public async Task<TaskReportView> ReportProgressAsync(Guid taskId, short percent, string? content, CancellationToken cancellationToken)
+    {
+        await authorizer.AuthorizeAsync("tasks.execute", new(context.TenantId), cancellationToken: cancellationToken);
+        if (context.TenantId is not { } tenantId || context.UserId is not { } actorId) throw ApplicationFault.NotFound();
+        if (percent is < 0 or > 99)
+            throw new ApplicationFault(FaultKind.Validation, "TASK.INVALID_PROGRESS_PERCENT",
+                "Tiến độ báo cáo định kỳ phải nằm trong khoảng từ 0% đến 99%. Để hoàn thành 100%, vui lòng nộp kết quả nghiệm thu chính thức.");
+        var clean = string.IsNullOrWhiteSpace(content) ? null : content.Trim();
+        if (clean is null || clean.Any(c => char.IsControl(c) && c is not ('\r' or '\n' or '\t')))
+            throw new ApplicationFault(FaultKind.Validation, "TASK.PROGRESS_CONTENT_REQUIRED",
+                "Vui lòng nhập nội dung báo cáo tiến độ rõ ràng.");
+        var now = TaskCreationRules.DatabaseTime(clock.GetUtcNow());
+        return await store.RecordProgressReportAsync(tenantId, actorId, taskId, percent, clean, now, cancellationToken);
     }
 }

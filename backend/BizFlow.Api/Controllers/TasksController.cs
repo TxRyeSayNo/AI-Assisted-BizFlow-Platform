@@ -9,8 +9,30 @@ namespace BizFlow.Api.Controllers;
 
 [ApiController, Authorize, Route("api/v1/tasks")]
 [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
-public sealed class TasksController(TaskListQuery tasks, TaskCreation creation, TaskDetailQuery detail, TaskAssignmentCommand assignment, TaskAcceptanceCommand acceptance, TaskExecutionCommand execution, TaskSubmissionCommand submission, TaskConfirmationCommand confirmation, CommentService commentService, AttachmentService attachmentService) : ControllerBase
+public sealed class TasksController(
+    TaskListQuery tasks,
+    TaskCreation creation,
+    TaskDetailQuery detail,
+    TaskAssignmentCommand assignment,
+    TaskAcceptanceCommand acceptance,
+    TaskExecutionCommand execution,
+    TaskSubmissionCommand submission,
+    TaskConfirmationCommand confirmation,
+    CommentService commentService,
+    AttachmentService attachmentService,
+    ICompanyAssignmentService companyAssignment) : ControllerBase
 {
+    [HttpGet("assignable-recipients")]
+    public Task<AssignableRecipientsView> GetAssignableRecipients(CancellationToken cancellationToken) =>
+        companyAssignment.GetAssignableRecipientsAsync(cancellationToken);
+
+    [HttpPost("assign-independent")]
+    public Task<CompanyAssignmentResultView> AssignIndependentTask([FromBody] AssignIndependentTaskCommand command, CancellationToken cancellationToken) =>
+        companyAssignment.AssignIndependentTaskAsync(command, cancellationToken);
+
+    [HttpPost("assign-project")]
+    public Task<CompanyAssignmentResultView> AssignProject([FromBody] AssignProjectCommand command, CancellationToken cancellationToken) =>
+        companyAssignment.AssignProjectAsync(command, cancellationToken);
     [JsonUnmappedMemberHandling(JsonUnmappedMemberHandling.Disallow)]
     public sealed record SubmissionInput(string? Content);
 
@@ -43,6 +65,15 @@ public sealed class TasksController(TaskListQuery tasks, TaskCreation creation, 
         var keys = Request.Headers["Idempotency-Key"];
         if (keys.Count > 1) throw new ApplicationFault(FaultKind.Validation, "IDEMPOTENCY.INVALID_KEY", "Supply at most one Idempotency-Key header.");
         return execution.StartAsync(id, keys.Count == 0 ? null : keys[0], cancellationToken);
+    }
+
+    [JsonUnmappedMemberHandling(JsonUnmappedMemberHandling.Disallow)]
+    public sealed record ProgressReportInput(short Percent, string? Content);
+
+    [HttpPost("{id:guid}/progress")]
+    public Task<TaskReportView> ReportProgress(Guid id, ProgressReportInput input, CancellationToken cancellationToken)
+    {
+        return execution.ReportProgressAsync(id, input.Percent, input.Content, cancellationToken);
     }
 
     [JsonUnmappedMemberHandling(JsonUnmappedMemberHandling.Disallow)]

@@ -14,7 +14,6 @@ import { requestPriorities, requestStates } from './requests';
 import { WorkItemComments } from '../collaboration/work-item-comments';
 import { WorkItemAttachments } from '../collaboration/work-item-attachments';
 import { WorkItemWatch } from '../collaboration/work-item-watch';
-import { WorkItemLabels } from '../collaboration/work-item-labels';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
 
 export interface RequestResolutionItemView {
@@ -121,7 +120,6 @@ export interface UserOption {
     WorkItemComments,
     WorkItemAttachments,
     WorkItemWatch,
-    WorkItemLabels,
     TranslatePipe,
   ],
   templateUrl: './request-detail.html',
@@ -155,6 +153,7 @@ export class RequestDetail implements OnInit {
     | 'revise'
     | 'create-task'
     | 'ai-split'
+    | 'ai-hub'
     | 'escalate'
     | null
   >(null);
@@ -267,14 +266,31 @@ export class RequestDetail implements OnInit {
   }
 
   // A manager escalates a request up to the elevated approval level. Only roles granted
-  // requests.escalate see this; employees cannot, which enforces no level-skipping.
+  // requests.escalate who are NOT already at the Company Admin / elevated authority level see this.
   canEscalate(): boolean {
     const d = this.data();
     if (!d) return false;
     const terminal = ['DRAFT', 'CONFIRMED', 'CLOSED', 'REJECTED', 'CANCELLED'];
     if (terminal.includes(d.status)) return false;
     if (this.escalation()?.state === 'PENDING') return false;
+    if (
+      this.session.hasPermission('requests.approve.elevated') ||
+      this.session.hasPermission('roles.configure')
+    ) {
+      return false;
+    }
     return this.session.hasPermission('requests.escalate');
+  }
+
+  canUseAiSupport(): boolean {
+    const d = this.data();
+    if (!d) return false;
+    if (!['SUBMITTED', 'ROUTED', 'RECEIVED', 'IN_PROGRESS'].includes(d.status)) return false;
+    return (
+      this.session.hasPermission('requests.route') ||
+      this.session.hasPermission('requests.process') ||
+      this.session.hasPermission('tasks.create')
+    );
   }
 
   canDecideElevated(): boolean {
@@ -368,6 +384,7 @@ export class RequestDetail implements OnInit {
       | 'confirm'
       | 'revise'
       | 'create-task'
+      | 'ai-hub'
       | 'escalate',
   ) {
     this.activeModal.set(modal);
@@ -1090,6 +1107,12 @@ export class RequestDetail implements OnInit {
     const d = this.data();
     if (!d || (d.status !== 'DRAFT' && d.status !== 'SUBMITTED' && d.status !== 'ROUTED'))
       return false;
+    // Requirement 6.B: Do not show redundant cancel control when reviewer can reject;
+    // only show cancel to the request creator when rejection is not applicable.
+    if (this.canReject()) return false;
+    const currentUserId =
+      typeof this.session.identity === 'function' ? this.session.identity()?.userId : null;
+    if (currentUserId && d.requesterId && d.requesterId !== currentUserId) return false;
     return this.session.hasPermission('requests.cancel');
   }
 

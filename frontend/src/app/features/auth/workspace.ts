@@ -8,6 +8,38 @@ import { AiAgentService } from '../../core/ai/ai-agent.service';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
 
+interface DashboardTaskItem {
+  taskId: string;
+  title: string;
+  status: string;
+  priority: string;
+  deadline?: string | null;
+  assignedDepartmentName?: string | null;
+  assignedUserName?: string | null;
+  accountableManagerName?: string | null;
+  progressPercent: number;
+  subtaskCount: number;
+  completedSubtaskCount: number;
+  inProgressSubtaskCount: number;
+  overdueSubtaskCount: number;
+  participantCount: number;
+}
+
+interface DashboardRequestItem {
+  requestId: string;
+  title: string;
+  status: string;
+  priority: string;
+  serviceName?: string | null;
+  requesterName?: string | null;
+  requesterDepartmentName?: string | null;
+  currentRoutingDepartmentName?: string | null;
+  currentRoutingUserName?: string | null;
+  escalationState?: string | null;
+  escalatedByName?: string | null;
+  createdAt: string;
+}
+
 @Component({
   selector: 'bf-workspace',
   standalone: true,
@@ -151,35 +183,12 @@ import { TranslatePipe } from '../../core/i18n/translate.pipe';
           </div>
 
           <h1>{{ 'common.welcome' | translate: 'Xin chào' }} {{ welcomeName() }}</h1>
-
-          <!-- Quick Action Buttons -->
-          <div class="hero-actions">
-            @if (session.hasPermission('tasks.create')) {
-              <a routerLink="/tasks/new" class="btn-hero-primary">{{
-                'workspace.newTask' | translate: '+ Tạo nhiệm vụ mới'
-              }}</a>
-            }
-            @if (session.hasPermission('requests.create')) {
-              <a routerLink="/requests/new" class="btn-hero-secondary">{{
-                'workspace.newRequest' | translate: '+ Tạo yêu cầu mới'
-              }}</a>
-            }
-            @if (
-              session.hasPermission('tasks.confirm') ||
-              session.hasPermission('tasks.read.managed') ||
-              session.hasPermission('roles.configure')
-            ) {
-              <a routerLink="/approvals" class="btn-hero-ghost">
-                {{ 'approvals.title' | translate: 'Trung tâm phê duyệt' }} →
-              </a>
-            }
-          </div>
         </div>
       </section>
 
-      <!-- KPI Executive Metrics Row (Personalized by Role) -->
-      <section class="kpi-metric-row">
-        @if (kpiData(); as kpi) {
+      <!-- KPI Executive Metrics Row (Positioned directly under welcome banner) -->
+      @if (kpiData(); as kpi) {
+        <section class="kpi-metric-row">
           <div class="kpi-box azure-accent">
             <div class="kpi-top">
               <span class="kpi-title">{{ kpi.box1.title }}</span>
@@ -223,365 +232,407 @@ import { TranslatePipe } from '../../core/i18n/translate.pipe';
               <a [routerLink]="kpi.box4.link">{{ kpi.box4.label }}</a>
             </p>
           </div>
-        }
-      </section>
+        </section>
+      }
 
-      <!-- Organized Workspace Modules Grid with Clear Role Separation (Requirement 1 & User Request) -->
-      <section class="modules-section">
-        <h2 class="section-title">
-          {{ 'workspace.sectionExecution' | translate: 'Phân hệ chức năng doanh nghiệp' }}
-        </h2>
-        <div class="modules-grid">
-          <!-- Platform Admin Modules -->
-          @if (!identity()?.tenantId) {
-            <article class="module-card">
-              <div class="module-icon">🏢</div>
-              <h3>Quản lý doanh nghiệp & Cung cấp workspace</h3>
-              <p>
-                Phê duyệt hồ sơ đăng ký doanh nghiệp, cấp phát tenant key và quản lý trạng thái tài
-                khoản công ty.
-              </p>
-              <div class="module-link-wrap">
-                <p><a routerLink="/platform/companies">Quản lý doanh nghiệp</a></p>
-              </div>
-            </article>
+      <!-- ROLE-SPECIFIC OPERATIONAL DASHBOARD: Nhiệm vụ (trên) & Yêu cầu (dưới) - Horizontal cards -->
+      @if (identity()?.tenantId) {
+        <section class="role-operational-dashboard" [attr.data-role]="userRole()">
+          <!-- COMPANY ADMINISTRATOR DASHBOARD -->
+          @if (userRole() === 'COMPANY_ADMIN') {
+            <div class="op-stacked-layout">
+              <!-- Section 1 (TOP) — Main assignments / tasks in horizontal cards -->
+              <div class="op-card">
+                <div class="op-card-header">
+                  <div class="op-header-title">
+                    <span class="op-icon">🎯</span>
+                    <div>
+                      <h3>Nhiệm vụ trọng tâm toàn công ty (Đã giao việc)</h3>
+                      <p class="op-subtitle">Các nhiệm vụ đang thực hiện, được phân công theo dõi hoặc cận hạn hoàn thành</p>
+                    </div>
+                  </div>
+                  <a routerLink="/tasks" class="op-header-link">Xem tất cả nhiệm vụ →</a>
+                </div>
 
-            <article class="module-card">
-              <div class="module-icon">🛡️</div>
-              <h3>Kiểm toán hệ thống nền tảng</h3>
-              <p>
-                Truy vết toàn diện nhật ký bảo mật, định tuyến xác thực và truy cập tài nguyên toàn
-                hệ thống.
-              </p>
-              <div class="module-link-wrap">
-                <p><a routerLink="/platform/audit">Xem nhật ký kiểm toán</a></p>
+                <div class="op-card-body">
+                  @if (adminUrgentTasks().length === 0) {
+                    <div class="op-empty">
+                      <span class="op-empty-icon">✓</span>
+                      <p>Không có nhiệm vụ nào đang được giao thực hiện.</p>
+                    </div>
+                  } @else {
+                    <div class="op-horizontal-cards">
+                      @for (task of adminUrgentTasks(); track task.taskId) {
+                        <div class="op-task-card">
+                          <div class="op-card-top-row">
+                            <span class="priority-chip" [attr.data-priority]="task.priority">
+                              {{ formatPriorityLabel(task.priority) }}
+                            </span>
+                            <span class="status-badge" [attr.data-status]="task.status">
+                              {{ formatStatusLabel(task.status) }}
+                            </span>
+                            @if (isOverdue(task.deadline, task.status)) {
+                              <span class="badge-overdue">⚠️ Quá hạn</span>
+                            }
+                          </div>
+                          <a [routerLink]="['/tasks', task.taskId]" class="op-card-title">
+                            {{ task.title }}
+                          </a>
+                          <div class="op-card-meta">
+                            <span>🏢 {{ task.assignedDepartmentName || 'Toàn công ty' }}</span>
+                            <span>👤 Quản lý: <strong>{{ task.accountableManagerName || 'Chưa chỉ định' }}</strong></span>
+                            @if (task.assignedUserName) {
+                              <span>👷 Thực hiện: <strong>{{ task.assignedUserName }}</strong></span>
+                            }
+                            @if (task.deadline) {
+                              <span [class.text-danger]="isOverdue(task.deadline, task.status)">
+                                📅 Hạn: {{ task.deadline | date: 'dd/MM/yyyy' }}
+                              </span>
+                            }
+                          </div>
+                          <div class="op-card-footer">
+                            <div class="op-progress-bar-wrap">
+                              <div class="op-progress-bar">
+                                <div class="op-progress-fill" [style.width.%]="task.progressPercent"></div>
+                              </div>
+                              <span class="op-progress-val">{{ task.progressPercent }}%</span>
+                            </div>
+                            <span class="op-progress-sub">Tiến độ</span>
+                          </div>
+                        </div>
+                      }
+                    </div>
+                  }
+                </div>
               </div>
-            </article>
+
+              <!-- Section 2 (BOTTOM) — Requests in horizontal cards -->
+              <div class="op-card">
+                <div class="op-card-header">
+                  <div class="op-header-title">
+                    <span class="op-icon">📨</span>
+                    <div>
+                      <h3>Yêu cầu cần xử lý & Theo dõi</h3>
+                      <p class="op-subtitle">Theo dõi tình trạng xem xét của Quản lý và các yêu cầu đã leo thang</p>
+                    </div>
+                  </div>
+                  <a routerLink="/requests" class="op-header-link">Xem tất cả yêu cầu →</a>
+                </div>
+
+                <div class="op-card-body">
+                  @if (adminSubordinateRequests().length === 0) {
+                    <div class="op-empty">
+                      <span class="op-empty-icon">✓</span>
+                      <p>Hiện không có yêu cầu nào đang chờ xử lý.</p>
+                    </div>
+                  } @else {
+                    <div class="op-horizontal-cards">
+                      @for (req of adminSubordinateRequests(); track req.requestId) {
+                        <div class="op-request-card" [class.is-escalated]="req.escalationState === 'ESCALATED'">
+                          <div class="op-card-top-row">
+                            <span class="status-badge" [attr.data-status]="req.status">
+                              {{ formatStatusLabel(req.status) }}
+                            </span>
+                            @if (req.escalationState === 'ESCALATED') {
+                              <span class="badge-escalated">🔥 Đã leo thang</span>
+                            }
+                          </div>
+                          <a [routerLink]="['/requests', req.requestId]" class="op-card-title">
+                            {{ req.title }}
+                          </a>
+                          <div class="op-card-meta">
+                            <span>👤 Người gửi: {{ req.requesterName || 'Người dùng' }}</span>
+                            @if (req.requesterDepartmentName) {
+                              <span>🏢 {{ req.requesterDepartmentName }}</span>
+                            }
+                            <span>🕒 {{ req.createdAt | date: 'dd/MM/yyyy HH:mm' }}</span>
+                          </div>
+                          <div class="op-card-footer">
+                            <span class="op-manager-status-chip" [ngClass]="getAdminRequestReviewStage(req).class">
+                              {{ getAdminRequestReviewStage(req).label }}
+                            </span>
+                            <a [routerLink]="['/requests', req.requestId]" class="op-view-link">
+                              Chi tiết →
+                            </a>
+                          </div>
+                        </div>
+                      }
+                    </div>
+                  }
+                </div>
+              </div>
+            </div>
           }
 
-          <!-- 1. Quản lý Nhiệm vụ -->
-          @if (
-            session.hasPermission('tasks.read.tenant') ||
-            session.hasPermission('tasks.read.managed') ||
-            session.hasPermission('tasks.read.own') ||
-            session.hasPermission('tasks.read.assigned') ||
-            !identity()?.tenantId
-          ) {
-            <article class="module-card">
-              <div class="module-icon">📋</div>
-              <h3>{{ 'workspace.cardTasksTitle' | translate: 'Quản lý Nhiệm vụ' }}</h3>
-              <p>
-                {{
-                  'workspace.cardTasksDesc'
-                    | translate
-                      : 'Khởi tạo, phân công, theo dõi danh mục kiểm tra, nộp bằng chứng và phê duyệt kết quả công việc.'
-                }}
-              </p>
-              <div class="module-link-wrap">
-                <p>
-                  <a routerLink="/tasks">{{
-                    'workspace.viewTasks' | translate: 'Xem danh sách công việc'
-                  }}</a>
-                </p>
+          <!-- MANAGER DASHBOARD -->
+          @if (userRole() === 'MANAGER') {
+            <div class="op-stacked-layout">
+              <!-- Section 1 (TOP) — Department tasks and assignments in horizontal cards -->
+              <div class="op-card">
+                <div class="op-card-header">
+                  <div class="op-header-title">
+                    <span class="op-icon">📊</span>
+                    <div>
+                      <h3>Nhiệm vụ & Tiến độ phòng ban (Đã giao việc)</h3>
+                      <p class="op-subtitle">Tổng quan hoàn thành và các nhiệm vụ đang thực hiện của phòng ban</p>
+                    </div>
+                  </div>
+                  <a routerLink="/tasks" class="op-header-link">Quản lý nhiệm vụ →</a>
+                </div>
+
+                <div class="op-card-body">
+                  <!-- Department aggregated overview stats -->
+                  <div class="op-dept-stats-row">
+                    <div class="op-stat-pill">
+                      <span class="op-stat-num">{{ managerDeptStats().avgProgress }}%</span>
+                      <span class="op-stat-lbl">Hoàn thành phòng ban</span>
+                    </div>
+                    <div class="op-stat-pill">
+                      <span class="op-stat-num">{{ managerDeptStats().assignedEmployeesCount }}</span>
+                      <span class="op-stat-lbl">Nhân sự tham gia</span>
+                    </div>
+                    <div class="op-stat-pill">
+                      <span class="op-stat-num">{{ managerDeptStats().completedChildTasks }}</span>
+                      <span class="op-stat-lbl">Việc con đã xong</span>
+                    </div>
+                    <div class="op-stat-pill">
+                      <span class="op-stat-num text-azure">{{ managerDeptStats().inProgressCount }}</span>
+                      <span class="op-stat-lbl">Đang tiến hành</span>
+                    </div>
+                    <div class="op-stat-pill">
+                      <span class="op-stat-num" [class.text-danger]="managerDeptStats().overdueCount > 0">
+                        {{ managerDeptStats().overdueCount }}
+                      </span>
+                      <span class="op-stat-lbl">Việc quá hạn</span>
+                    </div>
+                  </div>
+
+                  @if (managerUrgentTasks().length === 0) {
+                    <div class="op-empty">
+                      <span class="op-empty-icon">✓</span>
+                      <p>Không có nhiệm vụ phòng ban nào đang thực hiện.</p>
+                    </div>
+                  } @else {
+                    <div class="op-horizontal-cards">
+                      @for (task of managerUrgentTasks(); track task.taskId) {
+                        <div class="op-task-card">
+                          <div class="op-card-top-row">
+                            <span class="priority-chip" [attr.data-priority]="task.priority">
+                              {{ formatPriorityLabel(task.priority) }}
+                            </span>
+                            <span class="status-badge" [attr.data-status]="task.status">
+                              {{ formatStatusLabel(task.status) }}
+                            </span>
+                            @if (isOverdue(task.deadline, task.status)) {
+                              <span class="badge-overdue">⚠️ Quá hạn</span>
+                            }
+                          </div>
+                          <a [routerLink]="['/tasks', task.taskId]" class="op-card-title">
+                            {{ task.title }}
+                          </a>
+                          <div class="op-card-meta">
+                            <span>👤 Phụ trách: <strong>{{ task.assignedUserName || 'Chưa giao cụ thể' }}</strong></span>
+                            @if (task.subtaskCount > 0) {
+                              <span>📋 Việc con: {{ task.completedSubtaskCount }}/{{ task.subtaskCount }} hoàn tất</span>
+                            }
+                            @if (task.deadline) {
+                              <span [class.text-danger]="isOverdue(task.deadline, task.status)">
+                                📅 Hạn: {{ task.deadline | date: 'dd/MM/yyyy' }}
+                              </span>
+                            }
+                          </div>
+                          <div class="op-card-footer">
+                            <div class="op-progress-bar-wrap">
+                              <div class="op-progress-bar">
+                                <div class="op-progress-fill" [style.width.%]="task.progressPercent"></div>
+                              </div>
+                              <span class="op-progress-val">{{ task.progressPercent }}%</span>
+                            </div>
+                            <span class="op-progress-sub">Tiến độ</span>
+                          </div>
+                        </div>
+                      }
+                    </div>
+                  }
+                </div>
               </div>
-            </article>
+
+              <!-- Section 2 (BOTTOM) — Employee Requests in horizontal cards -->
+              <div class="op-card">
+                <div class="op-card-header">
+                  <div class="op-header-title">
+                    <span class="op-icon">📨</span>
+                    <div>
+                      <h3>Yêu cầu từ nhân viên phòng ban</h3>
+                      <p class="op-subtitle">Theo dõi tình trạng tiếp nhận, xem xét bước 1 và leo thang</p>
+                    </div>
+                  </div>
+                  <a routerLink="/requests" class="op-header-link">Xem danh sách yêu cầu →</a>
+                </div>
+
+                <div class="op-card-body">
+                  @if (managerDeptRequests().length === 0) {
+                    <div class="op-empty">
+                      <span class="op-empty-icon">✓</span>
+                      <p>Hiện không có yêu cầu nào từ nhân viên trong phòng ban.</p>
+                    </div>
+                  } @else {
+                    <div class="op-horizontal-cards">
+                      @for (req of managerDeptRequests(); track req.requestId) {
+                        <div class="op-request-card" [class.is-escalated]="req.escalationState === 'ESCALATED'">
+                          <div class="op-card-top-row">
+                            <span class="status-badge" [attr.data-status]="req.status">
+                              {{ formatStatusLabel(req.status) }}
+                            </span>
+                            @if (req.escalationState === 'ESCALATED') {
+                              <span class="badge-escalated">🔥 Đã leo thang</span>
+                            }
+                          </div>
+                          <a [routerLink]="['/requests', req.requestId]" class="op-card-title">
+                            {{ req.title }}
+                          </a>
+                          <div class="op-card-meta">
+                            <span>👤 Nhân viên gửi: {{ req.requesterName || 'Nhân viên' }}</span>
+                            <span>🕒 {{ req.createdAt | date: 'dd/MM/yyyy HH:mm' }}</span>
+                          </div>
+                          <div class="op-card-footer">
+                            <span class="op-manager-status-chip" [ngClass]="getManagerRequestReviewStage(req).class">
+                              {{ getManagerRequestReviewStage(req).label }}
+                            </span>
+                            <a [routerLink]="['/requests', req.requestId]" class="op-review-btn">
+                              Xử lý yêu cầu →
+                            </a>
+                          </div>
+                        </div>
+                      }
+                    </div>
+                  }
+                </div>
+              </div>
+            </div>
           }
 
-          <!-- 2. Yêu cầu Dịch vụ -->
-          @if (
-            session.hasPermission('requests.read.tenant') ||
-            session.hasPermission('requests.read.managed') ||
-            session.hasPermission('requests.read.own') ||
-            !identity()?.tenantId
-          ) {
-            <article class="module-card">
-              <div class="module-icon">📨</div>
-              <h3>{{ 'workspace.cardRequestsTitle' | translate: 'Yêu cầu Dịch vụ' }}</h3>
-              <p>
-                {{
-                  'workspace.cardRequestsDesc'
-                    | translate
-                      : 'Gửi yêu cầu dịch vụ nội bộ, điều phối về phòng ban chuyên trách và xác nhận kết quả xử lý.'
-                }}
-              </p>
-              <div class="module-link-wrap">
-                <p>
-                  <a routerLink="/requests">{{
-                    'workspace.viewRequests' | translate: 'Xem danh sách yêu cầu'
-                  }}</a>
-                </p>
-              </div>
-            </article>
-          }
+          <!-- EMPLOYEE DASHBOARD -->
+          @if (userRole() === 'EMPLOYEE') {
+            <div class="op-stacked-layout">
+              <!-- Section 1 (TOP) — My assigned tasks in horizontal cards -->
+              <div class="op-card">
+                <div class="op-card-header">
+                  <div class="op-header-title">
+                    <span class="op-icon">📝</span>
+                    <div>
+                      <h3>Nhiệm vụ được giao & Cần xử lý</h3>
+                      <p class="op-subtitle">Danh sách nhiệm vụ đang thực hiện được giao cho bạn kèm hạn và báo cáo kết quả</p>
+                    </div>
+                  </div>
+                  <a routerLink="/tasks" class="op-header-link">Xem tất cả việc của tôi →</a>
+                </div>
 
-          <!-- 3. Danh mục Dịch vụ -->
-          @if (
-            (session.hasPermission('service.create') ||
-              session.hasPermission('service.update') ||
-              session.hasPermission('service.manage')) &&
-            identity()?.tenantId
-          ) {
-            <article class="module-card">
-              <div class="module-icon">⚙</div>
-              <h3>{{ 'workspace.cardServicesTitle' | translate: 'Danh mục dịch vụ' }}</h3>
-              <p>
-                {{
-                  'workspace.cardServicesDesc'
-                    | translate
-                      : 'Quản lý các dịch vụ nội bộ, phân loại yêu cầu và quy tắc định tuyến SLA.'
-                }}
-              </p>
-              <div class="module-link-wrap">
-                <p>
-                  <a routerLink="/settings/services">{{
-                    'workspace.browseServices' | translate: 'Xem danh mục dịch vụ nội bộ'
-                  }}</a>
-                </p>
+                <div class="op-card-body">
+                  @if (employeeUrgentTasks().length === 0) {
+                    <div class="op-empty">
+                      <span class="op-empty-icon">✓</span>
+                      <p>Bạn không có nhiệm vụ nào đang cần xử lý.</p>
+                    </div>
+                  } @else {
+                    <div class="op-horizontal-cards">
+                      @for (task of employeeUrgentTasks(); track task.taskId) {
+                        <div class="op-task-card">
+                          <div class="op-card-top-row">
+                            <span class="priority-chip" [attr.data-priority]="task.priority">
+                              {{ formatPriorityLabel(task.priority) }}
+                            </span>
+                            <span class="status-badge" [attr.data-status]="task.status">
+                              {{ formatStatusLabel(task.status) }}
+                            </span>
+                            @if (isOverdue(task.deadline, task.status)) {
+                              <span class="badge-overdue">⚠️ Quá hạn</span>
+                            }
+                          </div>
+                          <a [routerLink]="['/tasks', task.taskId]" class="op-card-title">
+                            {{ task.title }}
+                          </a>
+                          <div class="op-card-meta">
+                            @if (task.deadline) {
+                              <span [class.text-danger]="isOverdue(task.deadline, task.status)">
+                                📅 Hạn chót: {{ task.deadline | date: 'dd/MM/yyyy' }}
+                              </span>
+                            }
+                            <span class="op-report-status-badge" [attr.data-type]="getEmployeeTaskPendingReportStatus(task.status).badgeClass">
+                              {{ getEmployeeTaskPendingReportStatus(task.status).label }}
+                            </span>
+                          </div>
+                          <div class="op-card-footer">
+                            <div class="op-progress-bar-wrap">
+                              <div class="op-progress-bar">
+                                <div class="op-progress-fill" [style.width.%]="task.progressPercent"></div>
+                              </div>
+                              <span class="op-progress-val">{{ task.progressPercent }}%</span>
+                            </div>
+                            <span class="op-progress-sub">Tiến độ cá nhân</span>
+                          </div>
+                        </div>
+                      }
+                    </div>
+                  }
+                </div>
               </div>
-            </article>
-          }
 
-          <!-- 4. Phòng ban & Bộ phận -->
-          @if (
-            (session.hasPermission('roles.configure') ||
-              session.hasPermission('departments.manage') ||
-              session.hasPermission('departments.read')) &&
-            identity()?.tenantId
-          ) {
-            <article class="module-card">
-              <div class="module-icon">🏢</div>
-              <h3>{{ 'workspace.cardDeptsTitle' | translate: 'Phòng ban & bộ phận' }}</h3>
-              <p>
-                {{
-                  'workspace.cardDeptsDesc'
-                    | translate
-                      : 'Cơ cấu tổ chức, mã phòng ban, trưởng bộ phận và hàng đợi công việc.'
-                }}
-              </p>
-              <div class="module-link-wrap">
-                <p>
-                  <a routerLink="/settings/organization/departments">{{
-                    'workspace.browseDepartments' | translate: 'Xem cơ cấu tổ chức & phòng ban'
-                  }}</a>
-                </p>
-              </div>
-            </article>
-          }
+              <!-- Section 2 (BOTTOM) — My Requests in horizontal cards -->
+              <div class="op-card">
+                <div class="op-card-header">
+                  <div class="op-header-title">
+                    <span class="op-icon">✉️</span>
+                    <div>
+                      <h3>Yêu cầu đã gửi của tôi</h3>
+                      <p class="op-subtitle">Theo dõi trạng thái xử lý, phòng ban tiếp nhận và kết quả các yêu cầu</p>
+                    </div>
+                  </div>
+                  <a routerLink="/requests" class="op-header-link">Xem tất cả yêu cầu của tôi →</a>
+                </div>
 
-          <!-- 4b. Dashboard dự án theo vai trò (bổ sung, không thay thế Báo cáo) -->
-          @if (
-            (session.hasPermission('tasks.read.tenant') ||
-              session.hasPermission('tasks.read.managed') ||
-              session.hasPermission('tasks.read.own') ||
-              session.hasPermission('tasks.read.assigned')) &&
-            identity()?.tenantId
-          ) {
-            <article class="module-card">
-              <div class="module-icon">📈</div>
-              <h3>{{ 'workspace.cardProjectsTitle' | translate: 'Dashboard dự án & tiến độ' }}</h3>
-              <p>
-                {{
-                  'workspace.cardProjectsDesc'
-                    | translate
-                      : 'Phân loại dự án lớn/nhỏ, ai phụ trách phần việc nào, tiến độ từng phần và phần trăm trách nhiệm của mỗi người.'
-                }}
-              </p>
-              <div class="module-link-wrap">
-                <p>
-                  <a routerLink="/dashboard/projects">{{
-                    'workspace.viewProjectDashboard' | translate: 'Xem dashboard dự án'
-                  }}</a>
-                </p>
-                @if (
-                  session.hasPermission('tasks.read.tenant') ||
-                  session.hasPermission('tasks.read.managed')
-                ) {
-                  <p>
-                    <a routerLink="/dashboard/team">{{
-                      'workspace.viewTeamDashboard' | translate: 'Quản lý cấp dưới của tôi'
-                    }}</a>
-                  </p>
-                } @else {
-                  <p>
-                    <a routerLink="/dashboard/my-work">{{
-                      'workspace.viewMyWork' | translate: 'Bảng công việc của tôi'
-                    }}</a>
-                  </p>
-                }
+                <div class="op-card-body">
+                  @if (employeeRequests().length === 0) {
+                    <div class="op-empty">
+                      <span class="op-empty-icon">✓</span>
+                      <p>Bạn chưa gửi yêu cầu dịch vụ nào gần đây.</p>
+                    </div>
+                  } @else {
+                    <div class="op-horizontal-cards">
+                      @for (req of employeeRequests(); track req.requestId) {
+                        <div class="op-request-card">
+                          <div class="op-card-top-row">
+                            <span class="status-badge" [attr.data-status]="req.status">
+                              {{ formatStatusLabel(req.status) }}
+                            </span>
+                          </div>
+                          <a [routerLink]="['/requests', req.requestId]" class="op-card-title">
+                            {{ req.title }}
+                          </a>
+                          <div class="op-card-meta">
+                            <span>🕒 Đã gửi: {{ req.createdAt | date: 'dd/MM/yyyy HH:mm' }}</span>
+                            @if (req.currentRoutingDepartmentName) {
+                              <span>🏢 Nơi xử lý: {{ req.currentRoutingDepartmentName }}</span>
+                            }
+                          </div>
+                          <div class="op-card-footer">
+                            <span class="op-employee-stage-chip" [ngClass]="getEmployeeRequestStage(req).class">
+                              {{ getEmployeeRequestStage(req).label }}
+                            </span>
+                            <a [routerLink]="['/requests', req.requestId]" class="op-view-link">
+                              Chi tiết →
+                            </a>
+                          </div>
+                        </div>
+                      }
+                    </div>
+                  }
+                </div>
               </div>
-            </article>
+            </div>
           }
-
-          <!-- 5. Báo cáo & Phân tích thông minh -->
-          @if (
-            session.hasPermission('reports.manager') ||
-            session.hasPermission('reports.company') ||
-            session.hasPermission('reports.workload') ||
-            session.hasPermission('reports.sla') ||
-            !identity()?.tenantId
-          ) {
-            <article class="module-card">
-              <div class="module-icon">📊</div>
-              <h3>
-                {{ 'workspace.cardReportsTitle' | translate: 'Báo cáo & Phân tích thông minh' }}
-              </h3>
-              <p>
-                {{
-                  'workspace.cardReportsDesc'
-                    | translate
-                      : 'Bảng điều hành quản trị, phân bổ tải công việc và biểu đồ tuân thủ SLA theo thời gian thực.'
-                }}
-              </p>
-              <div class="module-link-wrap">
-                <p>
-                  <a routerLink="/reports">{{
-                    'workspace.dashboardReports' | translate: 'Xem Báo cáo & Chỉ số'
-                  }}</a>
-                </p>
-              </div>
-            </article>
-          }
-
-          <!-- 6. Tra cứu Hồ sơ Hợp nhất -->
-          @if (session.hasPermission('records.search')) {
-            <article class="module-card">
-              <div class="module-icon">🔍</div>
-              <h3>{{ 'workspace.cardSearchTitle' | translate: 'Tra cứu hồ sơ hợp nhất' }}</h3>
-              <p>
-                {{
-                  'workspace.cardSearchDesc'
-                    | translate
-                      : 'Tìm kiếm toàn văn nâng cao trên toàn bộ nhiệm vụ, yêu cầu, thảo luận và tệp đính kèm.'
-                }}
-              </p>
-              <div class="module-link-wrap">
-                <p>
-                  <a routerLink="/records/search">{{
-                    'workspace.searchRecords' | translate: 'Tra cứu hồ sơ kiểm toán'
-                  }}</a>
-                </p>
-              </div>
-            </article>
-          }
-
-          <!-- 7. Danh bạ Nhân sự -->
-          @if (session.hasPermission('users.read')) {
-            <article class="module-card">
-              <div class="module-icon">👥</div>
-              <h3>{{ 'workspace.cardUsersTitle' | translate: 'Danh bạ nhân sự & tài khoản' }}</h3>
-              <p>
-                {{
-                  'workspace.cardUsersDesc'
-                    | translate
-                      : 'Quản lý thành viên, mã nhân viên, gán vai trò quyền hạn và phân bổ phòng ban.'
-                }}
-              </p>
-              <div class="module-link-wrap">
-                <p>
-                  <a routerLink="/settings/organization/users">{{
-                    'workspace.browseUsers' | translate: 'Quản lý danh bạ nhân sự'
-                  }}</a>
-                </p>
-              </div>
-            </article>
-          }
-
-          <!-- 8. Thiết lập Doanh nghiệp & Quy trình -->
-          @if (
-            session.hasPermission('roles.configure') ||
-            session.hasPermission('users.read') ||
-            session.hasPermission('departments.read') ||
-            session.hasPermission('workflows.configure') ||
-            session.hasPermission('sla.configure') ||
-            session.hasPermission('service.create')
-          ) {
-            <article class="module-card">
-              <div class="module-icon">🛠</div>
-              <h3>{{ 'workspace.cardSettingsTitle' | translate: 'Thiết lập doanh nghiệp' }}</h3>
-              <p>
-                {{
-                  'workspace.cardSettingsDesc'
-                    | translate
-                      : 'Cấu hình vai trò tùy chỉnh, máy trạng thái quy trình, hồ sơ SLA và tham số doanh nghiệp.'
-                }}
-              </p>
-              <div class="module-link-wrap">
-                <p>
-                  <a routerLink="/settings">{{
-                    'workspace.settings' | translate: 'Cài đặt hệ thống'
-                  }}</a>
-                </p>
-              </div>
-            </article>
-          }
-
-          <!-- 9. Nhật ký Kiểm toán -->
-          @if (session.hasPermission('audit.read') && identity()?.tenantId) {
-            <article class="module-card">
-              <div class="module-icon">🛡</div>
-              <h3>{{ 'workspace.cardAuditTitle' | translate: 'Nhật ký Kiểm toán' }}</h3>
-              <p>
-                {{
-                  'workspace.cardAuditDesc'
-                    | translate
-                      : 'Bản ghi bất biến ghi lại toàn bộ giao dịch, thay đổi trạng thái và quyết định phê duyệt.'
-                }}
-              </p>
-              <div class="module-link-wrap">
-                <p>
-                  <a routerLink="/audit">{{
-                    'workspace.audit' | translate: 'Xem nhật ký kiểm toán'
-                  }}</a>
-                </p>
-              </div>
-            </article>
-          }
-
-          <!-- 10. Quản lý Công ty Nền tảng -->
-          @if (
-            !identity()?.tenantId && session.hasPermission('platform.company-registrations.read')
-          ) {
-            <article class="module-card platform-card">
-              <div class="module-icon">🌐</div>
-              <h3>
-                {{
-                  'workspace.cardPlatformCompaniesTitle' | translate: 'Công ty & Thuê bao Nền tảng'
-                }}
-              </h3>
-              <p>
-                {{
-                  'workspace.cardPlatformCompaniesDesc'
-                    | translate
-                      : 'Duyệt hồ sơ đăng ký doanh nghiệp mới và quản trị vòng đời các đơn vị khách thuê.'
-                }}
-              </p>
-              <div class="module-link-wrap">
-                <a routerLink="/platform/companies">Duyệt đăng ký doanh nghiệp</a>
-              </div>
-            </article>
-          }
-
-          <!-- 11. Kiểm toán Nền tảng Toàn cầu -->
-          @if (!identity()?.tenantId && session.hasPermission('platform.audit.read')) {
-            <article class="module-card platform-card">
-              <div class="module-icon">🏛</div>
-              <h3>
-                {{ 'workspace.cardPlatformAuditTitle' | translate: 'Kiểm toán Nền tảng Toàn cầu' }}
-              </h3>
-              <p>
-                {{
-                  'workspace.cardPlatformAuditDesc'
-                    | translate
-                      : 'Giám sát cấu hình hệ thống, sự kiện an ninh và các biến động tài khoản trên toàn nền tảng.'
-                }}
-              </p>
-              <div class="module-link-wrap">
-                <p><a routerLink="/platform/audit">Kiểm toán nền tảng</a></p>
-              </div>
-            </article>
-          }
-        </div>
-      </section>
+        </section>
+      }
     </main>
 
     <!-- Shared AI Assistant Drawer -->
@@ -788,95 +839,459 @@ import { TranslatePipe } from '../../core/i18n/translate.pipe';
         -webkit-backdrop-filter: blur(12px);
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
       }
-      .hero-actions {
+      .role-operational-dashboard {
+        margin-top: 1.25rem;
+        margin-bottom: 2rem;
+      }
+      .op-stacked-layout {
         display: flex;
-        gap: 1.1rem;
+        flex-direction: column;
+        gap: 1.5rem;
+        width: 100%;
+      }
+      .op-horizontal-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 1.15rem;
+        width: 100%;
+      }
+      .op-task-card,
+      .op-request-card {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        padding: 1.15rem;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        transition: all 180ms ease;
+        min-height: 155px;
+
+        &:hover {
+          background: #ffffff;
+          border-color: #93c5fd;
+          transform: translateY(-2px);
+          box-shadow: 0 6px 18px rgba(37, 99, 235, 0.08);
+        }
+
+        &.is-escalated {
+          border-left: 3.5px solid #ef4444;
+          background: #fffafa;
+        }
+      }
+      .op-card-top-row {
+        display: flex;
+        align-items: center;
         flex-wrap: wrap;
-        align-items: center;
+        gap: 0.45rem;
+        margin-bottom: 0.65rem;
       }
-      .btn-hero-primary {
-        position: relative;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        padding: 0.75rem 1.6rem;
-        border-radius: 12px;
+      .op-card-title {
+        font-size: 0.95rem;
         font-weight: 700;
-        font-size: 0.9375rem;
-        color: #ffffff;
-        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-        border: 1px solid rgba(255, 255, 255, 0.28);
-        box-shadow:
-          0 4px 16px rgba(37, 99, 235, 0.38),
-          inset 0 1px 0 rgba(255, 255, 255, 0.32);
-        text-decoration: none !important;
-        cursor: pointer;
-        transition:
-          transform 160ms cubic-bezier(0.16, 1, 0.3, 1),
-          box-shadow 180ms ease,
-          border-color 180ms ease;
-
-        &:hover {
-          transform: translateY(-2px);
-          border-color: #ffffff;
-          background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-          box-shadow: 0 8px 26px rgba(37, 99, 235, 0.55);
-          text-decoration: none !important;
-        }
-
-        &:active {
-          transform: scale(0.98);
-        }
-      }
-
-      .btn-hero-secondary {
-        position: relative;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        padding: 0.75rem 1.6rem;
-        border-radius: 12px;
-        font-weight: 700;
-        font-size: 0.9375rem;
-        color: #f8fafc;
-        background: rgba(255, 255, 255, 0.08);
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
-        border: 1px solid rgba(255, 255, 255, 0.18);
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
-        text-decoration: none !important;
-        cursor: pointer;
-        transition:
-          transform 160ms cubic-bezier(0.16, 1, 0.3, 1),
-          box-shadow 180ms ease,
-          background 180ms ease,
-          border-color 180ms ease;
-
-        &:hover {
-          background: rgba(255, 255, 255, 0.16);
-          border-color: rgba(255, 255, 255, 0.38);
-          color: #ffffff;
-          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
-          transform: translateY(-2px);
-          text-decoration: none !important;
-        }
-
-        &:active {
-          transform: scale(0.98);
-        }
-      }
-      .btn-hero-ghost {
-        color: #cbd5e1;
-        padding: 0.65rem 1.15rem;
-        font-weight: 600;
-        font-size: 0.9375rem;
+        color: #0f172a;
+        line-height: 1.4;
+        margin-bottom: 0.5rem;
         text-decoration: none;
-        transition: all 160ms ease;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+
         &:hover {
-          text-decoration: none;
-          color: #ffffff;
-          transform: translateX(3px);
+          color: #2563eb;
+          text-decoration: underline;
         }
+      }
+      .op-card-meta {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+        font-size: 0.785rem;
+        color: #64748b;
+        margin-bottom: 0.85rem;
+      }
+      .op-card-footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.5rem;
+        padding-top: 0.65rem;
+        border-top: 1px solid #edf2f7;
+        margin-top: auto;
+      }
+      .op-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 1.5rem;
+        @media (max-width: 1024px) {
+          grid-template-columns: 1fr;
+        }
+      }
+      .op-card {
+        background: #ffffff;
+        border: 1px solid #dfe8f2;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(7, 27, 51, 0.04);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        transition: box-shadow 180ms ease, border-color 180ms ease;
+        &:hover {
+          box-shadow: 0 6px 18px rgba(37, 99, 235, 0.08);
+          border-color: #bfdbfe;
+        }
+      }
+      .op-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        padding: 1.15rem 1.4rem;
+        border-bottom: 1px solid #f1f5f9;
+        background: #fafcff;
+        gap: 1rem;
+      }
+      .op-header-title {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.75rem;
+        h3 {
+          font-size: 1.05rem;
+          font-weight: 700;
+          color: #071b33;
+          margin: 0;
+          line-height: 1.35;
+        }
+      }
+      .op-icon {
+        font-size: 1.35rem;
+        line-height: 1;
+        flex-shrink: 0;
+      }
+      .op-subtitle {
+        font-size: 0.785rem;
+        color: #64748b;
+        margin: 0.2rem 0 0;
+        line-height: 1.4;
+      }
+      .op-header-link {
+        font-size: 0.8125rem;
+        font-weight: 600;
+        color: #2563eb;
+        text-decoration: none;
+        white-space: nowrap;
+        align-self: center;
+        &:hover {
+          text-decoration: underline;
+        }
+      }
+      .op-card-body {
+        padding: 1.25rem 1.4rem;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 0.85rem;
+      }
+      .op-dept-stats-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(95px, 1fr));
+        gap: 0.65rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid #f1f5f9;
+        margin-bottom: 0.25rem;
+      }
+      .op-stat-pill {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 0.5rem 0.6rem;
+        text-align: center;
+      }
+      .op-stat-num {
+        display: block;
+        font-size: 1.15rem;
+        font-weight: 800;
+        color: #0f172a;
+        &.text-azure {
+          color: #2563eb;
+        }
+        &.text-danger {
+          color: #dc2626;
+        }
+      }
+      .op-stat-lbl {
+        display: block;
+        font-size: 0.7rem;
+        color: #64748b;
+        font-weight: 600;
+        margin-top: 0.2rem;
+      }
+      .op-task-list,
+      .op-request-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+      }
+      .op-task-item,
+      .op-request-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+        padding: 0.85rem 1rem;
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        transition: all 160ms cubic-bezier(0.16, 1, 0.3, 1);
+        &:hover {
+          border-color: #93c5fd;
+          background: #f8fbff;
+          box-shadow: 0 4px 12px rgba(37, 99, 235, 0.06);
+        }
+        &.is-escalated {
+          border-left: 3.5px solid #ef4444;
+          background: #fffafa;
+        }
+      }
+      .op-task-main,
+      .op-req-left {
+        flex: 1;
+        min-width: 0;
+      }
+      .op-task-badges,
+      .op-req-badges {
+        display: flex;
+        align-items: center;
+        gap: 0.45rem;
+        margin-bottom: 0.35rem;
+        flex-wrap: wrap;
+      }
+      .op-task-title,
+      .op-req-title {
+        display: block;
+        font-size: 0.925rem;
+        font-weight: 700;
+        color: #0f172a;
+        text-decoration: none;
+        margin-bottom: 0.35rem;
+        line-height: 1.4;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        &:hover {
+          color: #2563eb;
+        }
+      }
+      .op-task-meta,
+      .op-req-meta {
+        display: flex;
+        align-items: center;
+        gap: 0.85rem;
+        font-size: 0.785rem;
+        color: #64748b;
+        flex-wrap: wrap;
+      }
+      .op-task-progress-col {
+        min-width: 135px;
+        text-align: right;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 0.25rem;
+      }
+      .op-progress-bar-wrap {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        width: 100%;
+      }
+      .op-progress-bar {
+        flex: 1;
+        height: 7px;
+        background: #e2e8f0;
+        border-radius: 9999px;
+        overflow: hidden;
+      }
+      .op-progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #2563eb, #38bdf8);
+        border-radius: 9999px;
+        transition: width 300ms ease;
+      }
+      .op-progress-val {
+        font-size: 0.8125rem;
+        font-weight: 700;
+        color: #0f172a;
+        min-width: 34px;
+      }
+      .op-progress-sub {
+        font-size: 0.6875rem;
+        color: #94a3b8;
+      }
+      .op-req-status-col {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 0.35rem;
+        min-width: 140px;
+      }
+      .priority-chip {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.15rem 0.5rem;
+        border-radius: 9999px;
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        white-space: nowrap;
+        &[data-priority='URGENT'] {
+          background: #fef2f2;
+          color: #b91c1c;
+          border: 1px solid #fecaca;
+        }
+        &[data-priority='HIGH'] {
+          background: #fff7ed;
+          color: #c2410c;
+          border: 1px solid #fed7aa;
+        }
+        &[data-priority='NORMAL'] {
+          background: #eff6ff;
+          color: #1d4ed8;
+          border: 1px solid #bfdbfe;
+        }
+        &[data-priority='LOW'] {
+          background: #f8fafc;
+          color: #64748b;
+          border: 1px solid #e2e8f0;
+        }
+      }
+      .badge-overdue {
+        background: #fef2f2;
+        color: #dc2626;
+        border: 1px solid #fca5a5;
+        font-size: 0.7rem;
+        font-weight: 700;
+        padding: 0.15rem 0.45rem;
+        border-radius: 9999px;
+      }
+      .badge-escalated {
+        background: #fef2f2;
+        color: #b91c1c;
+        border: 1px solid #f87171;
+        font-size: 0.7rem;
+        font-weight: 800;
+        padding: 0.15rem 0.45rem;
+        border-radius: 9999px;
+      }
+      .op-manager-status-chip,
+      .op-employee-stage-chip {
+        font-size: 0.75rem;
+        font-weight: 600;
+        padding: 0.2rem 0.55rem;
+        border-radius: 6px;
+        white-space: nowrap;
+        &.stage-pending {
+          background: #fffbeb;
+          color: #b45309;
+          border: 1px solid #fde68a;
+        }
+        &.stage-reviewed {
+          background: #eff6ff;
+          color: #1d4ed8;
+          border: 1px solid #bfdbfe;
+        }
+        &.stage-completed {
+          background: #ecfdf5;
+          color: #047857;
+          border: 1px solid #a7f3d0;
+        }
+        &.stage-info {
+          background: #fff7ed;
+          color: #c2410c;
+          border: 1px solid #fed7aa;
+        }
+        &.stage-escalated {
+          background: #fef2f2;
+          color: #dc2626;
+          border: 1px solid #fca5a5;
+          font-weight: 700;
+        }
+        &.stage-rejected {
+          background: #f8fafc;
+          color: #64748b;
+          border: 1px solid #e2e8f0;
+        }
+      }
+      .op-action-required-chip {
+        font-size: 0.6875rem;
+        font-weight: 700;
+        color: #dc2626;
+        background: #fff1f2;
+        border: 1px solid #ffe4e6;
+        padding: 0.15rem 0.45rem;
+        border-radius: 4px;
+      }
+      .op-review-btn {
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: #ffffff !important;
+        background: #2563eb;
+        border-radius: 6px;
+        padding: 0.3rem 0.65rem;
+        text-decoration: none !important;
+        transition: background 150ms ease;
+        &:hover {
+          background: #1d4ed8;
+        }
+      }
+      .op-view-link {
+        font-size: 0.785rem;
+        font-weight: 600;
+        color: #2563eb;
+        text-decoration: none;
+        &:hover {
+          text-decoration: underline;
+        }
+      }
+      .op-report-status-badge {
+        font-size: 0.72rem;
+        font-weight: 600;
+        padding: 0.15rem 0.45rem;
+        border-radius: 4px;
+        &[data-type='amber'] {
+          background: #fffbeb;
+          color: #b45309;
+          border: 1px solid #fde68a;
+        }
+        &[data-type='azure'] {
+          background: #eff6ff;
+          color: #1d4ed8;
+          border: 1px solid #bfdbfe;
+        }
+        &[data-type='green'] {
+          background: #ecfdf5;
+          color: #047857;
+          border: 1px solid #a7f3d0;
+        }
+      }
+      .op-empty {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem 1rem;
+        color: #94a3b8;
+        text-align: center;
+        gap: 0.5rem;
+      }
+      .op-empty-icon {
+        font-size: 1.5rem;
+        color: #10b981;
+      }
+      .text-danger {
+        color: #dc2626 !important;
+        font-weight: 600;
       }
       .kpi-metric-row {
         display: grid;
@@ -1079,6 +1494,9 @@ export class Workspace implements OnInit {
   readonly requestsPendingCount = signal<number>(0);
   readonly requestsTotalCount = signal<number>(0);
   readonly auditCount = signal<number>(0);
+  readonly operationalTasks = signal<DashboardTaskItem[]>([]);
+  readonly operationalRequests = signal<DashboardRequestItem[]>([]);
+  readonly isOperationalLoading = signal<boolean>(false);
   readonly unreadNotificationsCount = computed(() => this.notifCount.unreadCount());
   readonly totalNotificationsCount = computed(() => this.notifCount.totalCount());
   readonly slaRate = signal<string>('100%');
@@ -1186,6 +1604,26 @@ export class Workspace implements OnInit {
           }
         },
         error: () => {},
+      });
+    }
+
+    if (this.identity()?.tenantId) {
+      this.isOperationalLoading.set(true);
+      this.http.get<{ items: DashboardTaskItem[]; total: number }>('/api/v1/tasks?pageSize=50').subscribe({
+        next: (res) => {
+          this.operationalTasks.set(res?.items ?? []);
+        },
+        error: () => {},
+      });
+
+      this.http.get<{ items: DashboardRequestItem[]; total: number }>('/api/v1/requests?pageSize=50').subscribe({
+        next: (res) => {
+          this.operationalRequests.set(res?.items ?? []);
+          this.isOperationalLoading.set(false);
+        },
+        error: () => {
+          this.isOperationalLoading.set(false);
+        },
       });
     }
   }
@@ -1369,6 +1807,219 @@ export class Workspace implements OnInit {
       }
     }
   });
+
+  isOverdue(deadline?: string | null, status?: string): boolean {
+    if (!deadline) return false;
+    if (status === 'COMPLETED' || status === 'CANCELLED' || status === 'RESOLVED') return false;
+    return new Date(deadline).getTime() < Date.now();
+  }
+
+  getPriorityWeight(priority?: string): number {
+    switch ((priority || '').toUpperCase()) {
+      case 'URGENT': return 4;
+      case 'HIGH': return 3;
+      case 'NORMAL': return 2;
+      case 'LOW': return 1;
+      default: return 0;
+    }
+  }
+
+  readonly adminUrgentTasks = computed(() => {
+    const tasks = this.operationalTasks().filter(t => t.status !== 'DRAFT' && t.status !== 'COMPLETED' && t.status !== 'CANCELLED');
+    return [...tasks].sort((a, b) => {
+      const aOverdue = this.isOverdue(a.deadline, a.status);
+      const bOverdue = this.isOverdue(b.deadline, b.status);
+      if (aOverdue && !bOverdue) return -1;
+      if (!aOverdue && bOverdue) return 1;
+      const pDiff = this.getPriorityWeight(b.priority) - this.getPriorityWeight(a.priority);
+      if (pDiff !== 0) return pDiff;
+      const aDate = a.deadline ? new Date(a.deadline).getTime() : Infinity;
+      const bDate = b.deadline ? new Date(b.deadline).getTime() : Infinity;
+      return aDate - bDate;
+    }).slice(0, 8);
+  });
+
+  readonly adminSubordinateRequests = computed(() => {
+    const reqs = this.operationalRequests().filter(r => r.status !== 'DRAFT' && r.status !== 'CANCELLED');
+    return [...reqs].sort((a, b) => {
+      if (a.escalationState === 'ESCALATED' && b.escalationState !== 'ESCALATED') return -1;
+      if (a.escalationState !== 'ESCALATED' && b.escalationState === 'ESCALATED') return 1;
+      if (a.status === 'SUBMITTED' && b.status !== 'SUBMITTED') return -1;
+      if (a.status !== 'SUBMITTED' && b.status === 'SUBMITTED') return 1;
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    }).slice(0, 8);
+  });
+
+  readonly managerUrgentTasks = computed(() => {
+    const tasks = this.operationalTasks().filter(t => t.status !== 'DRAFT' && t.status !== 'COMPLETED' && t.status !== 'CANCELLED');
+    return [...tasks].sort((a, b) => {
+      const aOverdue = this.isOverdue(a.deadline, a.status);
+      const bOverdue = this.isOverdue(b.deadline, b.status);
+      if (aOverdue && !bOverdue) return -1;
+      if (!aOverdue && bOverdue) return 1;
+      const pDiff = this.getPriorityWeight(b.priority) - this.getPriorityWeight(a.priority);
+      if (pDiff !== 0) return pDiff;
+      const aDate = a.deadline ? new Date(a.deadline).getTime() : Infinity;
+      const bDate = b.deadline ? new Date(b.deadline).getTime() : Infinity;
+      return aDate - bDate;
+    }).slice(0, 8);
+  });
+
+  readonly managerDeptStats = computed(() => {
+    const tasks = this.operationalTasks().filter(t => t.status !== 'DRAFT');
+    const overdue = tasks.filter(t => this.isOverdue(t.deadline, t.status)).length;
+    const inProgress = tasks.filter(t => t.status === 'IN_PROGRESS' || t.status === 'ASSIGNED').length;
+    const avgProgress = tasks.length > 0
+      ? Math.round(tasks.reduce((sum, t) => sum + (t.progressPercent || 0), 0) / tasks.length)
+      : 100;
+    const completedChildTasks = tasks.reduce((sum, t) => sum + (t.completedSubtaskCount || 0), 0);
+    const assignedUsers = new Set(tasks.map(t => t.assignedUserName).filter(Boolean));
+
+    return {
+      avgProgress,
+      assignedEmployeesCount: assignedUsers.size,
+      completedChildTasks,
+      inProgressCount: inProgress,
+      overdueCount: overdue,
+    };
+  });
+
+  readonly managerDeptRequests = computed(() => {
+    const reqs = this.operationalRequests().filter(r => r.status !== 'DRAFT' && r.status !== 'CANCELLED');
+    return [...reqs].sort((a, b) => {
+      if (a.escalationState === 'ESCALATED' && b.escalationState !== 'ESCALATED') return -1;
+      if (a.escalationState !== 'ESCALATED' && b.escalationState === 'ESCALATED') return 1;
+      if (a.status === 'SUBMITTED' && b.status !== 'SUBMITTED') return -1;
+      if (a.status !== 'SUBMITTED' && b.status === 'SUBMITTED') return 1;
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    }).slice(0, 8);
+  });
+
+  readonly employeeUrgentTasks = computed(() => {
+    const tasks = this.operationalTasks().filter(t => t.status !== 'DRAFT' && t.status !== 'COMPLETED' && t.status !== 'CANCELLED');
+    return [...tasks].sort((a, b) => {
+      const aOverdue = this.isOverdue(a.deadline, a.status);
+      const bOverdue = this.isOverdue(b.deadline, b.status);
+      if (aOverdue && !bOverdue) return -1;
+      if (!aOverdue && bOverdue) return 1;
+      const pDiff = this.getPriorityWeight(b.priority) - this.getPriorityWeight(a.priority);
+      if (pDiff !== 0) return pDiff;
+      const aDate = a.deadline ? new Date(a.deadline).getTime() : Infinity;
+      const bDate = b.deadline ? new Date(b.deadline).getTime() : Infinity;
+      return aDate - bDate;
+    }).slice(0, 8);
+  });
+
+  readonly employeeRequests = computed(() => {
+    const reqs = this.operationalRequests().filter(r => r.status !== 'DRAFT' && r.status !== 'CANCELLED');
+    return [...reqs].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, 8);
+  });
+
+  getAdminRequestReviewStage(req: DashboardRequestItem): { label: string; class: string } {
+    if (req.escalationState === 'ESCALATED') {
+      return { label: 'Đã leo thang lên Giám đốc', class: 'stage-escalated' };
+    }
+    switch (req.status) {
+      case 'SUBMITTED':
+        return { label: 'Chờ Quản lý tiếp nhận & xem xét', class: 'stage-pending' };
+      case 'ROUTED':
+      case 'IN_REVIEW':
+        return { label: 'Quản lý đã tiếp nhận xử lý', class: 'stage-reviewed' };
+      case 'ACCEPTED':
+        return { label: 'Quản lý đã phê duyệt tiếp nhận', class: 'stage-reviewed' };
+      case 'RESOLVED':
+      case 'COMPLETED':
+        return { label: 'Đã nghiệm thu / Hoàn tất', class: 'stage-completed' };
+      case 'REJECTED':
+        return { label: 'Đã từ chối', class: 'stage-rejected' };
+      default:
+        return { label: 'Đang xử lý', class: 'stage-reviewed' };
+    }
+  }
+
+  getManagerRequestReviewStage(req: DashboardRequestItem): { label: string; class: string } {
+    if (req.escalationState === 'ESCALATED') {
+      return { label: 'Đã leo thang Ban Giám đốc', class: 'stage-escalated' };
+    }
+    switch (req.status) {
+      case 'SUBMITTED':
+        return { label: 'Chờ xem xét bước 1', class: 'stage-pending' };
+      case 'ROUTED':
+      case 'IN_REVIEW':
+        return { label: 'Đã tiếp nhận vào luồng', class: 'stage-reviewed' };
+      case 'INFO_REQUESTED':
+        return { label: 'Chờ bổ sung thông tin', class: 'stage-info' };
+      case 'RESOLVED':
+      case 'COMPLETED':
+        return { label: 'Đã xử lý hoàn thành', class: 'stage-completed' };
+      case 'REJECTED':
+        return { label: 'Đã từ chối', class: 'stage-rejected' };
+      default:
+        return { label: 'Đang theo dõi', class: 'stage-reviewed' };
+    }
+  }
+
+  getEmployeeRequestStage(req: DashboardRequestItem): { label: string; class: string } {
+    switch (req.status) {
+      case 'SUBMITTED':
+        return { label: 'Chờ Quản lý xem xét', class: 'stage-pending' };
+      case 'INFO_REQUESTED':
+        return { label: 'Cần bổ sung thông tin', class: 'stage-info' };
+      case 'ROUTED':
+      case 'IN_REVIEW':
+        return { label: 'Đã tiếp nhận xử lý', class: 'stage-reviewed' };
+      case 'RESOLVED':
+      case 'COMPLETED':
+        return { label: 'Đã xử lý xong', class: 'stage-completed' };
+      case 'REJECTED':
+        return { label: 'Đã từ chối', class: 'stage-rejected' };
+      default:
+        return { label: 'Đang xử lý', class: 'stage-reviewed' };
+    }
+  }
+
+  getEmployeeTaskPendingReportStatus(status: string): { label: string; badgeClass: string } {
+    switch (status) {
+      case 'ASSIGNED':
+        return { label: 'Chưa tiếp nhận bắt đầu', badgeClass: 'amber' };
+      case 'IN_PROGRESS':
+        return { label: 'Đang làm · Chưa nộp báo cáo kết quả', badgeClass: 'azure' };
+      case 'SUBMITTED':
+      case 'UNDER_REVIEW':
+        return { label: 'Đã nộp kết quả · Chờ nghiệm thu', badgeClass: 'green' };
+      case 'COMPLETED':
+        return { label: 'Đã nghiệm thu hoàn thành', badgeClass: 'green' };
+      default:
+        return { label: 'Đang thực hiện', badgeClass: 'azure' };
+    }
+  }
+
+  formatStatusLabel(status: string): string {
+    switch (status) {
+      case 'ASSIGNED': return 'Đã giao việc';
+      case 'ACCEPTED': return 'Đã tiếp nhận';
+      case 'IN_PROGRESS': return 'Đang thực hiện';
+      case 'SUBMITTED': return 'Chờ duyệt / Xem xét';
+      case 'UNDER_REVIEW': return 'Đang nghiệm thu';
+      case 'COMPLETED': return 'Hoàn thành';
+      case 'RESOLVED': return 'Đã giải quyết';
+      case 'CANCELLED': return 'Đã hủy';
+      case 'REJECTED': return 'Từ chối';
+      case 'ROUTED': return 'Đã điều phối';
+      case 'INFO_REQUESTED': return 'Cần thông tin';
+      default: return status;
+    }
+  }
+
+  formatPriorityLabel(priority: string): string {
+    switch ((priority || '').toUpperCase()) {
+      case 'URGENT': return 'Khẩn cấp';
+      case 'HIGH': return 'Cao';
+      case 'NORMAL': return 'Bình thường';
+      case 'LOW': return 'Thấp';
+      default: return priority;
+    }
+  }
 
   currentRoleLabel(): string {
     const id = this.identity();

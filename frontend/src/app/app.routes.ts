@@ -260,13 +260,6 @@ export const routes: Routes = [
     loadComponent: () => import('./features/organization/settings').then((m) => m.Settings),
   },
   {
-    // F6. The server enforces roles.configure on every mutation; this guard is a convenience,
-    // and reading the catalogue needs only tenant membership.
-    path: 'settings/labels',
-    canActivate: [tenantGuard],
-    loadComponent: () => import('./features/organization/labels').then((m) => m.Labels),
-  },
-  {
     path: 'settings/organization/roles',
     canActivate: [tenantGuard, permissionGuard],
     data: { permission: 'roles.configure' },

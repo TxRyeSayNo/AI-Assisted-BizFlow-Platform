@@ -20,12 +20,18 @@ public sealed class AuthenticationService(IAuthenticationStore store, ICredentia
         }
         var candidates = await store.FindCandidatesAsync(identifier.Trim().ToUpperInvariant(),
             string.IsNullOrWhiteSpace(tenantKey) ? null : tenantKey.Trim().ToLowerInvariant(), cancellationToken);
-        if (candidates.Count != 1)
+        if (candidates.Count == 0)
         {
             passwords.VerifyDummy(password);
             throw InvalidCredentials();
         }
-        if (candidates[0].TenantId is not null && string.IsNullOrWhiteSpace(tenantKey))
+        if (candidates.Count > 1 && string.IsNullOrWhiteSpace(tenantKey))
+        {
+            passwords.VerifyDummy(password);
+            throw new ApplicationFault(FaultKind.Validation, "AUTH.TENANT_CONTEXT_REQUIRED",
+                "Tài khoản của bạn thuộc nhiều không gian làm việc. Vui lòng nhập mã không gian làm việc để tiếp tục.");
+        }
+        if (candidates.Count != 1)
         {
             passwords.VerifyDummy(password);
             throw InvalidCredentials();

@@ -120,8 +120,6 @@ export class TaskBoard {
     assignedDepartmentId: '',
     deadlineFrom: '',
     deadlineTo: '',
-    // F6: narrow the board to one label.
-    labelId: '',
   };
   private moving = false;
 
@@ -151,22 +149,9 @@ export class TaskBoard {
   readonly departmentOptions = computed(() => [...this.seenDepartments().entries()]);
 
   readonly features = inject(FeatureFlagsService);
-  /** F6: the label catalogue, loaded only where the Labels feature is enabled. */
-  readonly labelOptions = signal<{ labelId: string; name: string; colour: string }[]>([]);
 
   constructor() {
     this.load();
-    if (this.features.labels()) this.loadLabels();
-  }
-
-  private loadLabels() {
-    this.http
-      .get<{ labelId: string; name: string; colour: string; archived: boolean }[]>('/api/v1/labels')
-      .pipe(takeUntilDestroyed(this.destroy))
-      .subscribe({
-        next: (items) => this.labelOptions.set((items ?? []).filter((item) => !item.archived)),
-        error: () => this.labelOptions.set([]),
-      });
   }
 
   apply() {

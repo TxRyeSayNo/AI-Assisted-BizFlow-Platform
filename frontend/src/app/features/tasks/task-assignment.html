@@ -1,76 +1,130 @@
 <h2 mat-dialog-title id="task-assignment-title">Phân công nhiệm vụ</h2>
 <form [formGroup]="form" (ngSubmit)="save()" [attr.aria-busy]="busy()">
   <mat-dialog-content>
-    <p>{{ data.title }}</p>
-    <p>
-      Chọn đối tượng phân công trong phạm vi quản lý. Phân công cho phòng ban sẽ đưa nhiệm vụ vào
-      hàng đợi chung của phòng ban.
-    </p>
-    <mat-form-field appearance="outline"
-      ><mat-label>Loại đối tượng</mat-label
-      ><mat-select formControlName="targetType" (selectionChange)="load(1)"
-        ><mat-option value="USER">Nhân viên</mat-option
-        ><mat-option value="DEPARTMENT">Phòng ban</mat-option></mat-select
-      ></mat-form-field
-    >
-    <mat-form-field appearance="outline"
-      ><mat-label>Tìm kiếm danh bạ</mat-label
-      ><input matInput formControlName="search" maxlength="200"
-    /></mat-form-field>
-    <button
-      mat-stroked-button
-      type="button"
-      (click)="load(1)"
-      [disabled]="busy() || uncertain() || terminal()"
-    >
-      Tìm đối tượng
-    </button>
-    @if (loading()) {
-      <p role="status">Đang tải danh sách đối tượng…</p>
+    <div class="task-title-banner">
+      <span class="task-title-icon">📌</span>
+      <strong>{{ data.title }}</strong>
+    </div>
+
+    @if (isCompanyAdmin()) {
+      <div class="admin-assignment-guidance">
+        <div class="guidance-header">
+          <span class="guidance-icon">💡</span>
+          <div>
+            <strong>Gợi ý Lãnh đạo cấp cao (Chỉ đạo & Giao việc)</strong>
+            <p>
+              Là Lãnh đạo cao nhất, nhiệm vụ chính cấp công ty nên được giao cho <strong>Trưởng phòng / Quản lý</strong> phụ trách hoặc giao cho <strong>Phòng ban</strong> tiếp nhận để Trưởng phòng phân rã công việc cho nhân viên.
+            </p>
+          </div>
+        </div>
+
+        @if (suggestedDepartments().length > 0 || suggestedManagers().length > 0) {
+          <div class="quick-chips-box">
+            <span class="quick-chips-title">Gợi ý phân công nhanh:</span>
+            <div class="chips-container">
+              @for (dept of suggestedDepartments(); track dept.id) {
+                <button
+                  type="button"
+                  class="quick-suggestion-chip dept-chip"
+                  [class.active]="form.controls.targetType.value === 'DEPARTMENT' && form.controls.targetId.value === dept.id"
+                  (click)="selectSuggestion('DEPARTMENT', dept.id)"
+                >
+                  🏢 {{ dept.label }}
+                </button>
+              }
+              @for (mgr of suggestedManagers(); track mgr.id) {
+                <button
+                  type="button"
+                  class="quick-suggestion-chip mgr-chip"
+                  [class.active]="form.controls.targetType.value === 'USER' && form.controls.targetId.value === mgr.id"
+                  (click)="selectSuggestion('USER', mgr.id)"
+                >
+                  ⭐ {{ mgr.label }}
+                </button>
+              }
+            </div>
+          </div>
+        }
+      </div>
     }
-    <mat-form-field appearance="outline" floatLabel="always"
-      ><mat-label>Đối tượng phân công</mat-label
-      ><mat-select formControlName="targetId" placeholder="Chọn đối tượng thực hiện">
+
+    <div class="target-type-selector">
+      <mat-form-field appearance="outline">
+        <mat-label>Loại đối tượng nhận việc</mat-label>
+        <mat-select formControlName="targetType" (selectionChange)="load(1)">
+          <mat-option value="DEPARTMENT">🏢 Phòng ban (Đưa vào hàng đợi bộ phận)</mat-option>
+          <mat-option value="USER">👤 Nhân sự (Quản lý / Nhân viên cụ thể)</mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+
+    <div class="search-row">
+      <mat-form-field appearance="outline" style="flex: 1">
+        <mat-label>Tìm kiếm danh bạ</mat-label>
+        <input matInput formControlName="search" maxlength="200" placeholder="Nhập tên, mã NV hoặc phòng ban..." />
+      </mat-form-field>
+      <button
+        mat-flat-button
+        type="button"
+        class="btn-search-target"
+        (click)="load(1)"
+        [disabled]="busy() || uncertain() || terminal()"
+      >
+        🔍 Tìm kiếm
+      </button>
+    </div>
+
+    @if (loading()) {
+      <p role="status" class="loading-hint">Đang tải danh sách đối tượng…</p>
+    }
+
+    <mat-form-field appearance="outline" floatLabel="always">
+      <mat-label>{{ form.controls.targetType.value === 'DEPARTMENT' ? 'Chọn phòng ban tiếp nhận' : 'Chọn nhân sự phụ trách' }}</mat-label>
+      <mat-select formControlName="targetId" [placeholder]="form.controls.targetType.value === 'DEPARTMENT' ? 'Chọn phòng ban' : 'Chọn Quản lý hoặc nhân viên'">
         @for (option of options(); track option.id) {
-          <mat-option [value]="option.id">{{ option.label }}</mat-option>
-        }</mat-select
-      ><mat-error>Vui lòng chọn đối tượng.</mat-error></mat-form-field
-    >
+          <mat-option [value]="option.id">
+            {{ option.label }}
+          </mat-option>
+        }
+      </mat-select>
+      <mat-error>Vui lòng chọn đối tượng phân công.</mat-error>
+    </mat-form-field>
+
     <div class="target-pages">
       <span>{{ total() }} mục danh bạ · Trang {{ page() }}</span>
       <button
         mat-stroked-button
         type="button"
+        class="btn-page-nav"
         (click)="load(page() - 1)"
         [disabled]="page() <= 1 || loading() || busy() || uncertain() || terminal()"
       >
-        Trang trước
+        ← Trang trước
       </button>
       <button
         mat-stroked-button
         type="button"
+        class="btn-page-nav"
         (click)="load(page() + 1)"
-        [disabled]="page() * 25 >= total() || loading() || busy() || uncertain() || terminal()"
+        [disabled]="page() * 50 >= total() || loading() || busy() || uncertain() || terminal()"
       >
-        Trang sau
+        Trang sau →
       </button>
     </div>
-    <p>
-      Việc hiển thị trong danh bạ không mặc nhiên cấp quyền phân công. Máy chủ sẽ kiểm tra lại phạm
-      vi quản lý khi thực hiện.
-    </p>
-    <mat-form-field appearance="outline"
-      ><mat-label>Ghi chú phân công (tùy chọn)</mat-label
-      ><textarea matInput formControlName="note" rows="3"></textarea>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Ghi chú chỉ đạo / phân công (tùy chọn)</mat-label>
+      <textarea matInput formControlName="note" rows="3" placeholder="Nhập yêu cầu chỉ đạo, mục tiêu chất lượng hoặc lưu ý..."></textarea>
     </mat-form-field>
+
     @if (error()) {
-      <p role="alert">{{ error() }}</p>
+      <p role="alert" class="error-alert">{{ error() }}</p>
     }
   </mat-dialog-content>
-  <mat-dialog-actions
-    ><button mat-stroked-button type="button" [disabled]="busy()" (click)="close()">Đóng</button
-    ><button mat-flat-button type="submit" [disabled]="busy() || loading() || terminal()">
-      {{ busy() ? 'Đang phân công…' : uncertain() ? 'Thử lại phân công' : 'Xác nhận phân công' }}
-    </button></mat-dialog-actions
-  >
+  <mat-dialog-actions align="end">
+    <button mat-stroked-button type="button" class="btn-dialog-close" [disabled]="busy()" (click)="close()">Đóng</button>
+    <button mat-flat-button type="submit" class="btn-dialog-confirm" [disabled]="busy() || loading() || terminal()">
+      {{ busy() ? 'Đang phân công…' : uncertain() ? 'Thử lại phân công' : '✓ Xác nhận phân công' }}
+    </button>
+  </mat-dialog-actions>
 </form>

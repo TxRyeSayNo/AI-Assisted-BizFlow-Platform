@@ -10,10 +10,55 @@ public sealed record TaskEvidencePage<T>(IReadOnlyList<T> Items, int Page, int P
 public sealed record TaskChecklistView(Guid Id, string Title, int SortOrder, bool IsCompleted);
 public sealed record TaskReportView(Guid Id, Guid AuthorId, short Percent, string? Content, DateTimeOffset SubmittedAt);
 public sealed record TaskResultView(Guid Id, Guid AuthorId, int RevisionNo, string? Content, DateTimeOffset SubmittedAt);
+
+public sealed record TaskWorkPackageContributionView(
+    Guid TaskId,
+    string Title,
+    string? Description,
+    string Status,
+    string Priority,
+    DateTimeOffset? Deadline,
+    Guid? AssignedUserId,
+    string? AssignedUserName,
+    string? AssignedEmployeeCode,
+    Guid? AssignedDepartmentId,
+    string? AssignedDepartmentName,
+    int IndividualProgressPercent,
+    decimal WeightPercent,
+    decimal ContributedPercent,
+    bool IsCompleted,
+    bool IsOverdue,
+    short? LatestReportPercent,
+    string? LatestReportContent,
+    DateTimeOffset? LatestReportAt,
+    int? LatestResultRevisionNo,
+    string? LatestResultContent,
+    DateTimeOffset? LatestResultAt,
+    DateTimeOffset UpdatedAt,
+    string? TaskKind = null,
+    IReadOnlyList<TaskWorkPackageContributionView>? ChildContributions = null);
+
+public sealed record TaskProgressOverviewView(
+    int OverallCompletionPercent,
+    int ParticipatingEmployeesCount,
+    int TotalWorkPackagesCount,
+    int CompletedWorkPackagesCount,
+    int InProgressWorkPackagesCount,
+    int UnfinishedWorkPackagesCount,
+    int OverdueWorkPackagesCount,
+    int PendingReviewWorkPackagesCount,
+    string? ResponsibleDepartmentName,
+    string? AccountableManagerName,
+    IReadOnlyList<TaskWorkPackageContributionView> Contributions,
+    string? TaskKind = null,
+    int ParticipatingDepartmentsCount = 0,
+    int AccountableManagersCount = 0);
+
 public sealed record TaskDetailView(TaskListRow Task, string? Description, string? CreatorName,
     Guid? WorkflowVersionId, Guid? SlaVersionId, DateTimeOffset? CompletedAt, DateTimeOffset UpdatedAt,
     TaskEvidencePage<TaskChecklistView> Checklist, TaskEvidencePage<TaskReportView> Reports, TaskEvidencePage<TaskResultView> Results,
-    IReadOnlyList<TaskListRow>? Subtasks = null, string? ParentTaskTitle = null);
+    IReadOnlyList<TaskListRow>? Subtasks = null, string? ParentTaskTitle = null,
+    TaskProgressOverviewView? ProgressOverview = null);
 public interface ITaskDetailReader
 {
     Task<TaskDetailView?> GetAsync(TaskReadScope scope, Guid id, TaskDetailPages pages, CancellationToken cancellationToken);

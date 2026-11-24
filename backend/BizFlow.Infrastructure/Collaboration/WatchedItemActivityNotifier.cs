@@ -73,10 +73,11 @@ public sealed class WatchedItemActivityNotifier(
         {
             var since = watcher.LastNotifiedAt ?? watcher.CreatedAt;
             var code = watcher.ObjectType == CommentObjectType.Task ? "TASK" : "REQUEST";
+            var pascalCode = watcher.ObjectType == CommentObjectType.Task ? "Task" : "Request";
 
             // Status changes and other business events, straight from the audit trail.
             var events = await db.AuditLogs.AsNoTracking()
-                .Where(a => a.TenantId == tenantId && a.ObjectType == code && a.ObjectId == watcher.ObjectId &&
+                .Where(a => a.TenantId == tenantId && (a.ObjectType == code || a.ObjectType == pascalCode) && a.ObjectId == watcher.ObjectId &&
                     a.CreatedAt > since && a.ActorId != watcher.UserId)
                 .OrderBy(a => a.CreatedAt)
                 .Take(MaxEventsPerWatcher)

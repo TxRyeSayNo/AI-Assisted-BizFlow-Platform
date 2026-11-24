@@ -78,6 +78,23 @@ public sealed class TaskConfirmationStore(BizFlowDbContext db, ITenantContext co
             db.Confirmations.Add(confirmation);
             db.AuditLogs.Add(audit);
             db.Notifications.Add(notification);
+
+            if (audit.Action == "TASK.RESULT_CONFIRMED" && task.ParentTaskId is { } parentTaskId)
+            {
+                var parentTask = await db.WorkTasks.FirstOrDefaultAsync(
+                    pt => pt.TenantId == tenantId && pt.Id == parentTaskId && pt.DeletedAt == null,
+                    cancellationToken);
+                if (parentTask is not null)
+                {
+                    var hasOtherIncompleteChildren = await db.WorkTasks.AnyAsync(
+                        st => st.TenantId == tenantId && st.ParentTaskId == parentTaskId && st.Id != task.Id
+                            && st.Status != TaskState.Completed && st.Status != TaskState.Confirmed && st.Status != TaskState.Cancelled
+                            && st.DeletedAt == null,
+                        cancellationToken);
+                    parentTask.SyncParentRollupState(allChildrenCompleted: !hasOtherIncompleteChildren, confirmation.ConfirmedAt);
+                }
+            }
+
             await db.SaveChangesAsync(cancellationToken);
             await transaction.CommitAsync(cancellationToken);
         }

@@ -1,5 +1,5 @@
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { Component, DestroyRef, Input, OnInit, inject, signal } from '@angular/core';
+import { Component, DestroyRef, Input, OnInit, effect, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
@@ -102,9 +102,25 @@ export class TaskReminders implements OnInit {
   readonly available = signal(false);
   /** The rows the server currently holds, so unchecking can cancel the right ones. */
   private current: ReminderMark[] = [];
+  private loadedForTask = '';
+
+  constructor() {
+    effect(() => {
+      if (this.features.deadlineReminders() && this.taskId && this.hasDeadline) {
+        this.loadConfig();
+      }
+    });
+  }
 
   ngOnInit() {
-    if (!this.features.deadlineReminders() || !this.taskId || !this.hasDeadline) return;
+    if (this.features.deadlineReminders() && this.taskId && this.hasDeadline) {
+      this.loadConfig();
+    }
+  }
+
+  private loadConfig() {
+    if (this.loadedForTask === this.taskId) return;
+    this.loadedForTask = this.taskId;
     this.http
       .get<ReminderMark[]>('/api/v1/notifications/reminders/config', {
         params: { taskId: this.taskId },

@@ -1,48 +1,59 @@
 <main id="main-content" class="page-content" tabindex="-1">
-  <nav aria-label="Breadcrumb">
-    <a routerLink="/workspace">{{ 'common.workspace' | translate: 'Không gian làm việc' }}</a>
-    <span aria-hidden="true"> / </span>
-    <span>{{ 'requests.title' | translate: 'Yêu cầu' }}</span>
-  </nav>
-  <div
-    style="
-      display: flex;
-      justify-content: space-between;
-      align-items: baseline;
-      flex-wrap: wrap;
-      gap: 1rem;
-      margin-bottom: 1rem;
-    "
-  >
-    <h1>{{ 'requests.title' | translate: 'Yêu cầu' }}</h1>
-    <div style="display: flex; flex-wrap: wrap; gap: 0.75rem">
-      @if (features.kanban()) {
-        <a
-          mat-stroked-button
-          routerLink="/requests/board"
-          [title]="'requestBoard.viewBoardHint' | translate: 'Open the request board'"
-          >{{ 'taskBoard.viewBoard' | translate: 'Board' }}</a
-        >
-      }
-      @if (session.hasPermission('requests.create')) {
-        <a mat-flat-button routerLink="/requests/new">{{
-          'requests.newRequest' | translate: 'New request'
-        }}</a>
-      }
-      @if (session.hasPermission('records.search')) {
-        <a mat-stroked-button routerLink="/records/search">{{
-          'requests.searchRecords' | translate: 'Search records'
-        }}</a>
-      }
+  <div class="task-page-header">
+    <nav class="compact-breadcrumb" aria-label="Breadcrumb">
+      <a routerLink="/workspace">{{ 'common.workspace' | translate: 'Không gian làm việc' }}</a>
+      <span class="sep" aria-hidden="true">/</span>
+      <span class="breadcrumb-current">{{ 'requests.title' | translate: 'Yêu cầu' }}</span>
+    </nav>
+    <div class="task-header-row">
+      <div class="header-titles">
+        <h1 class="task-header-title">{{ 'requests.title' | translate: 'Yêu cầu' }}</h1>
+        <p class="task-header-subtitle">
+          {{
+            'requests.subtitle'
+              | translate
+                : 'Browse and track enterprise service requests. Only requests within your access scope appear here.'
+          }}
+        </p>
+      </div>
+      <div class="task-nav-container" aria-label="Request navigation">
+        @if (features.kanban()) {
+          <span class="task-nav-btn is-current" aria-current="page">
+            <span class="nav-btn-icon" aria-hidden="true">≡</span>
+            <span>{{ 'taskBoard.viewList' | translate: 'List' }}</span>
+          </span>
+          <a
+            class="task-nav-btn"
+            routerLink="/requests/board"
+            [title]="'requestBoard.viewBoardHint' | translate: 'Open the request board'"
+          >
+            <span class="nav-btn-icon" aria-hidden="true">▦</span>
+            <span>{{ 'taskBoard.viewBoard' | translate: 'Board' }}</span>
+          </a>
+        }
+        @if (session.hasPermission('requests.create')) {
+          <a
+            class="task-nav-btn primary-nav-btn"
+            routerLink="/requests/new"
+            [title]="'requests.newRequest' | translate: 'New request'"
+          >
+            <span class="nav-btn-icon" aria-hidden="true">+</span>
+            <span>{{ 'requests.newRequest' | translate: 'New request' }}</span>
+          </a>
+        }
+        @if (session.hasPermission('records.search')) {
+          <a
+            class="task-nav-btn"
+            routerLink="/records/search"
+            [title]="'requests.searchRecords' | translate: 'Search records'"
+          >
+            <span class="nav-btn-icon" aria-hidden="true">🔍</span>
+            <span>{{ 'requests.searchRecords' | translate: 'Search records' }}</span>
+          </a>
+        }
+      </div>
     </div>
   </div>
-  <p>
-    {{
-      'requests.subtitle'
-        | translate
-          : 'Browse and track enterprise service requests. Only requests within your access scope appear here.'
-    }}
-  </p>
   <section aria-label="Request list" class="directory-panel" [attr.aria-busy]="busy()">
     <form [formGroup]="filters" (ngSubmit)="apply()" class="filters">
       <mat-form-field appearance="outline" subscriptSizing="dynamic">
@@ -158,7 +169,11 @@
                       >{{ 'reqStatus.' + item.status | translate: getStateName(item.status) }}</span
                     >
                     <span class="request-meta">
-                      <span class="priority-indicator" [ngClass]="priorityClass(item.priority)">
+                      <span
+                        class="priority-indicator"
+                        [attr.data-priority]="item.priority"
+                        [ngClass]="priorityClass(item.priority)"
+                      >
                         {{
                           'priorityBadge.' + item.priority
                             | translate: getPriorityName(item.priority) + ' priority'

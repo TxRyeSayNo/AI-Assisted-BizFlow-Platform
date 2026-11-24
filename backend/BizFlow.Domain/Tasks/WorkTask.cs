@@ -23,8 +23,16 @@ public sealed class WorkTask
     public DateTimeOffset CreatedAt { get; private set; }
     public DateTimeOffset UpdatedAt { get; private set; }
     public DateTimeOffset? DeletedAt { get; private set; }
+    public string? TaskKind { get; private set; }
+    public decimal? Weight { get; private set; }
     public TaskWorkflowMutation? WorkflowMutation { get; private set; }
     private WorkTask() { }
+
+    public void ConfigureKindAndWeight(string? kind, decimal? weight)
+    {
+        TaskKind = kind;
+        Weight = weight;
+    }
 
     internal void ApplyExecutionTransition(TaskWorkflowMutation mutation, DateTimeOffset now)
     {
@@ -74,7 +82,8 @@ public sealed class WorkTask
     // must authorize the creator, validate source ownership and apply workflow/SLA deadline rules.
     public static WorkTask CreateDraft(Guid tenantId, Guid creatorId, string title, DateTimeOffset now,
         string? description = null, TaskPriority priority = TaskPriority.Medium,
-        DateTimeOffset? deadline = null, Guid? requestId = null, Guid? parentTaskId = null)
+        DateTimeOffset? deadline = null, Guid? requestId = null, Guid? parentTaskId = null,
+        string? taskKind = null, decimal? weight = null)
     {
         if (!Enum.IsDefined(priority)) throw new ArgumentException("Unknown task priority.", nameof(priority));
         if (requestId is { } request) EntityRules.Id(request, nameof(requestId));
@@ -93,17 +102,45 @@ public sealed class WorkTask
             CreatorId = EntityRules.Id(creatorId, nameof(creatorId)), RequestId = requestId,
             Title = normalizedTitle, Description = string.IsNullOrWhiteSpace(description) ? null : description.Trim(),
             Priority = priority, Deadline = deadline?.ToUniversalTime(), Status = TaskState.Draft,
+            TaskKind = taskKind, Weight = weight,
             CreatedAt = now.ToUniversalTime(), UpdatedAt = now.ToUniversalTime()
         };
     }
 
     public static WorkTask CreateAssigned(Guid tenantId, Guid creatorId, string title, DateTimeOffset now,
         string? description = null, TaskPriority priority = TaskPriority.Medium,
-        DateTimeOffset? deadline = null, Guid? requestId = null)
+        DateTimeOffset? deadline = null, Guid? requestId = null, Guid? parentTaskId = null,
+        string? taskKind = null, decimal? weight = null)
     {
-        var task = CreateDraft(tenantId, creatorId, title, now, description, priority, deadline, requestId);
+        var task = CreateDraft(tenantId, creatorId, title, now, description, priority, deadline, requestId, parentTaskId, taskKind, weight);
         task.Status = TaskState.Assigned;
         return task;
+    }
+
+    public static WorkTask CreateCoordinating(Guid tenantId, Guid creatorId, string title, DateTimeOffset now,
+        string? description = null, TaskPriority priority = TaskPriority.Medium,
+        DateTimeOffset? deadline = null, Guid? requestId = null, Guid? parentTaskId = null,
+        string? taskKind = null, decimal? weight = null)
+    {
+        var task = CreateDraft(tenantId, creatorId, title, now, description, priority, deadline, requestId, parentTaskId, taskKind, weight);
+        task.Status = TaskState.InProgress;
+        return task;
+    }
+
+    public void SyncParentRollupState(bool allChildrenCompleted, DateTimeOffset now)
+    {
+        if (Status is TaskState.Cancelled) return;
+        if (allChildrenCompleted && TaskKind is "PROJECT" or "INDEPENDENT")
+        {
+            Status = TaskState.Completed;
+            CompletedAt = now.ToUniversalTime();
+            UpdatedAt = now.ToUniversalTime();
+        }
+        else if (Status is TaskState.Draft or TaskState.Assigned or TaskState.Accepted)
+        {
+            Status = TaskState.InProgress;
+            UpdatedAt = now.ToUniversalTime();
+        }
     }
 
     public void Archive(DateTimeOffset now)

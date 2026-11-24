@@ -10,51 +10,49 @@
       <span aria-hidden="true" class="breadcrumb-separator">/</span>
       <span class="breadcrumb-current">{{
         parentTaskId()
-          ? 'Tạo nhiệm vụ con'
-          : ('taskCreate.breadcrumbNew' | translate: 'Tạo nhiệm vụ mới')
-      }}</span>
+        ? 'Tạo nhiệm vụ con'
+        : isCompanyAdmin()
+        ? 'Phân công công việc cấp Công ty'
+        : ('taskCreate.breadcrumbNew' | translate: 'Tạo nhiệm vụ mới')
+        }}</span>
     </nav>
     <div class="task-header-row">
       <div class="header-titles">
         <h1 class="task-header-title">
           {{
-            parentTaskId()
-              ? 'Phân rã Nhiệm vụ con'
-              : ('taskCreate.breadcrumbNew' | translate: 'Khởi tạo Nhiệm vụ Mới')
+          parentTaskId()
+          ? 'Phân rã Nhiệm vụ con'
+          : isCompanyAdmin()
+          ? 'Phân công Công việc Cấp Công ty'
+          : ('taskCreate.breadcrumbNew' | translate: 'Khởi tạo Nhiệm vụ Mới')
           }}
         </h1>
         <p class="task-header-subtitle">
           @if (parentTaskId()) {
-            Tạo nhiệm vụ con trực thuộc nhiệm vụ cấp công ty và phân công cho nhân viên trong phòng
-            ban thực hiện.
+          Phân rã gói việc trực thuộc và giao việc cụ thể cho nhân viên trong phòng ban phụ trách.
+          } @else if (isCompanyAdmin()) {
+          Lựa chọn hình thức phân công: Nhiệm vụ độc lập cho nhiều nhân sự hoặc Dự án phối hợp liên phòng ban.
           } @else {
-            Tạo bản thảo công việc. Quản trị viên phân công cho Quản lý phòng ban, Quản lý phân rã
-            và giao việc cho nhân sự.
+          Tạo bản thảo công việc nội bộ và điều phối thực hiện trong phòng ban.
           }
         </p>
       </div>
       <div class="task-nav-container">
         @if (parentTaskId()) {
-          <a
-            [routerLink]="['/tasks', parentTaskId()]"
-            class="task-nav-btn"
-            title="Quay lại nhiệm vụ cha"
-          >
-            <span>← Quay lại nhiệm vụ cha</span>
-          </a>
+        <a [routerLink]="['/tasks', parentTaskId()]" class="task-nav-btn" title="Quay lại nhiệm vụ cha">
+          <span>← Quay lại nhiệm vụ cha</span>
+        </a>
         } @else {
-          <a routerLink="/tasks" class="task-nav-btn" title="Quay lại danh sách nhiệm vụ">
-            <span>← Quay lại danh sách</span>
-          </a>
+        <a routerLink="/tasks" class="task-nav-btn" title="Quay lại danh sách nhiệm vụ">
+          <span>← Quay lại danh sách</span>
+        </a>
         }
       </div>
     </div>
   </div>
 
   @if (parentTaskId()) {
-    <div
-      class="parent-task-banner"
-      style="
+  <div class="parent-task-banner" style="
         background: #eff6ff;
         border: 1.5px solid #bfdbfe;
         border-radius: 12px;
@@ -63,120 +61,598 @@
         display: flex;
         align-items: center;
         gap: 12px;
-      "
-    >
-      <span style="font-size: 24px">🔗</span>
-      <div>
-        <div
-          style="
+      ">
+    <span style="font-size: 24px">🔗</span>
+    <div>
+      <div style="
             font-size: 11px;
             font-weight: 700;
             text-transform: uppercase;
             color: #1e40af;
             letter-spacing: 0.5px;
-          "
-        >
-          Phân cấp Công việc Trực thuộc
-        </div>
-        <div style="font-size: 14px; font-weight: 700; color: #0f172a">
-          {{ parentTaskTitle() || 'Nhiệm vụ cấp công ty' }}
-        </div>
+          ">
+        Phân cấp Công việc Trực thuộc (Gói việc cha)
+      </div>
+      <div style="font-size: 14px; font-weight: 700; color: #0f172a">
+        {{ parentTaskTitle() || 'Nhiệm vụ cấp công ty' }}
       </div>
     </div>
+  </div>
   }
 
-  <form
-    class="directory-panel task-form"
-    [formGroup]="form"
-    (ngSubmit)="submit()"
-    [attr.aria-busy]="busy()"
-  >
-    <mat-form-field appearance="outline" class="form-full-width">
-      <mat-label>{{ 'common.title' | translate: 'Tiêu đề nhiệm vụ *' }}</mat-label>
-      <input
-        matInput
-        formControlName="title"
-        maxlength="300"
-        required
-        placeholder="Ví dụ: Triển khai kiểm thử tính năng phân rã nhiệm vụ..."
-      />
-    </mat-form-field>
-
-    <mat-form-field appearance="outline" class="form-full-width task-description-field">
-      <mat-label>{{ 'tasks.description' | translate: 'Mô tả chi tiết công việc' }}</mat-label>
-      <textarea
-        matInput
-        formControlName="description"
-        rows="5"
-        placeholder="Nhập mô tả chi tiết mục tiêu, phạm vi và kết quả cần đạt..."
-      ></textarea>
-    </mat-form-field>
-
-    <mat-form-field appearance="outline">
-      <mat-label>{{ 'common.priority' | translate: 'Độ ưu tiên' }}</mat-label>
-      <mat-select formControlName="priority">
-        <mat-option value="LOW">{{ 'priority.LOW' | translate: 'Thấp' }}</mat-option>
-        <mat-option value="MEDIUM">{{ 'priority.MEDIUM' | translate: 'Trung bình' }}</mat-option>
-        <mat-option value="HIGH">{{ 'priority.HIGH' | translate: 'Cao' }}</mat-option>
-        <mat-option value="CRITICAL">{{ 'priority.CRITICAL' | translate: 'Khẩn cấp' }}</mat-option>
-      </mat-select>
-    </mat-form-field>
-
-    <mat-form-field appearance="outline">
-      <mat-label>{{
-        'taskCreate.deadlineLabel' | translate: 'Hạn chót hoàn thành (tùy chọn)'
-      }}</mat-label>
-      <input matInput type="datetime-local" formControlName="deadline" />
-      <mat-hint>Mốc thời gian cam kết tiến độ nghiệm thu.</mat-hint>
-    </mat-form-field>
-
-    <mat-form-field appearance="outline" class="form-full-width task-checklist-field">
-      <mat-label>{{
-        'tasks.checklist' | translate: 'Danh mục kiểm tra (mỗi dòng một bước)'
-      }}</mat-label>
-      <textarea
-        matInput
-        formControlName="checklist"
-        rows="4"
-        placeholder="Bước 1: Chuẩn bị tài liệu&#10;Bước 2: Triển khai thực hiện&#10;Bước 3: Báo cáo kết quả"
-      ></textarea>
-    </mat-form-field>
-
-    @if (error()) {
-      <p role="alert" class="form-full-width text-danger" style="color: #ef4444; font-weight: 600">
-        {{ error() }}
-      </p>
-    }
-    @if (done()) {
-      <p
-        role="status"
-        class="form-full-width text-success"
-        style="color: #10b981; font-weight: 600"
-      >
-        Đã tạo thành công nhiệm vụ. Đang chuyển hướng…
-      </p>
-    }
-    <div class="actions" style="display: flex; gap: 12px; margin-top: 16px">
-      <button
-        mat-flat-button
-        color="primary"
-        type="submit"
-        class="submit-task-btn"
-        [disabled]="busy() || done()"
-      >
-        {{
-          busy()
-            ? ('common.saving' | translate: 'Đang lưu…')
-            : uncertain()
-              ? 'Thử lại gửi biểu mẫu'
-              : parentTaskId()
-                ? 'Tạo nhiệm vụ con'
-                : ('taskCreate.saveDraft' | translate: 'Lưu bản thảo nhiệm vụ')
-        }}
+  <!-- ASSIGNMENT TYPE SELECTION CARDS (S1.1: Available for both Company Admin and Department Managers) -->
+  @if (canAssignDirectly() && !parentTaskId()) {
+  <section class="assignment-type-selection-section" aria-label="Lựa chọn loại phân công">
+    <div class="type-cards-grid">
+      <!-- Option 1: Independent Task -->
+      <button type="button" class="assignment-type-card" [class.is-selected]="assignmentType() === 'INDEPENDENT'"
+        (click)="setAssignmentType('INDEPENDENT')" id="btn-select-type-independent">
+        <div class="type-card-header">
+          <div class="type-card-icon independent-icon">🎯</div>
+          <div class="type-card-badge">
+            @if (assignmentType() === 'INDEPENDENT') {
+            <span class="active-pill">✓ Đang chọn</span>
+            } @else {
+            <span class="inactive-pill">Chọn hình thức</span>
+            }
+          </div>
+        </div>
+        <h2 class="type-card-title">Nhiệm vụ độc lập</h2>
+        <p class="type-card-desc">
+          Giao một công việc độc lập cho <strong>một hoặc nhiều nhân sự</strong>. Không bắt buộc thuộc dự án lớn. Mỗi
+          nhân sự có trách nhiệm, tỷ trọng đóng góp (%), tiến độ cá nhân và báo cáo kết quả riêng.
+        </p>
+        <div class="type-card-footer">
+          <span class="feature-tag">👤 Chọn nhiều nhân viên</span>
+          <span class="feature-tag">⭐ 1 người chịu trách nhiệm chính</span>
+          <span class="feature-tag">⚖️ Tỷ trọng & Tiến độ từng người</span>
+        </div>
       </button>
-      <a mat-stroked-button [routerLink]="parentTaskId() ? ['/tasks', parentTaskId()] : '/tasks'">
-        {{ 'common.cancel' | translate: 'Hủy bỏ' }}
-      </a>
+
+      <!-- Option 2: Project -->
+      <button type="button" class="assignment-type-card" [class.is-selected]="assignmentType() === 'PROJECT'"
+        (click)="setAssignmentType('PROJECT')" id="btn-select-type-project">
+        <div class="type-card-header">
+          <div class="type-card-icon project-icon">🏢</div>
+          <div class="type-card-badge">
+            @if (assignmentType() === 'PROJECT') {
+            <span class="active-pill">✓ Đang chọn</span>
+            } @else {
+            <span class="inactive-pill">Chọn hình thức</span>
+            }
+          </div>
+        </div>
+        <h2 class="type-card-title">Dự án</h2>
+        <p class="type-card-desc">
+          Khởi tạo dự án chiến lược điều phối qua <strong>các phòng ban</strong>. Mỗi phòng ban chỉ định một Trưởng
+          phòng phụ trách nhận gói việc và tự phân rã việc nhỏ cho nhân viên.
+        </p>
+        <div class="type-card-footer">
+          <span class="feature-tag">🏛️ Điều phối phòng ban</span>
+          <span class="feature-tag">👔 Trưởng phòng phụ trách</span>
+          <span class="feature-tag">📊 Tỷ trọng đóng góp %</span>
+        </div>
+      </button>
+    </div>
+  </section>
+  }
+
+  <!-- AI ASSISTANT PANEL (Collapsed / Compact) -->
+  <div class="directory-panel ai-assistant-bar" style="
+        margin-bottom: 20px;
+        padding: 14px 18px;
+        background: #f8fbff;
+        border: 1px solid #dbeafe;
+        border-radius: 12px;
+      ">
+    <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap">
+      <div style="display: flex; align-items: center; gap: 8px">
+        <span style="font-size: 20px">✨</span>
+        <div>
+          <strong style="color: #1e40af; font-size: 0.9rem">Trợ lý AI Hỗ trợ Soạn thảo & Phân rã</strong>
+          <p style="margin: 0; font-size: 0.78rem; color: #64748b">
+            Nhập yêu cầu tóm tắt để AI tự động điền tiêu đề, mô tả và gợi ý phân rã checklist.
+          </p>
+        </div>
+      </div>
+      <div style="display: flex; gap: 8px; flex: 1; max-width: 540px; min-width: 260px">
+        <input type="text" [(ngModel)]="aiPrompt" placeholder="Ví dụ: Nâng cấp bảo mật cổng thông tin nội bộ Q4..."
+          style="
+              flex: 1;
+              padding: 7px 12px;
+              border: 1px solid #cbd5e1;
+              border-radius: 8px;
+              font-size: 0.85rem;
+            " />
+        <button type="button" class="task-nav-btn primary-nav-btn"
+          style="min-height: 2.2rem; padding: 0.35rem 0.9rem; font-size: 0.82rem" (click)="assistWithAi()"
+          [disabled]="aiBusy()">
+          <span>{{ aiBusy() ? 'Đang tạo…' : 'AI Soạn' }}</span>
+        </button>
+        <button type="button" class="task-nav-btn"
+          style="min-height: 2.2rem; padding: 0.35rem 0.8rem; font-size: 0.82rem" (click)="breakdownWithAi()"
+          [disabled]="aiBusy() || !form.controls.title.value.trim()"
+          title="Dùng AI phân rã tiêu đề thành danh mục checklist">
+          <span>📋 AI Checklist</span>
+        </button>
+      </div>
+    </div>
+    @if (aiMessage()) {
+    <div style="margin-top: 8px; font-size: 0.8rem; color: #059669; font-weight: 600">
+      {{ aiMessage() }}
+    </div>
+    }
+  </div>
+
+  <!-- MAIN ASSIGNMENT FORM -->
+  <form class="directory-panel task-assignment-container" [formGroup]="form" (ngSubmit)="submit()"
+    [attr.aria-busy]="busy()">
+    <!-- Section: Common Information -->
+    <div class="form-section-header">
+      <h2 class="form-section-title">
+        1. Thông tin chung
+        <span class="type-pill">
+          @if (parentTaskId()) {
+          Nhiệm vụ con (WBS)
+          } @else if (canAssignDirectly()) {
+          {{ assignmentType() === 'PROJECT' ? 'Dự án' : 'Nhiệm vụ độc lập' }}
+          } @else {
+          Nhiệm vụ
+          }
+        </span>
+      </h2>
+      <p class="form-section-subtitle">
+        Xác định tiêu đề, mô tả mục tiêu, mức độ ưu tiên và hạn chót hoàn thành.
+      </p>
+    </div>
+
+    <div class="common-fields-grid">
+      <!-- Title -->
+      <mat-form-field appearance="outline" class="form-full-width">
+        <mat-label>{{
+          canAssignDirectly() && !parentTaskId() && assignmentType() === 'PROJECT'
+          ? 'Tên dự án *'
+          : 'Tiêu đề nhiệm vụ *'
+          }}</mat-label>
+        <input matInput formControlName="title" maxlength="300" required [placeholder]="
+            canAssignDirectly() && !parentTaskId() && assignmentType() === 'PROJECT'
+              ? 'Ví dụ: Triển khai Hệ thống Quản trị Doanh nghiệp BizFlow Toàn Diện'
+              : 'Ví dụ: Xây dựng Báo cáo Tài chính Quý 4'
+          " />
+        @if (form.controls.title.hasError('required') && form.controls.title.touched) {
+        <mat-error>Tiêu đề không được để trống</mat-error>
+        }
+      </mat-form-field>
+
+      <!-- Description -->
+      <mat-form-field appearance="outline" class="form-full-width task-description-field">
+        <mat-label>Mô tả chi tiết & Kết quả mong đợi</mat-label>
+        <textarea matInput formControlName="description" rows="4"
+          placeholder="Mô tả bối cảnh, mục tiêu cụ thể, yêu cầu chất lượng và tiêu chí nghiệm thu công việc..."></textarea>
+      </mat-form-field>
+
+      <!-- Priority -->
+      <mat-form-field appearance="outline">
+        <mat-label>Mức độ ưu tiên</mat-label>
+        <mat-select formControlName="priority">
+          <mat-option value="LOW">🟢 Thấp (Low)</mat-option>
+          <mat-option value="MEDIUM">🔵 Trung bình (Medium)</mat-option>
+          <mat-option value="HIGH">🟠 Cao (High)</mat-option>
+          <mat-option value="URGENT">🔴 Khẩn cấp (Urgent)</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <!-- Common Deadline -->
+      <mat-form-field appearance="outline">
+        <mat-label>{{
+          canAssignDirectly() && !parentTaskId() && assignmentType() === 'PROJECT'
+          ? 'Hạn chót toàn dự án'
+          : 'Hạn hoàn thành chung'
+          }}</mat-label>
+        <input matInput formControlName="deadline" type="datetime-local" placeholder="YYYY-MM-DDTHH:mm" />
+      </mat-form-field>
+    </div>
+
+    <!-- Section 2A: INDEPENDENT TASK OR SUBTASK WBS MULTI-EMPLOYEE ASSIGNMENT (S1.1, S1.4, S2.1, S2.3) -->
+    @if (canAssignDirectly() && (parentTaskId() || assignmentType() === 'INDEPENDENT')) {
+    <div class="form-section-header" style="margin-top: 2rem">
+      <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px">
+        <h2 class="form-section-title" style="margin: 0">
+          {{ parentTaskId() ? '2. Phân rã & Chọn nhân sự thực hiện trực tiếp' : '2. Chọn nhân sự thực hiện' }}
+          <span class="selection-count-badge">
+            {{ selectedRecipients().length }} nhân sự đã chọn
+          </span>
+        </h2>
+        @if (selectedRecipients().length > 1) {
+        <button type="button" class="task-nav-btn" style="min-height: 2.2rem; padding: 0.3rem 0.95rem; font-size: 0.82rem"
+          (click)="distributeIndependentWeightsEqually()">
+          <span>⚖️ Chia đều tỷ trọng (100%)</span>
+        </button>
+        }
+      </div>
+      <p class="form-section-subtitle" style="margin-top: 6px">
+        @if (parentTaskId()) {
+        Chọn một hoặc nhiều nhân viên trong phòng ban để giao trực tiếp các nhiệm vụ con thuộc gói việc này trong một lượt
+        (kèm tỷ trọng % đóng góp và hạn chót riêng), hoặc để trống nếu chỉ muốn lưu bản thảo chưa gán người.
+        } @else {
+        Tìm kiếm và chọn một hoặc nhiều nhân viên tham gia thực hiện nhiệm vụ độc lập. Chỉ định người phụ trách chính,
+        phân bổ trách nhiệm và tỷ trọng đóng góp (%) cho từng nhân sự.
+        }
+      </p>
+    </div>
+
+    <!-- Search & Department Filter Bar -->
+    <div class="employee-picker-controls">
+      <div class="filter-group">
+        <label for="dept-filter" class="control-label">Lọc theo phòng ban:</label>
+        <select id="dept-filter" class="custom-select" [ngModel]="independentDeptFilter()"
+          (ngModelChange)="independentDeptFilter.set($event)" [ngModelOptions]="{ standalone: true }">
+          <option value="">🏢 Tất cả phòng ban trong phạm vi</option>
+          @for (dept of assignableData()?.departments; track dept.id) {
+          <option [value]="dept.id">{{ dept.name }} ({{ dept.code }})</option>
+          }
+        </select>
+      </div>
+
+      <div class="search-group">
+        <label for="emp-search" class="control-label">Tìm nhân viên:</label>
+        <input id="emp-search" type="text" class="custom-search-input" [ngModel]="independentSearchQuery()"
+          (ngModelChange)="independentSearchQuery.set($event)" [ngModelOptions]="{ standalone: true }"
+          placeholder="Tìm theo tên hoặc mã nhân viên (EMP001)..." />
+      </div>
+    </div>
+
+    <!-- Quick Employee Selector Grid -->
+    <div class="employee-selection-box">
+      <div class="box-title">
+        <span>Danh sách nhân sự khả dụng (Nhấp vào nhân sự để chọn/bỏ chọn):</span>
+        <span style="font-size: 0.75rem; color: #64748b">
+          Hiển thị {{ filteredEmployees().length }} nhân sự
+        </span>
+      </div>
+
+      <div class="employee-chips-grid">
+        @for (emp of filteredEmployees(); track (emp.id || $any(emp).userId)) {
+        <button type="button" class="employee-chip-btn"
+          [class.is-checked]="isEmployeeSelected(emp.id || $any(emp).userId)" (click)="toggleEmployee(emp)"
+          [attr.aria-pressed]="isEmployeeSelected(emp.id || $any(emp).userId)">
+          <span class="check-box-indicator">
+            {{ isEmployeeSelected(emp.id) ? '✓' : '+' }}
+          </span>
+          <div class="chip-info">
+            <span class="emp-name">{{ emp.fullName }}</span>
+            <span class="emp-dept-role">
+              {{ emp.employeeCode }} · {{ emp.departmentName || 'Chưa xếp phòng' }} ({{ emp.roleTitle }})
+            </span>
+          </div>
+        </button>
+        } @empty {
+        <div class="empty-hint">Không tìm thấy nhân viên nào phù hợp với bộ lọc hiện tại.</div>
+        }
+      </div>
+    </div>
+
+    <!-- Weight Balance Bar Indicator for Independent / Subtask WBS (S1.4 & S2.3) -->
+    @if (selectedRecipients().length > 1) {
+    <div class="weight-summary-bar" style="margin-bottom: 14px">
+      <div class="weight-info">
+        <span>Tổng tỷ trọng phân bổ nhân sự:</span>
+        <strong [style.color]="totalIndependentWeight() === 100 ? '#166534' : '#b45309'">
+          {{ totalIndependentWeight() }}% / 100%
+        </strong>
+        @if (totalIndependentWeight() === 100) {
+        <span class="weight-ok">✓ Hợp lệ (100%)</span>
+        } @else {
+        <span class="weight-warn">⚠️ Chưa đủ hoặc vượt 100% (Nhấn "Chia đều tỷ trọng" để cân đối)</span>
+        }
+      </div>
+      <div class="weight-progress-track">
+        <div class="weight-progress-fill" [style.width.%]="Math.min(100, totalIndependentWeight())"
+          [style.background]="totalIndependentWeight() === 100 ? '#10b981' : '#f59e0b'"></div>
+      </div>
+    </div>
+    }
+
+    <!-- Selected Recipients Assignment Table -->
+    <div class="selected-recipients-container">
+      <h3 class="table-title">
+        📋 Chi tiết phân bổ cho các nhân sự đã chọn ({{ selectedRecipients().length }} người)
+      </h3>
+
+      @if (selectedRecipients().length > 0) {
+      <div class="table-responsive">
+        <table class="assignment-table">
+          <thead>
+            <tr>
+              <th style="width: 22%">Nhân sự & Phòng ban</th>
+              @if (!parentTaskId()) {
+              <th style="width: 13%; text-align: center">Phụ trách chính</th>
+              }
+              <th style="width: 30%">Vai trò / Phần việc cụ thể</th>
+              <th style="width: 13%; text-align: center">⚖️ Tỷ trọng (%)</th>
+              <th style="width: 17%">Hạn hoàn thành riêng</th>
+              <th style="width: 5%; text-align: center">Xóa</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (rec of selectedRecipients(); track rec.userId) {
+            <tr [class.is-primary-row]="!parentTaskId() && rec.isPrimary">
+              <td>
+                <div class="rec-name">
+                  {{ rec.fullName }}
+                  @if (!parentTaskId() && rec.isPrimary) {
+                  <span class="primary-badge">⭐ Phụ trách chính</span>
+                  }
+                </div>
+                <div class="rec-meta">{{ rec.employeeCode }} · {{ rec.departmentName }}</div>
+              </td>
+              @if (!parentTaskId()) {
+              <td style="text-align: center">
+                <label class="radio-label">
+                  <input type="radio" name="primaryRecipientRadio" [checked]="rec.isPrimary"
+                    (change)="setPrimaryRecipient(rec.userId)" />
+                  <span class="radio-text">{{ rec.isPrimary ? 'Chính' : 'Phụ' }}</span>
+                </label>
+              </td>
+              }
+              <td>
+                <input type="text" class="table-input" [value]="rec.responsibility"
+                  (input)="updateRecipientResponsibility(rec.userId, $any($event.target).value)"
+                  placeholder="Mô tả đầu việc giao riêng (ví dụ: Lập trình API, Kiểm thử...)" />
+              </td>
+              <td style="text-align: center">
+                <div style="display: inline-flex; align-items: center; gap: 4px">
+                  <input type="number" min="1" max="100" step="0.5" class="table-input"
+                    style="width: 72px; font-weight: 700; text-align: right" [value]="rec.weight"
+                    (input)="updateRecipientWeight(rec.userId, $any($event.target).value)" />
+                  <span style="font-weight: 700; color: #1e40af; font-size: 0.8rem">%</span>
+                </div>
+              </td>
+              <td>
+                <input type="datetime-local" class="table-input" [value]="rec.deadline"
+                  (input)="updateRecipientDeadline(rec.userId, $any($event.target).value)" />
+              </td>
+              <td style="text-align: center">
+                <button type="button" class="delete-btn" (click)="removeRecipient(rec.userId)"
+                  title="Xóa nhân sự này khỏi nhiệm vụ">
+                  ✕
+                </button>
+              </td>
+            </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      } @else {
+      <div class="no-selection-banner">
+        @if (parentTaskId()) {
+        💡 Chưa chọn nhân sự thực hiện trực tiếp. Chọn 1 hoặc nhiều nhân viên phía trên để giao việc ngay, hoặc nhấn nút tạo bên dưới để lưu bản thảo.
+        } @else {
+        ⚠️ Chưa có nhân sự nào được chọn. Vui lòng chọn ít nhất 1 nhân viên từ danh sách phía trên để phân công.
+        }
+      </div>
+      }
+    </div>
+    }
+
+    <!-- Section 2B: PROJECT MULTI-DEPARTMENT ASSIGNMENT -->
+    @if (canAssignDirectly() && !parentTaskId() && assignmentType() === 'PROJECT') {
+    <div class="form-section-header" style="margin-top: 2rem">
+      <h2 class="form-section-title">
+        2. Các phòng ban tham gia dự án & Trưởng phòng phụ trách
+        <span class="selection-count-badge">
+          {{ selectedProjectPackages().length }} phòng ban
+        </span>
+      </h2>
+      <p class="form-section-subtitle">
+        Chỉ định các phòng ban cùng tham gia dự án chiến lược. Chọn Trưởng phòng chịu trách nhiệm điều phối cho từng
+        phòng ban và phân chia tỷ trọng đóng góp (%) cho mỗi gói việc.
+      </p>
+    </div>
+
+    <!-- Add Department to Project Control -->
+    <div class="add-department-bar">
+      <div class="add-controls">
+        <label for="select-dept-to-add" class="control-label">Thêm phòng ban vào dự án:</label>
+        <select id="select-dept-to-add" class="custom-select" [ngModel]="projectDeptToAdd()"
+          (ngModelChange)="projectDeptToAdd.set($event)" [ngModelOptions]="{ standalone: true }">
+          <option value="">-- Chọn phòng ban cần phối hợp --</option>
+          @for (dept of availableDepartmentsForProject(); track dept.id) {
+          <option [value]="dept.id">{{ dept.name }} (Mã: {{ dept.code }})</option>
+          }
+        </select>
+        <button type="button" class="task-nav-btn primary-nav-btn"
+          style="min-height: 2.3rem; padding: 0.35rem 1.1rem; font-size: 0.85rem"
+          (click)="addDepartmentPackage(projectDeptToAdd())" [disabled]="!projectDeptToAdd()">
+          <span>+ Thêm phòng ban</span>
+        </button>
+      </div>
+
+      <button type="button" class="task-nav-btn" style="min-height: 2.3rem; padding: 0.35rem 1rem; font-size: 0.82rem"
+        (click)="distributeWeightsEqually()">
+        <span>⚖️ Chia đều tỷ trọng (100%)</span>
+      </button>
+    </div>
+
+    <!-- Weight Balance Bar Indicator -->
+    <div class="weight-summary-bar">
+      <div class="weight-info">
+        <span>Tổng tỷ trọng phân bổ:</span>
+        <strong [style.color]="totalProjectWeight() === 100 ? '#166534' : '#b45309'">
+          {{ totalProjectWeight() }}% / 100%
+        </strong>
+        @if (totalProjectWeight() === 100) {
+        <span class="weight-ok">✓ Hợp lệ (100%)</span>
+        } @else {
+        <span class="weight-warn">⚠️ Chưa đủ hoặc vượt 100% (Nhấn "Chia đều tỷ trọng" để cân đối)</span>
+        }
+      </div>
+      <div class="weight-progress-track">
+        <div class="weight-progress-fill" [style.width.%]="Math.min(100, totalProjectWeight())"
+          [style.background]="totalProjectWeight() === 100 ? '#10b981' : '#f59e0b'"></div>
+      </div>
+    </div>
+
+    <!-- Department Work Packages Cards List -->
+    <div class="project-packages-list">
+      @for (pkg of selectedProjectPackages(); track pkg.departmentId) {
+      <div class="package-item-card">
+        <div class="package-header">
+          <div class="pkg-dept-title">
+            <span class="dept-badge">🏛️ {{ pkg.departmentName }} ({{ pkg.departmentCode }})</span>
+          </div>
+          <button type="button" class="remove-pkg-btn" (click)="removeDepartmentPackage(pkg.departmentId)"
+            title="Loại phòng ban này khỏi dự án">
+            ✕ Xóa phòng ban
+          </button>
+        </div>
+
+        <div class="package-fields-grid">
+          <!-- Manager Selector -->
+          <div class="field-item">
+            <label class="field-label">👔 Trưởng phòng phụ trách điều phối *:</label>
+            <select class="custom-select" [ngModel]="pkg.managerId"
+              (ngModelChange)="updatePackageManager(pkg.departmentId, $event)" [ngModelOptions]="{ standalone: true }"
+              required>
+              <option value="">-- Chọn Trưởng phòng phụ trách --</option>
+              @for (mgr of pkg.availableManagers; track mgr.id) {
+              <option [value]="mgr.id">
+                {{ mgr.fullName }} · {{ mgr.title }} ({{ mgr.employeeCode }})
+              </option>
+              }
+              @if (pkg.availableManagers.length === 0) {
+              <option [value]="session.identity()?.userId">
+                (Chưa có Trưởng phòng riêng — Chỉ định quản trị viên)
+              </option>
+              }
+            </select>
+          </div>
+
+          <!-- Package Weight % -->
+          <div class="field-item">
+            <label class="field-label">⚖️ Tỷ trọng đóng góp (%):</label>
+            <div style="display: flex; align-items: center; gap: 6px">
+              <input type="number" min="1" max="100" step="0.5" class="custom-input"
+                style="width: 90px; font-weight: 700" [value]="pkg.weight"
+                (input)="updatePackageWeight(pkg.departmentId, $any($event.target).value)" />
+              <span style="font-weight: 700; color: #1e40af">%</span>
+            </div>
+          </div>
+
+          <!-- Package Name -->
+          <div class="field-item form-full-width">
+            <label class="field-label">Tên gói việc phòng ban:</label>
+            <input type="text" class="custom-input" [value]="pkg.packageName"
+              (input)="updatePackageName(pkg.departmentId, $any($event.target).value)"
+              placeholder="[Gói việc] Tên dự án — Tên phòng ban" />
+          </div>
+
+          <!-- Package Scope -->
+          <div class="field-item form-full-width">
+            <label class="field-label">Phạm vi công việc & Đầu ra mong đợi:</label>
+            <textarea rows="2" class="custom-textarea" [value]="pkg.scopeDescription"
+              (input)="updatePackageScope(pkg.departmentId, $any($event.target).value)"
+              placeholder="Mô tả phạm vi gói việc, kết quả phòng ban cần bàn giao..."></textarea>
+          </div>
+
+          <!-- Package Deadline -->
+          <div class="field-item">
+            <label class="field-label">Hạn hoàn thành gói việc:</label>
+            <input type="datetime-local" class="custom-input" [value]="pkg.deadline"
+              (input)="updatePackageDeadline(pkg.departmentId, $any($event.target).value)" />
+          </div>
+        </div>
+      </div>
+      } @empty {
+      <div class="no-selection-banner">
+        ⚠️ Dự án cần ít nhất 1 phòng ban tham gia. Vui lòng chọn phòng ban từ thanh công cụ phía trên.
+      </div>
+      }
+    </div>
+    }
+
+    <!-- Section 3: CHECKLIST -->
+    <div class="form-section-header" style="margin-top: 1.5rem">
+      <h2 class="form-section-title">3. Danh mục kiểm tra (Checklist)</h2>
+      <p class="form-section-subtitle">
+        Liệt kê các đầu việc nhỏ hoặc tiêu chí nghiệm thu để kiểm soát tiến độ từng bước.
+      </p>
+    </div>
+
+    <div class="common-fields-grid">
+      <mat-form-field appearance="outline" class="form-full-width task-checklist-field">
+        <mat-label>Danh mục kiểm tra (mỗi dòng một việc)</mat-label>
+        <textarea matInput formControlName="checklist" rows="3"
+          placeholder="Khảo sát yêu cầu&#10;Thiết kế bản vẽ&#10;Triển khai thử nghiệm"></textarea>
+      </mat-form-field>
+    </div>
+
+    <!-- Error message alert -->
+    @if (error()) {
+    <div class="form-error-banner" style="
+          grid-column: 1 / -1;
+          background: #fef2f2;
+          border: 1.5px solid #f87171;
+          color: #991b1b;
+          border-radius: 10px;
+          padding: 12px 16px;
+          font-weight: 600;
+          font-size: 0.88rem;
+          margin-top: 10px;
+        ">
+      ⚠️ {{ error() }}
+    </div>
+    }
+
+    <!-- Form Actions Bar -->
+    <div class="assignment-actions-bar">
+      <div class="left-note">
+        @if (parentTaskId()) {
+        @if (selectedRecipients().length > 0) {
+        <span>Phân rã và giao trực tiếp tới <strong>{{ selectedRecipients().length }} nhân sự</strong> thuộc gói việc.</span>
+        } @else {
+        <span>Khởi tạo nhiệm vụ con ở trạng thái bản thảo (có thể phân công nhân sự sau).</span>
+        }
+        } @else if (canAssignDirectly()) {
+        @if (assignmentType() === 'INDEPENDENT') {
+        <span>Phân công độc lập tới <strong>{{ selectedRecipients().length }} nhân sự</strong>. Thông báo sẽ được gửi
+          trực tiếp tới từng nhân viên.</span>
+        } @else {
+        <span>Khởi tạo dự án điều phối qua <strong>{{ selectedProjectPackages().length }} phòng ban</strong>. Thông báo
+          sẽ được gửi tới các Trưởng phòng phụ trách.</span>
+        }
+        }
+      </div>
+
+      <div class="action-buttons">
+        <a routerLink="/tasks" class="task-nav-btn">
+          <span>Hủy bỏ</span>
+        </a>
+
+        <button type="submit" class="task-nav-btn primary-nav-btn submit-assignment-btn"
+          [disabled]="busy() || (canAssignDirectly() && !parentTaskId() && assignableData() !== null && assignmentType() === 'INDEPENDENT' && selectedRecipients().length === 0) || (canAssignDirectly() && !parentTaskId() && assignmentType() === 'PROJECT' && selectedProjectPackages().length === 0)"
+          id="btn-submit-task-assignment">
+          <span>
+            @if (busy()) {
+            Đang xử lý phân công…
+            } @else if (parentTaskId()) {
+            @if (selectedRecipients().length > 0) {
+            🚀 Phân rã & Giao ngay ({{ selectedRecipients().length }} nhân sự)
+            } @else {
+            ✓ Lưu bản thảo nhiệm vụ con
+            }
+            } @else if (canAssignDirectly()) {
+            @if (assignmentType() === 'INDEPENDENT') {
+            🎯 Phân công nhiệm vụ độc lập ({{ selectedRecipients().length }} nhân sự)
+            } @else {
+            🚀 Khởi tạo & Phân công dự án ({{ selectedProjectPackages().length }} phòng ban)
+            }
+            } @else {
+            ✓ Khởi tạo nhiệm vụ
+            }
+          </span>
+        </button>
+      </div>
     </div>
   </form>
 </main>

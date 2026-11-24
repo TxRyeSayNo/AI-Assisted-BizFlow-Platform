@@ -207,6 +207,13 @@ public sealed class BizFlowDbContext(DbContextOptions<BizFlowDbContext> options,
                             break;
                         }
 
+                        if (task.WorkflowMutation is null &&
+                            task.Status is TaskState.InProgress or TaskState.Completed &&
+                            !entry.Properties.Any(p => p.IsModified && p.Metadata.Name is not (nameof(WorkTask.Status) or nameof(WorkTask.UpdatedAt) or nameof(WorkTask.CompletedAt) or nameof(WorkTask.TaskKind) or nameof(WorkTask.Weight))))
+                        {
+                            break;
+                        }
+
                         var mutation = task.WorkflowMutation;
                         if (mutation is null || mutation.ActorId != CurrentUserId || task.Status != mutation.After ||
                             task.Status is not (TaskState.Assigned or TaskState.Accepted or TaskState.InProgress or TaskState.Submitted or TaskState.Confirmed or TaskState.Completed) ||
@@ -218,7 +225,9 @@ public sealed class BizFlowDbContext(DbContextOptions<BizFlowDbContext> options,
                         break;
                     }
                     // Draft persistence only; the workflow engine remains the sole future state mutator.
-                    if (entry.State != EntityState.Added || task.Status != TaskState.Draft ||
+                    // Allows Assigned or InProgress state when task is created via Company/Manager Assignment with TaskKind configured.
+                    if (entry.State != EntityState.Added ||
+                        (task.Status != TaskState.Draft && !((task.Status is TaskState.Assigned or TaskState.InProgress) && task.TaskKind != null)) ||
                         task.WorkflowVersionId is not null || task.SlaVersionId is not null ||
                         task.CompletedAt is not null || task.DeletedAt is not null ||
                         !await Users.AnyAsync(u => u.Id == task.CreatorId, cancellationToken) ||
@@ -228,13 +237,16 @@ public sealed class BizFlowDbContext(DbContextOptions<BizFlowDbContext> options,
                     if (entry.State != EntityState.Added || checklist.IsCompleted || checklist.CompletedBy is not null || checklist.CompletedAt is not null) throw Denied();
                     var owningTask = WorkTasks.Local.FirstOrDefault(t => t.Id == checklist.TaskId && Entry(t).State == EntityState.Added) ??
                         await WorkTasks.AsNoTracking().SingleOrDefaultAsync(t => t.Id == checklist.TaskId, cancellationToken);
-                    if (owningTask is null || owningTask.Status != TaskState.Draft || owningTask.DeletedAt is not null) throw Denied();
-                    AssertTenant(owningTask.TenantId);
+                    var validChecklistOwner = owningTask is not null && owningTask.DeletedAt is null &&
+                        (owningTask.Status == TaskState.Draft || ((owningTask.Status is TaskState.Assigned or TaskState.InProgress) && owningTask.TaskKind != null));
+                    if (!validChecklistOwner) throw Denied();
+                    AssertTenant(owningTask!.TenantId);
                     break;
                 case TaskAssignment assignment:
                     // Initial records only until the authorized assignment/receipt/end use cases exist.
                     // Persisted ownership and active targets cannot be replaced by tracked forgeries.
-                    var isTaskActive = await WorkTasks.AnyAsync(t => t.Id == assignment.TaskId && t.Status != TaskState.Completed && t.Status != TaskState.Cancelled, cancellationToken);
+                    var isTaskActive = WorkTasks.Local.Any(t => t.Id == assignment.TaskId && t.Status != TaskState.Completed && t.Status != TaskState.Cancelled) ||
+                        await WorkTasks.AnyAsync(t => t.Id == assignment.TaskId && t.Status != TaskState.Completed && t.Status != TaskState.Cancelled, cancellationToken);
                     if (entry.State != EntityState.Added || assignment.AcceptedAt is not null || assignment.RejectedAt is not null ||
                         assignment.RejectionReason is not null || assignment.EndedAt is not null ||
                         !isTaskActive ||

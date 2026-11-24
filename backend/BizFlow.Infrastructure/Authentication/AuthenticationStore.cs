@@ -5,6 +5,7 @@ using BizFlow.Domain.Audit;
 using BizFlow.Domain.Authentication;
 using BizFlow.Domain.Organization;
 using BizFlow.Domain.Security;
+using BizFlow.Domain.Tenancy;
 using BizFlow.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
@@ -25,17 +26,27 @@ public sealed class AuthenticationStore(DbContextOptions<BizFlowDbContext> optio
 
         if (tenantKey == null)
         {
-            var query = from user in baseQuery
-                        where user.TenantId == null && user.IsPlatformAdministrator
-                        orderby user.Id
-                        select new AuthenticationCandidate(user.Id, null, null, null);
-            return await query.Take(20).ToListAsync(cancellationToken);
+            var adminQuery = from user in baseQuery
+                             where user.TenantId == null && user.IsPlatformAdministrator
+                             orderby user.Id
+                             select new AuthenticationCandidate(user.Id, null, null, null);
+
+            var tenantUserQuery = from user in baseQuery
+                                  join tenant in db.Tenants.IgnoreQueryFilters() on user.TenantId equals tenant.Id
+                                  where user.TenantId != null && tenant.Status == TenantStatus.Active
+                                  orderby user.Id
+                                  select new AuthenticationCandidate(user.Id, user.TenantId, tenant.Name, tenant.TenantKey);
+
+            var adminList = await adminQuery.Take(20).ToListAsync(cancellationToken);
+            if (adminList.Count > 0) return adminList;
+
+            return await tenantUserQuery.Take(20).ToListAsync(cancellationToken);
         }
         else
         {
             var query = from user in baseQuery
                         join tenant in db.Tenants.IgnoreQueryFilters() on user.TenantId equals tenant.Id
-                        where tenant.TenantKey == tenantKey
+                        where tenant.TenantKey == tenantKey && tenant.Status == TenantStatus.Active
                         orderby user.Id
                         select new AuthenticationCandidate(user.Id, user.TenantId, tenant.Name, tenant.TenantKey);
             return await query.Take(20).ToListAsync(cancellationToken);

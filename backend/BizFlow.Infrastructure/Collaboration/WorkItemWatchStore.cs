@@ -35,6 +35,60 @@ public sealed class WorkItemWatchStore(BizFlowDbContext db) : IWorkItemWatchStor
         return (rows.Contains(userId), rows.Count);
     }
 
+    public async Task<IReadOnlyList<WorkItemParticipantInfo>> ReadWatchersAsync(Guid tenantId, CommentObjectType objectType,
+        Guid objectId, CancellationToken cancellationToken)
+    {
+        var watcherIds = await db.WorkItemWatchers.AsNoTracking()
+            .Where(w => w.TenantId == tenantId && w.ObjectType == objectType && w.ObjectId == objectId &&
+                w.RemovedAt == null)
+            .OrderBy(w => w.CreatedAt)
+            .Select(w => w.UserId)
+            .ToListAsync(cancellationToken);
+        if (watcherIds.Count == 0) return [];
+        var users = await db.Users.AsNoTracking()
+            .Where(u => u.TenantId == tenantId && watcherIds.Contains(u.Id))
+            .Select(u => new
+            {
+                u.Id,
+                u.FullName,
+                u.EmployeeCode,
+                DepartmentName = u.DepartmentId == null
+                    ? null
+                    : db.Departments.Where(d => d.TenantId == tenantId && d.Id == u.DepartmentId)
+                        .Select(d => d.Name)
+                        .FirstOrDefault()
+            })
+            .ToListAsync(cancellationToken);
+        return watcherIds
+            .Select(id => users.FirstOrDefault(u => u.Id == id))
+            .Where(u => u is not null)
+            .Select(u => new WorkItemParticipantInfo(u!.Id, u.FullName, u.EmployeeCode, u.DepartmentName))
+            .ToArray();
+    }
+
+    public async Task<IReadOnlyList<WorkItemParticipantInfo>> ReadActiveTenantDirectoryAsync(Guid tenantId,
+        CancellationToken cancellationToken)
+    {
+        var rows = await db.Users.AsNoTracking()
+            .Where(u => u.TenantId == tenantId && u.Status == UserStatus.Active)
+            .OrderBy(u => u.FullName)
+            .ThenBy(u => u.EmployeeCode)
+            .Take(200)
+            .Select(u => new
+            {
+                u.Id,
+                u.FullName,
+                u.EmployeeCode,
+                DepartmentName = u.DepartmentId == null
+                    ? null
+                    : db.Departments.Where(d => d.TenantId == tenantId && d.Id == u.DepartmentId)
+                        .Select(d => d.Name)
+                        .FirstOrDefault()
+            })
+            .ToListAsync(cancellationToken);
+        return [.. rows.Select(u => new WorkItemParticipantInfo(u.Id, u.FullName, u.EmployeeCode, u.DepartmentName))];
+    }
+
     public async Task<bool> AddWatcherAsync(WorkItemWatcher watcher, CancellationToken cancellationToken)
     {
         // The unique index means a person has at most one row per item, active or cancelled.

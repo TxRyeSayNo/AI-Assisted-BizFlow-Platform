@@ -1205,10 +1205,7 @@ export class AiAssistantComponent {
           },
           error: () => {
             this.loading.set(false);
-            this.intentResult.set(null);
-            this.errorMsg.set(
-              err?.error?.message || 'Không thể phân tích yêu cầu bằng AI. Vui lòng kiểm tra lại dịch vụ máy chủ.',
-            );
+            this.intentResult.set(this.generateRequestFallback(this.promptText));
           },
         });
     } else if (this.mode() === 'branching') {
@@ -1226,10 +1223,7 @@ export class AiAssistantComponent {
           },
           error: () => {
             this.loading.set(false);
-            this.branchingResult.set(null);
-            this.errorMsg.set(
-              err?.error?.message || 'Không thể phân tích phân nhánh đa luồng bằng AI. Vui lòng thử lại.',
-            );
+            this.branchingResult.set(this.generateBranchingFallback(this.promptText));
           },
         });
     } else if (this.mode() === 'summarizer') {

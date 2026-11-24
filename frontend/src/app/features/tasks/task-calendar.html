@@ -32,10 +32,28 @@
           <span class="nav-btn-icon" aria-hidden="true">≡</span>
           <span>{{ 'taskBoard.viewList' | translate: 'List' }}</span>
         </a>
+        <a
+          class="task-nav-btn"
+          routerLink="/tasks/board"
+          [title]="'taskBoard.viewBoardHint' | translate: 'Open the Kanban board'"
+        >
+          <span class="nav-btn-icon" aria-hidden="true">▦</span>
+          <span>{{ 'taskBoard.viewBoard' | translate: 'Board' }}</span>
+        </a>
         <span class="task-nav-btn primary-nav-btn is-current" aria-current="page">
           <span class="nav-btn-icon" aria-hidden="true">▤</span>
           <span>{{ 'taskCalendar.viewCalendar' | translate: 'Calendar' }}</span>
         </span>
+        @if (session.hasPermission('tasks.create')) {
+          <a
+            class="task-nav-btn primary-nav-btn"
+            routerLink="/tasks/new"
+            [title]="'tasks.newTask' | translate: 'New task'"
+          >
+            <span class="nav-btn-icon" aria-hidden="true">+</span>
+            <span>{{ 'tasks.newTask' | translate: 'New task' }}</span>
+          </a>
+        }
       </div>
     </div>
   </div>
@@ -158,6 +176,13 @@
           }}
         </p>
       }
+      <div class="calendar-legend" aria-label="Chú giải màu trạng thái và mức độ ưu tiên">
+        <span class="legend-item"><span class="legend-dot dot-completed"></span> Hoàn thành / Xác nhận</span>
+        <span class="legend-item"><span class="legend-dot dot-active"></span> Đang thực hiện / Đã nhận</span>
+        <span class="legend-item"><span class="legend-dot dot-warning"></span> Đã nộp / Chờ nghiệm thu</span>
+        <span class="legend-item"><span class="legend-dot dot-overdue"></span> Quá hạn / Khẩn cấp</span>
+        <span class="legend-item"><span class="legend-dot dot-draft"></span> Bản nháp / Đã giao</span>
+      </div>
       <div class="calendar-grid" role="grid" [attr.aria-label]="heading()">
         <div class="calendar-weekdays" role="row">
           @for (label of weekdayLabels; track label) {
@@ -177,14 +202,20 @@
                 <a
                   class="calendar-entry"
                   [attr.data-priority]="item.priority"
+                  [attr.data-status]="item.status"
                   [routerLink]="['/tasks', item.taskId]"
                   [title]="item.title"
                 >
                   <span class="calendar-entry-title">{{ item.title }}</span>
                   <span class="calendar-entry-meta">
-                    {{ 'status.' + item.status | translate: states[item.status] }}
+                    <span class="calendar-status-flag" [attr.data-status]="item.status">
+                      {{ 'status.' + item.status | translate: states[item.status] }}
+                    </span>
+                    <span class="calendar-priority-flag" [attr.data-priority]="item.priority">
+                      {{ 'priority.' + item.priority | translate: priorities[item.priority] }}
+                    </span>
                     @if (item.deadline) {
-                      · {{ item.deadline | date: 'shortTime' }}
+                      <span class="calendar-time">· {{ item.deadline | date: 'shortTime' }}</span>
                     }
                   </span>
                 </a>

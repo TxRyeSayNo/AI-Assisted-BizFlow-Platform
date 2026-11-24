@@ -33,6 +33,26 @@
           <span class="nav-btn-icon" aria-hidden="true">▦</span>
           <span>{{ 'taskBoard.viewBoard' | translate: 'Board' }}</span>
         </span>
+        @if (features.calendar()) {
+          <a
+            class="task-nav-btn"
+            routerLink="/tasks/calendar"
+            [title]="'taskCalendar.viewCalendarHint' | translate: 'Open the deadline calendar'"
+          >
+            <span class="nav-btn-icon" aria-hidden="true">▤</span>
+            <span>{{ 'taskCalendar.viewCalendar' | translate: 'Calendar' }}</span>
+          </a>
+        }
+        @if (session.hasPermission('tasks.create')) {
+          <a
+            class="task-nav-btn primary-nav-btn"
+            routerLink="/tasks/new"
+            [title]="'tasks.newTask' | translate: 'New task'"
+          >
+            <span class="nav-btn-icon" aria-hidden="true">+</span>
+            <span>{{ 'tasks.newTask' | translate: 'New task' }}</span>
+          </a>
+        }
       </div>
     </div>
   </div>
@@ -76,17 +96,6 @@
           }
         </mat-select></mat-form-field
       >
-      @if (features.labels() && labelOptions().length > 0) {
-        <mat-form-field appearance="outline" subscriptSizing="dynamic"
-          ><mat-label>{{ 'labels.onItem' | translate: 'Labels' }}</mat-label
-          ><mat-select formControlName="labelId"
-            ><mat-option value="">{{ 'labels.all' | translate: 'All labels' }}</mat-option>
-            @for (label of labelOptions(); track label.labelId) {
-              <mat-option [value]="label.labelId">{{ label.name }}</mat-option>
-            }
-          </mat-select></mat-form-field
-        >
-      }
       <mat-form-field appearance="outline" subscriptSizing="dynamic"
         ><mat-label>{{ 'taskBoard.deadlineFrom' | translate: 'Deadline from' }}</mat-label
         ><input matInput type="date" formControlName="deadlineFrom" [readonly]="busy()"
@@ -164,42 +173,50 @@
                       card.title
                     }}</a>
                     <span class="task-meta">
-                      {{
-                        'priorityBadge.' + card.priority
-                          | translate: priorities[card.priority] + ' priority'
-                      }}
-                    </span>
-                    <span class="task-meta">
-                      @if (card.assignedUserId) {
+                      <span class="priority-badge" [attr.data-priority]="card.priority">
                         {{
-                          card.assignedUserName ?? ('tasks.unassigned' | translate: 'Unassigned')
+                          'priorityBadge.' + card.priority
+                            | translate: priorities[card.priority] + ' priority'
                         }}
+                      </span>
+                    </span>
+                    <span class="task-meta assignee-meta">
+                      @if (card.assignedUserId) {
+                        <span class="meta-icon" aria-hidden="true">👤</span>
+                        <span>{{
+                          card.assignedUserName ?? ('tasks.unassigned' | translate: 'Unassigned')
+                        }}</span>
                       } @else if (card.assignedDepartmentId) {
-                        {{ 'tasks.departmentQueue' | translate: 'Department queue' }}
-                        @if (card.assignedDepartmentName) {
-                          · {{ card.assignedDepartmentName }}
-                        }
+                        <span class="meta-icon" aria-hidden="true">🏢</span>
+                        <span>{{ 'tasks.departmentQueue' | translate: 'Department queue' }}@if (card.assignedDepartmentName) { · {{ card.assignedDepartmentName }} }</span>
                       } @else {
-                        {{ 'tasks.unassigned' | translate: 'Unassigned' }}
+                        <span class="meta-icon" aria-hidden="true">⚪</span>
+                        <span>{{ 'tasks.unassigned' | translate: 'Unassigned' }}</span>
                       }
                     </span>
                     @if (card.deadline) {
                       <time
-                        class="task-meta"
+                        class="task-meta deadline-meta"
                         [attr.datetime]="card.deadline"
                         [class.overdue]="card.status === 'OVERDUE'"
-                        >{{ card.deadline | date: 'short' }}</time
                       >
+                        <span class="meta-icon" aria-hidden="true">📅</span>
+                        <span>{{ card.deadline | date: 'short' }}</span>
+                      </time>
                     } @else {
-                      <span class="task-meta">{{
-                        'tasks.noDeadline' | translate: 'No deadline'
-                      }}</span>
+                      <span class="task-meta deadline-meta">
+                        <span class="meta-icon" aria-hidden="true">📅</span>
+                        <span>{{
+                          'tasks.noDeadline' | translate: 'No deadline'
+                        }}</span>
+                      </span>
                     }
                     @if (card.subtaskCount && card.subtaskCount > 0) {
-                      <span class="task-meta"
-                        >{{ card.completedSubtaskCount }}/{{ card.subtaskCount }}
-                        {{ 'taskBoard.subtasks' | translate: 'subtasks' }}</span
-                      >
+                      <span class="task-meta subtask-meta">
+                        <span class="meta-icon" aria-hidden="true">↳</span>
+                        <span>{{ card.completedSubtaskCount }}/{{ card.subtaskCount }}
+                        {{ 'taskBoard.subtasks' | translate: 'subtasks' }}</span>
+                      </span>
                     }
                   </article>
                 }

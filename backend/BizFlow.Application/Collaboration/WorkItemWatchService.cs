@@ -9,7 +9,14 @@ using BizFlow.Domain.Tasks;
 
 namespace BizFlow.Application.Collaboration;
 
-public sealed record WorkItemWatchStatus(string ObjectType, Guid ObjectId, bool Watching, int WatcherCount);
+public sealed record WorkItemParticipantInfo(Guid UserId, string FullName, string EmployeeCode, string? DepartmentName = null);
+
+public sealed record WorkItemWatchStatus(
+    string ObjectType,
+    Guid ObjectId,
+    bool Watching,
+    int WatcherCount,
+    IReadOnlyList<WorkItemParticipantInfo>? Watchers = null);
 
 public sealed record WorkItemMentionResult(Guid CommentId, int Recorded, IReadOnlyList<Guid> Skipped);
 
@@ -23,6 +30,16 @@ public interface IWorkItemWatchStore
 
     Task<(bool Watching, int Count)> ReadStatusAsync(Guid tenantId, CommentObjectType objectType, Guid objectId,
         Guid userId, CancellationToken cancellationToken);
+
+    /// <summary>Returns the active watchers with display identity for this work item.</summary>
+    Task<IReadOnlyList<WorkItemParticipantInfo>> ReadWatchersAsync(Guid tenantId, CommentObjectType objectType,
+        Guid objectId, CancellationToken cancellationToken) =>
+        Task.FromResult<IReadOnlyList<WorkItemParticipantInfo>>([]);
+
+    /// <summary>Returns active users in this tenant for scoped mention/watcher candidate filtering.</summary>
+    Task<IReadOnlyList<WorkItemParticipantInfo>> ReadActiveTenantDirectoryAsync(Guid tenantId,
+        CancellationToken cancellationToken) =>
+        Task.FromResult<IReadOnlyList<WorkItemParticipantInfo>>([]);
 
     /// <summary>Adds the watcher when absent. Returns false when it was already there.</summary>
     Task<bool> AddWatcherAsync(WorkItemWatcher watcher, CancellationToken cancellationToken);
@@ -75,7 +92,8 @@ public sealed class WorkItemWatchService(
     {
         var (tenantId, userId, type) = await RequireVisibleAsync(objectType, objectId, cancellationToken);
         var (watching, count) = await store.ReadStatusAsync(tenantId, type, objectId, userId, cancellationToken);
-        return new(Code(type), objectId, watching, count);
+        var watchers = await store.ReadWatchersAsync(tenantId, type, objectId, cancellationToken);
+        return new(Code(type), objectId, watching, count, watchers);
     }
 
     public async Task<WorkItemWatchStatus> WatchAsync(string objectType, Guid objectId, CancellationToken cancellationToken)
@@ -84,7 +102,8 @@ public sealed class WorkItemWatchService(
         // Idempotent on purpose: pressing "follow" twice is not an error.
         await store.AddWatcherAsync(WorkItemWatcher.Create(tenantId, type, objectId, userId, clock.GetUtcNow()), cancellationToken);
         var (watching, count) = await store.ReadStatusAsync(tenantId, type, objectId, userId, cancellationToken);
-        return new(Code(type), objectId, watching, count);
+        var watchers = await store.ReadWatchersAsync(tenantId, type, objectId, cancellationToken);
+        return new(Code(type), objectId, watching, count, watchers);
     }
 
     public async Task<WorkItemWatchStatus> UnwatchAsync(string objectType, Guid objectId, CancellationToken cancellationToken)
@@ -92,7 +111,47 @@ public sealed class WorkItemWatchService(
         var (tenantId, userId, type) = await RequireVisibleAsync(objectType, objectId, cancellationToken);
         await store.RemoveWatcherAsync(tenantId, type, objectId, userId, clock.GetUtcNow(), cancellationToken);
         var (watching, count) = await store.ReadStatusAsync(tenantId, type, objectId, userId, cancellationToken);
-        return new(Code(type), objectId, watching, count);
+        var watchers = await store.ReadWatchersAsync(tenantId, type, objectId, cancellationToken);
+        return new(Code(type), objectId, watching, count, watchers);
+    }
+
+    /// <summary>
+    /// Returns active tenant employees who are authorized to view this specific work item,
+    /// so @mention and watcher suggestions never expose unrelated or unauthorized users.
+    /// </summary>
+    public async Task<IReadOnlyList<WorkItemParticipantInfo>> GetMentionCandidatesAsync(string objectType, Guid objectId,
+        CancellationToken cancellationToken)
+    {
+        var (tenantId, userId, type) = await RequireVisibleAsync(objectType, objectId, cancellationToken);
+        var directory = await store.ReadActiveTenantDirectoryAsync(tenantId, cancellationToken);
+        var eligible = new List<WorkItemParticipantInfo>();
+        foreach (var candidate in directory)
+        {
+            if (candidate.UserId == Guid.Empty || candidate.UserId == userId) continue;
+            if (await CanSeeAsync(candidate.UserId, tenantId, type, objectId, cancellationToken))
+            {
+                eligible.Add(candidate);
+            }
+        }
+        return eligible;
+    }
+
+    /// <summary>
+    /// Allows an authorized user to add another eligible participant (who can view the item) as a watcher.
+    /// </summary>
+    public async Task<WorkItemWatchStatus> AddParticipantWatcherAsync(string objectType, Guid objectId, Guid targetUserId,
+        CancellationToken cancellationToken)
+    {
+        var (tenantId, userId, type) = await RequireVisibleAsync(objectType, objectId, cancellationToken);
+        if (targetUserId == Guid.Empty)
+            throw new ApplicationFault(FaultKind.Validation, "WATCH.USER_REQUIRED", "A valid user id is required.");
+        var members = await store.ActiveTenantUsersAsync(tenantId, [targetUserId], cancellationToken);
+        if (!members.Contains(targetUserId) || !await CanSeeAsync(targetUserId, tenantId, type, objectId, cancellationToken))
+            throw new ApplicationFault(FaultKind.Forbidden, "WATCH.USER_NOT_ELIGIBLE", "The selected user does not have access to view this work item.");
+        await store.AddWatcherAsync(WorkItemWatcher.Create(tenantId, type, objectId, targetUserId, clock.GetUtcNow()), cancellationToken);
+        var (watching, count) = await store.ReadStatusAsync(tenantId, type, objectId, userId, cancellationToken);
+        var watchers = await store.ReadWatchersAsync(tenantId, type, objectId, cancellationToken);
+        return new(Code(type), objectId, watching, count, watchers);
     }
 
     public async Task<WorkItemMentionResult> RecordMentionsAsync(string objectType, Guid objectId, Guid commentId,

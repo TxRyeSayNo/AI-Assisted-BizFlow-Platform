@@ -21,6 +21,8 @@ internal sealed class TaskModelConfiguration : IEntityTypeConfiguration<WorkTask
         b.Property(t => t.Status).HasDefaultValue(TaskState.Draft);
         b.Property(t => t.SlaVersionId).HasColumnName("SLAVersionId");
         b.Property(t => t.ParentTaskId).HasColumnName("ParentTaskId");
+        b.Property(t => t.TaskKind).HasMaxLength(30);
+        b.Property(t => t.Weight).HasColumnType("numeric(5,2)");
         b.HasOne<Tenant>().WithMany().HasForeignKey(t => t.TenantId).OnDelete(DeleteBehavior.Restrict);
         b.HasOne<WorkTask>().WithMany().HasForeignKey(t => t.ParentTaskId).OnDelete(DeleteBehavior.Restrict);
         b.HasOne<UserAccount>().WithMany().HasForeignKey(t => t.CreatorId).OnDelete(DeleteBehavior.Restrict);

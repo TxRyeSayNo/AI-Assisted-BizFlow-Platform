@@ -11,17 +11,31 @@ import { Subscription } from 'rxjs';
 import { SessionService } from '../../core/auth/session';
 import { I18nService } from '../../core/i18n/i18n.service';
 
+interface DirectoryItem {
+  userId?: string;
+  departmentId?: string;
+  fullName?: string;
+  name?: string;
+  employeeCode?: string;
+  code?: string;
+  departmentName?: string;
+  isManager?: boolean;
+  roleName?: string;
+}
+
 interface DirectoryPage {
-  items: {
-    userId?: string;
-    departmentId?: string;
-    fullName?: string;
-    name?: string;
-    employeeCode?: string;
-    code?: string;
-  }[];
+  items: DirectoryItem[];
   total: number;
 }
+
+export interface AssignmentTargetOption {
+  id: string;
+  label: string;
+  type: 'USER' | 'DEPARTMENT';
+  isManager?: boolean;
+  departmentName?: string;
+}
+
 @Component({
   selector: 'bf-task-assignment',
   imports: [
@@ -50,7 +64,9 @@ export class TaskAssignmentEditor {
   readonly uncertain = signal(false);
   readonly terminal = signal(false);
   readonly error = signal('');
-  readonly options = signal<{ id: string; label: string }[]>([]);
+  readonly options = signal<AssignmentTargetOption[]>([]);
+  readonly suggestedManagers = signal<AssignmentTargetOption[]>([]);
+  readonly suggestedDepartments = signal<AssignmentTargetOption[]>([]);
   readonly page = signal(1);
   readonly total = signal(0);
   readonly form = inject(FormBuilder).nonNullable.group({
@@ -59,36 +75,125 @@ export class TaskAssignmentEditor {
     targetId: ['', Validators.required],
     note: [''],
   });
+
+  isCompanyAdmin(): boolean {
+    return this.session.hasPermission('roles.configure');
+  }
+
   constructor() {
+    if (this.isCompanyAdmin()) {
+      this.form.controls.targetType.setValue('DEPARTMENT');
+    }
+    this.loadSuggestions();
     this.load(1);
   }
-  load(page: number) {
+
+  private loadSuggestions(): void {
+    // 1. Load active departments
+    this.http
+      .get<DirectoryPage>('/api/v1/departments', { params: new HttpParams().set('pageSize', 20).set('status', 'ACTIVE') })
+      .pipe(takeUntilDestroyed(this.destroy))
+      .subscribe({
+        next: (res) => {
+          this.suggestedDepartments.set(
+            (res.items || []).map((d) => ({
+              id: d.departmentId!,
+              label: `${d.name} (${d.code})`,
+              type: 'DEPARTMENT',
+            })),
+          );
+        },
+      });
+
+    // 2. Load managers
+    this.http
+      .get<DirectoryPage>('/api/v1/users', { params: new HttpParams().set('pageSize', 50).set('status', 'ACTIVE') })
+      .pipe(takeUntilDestroyed(this.destroy))
+      .subscribe({
+        next: (res) => {
+          const currentUserId = this.session.identity()?.userId;
+          const managers = (res.items || [])
+            .filter((u) => u.userId !== currentUserId && (u.isManager || u.roleName === 'MANAGER'))
+            .map((u) => ({
+              id: u.userId!,
+              label: `${u.fullName} · Trưởng phòng ${u.departmentName || 'Bộ phận'} (${u.employeeCode})`,
+              type: 'USER' as const,
+              isManager: true,
+              departmentName: u.departmentName,
+            }));
+          this.suggestedManagers.set(managers);
+        },
+      });
+  }
+
+  selectSuggestion(targetType: 'USER' | 'DEPARTMENT', targetId: string): void {
+    if (this.form.controls.targetType.value !== targetType) {
+      this.form.controls.targetType.setValue(targetType);
+      this.form.controls.targetId.setValue(targetId);
+      this.load(1, targetId);
+    } else {
+      this.form.controls.targetId.setValue(targetId);
+    }
+  }
+
+  load(page: number, preselectId?: string) {
     if (this.busy() || this.uncertain() || this.terminal()) return;
     this.query?.unsubscribe();
-    this.options.set([]);
-    this.form.controls.targetId.setValue('');
     this.loading.set(true);
     this.error.set('');
     this.page.set(page);
     const type = this.form.controls.targetType.value;
+    const currentUserId = this.session.identity()?.userId;
+
     const params = new HttpParams()
       .set('page', page)
-      .set('pageSize', 25)
+      .set('pageSize', 50)
       .set('status', 'ACTIVE')
       .set('search', this.form.controls.search.value.trim());
+
     this.query = this.http
       .get<DirectoryPage>(type === 'USER' ? '/api/v1/users' : '/api/v1/departments', { params })
       .pipe(takeUntilDestroyed(this.destroy))
       .subscribe({
         next: (result) => {
-          this.options.set(
-            result.items.map((row) => ({
-              id: (type === 'USER' ? row.userId : row.departmentId)!,
-              label: `${type === 'USER' ? row.fullName : row.name} · ${type === 'USER' ? row.employeeCode : row.code}`,
-            })),
-          );
+          const rows = result.items || [];
+
+          const mapped: AssignmentTargetOption[] = rows.map((row) => {
+            if (type === 'USER') {
+              const isMgr = row.isManager || row.roleName === 'MANAGER';
+              const roleTitle = isMgr ? `⭐ Trưởng phòng ${row.departmentName || 'Bộ phận'}` : `👤 ${row.departmentName ? row.departmentName + ' · ' : ''}Nhân viên`;
+              return {
+                id: row.userId!,
+                label: `${row.fullName} · ${roleTitle} (${row.employeeCode})`,
+                type: 'USER',
+                isManager: isMgr,
+                departmentName: row.departmentName,
+              };
+            } else {
+              return {
+                id: row.departmentId!,
+                label: `🏢 ${row.name} · Mã: ${row.code}`,
+                type: 'DEPARTMENT',
+              };
+            }
+          });
+
+          // Sort so managers are at the top when selecting users
+          if (type === 'USER') {
+            mapped.sort((a, b) => {
+              if (a.isManager && !b.isManager) return -1;
+              if (!a.isManager && b.isManager) return 1;
+              return a.label.localeCompare(b.label);
+            });
+          }
+
+          this.options.set(mapped);
           this.total.set(result.total);
           this.loading.set(false);
+
+          if (preselectId) {
+            this.form.controls.targetId.setValue(preselectId);
+          }
         },
         error: () => {
           this.loading.set(false);

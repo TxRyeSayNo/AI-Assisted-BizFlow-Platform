@@ -40,6 +40,25 @@ public sealed class WorkItemWatchersController(WorkItemWatchService watchers, IO
         return watchers.UnwatchAsync(objectType, objectId, cancellationToken);
     }
 
+    [HttpGet("mention-candidates")]
+    public Task<IReadOnlyList<WorkItemParticipantInfo>> MentionCandidates(string objectType, Guid objectId,
+        CancellationToken cancellationToken)
+    {
+        Require();
+        return watchers.GetMentionCandidatesAsync(objectType, objectId, cancellationToken);
+    }
+
+    [JsonUnmappedMemberHandling(JsonUnmappedMemberHandling.Disallow)]
+    public sealed record AddWatcherInput(Guid UserId);
+
+    [HttpPost("watchers")]
+    public Task<WorkItemWatchStatus> AddWatcher(string objectType, Guid objectId, AddWatcherInput input,
+        CancellationToken cancellationToken)
+    {
+        Require();
+        return watchers.AddParticipantWatcherAsync(objectType, objectId, input.UserId, cancellationToken);
+    }
+
     [JsonUnmappedMemberHandling(JsonUnmappedMemberHandling.Disallow)]
     public sealed record MentionInput(Guid CommentId, Guid[] UserIds);
 

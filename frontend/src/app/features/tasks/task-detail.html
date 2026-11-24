@@ -32,56 +32,378 @@
           >
             <span>← {{ 'taskCreate.backToTasks' | translate: 'Back to tasks' }}</span>
           </a>
+          @if (canAccept()) {
+            <button
+              type="button"
+              class="task-nav-btn primary-nav-btn"
+              (click)="accept()"
+            >
+              <span>✓ {{ 'taskDetail.acceptBtn' | translate: 'Accept task' }}</span>
+            </button>
+          }
           @if (canStart()) {
-            <button mat-flat-button color="primary" type="button" (click)="start()">
-              {{
-                detail.task.status === 'OVERDUE'
-                  ? ('taskDetail.resumeWork' | translate: 'Resume work')
-                  : ('taskDetail.startWork' | translate: 'Start work')
-              }}
+            <button
+              type="button"
+              class="task-nav-btn primary-nav-btn"
+              (click)="start()"
+            >
+              <span>
+                ▶
+                {{
+                  detail.task.status === 'OVERDUE'
+                    ? ('taskDetail.resumeWork' | translate: 'Resume work')
+                    : ('taskDetail.startWork' | translate: 'Start work')
+                }}
+              </span>
+            </button>
+          }
+          @if (canReportProgress()) {
+            <button
+              type="button"
+              class="task-nav-btn"
+              (click)="toggleProgressForm()"
+            >
+              <span>📈 Báo cáo tiến độ</span>
             </button>
           }
           @if (canSubmit()) {
-            <button mat-flat-button color="primary" type="button" (click)="submit()">
-              {{ 'taskDetail.submitResultBtn' | translate: 'Submit result' }}
+            <button
+              type="button"
+              class="task-nav-btn primary-nav-btn"
+              (click)="submit()"
+            >
+              <span>📤 {{ 'taskDetail.submitResultBtn' | translate: 'Nộp kết quả' }}</span>
             </button>
           }
           @if (canConfirm()) {
-            <button mat-flat-button color="primary" type="button" (click)="confirm()">
-              {{ 'tasks.confirmTask' | translate: 'Review result' }}
-            </button>
-          }
-          @if (canAccept()) {
-            <button mat-flat-button color="primary" type="button" (click)="accept()">
-              {{ 'taskDetail.acceptBtn' | translate: 'Accept task' }}
+            <button
+              type="button"
+              class="task-nav-btn primary-nav-btn"
+              (click)="confirm()"
+            >
+              <span>📋 {{ 'tasks.confirmTask' | translate: 'Nghiệm thu / Đánh giá kết quả' }}</span>
             </button>
           }
           @if (
             session.hasPermission('tasks.assign') &&
             (detail.task.status === 'DRAFT' || detail.task.status === 'REJECTED')
           ) {
-            <button mat-flat-button color="primary" type="button" (click)="assign()">
-              {{ 'taskDetail.assignBtn' | translate: 'Assign task' }}
+            <button
+              type="button"
+              class="task-nav-btn primary-nav-btn"
+              (click)="assign()"
+            >
+              <span>👤 {{ 'taskDetail.assignBtn' | translate: 'Assign task' }}</span>
             </button>
           }
           @if (canArchive()) {
             <button
-              mat-stroked-button
-              color="warn"
               type="button"
+              class="task-nav-btn danger-nav-btn"
               (click)="archive()"
               [disabled]="archiving"
             >
-              {{
-                archiving
-                  ? ('taskDetail.archivingBtn' | translate: 'Archiving…')
-                  : ('taskDetail.archiveBtn' | translate: 'Archive task')
-              }}
+              <span>
+                {{
+                  archiving
+                    ? ('taskDetail.archivingBtn' | translate: 'Archiving…')
+                    : ('taskDetail.archiveBtn' | translate: 'Archive task')
+                }}
+              </span>
             </button>
           }
         </div>
       </div>
     </div>
+
+    <!-- DIRECT MANAGER / ASSIGNEE ACTION BANNER FOR PROJECT WORK PACKAGES -->
+    @if (myWorkPackage(); as myPkg) {
+      <section
+        class="my-package-action-banner"
+        aria-label="Phần việc phụ trách của bạn trong dự án này"
+        style="
+          background: linear-gradient(135deg, #eff6ff 0%, #f0fdf4 100%);
+          border: 1.5px solid #93c5fd;
+          border-radius: 12px;
+          padding: 16px 20px;
+          margin-bottom: 20px;
+          box-shadow: 0 4px 14px rgba(37, 99, 235, 0.08);
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          flex-wrap: wrap;
+          gap: 14px;
+        "
+      >
+        <div style="flex: 1; min-width: 280px">
+          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px">
+            <span style="font-size: 1.25rem">🎯</span>
+            <strong style="font-size: 1rem; color: #1e3a8a">
+              Phần việc bạn phụ trách: {{ myPkg.title }}
+            </strong>
+            <span class="status-label" [attr.data-status]="myPkg.status" style="font-size: 11px; padding: 2px 8px">
+              {{ 'status.' + myPkg.status | translate: myPkg.status }}
+            </span>
+          </div>
+          <div style="font-size: 0.825rem; color: #475569">
+            @if (myPkg.assignedDepartmentName) {
+              <span>🏢 {{ myPkg.assignedDepartmentName }} · </span>
+            }
+            <span>⚖️ Tỷ trọng: <strong>{{ myPkg.weightPercent }}%</strong> · </span>
+            <span>Tiến độ cá nhân: <strong>{{ myPkg.individualProgressPercent }}%</strong></span>
+            @if (myPkg.deadline) {
+              <span> · ⏰ Hạn: <strong>{{ myPkg.deadline | date: 'dd/MM/yyyy HH:mm' }}</strong></span>
+            }
+          </div>
+        </div>
+
+        <!-- Action buttons for manager / employee on this package -->
+        <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 8px">
+          @if (myPkg.status === 'ASSIGNED') {
+            <button
+              type="button"
+              class="task-nav-btn primary-nav-btn"
+              (click)="acceptTaskById(myPkg.taskId, myPkg.title)"
+            >
+              <span>✓ Tiếp nhận gói việc</span>
+            </button>
+          }
+          @if (myPkg.status === 'ACCEPTED' || myPkg.status === 'OVERDUE') {
+            <button
+              type="button"
+              class="task-nav-btn primary-nav-btn"
+              (click)="startTaskById(myPkg.taskId, myPkg.title, myPkg.status === 'OVERDUE')"
+            >
+              <span>▶ Bắt đầu thực hiện</span>
+            </button>
+          }
+          @if (myPkg.status === 'IN_PROGRESS' || myPkg.status === 'ACCEPTED' || myPkg.status === 'OVERDUE') {
+            <button
+              type="button"
+              class="task-nav-btn"
+              (click)="openProgressModalFor(myPkg.taskId, myPkg.title, myPkg.individualProgressPercent)"
+            >
+              <span>📈 Báo cáo tiến độ</span>
+            </button>
+          }
+          @if (myPkg.status === 'IN_PROGRESS') {
+            @if (canCreateSubtask()) {
+              <a
+                class="task-nav-btn"
+                [routerLink]="['/tasks/create']"
+                [queryParams]="{ parentTaskId: myPkg.taskId, parentTaskTitle: myPkg.title }"
+              >
+                <span>+ Giao việc cho nhân viên</span>
+              </a>
+            }
+            <button
+              type="button"
+              class="task-nav-btn primary-nav-btn"
+              (click)="submitTaskById(myPkg.taskId, myPkg.title)"
+            >
+              <span>📤 Nộp kết quả gói việc</span>
+            </button>
+          }
+          <a
+            [routerLink]="['/tasks', myPkg.taskId]"
+            class="task-nav-btn"
+            style="font-weight: 700; color: #1d4ed8; background: #ffffff"
+          >
+            <span>Chi tiết gói việc →</span>
+          </a>
+        </div>
+      </section>
+    }
+
+    <!-- EXECUTIVE TASK PROGRESS & SUPERVISION CARD (Requirement: Immediate visibility for Admin & Manager) -->
+    <section
+      class="executive-progress-oversight-card"
+      aria-label="Giám sát tiến độ hoàn thành nhiệm vụ"
+      style="
+        background: #ffffff;
+        border: 1px solid #dbeafe;
+        border-radius: 14px;
+        padding: 1.25rem 1.6rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 4px 18px rgba(37, 99, 235, 0.06);
+      "
+    >
+      <div style="display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 1rem; margin-bottom: 0.85rem">
+        <div>
+          <div style="display: flex; align-items: center; gap: 0.65rem">
+            <span style="font-size: 1.35rem">📊</span>
+            <div>
+              <div style="display: flex; align-items: center; gap: 8px">
+                <h2 style="margin: 0; font-size: 1.05rem; font-weight: 750; color: #0f172a; letter-spacing: -0.01em">
+                  Tiến độ thực hiện & Giám sát hoàn thành
+                </h2>
+                @if (detail.task.taskKind === 'PROJECT') {
+                  <span
+                    style="
+                      background: #e0e7ff;
+                      border: 1px solid #c7d2fe;
+                      color: #3730a3;
+                      font-size: 11px;
+                      font-weight: 750;
+                      padding: 2px 8px;
+                      border-radius: 999px;
+                    "
+                  >
+                    🏢 DỰ ÁN LIÊN PHÒNG BAN
+                  </span>
+                } @else if (detail.task.taskKind === 'INDEPENDENT') {
+                  <span
+                    style="
+                      background: #dbeafe;
+                      border: 1px solid #bfdbfe;
+                      color: #1e40af;
+                      font-size: 11px;
+                      font-weight: 750;
+                      padding: 2px 8px;
+                      border-radius: 999px;
+                    "
+                  >
+                    🎯 NHIỆM VỤ ĐỘC LẬP
+                  </span>
+                } @else if (detail.task.taskKind === 'WORK_PACKAGE') {
+                  <span
+                    style="
+                      background: #fef3c7;
+                      border: 1px solid #fde68a;
+                      color: #92400e;
+                      font-size: 11px;
+                      font-weight: 750;
+                      padding: 2px 8px;
+                      border-radius: 999px;
+                    "
+                  >
+                    📦 GÓI VIỆC PHÒNG BAN
+                  </span>
+                }
+              </div>
+              <p style="margin: 0.2rem 0 0; font-size: 0.825rem; color: #64748b">
+                Theo dõi thời gian thực tỷ lệ % tiến độ, nhân sự chịu trách nhiệm và kết quả thực thi
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div style="display: flex; align-items: baseline; gap: 0.75rem">
+          <div style="text-align: right">
+            <span class="exec-progress-num" style="font-size: 2.15rem; font-weight: 800; color: #1d4ed8; line-height: 1">
+              {{ currentEffectiveProgressPercent() }}%
+            </span>
+            <div style="font-size: 0.75rem; font-weight: 600; text-transform: uppercase; color: #64748b; margin-top: 2px">
+              Tiến độ hiện tại
+            </div>
+          </div>
+          <span
+            class="status-badge"
+            [attr.data-status]="detail.task.status"
+            style="font-size: 0.82rem; font-weight: 700; padding: 0.35rem 0.8rem; border-radius: 8px"
+          >
+            {{ formatStatusLabel(detail.task.status) }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Main Progress Bar -->
+      <div
+        class="progress-track-wrapper"
+        style="
+          position: relative;
+          width: 100%;
+          height: 14px;
+          background: #e2e8f0;
+          border-radius: 999px;
+          overflow: hidden;
+          margin-bottom: 0.85rem;
+        "
+      >
+        <div
+          class="progress-fill-bar"
+          [style.width.%]="currentEffectiveProgressPercent()"
+          style="
+            height: 100%;
+            background: linear-gradient(90deg, #2563eb 0%, #06b6d4 50%, #10b981 100%);
+            border-radius: 999px;
+            transition: width 400ms cubic-bezier(0.16, 1, 0.3, 1);
+          "
+        ></div>
+      </div>
+
+      <!-- Metadata summary grid -->
+      <div
+        class="progress-summary-grid"
+        style="
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+          gap: 0.75rem;
+          padding-top: 0.75rem;
+          border-top: 1px solid #f1f5f9;
+          font-size: 0.8125rem;
+          color: #334155;
+        "
+      >
+        <div>
+          <span style="color: #64748b">🏢 Phòng ban: </span>
+          <strong style="color: #0f172a">{{ detail.progressOverview?.responsibleDepartmentName || detail.task.assignedDepartmentName || 'Toàn công ty' }}</strong>
+        </div>
+        <div>
+          <span style="color: #64748b">👤 Quản lý điều phối: </span>
+          <strong style="color: #0f172a">{{ detail.progressOverview?.accountableManagerName || detail.task.accountableManagerName || 'Chưa chỉ định' }}</strong>
+        </div>
+        <div>
+          <span style="color: #64748b">👷 Nhân sự thực hiện: </span>
+          <strong style="color: #0f172a">{{ assignedPersonnelSummary() }}</strong>
+          @if (participatingPersonnelList().length > 1) {
+            <div style="display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px">
+              @for (p of participatingPersonnelList(); track p.name) {
+                <span
+                  style="
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 3px;
+                    font-size: 11px;
+                    background: #f8fafc;
+                    color: #1e293b;
+                    padding: 1px 6px;
+                    border-radius: 4px;
+                    border: 1px solid #cbd5e1;
+                    font-weight: 600;
+                  "
+                  [title]="p.department ? (p.name + ' - ' + p.department) : p.name"
+                >
+                  👤 {{ p.name }}
+                  @if (p.isPrimary) {
+                    <span style="color: #d97706; font-size: 10px">⭐</span>
+                  }
+                  @if (p.employeeCode) {
+                    <span style="font-size: 10px; color: #64748b; font-family: monospace">({{ p.employeeCode }})</span>
+                  }
+                  @if (p.department) {
+                    <span style="font-size: 10px; color: #475569">· {{ p.department }}</span>
+                  }
+                </span>
+              }
+            </div>
+          }
+        </div>
+        <div>
+          <span style="color: #64748b">📅 Hạn hoàn thành: </span>
+          @if (detail.task.deadline) {
+            <strong [style.color]="isOverdue(detail.task.deadline, detail.task.status) ? '#b91c1c' : '#0f172a'">
+              {{ detail.task.deadline | date: 'dd/MM/yyyy HH:mm' }}
+              @if (isOverdue(detail.task.deadline, detail.task.status)) {
+                (Quá hạn)
+              }
+            </strong>
+          } @else {
+            <strong style="color: #64748b">Không có thời hạn</strong>
+          }
+        </div>
+      </div>
+    </section>
 
     @if (detail.parentTaskId || detail.task.parentTaskId) {
       <div
@@ -91,10 +413,12 @@
           border: 1.5px solid #bfdbfe;
           border-radius: 12px;
           padding: 14px 18px;
-          margin-bottom: 20px;
+          margin-bottom: 18px;
           display: flex;
           align-items: center;
           justify-content: space-between;
+          flex-wrap: wrap;
+          gap: 12px;
         "
       >
         <div style="display: flex; align-items: center; gap: 10px">
@@ -103,7 +427,7 @@
             <div
               style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: #1e40af"
             >
-              Nhiệm vụ cấp công ty (Nhiệm vụ cha)
+              Thuộc nhiệm vụ chính cấp phòng ban / công ty (Nhiệm vụ cha)
             </div>
             <strong style="color: #0f172a; font-size: 14px">{{
               detail.parentTaskTitle || 'Xem nhiệm vụ chính'
@@ -112,28 +436,144 @@
         </div>
         <a
           [routerLink]="['/tasks', detail.parentTaskId || detail.task.parentTaskId]"
-          style="
-            text-decoration: none;
-            padding: 6px 14px;
-            background: #ffffff;
-            border-radius: 8px;
-            border: 1px solid #cbd5e1;
-            font-weight: 600;
-            color: #1e40af;
-            font-size: 13px;
-          "
+          class="task-nav-btn"
+          style="min-height: 2.25rem; padding: 0.35rem 0.95rem; font-size: 0.82rem"
         >
-          Mở nhiệm vụ cha →
+          <span>Mở nhiệm vụ chính →</span>
         </a>
       </div>
+    }
+
+    <!-- EMPLOYEE & MANAGER PROGRESS REPORT PANEL (Requirement 5.G & Project Actions) -->
+    @if (showProgressForm()) {
+      <section
+        class="directory-panel"
+        aria-label="Cập nhật báo cáo tiến độ cho Quản lý"
+        style="
+          margin-bottom: 18px;
+          padding: 18px 22px;
+          border: 1.5px solid #93c5fd;
+          background: linear-gradient(180deg, #f8fbff 0%, #ffffff 100%);
+          border-radius: 12px;
+        "
+      >
+        <div
+          style="
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+            gap: 8px;
+          "
+        >
+          <div>
+            <h2 style="margin: 0; font-size: 1.05rem; font-weight: 700; color: #0f172a">
+              📈 Gửi báo cáo tiến độ thực hiện{{ progressTargetTaskTitle() ? (': ' + progressTargetTaskTitle()) : ' cho Cấp trên / Quản lý' }}
+            </h2>
+            <p style="margin: 4px 0 0; font-size: 0.8125rem; color: #475569">
+              Cập nhật tỷ lệ phần việc đã thực hiện và mô tả tiến triển cụ thể. Lưu ý: để hoàn tất
+              100% nhiệm vụ, hãy sử dụng nút "Nộp kết quả" để Quản lý nghiệm thu.
+            </p>
+          </div>
+          <button
+            mat-stroked-button
+            type="button"
+            (click)="showProgressForm.set(false)"
+            style="min-height: 2rem; font-size: 0.78rem"
+          >
+            Đóng
+          </button>
+        </div>
+
+        <div
+          style="
+            display: grid;
+            grid-template-columns: minmax(180px, 240px) 1fr;
+            gap: 16px;
+            align-items: start;
+          "
+        >
+          <div>
+            <label
+              for="progress-percent-input"
+              style="display: block; font-size: 0.8rem; font-weight: 700; color: #1e293b; margin-bottom: 6px"
+            >
+              Tiến độ cá nhân hiện tại (0% – 99%)
+            </label>
+            <div style="display: flex; align-items: center; gap: 8px">
+              <input
+                id="progress-percent-input"
+                type="number"
+                min="0"
+                max="99"
+                [(ngModel)]="progressPercentInput"
+                style="
+                  width: 90px;
+                  padding: 8px 10px;
+                  border: 1px solid #cbd5e1;
+                  border-radius: 8px;
+                  font-weight: 700;
+                  font-size: 0.95rem;
+                "
+              />
+              <span style="font-weight: 700; color: #1e40af">%</span>
+            </div>
+          </div>
+
+          <div>
+            <label
+              for="progress-content-input"
+              style="display: block; font-size: 0.8rem; font-weight: 700; color: #1e293b; margin-bottom: 6px"
+            >
+              Nội dung công việc đã hoàn thành & ghi chú báo cáo Quản lý
+            </label>
+            <textarea
+              id="progress-content-input"
+              rows="3"
+              maxlength="2000"
+              [(ngModel)]="progressContentInput"
+              placeholder="Mô tả rõ những hạng mục đã thực hiện được, vướng mắc (nếu có) và dự kiến bước tiếp theo…"
+              style="
+                width: 100%;
+                padding: 10px 12px;
+                border: 1px solid #cbd5e1;
+                border-radius: 8px;
+                font-family: inherit;
+                font-size: 0.875rem;
+                box-sizing: border-box;
+              "
+            ></textarea>
+          </div>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 12px">
+          <button
+            type="button"
+            class="task-nav-btn primary-nav-btn"
+            [disabled]="reportingProgress() || !progressContentInput.trim()"
+            (click)="submitProgressReport()"
+          >
+            <span>{{ reportingProgress() ? 'Đang gửi báo cáo…' : '✓ Gửi báo cáo tiến độ' }}</span>
+          </button>
+        </div>
+      </section>
     }
 
     <section class="directory-panel detail-section" aria-label="Task summary">
       <dl>
         <dt>{{ 'common.status' | translate: 'Status' }}</dt>
-        <dd>{{ 'status.' + detail.task.status | translate: detail.task.status }}</dd>
+        <dd>
+          <span class="status-label" [attr.data-status]="detail.task.status">
+            {{ 'status.' + detail.task.status | translate: detail.task.status }}
+          </span>
+        </dd>
         <dt>{{ 'common.priority' | translate: 'Priority' }}</dt>
-        <dd>{{ 'priority.' + detail.task.priority | translate: detail.task.priority }}</dd>
+        <dd>
+          <span class="priority-badge" [attr.data-priority]="detail.task.priority">
+            {{ 'priority.' + detail.task.priority | translate: detail.task.priority }}
+          </span>
+        </dd>
         <dt>{{ 'tasks.creator' | translate: 'Created by' }}</dt>
         <dd>{{ detail.creatorName ?? ('taskDetail.unavailable' | translate: 'Unavailable') }}</dd>
         <dt>{{ 'tasks.colResponsibility' | translate: 'Responsibility' }}</dt>
@@ -143,6 +583,9 @@
               detail.task.assignedDepartmentName ??
               ('tasks.unassigned' | translate: 'Unassigned')
           }}
+          @if (detail.task.assignedDepartmentName && detail.task.assignedUserName) {
+            <span style="color: #64748b"> · {{ detail.task.assignedDepartmentName }}</span>
+          }
         </dd>
         <dt>{{ 'tasks.deadline' | translate: 'Deadline' }}</dt>
         <dd>
@@ -166,203 +609,673 @@
         </p>
       }
     </section>
-    <!-- SUBTASKS DELEGATION HUB -->
-    <section
-      class="directory-panel subtasks-hub-section"
-      aria-label="Danh sách nhiệm vụ con"
-      style="margin-top: 1.5rem; margin-bottom: 1.5rem; padding: 18px 24px"
-    >
-      <div
-        style="
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 16px;
-          flex-wrap: wrap;
-          gap: 12px;
-        "
-      >
-        <div>
-          <h2 style="font-size: 1.15rem; font-weight: 700; margin: 0; color: #0f172a">
-            📋 Phân rã công việc & nhiệm vụ con ({{ detail.subtasks?.length || 0 }})
-          </h2>
-          <p style="font-size: 0.8125rem; color: #64748b; margin: 4px 0 0">
-            Quản lý phòng ban phân rã công việc cấp công ty và ủy quyền cho nhân sự phụ trách thực
-            hiện.
-          </p>
-        </div>
-        @if (canCreateSubtask()) {
-          <a
-            mat-flat-button
-            color="primary"
-            [routerLink]="['/tasks/create']"
-            [queryParams]="{ parentTaskId: detail.task.taskId, parentTaskTitle: detail.task.title }"
-            style="background: #1e40af; color: #ffffff"
-          >
-            + Thêm nhiệm vụ con / Phân công nhân sự
-          </a>
-        }
-      </div>
 
-      @if (detail.subtasks && detail.subtasks.length > 0) {
+    <!-- INDIVIDUAL & TEAM TASK PROGRESS TRACKING HUB (Requirement 5) -->
+    @if (!isEmployeeOnly() || (detail.subtasks && detail.subtasks.length > 0)) {
+      <section
+        class="directory-panel subtasks-hub-section"
+        aria-label="Theo dõi tiến độ tổng thể và đóng góp theo từng người"
+        style="margin-top: 1.5rem; margin-bottom: 1.5rem; padding: 20px 24px"
+      >
         <div
           style="
-            background: #f8fafc;
-            border: 1px solid #e2e8f0;
-            border-radius: 10px;
-            padding: 12px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
             margin-bottom: 16px;
+            flex-wrap: wrap;
+            gap: 12px;
           "
         >
-          <div
-            style="
-              display: flex;
-              justify-content: space-between;
-              font-size: 12px;
-              font-weight: 600;
-              color: #475569;
-              margin-bottom: 6px;
-            "
-          >
-            <span>Tiến độ hoàn thành nhiệm vụ con</span>
-            <span
-              >{{ completedSubtasksCount() }} / {{ detail.subtasks.length }} hoàn thành ({{
-                subtasksProgressPercent()
-              }}%)</span
-            >
-          </div>
-          <div style="height: 8px; background: #e2e8f0; border-radius: 9999px; overflow: hidden">
-            <div
-              style="
-                height: 100%;
-                background: #10b981;
-                border-radius: 9999px;
-                transition: width 300ms ease;
-              "
-              [style.width.%]="subtasksProgressPercent()"
-            ></div>
-          </div>
-        </div>
-
-        <div class="table-container" style="overflow-x: auto">
-          <table
-            style="
-              width: 100%;
-              min-width: 720px;
-              border-collapse: separate;
-              border-spacing: 0;
-              font-size: 13px;
-            "
-          >
-            <thead>
-              <tr
+          <div>
+            <h2 style="font-size: 1.15rem; font-weight: 700; margin: 0; color: #0f172a">
+              📊 Theo dõi tiến độ nhiệm vụ & Đóng góp theo từng nhân sự ({{
+                totalWorkPackagesCount()
+              }}
+              phần việc)
+            </h2>
+            <p style="font-size: 0.825rem; color: #64748b; margin: 4px 0 0">
+              @if (isCompanyAdmin()) {
+                Giám sát cấp Quản trị viên: theo dõi phòng ban chủ trì, Trưởng phòng điều phối, tỷ
+                lệ hoàn thành tổng thể và kết quả đóng góp của từng nhân sự.
+              } @else {
+                Không gian giám sát Trưởng phòng: phân công phần việc, theo dõi tiến độ cá nhân,
+                báo cáo định kỳ và nghiệm thu kết quả từ nhân viên.
+              }
+            </p>
+            @if (
+              detail.progressOverview?.responsibleDepartmentName ||
+              detail.task.assignedDepartmentName ||
+              detail.progressOverview?.accountableManagerName ||
+              detail.task.assignedUserName
+            ) {
+              <div
                 style="
-                  background: #f8fafc;
-                  text-align: left;
-                  color: #64748b;
-                  font-size: 11px;
-                  text-transform: uppercase;
+                  display: flex;
+                  flex-wrap: wrap;
+                  gap: 10px;
+                  margin-top: 10px;
+                  font-size: 0.8rem;
                 "
               >
-                <th style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0">
-                  Tiêu đề nhiệm vụ con
-                </th>
-                <th
-                  style="
-                    padding: 10px 14px;
-                    border-bottom: 1px solid #e2e8f0;
-                    min-width: 170px;
-                    white-space: nowrap;
-                  "
-                >
-                  Nhân sự thực thi
-                </th>
-                <th
-                  style="
-                    padding: 10px 14px;
-                    border-bottom: 1px solid #e2e8f0;
-                    min-width: 155px;
-                    white-space: nowrap;
-                  "
-                >
-                  Trạng thái
-                </th>
-                <th
-                  style="
-                    padding: 10px 14px;
-                    border-bottom: 1px solid #e2e8f0;
-                    min-width: 130px;
-                    white-space: nowrap;
-                  "
-                >
-                  Độ ưu tiên
-                </th>
-                <th
-                  style="
-                    padding: 10px 14px;
-                    border-bottom: 1px solid #e2e8f0;
-                    min-width: 110px;
-                    white-space: nowrap;
-                    text-align: right;
-                  "
-                >
-                  Chi tiết
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (sub of detail.subtasks; track sub.taskId) {
-                <tr>
-                  <td style="padding: 10px 14px; border-bottom: 1px solid #f1f5f9">
-                    <a
-                      [routerLink]="['/tasks', sub.taskId]"
-                      style="font-weight: 600; color: #1d4ed8; text-decoration: none"
-                    >
-                      {{ sub.title }}
-                    </a>
-                  </td>
-                  <td style="padding: 10px 14px; border-bottom: 1px solid #f1f5f9">
-                    <span style="font-weight: 500; color: #1e293b">{{
-                      sub.assignedUserName ?? 'Chưa phân công'
-                    }}</span>
-                  </td>
-                  <td style="padding: 10px 14px; border-bottom: 1px solid #f1f5f9">
-                    <span
-                      class="status-chip"
-                      [class.active]="sub.status === 'COMPLETED' || sub.status === 'CONFIRMED'"
-                    >
-                      {{ 'status.' + sub.status | translate: sub.status }}
-                    </span>
-                  </td>
-                  <td style="padding: 10px 14px; border-bottom: 1px solid #f1f5f9">
-                    <span>{{ 'priority.' + sub.priority | translate: sub.priority }}</span>
-                  </td>
-                  <td
-                    style="padding: 10px 14px; border-bottom: 1px solid #f1f5f9; text-align: right"
+                @if (
+                  detail.progressOverview?.responsibleDepartmentName ||
+                  detail.task.assignedDepartmentName
+                ) {
+                  <span
+                    style="
+                      padding: 4px 10px;
+                      border-radius: 6px;
+                      background: #eff6ff;
+                      color: #1e40af;
+                      border: 1px solid #bfdbfe;
+                      font-weight: 600;
+                    "
                   >
-                    <a
-                      [routerLink]="['/tasks', sub.taskId]"
+                    🏢 Phòng ban phụ trách:
+                    <strong>{{
+                      detail.progressOverview?.responsibleDepartmentName ??
+                        detail.task.assignedDepartmentName
+                    }}</strong>
+                  </span>
+                }
+                @if (
+                  detail.progressOverview?.accountableManagerName || detail.task.accountableManagerName
+                ) {
+                  <span
+                    style="
+                      padding: 4px 10px;
+                      border-radius: 6px;
+                      background: #f0fdf4;
+                      color: #166534;
+                      border: 1px solid #bbf7d0;
+                      font-weight: 600;
+                    "
+                  >
+                    👤 Trưởng phòng điều phối:
+                    <strong>{{
+                      detail.progressOverview?.accountableManagerName ||
+                        detail.task.accountableManagerName
+                    }}</strong>
+                  </span>
+                }
+              </div>
+            }
+          </div>
+          @if (canCreateSubtask()) {
+            <a
+              class="task-nav-btn primary-nav-btn"
+              [routerLink]="['/tasks/create']"
+              [queryParams]="{
+                parentTaskId: detail.task.taskId,
+                parentTaskTitle: detail.task.title
+              }"
+            >
+              <span class="nav-btn-icon" aria-hidden="true">+</span>
+              <span>Thêm nhiệm vụ con / Phân công nhân sự</span>
+            </a>
+          }
+        </div>
+
+        @if (totalWorkPackagesCount() > 0) {
+          <!-- Main Progress Summary Card (Requirement 5.D) -->
+          <div
+            style="
+              background: linear-gradient(135deg, #f8fafc 0%, #f0f7ff 100%);
+              border: 1px solid #cbd5e1;
+              border-radius: 12px;
+              padding: 16px 20px;
+              margin-bottom: 18px;
+            "
+          >
+            <div
+              style="
+                display: flex;
+                justify-content: space-between;
+                align-items: baseline;
+                flex-wrap: wrap;
+                gap: 8px;
+                margin-bottom: 8px;
+              "
+            >
+              <div>
+                <strong style="font-size: 1.05rem; color: #0f172a">
+                  Tiến độ tổng thể: {{ subtasksProgressPercent() }}%
+                </strong>
+                <span style="margin-left: 10px; font-size: 0.82rem; color: #475569; font-weight: 600">
+                  ({{ completedSubtasksCount() }} / {{ totalWorkPackagesCount() }} phần việc hoàn
+                  thành)
+                </span>
+              </div>
+              <span
+                style="
+                  font-size: 0.78rem;
+                  font-weight: 700;
+                  padding: 3px 10px;
+                  border-radius: 999px;
+                "
+                [style.background]="subtasksProgressPercent() === 100 ? '#dcfce7' : '#dbeafe'"
+                [style.color]="subtasksProgressPercent() === 100 ? '#166534' : '#1e40af'"
+              >
+                ⚖️ Tổng hợp theo tỷ trọng đóng góp từng phần việc (100%)
+              </span>
+            </div>
+
+            <div
+              style="
+                height: 11px;
+                background: #e2e8f0;
+                border-radius: 9999px;
+                overflow: hidden;
+                margin-bottom: 14px;
+              "
+            >
+              <div
+                style="
+                  height: 100%;
+                  background: linear-gradient(90deg, #2563eb 0%, #10b981 100%);
+                  border-radius: 9999px;
+                  transition: width 300ms ease;
+                "
+                [style.width.%]="subtasksProgressPercent()"
+              ></div>
+            </div>
+
+            <!-- 6 Summary Metrics Grid -->
+            <div
+              style="
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+                gap: 10px;
+              "
+            >
+              <div
+                style="
+                  background: #ffffff;
+                  border: 1px solid #e2e8f0;
+                  border-radius: 8px;
+                  padding: 8px 12px;
+                "
+              >
+                <div style="font-size: 0.72rem; color: #64748b; font-weight: 600">
+                  Nhân viên tham gia
+                </div>
+                <div style="font-size: 1.05rem; font-weight: 800; color: #0f172a">
+                  {{ participatingEmployeesCount() }} nhân viên
+                </div>
+              </div>
+              <div
+                style="
+                  background: #ecfdf5;
+                  border: 1px solid #a7f3d0;
+                  border-radius: 8px;
+                  padding: 8px 12px;
+                "
+              >
+                <div style="font-size: 0.72rem; color: #047857; font-weight: 600">
+                  Phần việc hoàn thành
+                </div>
+                <div style="font-size: 1.05rem; font-weight: 800; color: #065f46">
+                  {{ completedSubtasksCount() }} phần việc
+                </div>
+              </div>
+              <div
+                style="
+                  background: #eff6ff;
+                  border: 1px solid #bfdbfe;
+                  border-radius: 8px;
+                  padding: 8px 12px;
+                "
+              >
+                <div style="font-size: 0.72rem; color: #1d4ed8; font-weight: 600">
+                  Đang thực hiện
+                </div>
+                <div style="font-size: 1.05rem; font-weight: 800; color: #1e40af">
+                  {{ inProgressWorkPackagesCount() }} phần việc
+                </div>
+              </div>
+              <div
+                style="
+                  background: #ffffff;
+                  border: 1px solid #e2e8f0;
+                  border-radius: 8px;
+                  padding: 8px 12px;
+                "
+              >
+                <div style="font-size: 0.72rem; color: #475569; font-weight: 600">
+                  Chưa hoàn thành
+                </div>
+                <div style="font-size: 1.05rem; font-weight: 800; color: #334155">
+                  {{ unfinishedWorkPackagesCount() }} phần việc
+                </div>
+              </div>
+              <div
+                style="
+                  background: #fffbeb;
+                  border: 1px solid #fde68a;
+                  border-radius: 8px;
+                  padding: 8px 12px;
+                "
+              >
+                <div style="font-size: 0.72rem; color: #92400e; font-weight: 600">
+                  Chờ nghiệm thu
+                </div>
+                <div style="font-size: 1.05rem; font-weight: 800; color: #78350f">
+                  {{ pendingReviewWorkPackagesCount() }} phần việc
+                </div>
+              </div>
+              <div
+                style="
+                  background: #fef2f2;
+                  border: 1px solid #fecaca;
+                  border-radius: 8px;
+                  padding: 8px 12px;
+                "
+              >
+                <div style="font-size: 0.72rem; color: #b91c1c; font-weight: 600">
+                  Quá hạn
+                </div>
+                <div style="font-size: 1.05rem; font-weight: 800; color: #991b1b">
+                  {{ overdueWorkPackagesCount() }} phần việc
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Individual Contribution Breakdown Table (Requirement 5.C) -->
+          <div class="table-container" style="overflow-x: auto">
+            <table
+              style="
+                width: 100%;
+                min-width: 860px;
+                border-collapse: separate;
+                border-spacing: 0;
+                font-size: 13px;
+              "
+            >
+              <thead>
+                <tr
+                  style="
+                    background: #f8fafc;
+                    text-align: left;
+                    color: #475569;
+                    font-size: 11px;
+                    text-transform: uppercase;
+                  "
+                >
+                  <th style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0">
+                    Nhân sự phụ trách & Phòng ban
+                  </th>
+                  <th style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0">
+                    Phần việc / Nhiệm vụ con & Hạn hoàn thành
+                  </th>
+                  <th
+                    style="
+                      padding: 10px 14px;
+                      border-bottom: 1px solid #e2e8f0;
+                      min-width: 155px;
+                      white-space: nowrap;
+                    "
+                  >
+                    Trạng thái & Ưu tiên
+                  </th>
+                  <th
+                    style="
+                      padding: 10px 14px;
+                      border-bottom: 1px solid #e2e8f0;
+                      min-width: 175px;
+                    "
+                  >
+                    Tiến độ & Tỷ trọng đóng góp
+                  </th>
+                  <th style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; min-width: 210px">
+                    Báo cáo tiến độ & Bằng chứng nộp
+                  </th>
+                  <th
+                    style="
+                      padding: 10px 14px;
+                      border-bottom: 1px solid #e2e8f0;
+                      min-width: 120px;
+                      white-space: nowrap;
+                      text-align: right;
+                    "
+                  >
+                    Thao tác
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (sub of contributionsList(); track sub.taskId) {
+                  <tr>
+                    <td style="padding: 12px 14px; border-bottom: 1px solid #f1f5f9">
+                      <div style="font-weight: 700; color: #0f172a; display: flex; align-items: center; flex-wrap: wrap; gap: 4px">
+                        <span>{{ sub.assignedUserName ?? 'Chưa phân công nhân viên' }}</span>
+                        @if (sub.assignedEmployeeCode) {
+                          <span
+                            style="
+                              font-family: monospace;
+                              font-size: 11px;
+                              background: #e2e8f0;
+                              color: #334155;
+                              padding: 1px 5px;
+                              border-radius: 4px;
+                            "
+                          >
+                            {{ sub.assignedEmployeeCode }}
+                          </span>
+                        }
+                        @if (sub.taskKind === 'PRIMARY_SUBTASK') {
+                          <span
+                            style="
+                              font-size: 10.5px;
+                              font-weight: 700;
+                              background: #fef3c7;
+                              color: #92400e;
+                              border: 1px solid #fde68a;
+                              padding: 1px 6px;
+                              border-radius: 999px;
+                            "
+                          >
+                            ⭐ Phụ trách chính
+                          </span>
+                        }
+                      </div>
+                      <div style="font-size: 11.5px; color: #64748b; margin-top: 2px">
+                        {{ sub.assignedDepartmentName ?? 'Chưa gán phòng ban' }}
+                      </div>
+                    </td>
+
+                    <td style="padding: 12px 14px; border-bottom: 1px solid #f1f5f9">
+                      <a
+                        [routerLink]="['/tasks', sub.taskId]"
+                        style="font-weight: 700; color: #1d4ed8; text-decoration: none; display: block"
+                      >
+                        {{ sub.title }}
+                      </a>
+                      @if (sub.description) {
+                        <div
+                          style="
+                            font-size: 11.5px;
+                            color: #475569;
+                            margin-top: 2px;
+                            max-width: 280px;
+                            overflow: hidden;
+                            text-overflow: ellipsis;
+                            white-space: nowrap;
+                          "
+                          [title]="sub.description"
+                        >
+                          {{ sub.description }}
+                        </div>
+                      }
+                      <div style="font-size: 11.5px; color: #64748b; margin-top: 3px">
+                        @if (sub.deadline) {
+                          <span [style.color]="sub.isOverdue ? '#b91c1c' : '#64748b'" [style.font-weight]="sub.isOverdue ? '700' : '500'">
+                            ⏰ Hạn: {{ sub.deadline | date: 'dd/MM/yyyy HH:mm' }}
+                            @if (sub.isOverdue) {
+                              (Quá hạn)
+                            }
+                          </span>
+                        } @else {
+                          <span>Không có hạn chót</span>
+                        }
+                      </div>
+                    </td>
+
+                    <td style="padding: 12px 14px; border-bottom: 1px solid #f1f5f9">
+                      <div>
+                        <span class="status-label" [attr.data-status]="sub.status">
+                          {{ 'status.' + sub.status | translate: sub.status }}
+                        </span>
+                      </div>
+                      <div style="margin-top: 5px">
+                        <span class="priority-badge" [attr.data-priority]="sub.priority">
+                          {{ 'priority.' + sub.priority | translate: sub.priority }}
+                        </span>
+                      </div>
+                    </td>
+
+                    <td style="padding: 12px 14px; border-bottom: 1px solid #f1f5f9">
+                      <div
+                        style="
+                          display: flex;
+                          justify-content: space-between;
+                          font-size: 11.5px;
+                          font-weight: 700;
+                          margin-bottom: 4px;
+                        "
+                      >
+                        <span style="color: #1e293b">Cá nhân: {{ sub.individualProgressPercent }}%</span>
+                        <span
+                          [style.color]="sub.isCompleted ? '#047857' : '#64748b'"
+                          title="Tỷ trọng đóng góp vào tiến độ nhiệm vụ chính"
+                        >
+                          Đóng góp: +{{ sub.contributedPercent }}% / {{ sub.weightPercent }}%
+                        </span>
+                      </div>
+                      <div
+                        style="
+                          height: 7px;
+                          background: #e2e8f0;
+                          border-radius: 999px;
+                          overflow: hidden;
+                        "
+                      >
+                        <div
+                          style="height: 100%; border-radius: 999px; transition: width 250ms ease"
+                          [style.width.%]="sub.individualProgressPercent"
+                          [style.background]="
+                            sub.isCompleted
+                              ? '#10b981'
+                              : sub.isOverdue
+                                ? '#ef4444'
+                                : '#2563eb'
+                          "
+                        ></div>
+                      </div>
+                    </td>
+
+                    <td style="padding: 12px 14px; border-bottom: 1px solid #f1f5f9; font-size: 11.5px">
+                      @if (sub.latestResultContent) {
+                        <div style="color: #065f46; font-weight: 600">
+                          ✓ Kết quả nộp (Lần #{{ sub.latestResultRevisionNo }}):
+                          <span style="font-weight: 400; color: #1e293b">{{
+                            sub.latestResultContent
+                          }}</span>
+                        </div>
+                      } @else if (sub.latestReportContent) {
+                        <div style="color: #1e40af; font-weight: 600">
+                          📈 Báo cáo ({{ sub.latestReportPercent }}%):
+                          <span style="font-weight: 400; color: #334155">{{
+                            sub.latestReportContent
+                          }}</span>
+                        </div>
+                      } @else {
+                        <span style="color: #94a3b8; font-style: italic">
+                          Chưa có báo cáo / bằng chứng nộp
+                        </span>
+                      }
+                      @if (sub.updatedAt) {
+                        <div style="color: #64748b; font-size: 10.5px; margin-top: 3px">
+                          Cập nhật: {{ sub.updatedAt | date: 'dd/MM/yyyy HH:mm' }}
+                        </div>
+                      }
+                    </td>
+
+                    <td
                       style="
-                        font-size: 12px;
-                        font-weight: 600;
-                        color: #2563eb;
-                        text-decoration: none;
+                        padding: 12px 14px;
+                        border-bottom: 1px solid #f1f5f9;
+                        text-align: right;
+                        white-space: nowrap;
                       "
                     >
-                      Xem →
-                    </a>
-                  </td>
-                </tr>
-              }
-            </tbody>
-          </table>
-        </div>
-      } @else {
-        <p style="color: #64748b; font-size: 13px; margin: 0; font-style: italic">
-          Nhiệm vụ này chưa được phân rã thành các nhiệm vụ con.
-        </p>
-      }
-    </section>
+                      @if (sub.assignedUserId === session.identity()?.userId && !isCompanyAdmin()) {
+                        @if (sub.status === 'ASSIGNED') {
+                          <button
+                            type="button"
+                            class="task-nav-btn primary-nav-btn"
+                            style="min-height: 1.95rem; padding: 0.25rem 0.65rem; font-size: 0.75rem; margin-right: 5px"
+                            (click)="acceptTaskById(sub.taskId, sub.title)"
+                          >
+                            <span>✓ Tiếp nhận</span>
+                          </button>
+                        }
+                        @if (sub.status === 'ACCEPTED' || sub.status === 'OVERDUE') {
+                          <button
+                            type="button"
+                            class="task-nav-btn primary-nav-btn"
+                            style="min-height: 1.95rem; padding: 0.25rem 0.65rem; font-size: 0.75rem; margin-right: 5px"
+                            (click)="startTaskById(sub.taskId, sub.title, sub.isOverdue)"
+                          >
+                            <span>▶ Bắt đầu</span>
+                          </button>
+                        }
+                        @if (sub.status === 'IN_PROGRESS') {
+                          <button
+                            type="button"
+                            class="task-nav-btn"
+                            style="min-height: 1.95rem; padding: 0.25rem 0.65rem; font-size: 0.75rem; margin-right: 5px"
+                            (click)="openProgressModalFor(sub.taskId, sub.title, sub.individualProgressPercent)"
+                          >
+                            <span>📈 Báo cáo</span>
+                          </button>
+                          <button
+                            type="button"
+                            class="task-nav-btn primary-nav-btn"
+                            style="min-height: 1.95rem; padding: 0.25rem 0.65rem; font-size: 0.75rem; margin-right: 5px"
+                            (click)="submitTaskById(sub.taskId, sub.title)"
+                          >
+                            <span>📤 Nộp</span>
+                          </button>
+                        }
+                      }
+                      @if (sub.status === 'SUBMITTED' && session.hasPermission('tasks.confirm')) {
+                        <button
+                          type="button"
+                          class="task-nav-btn primary-nav-btn"
+                          style="
+                            min-height: 1.95rem;
+                            padding: 0.25rem 0.7rem;
+                            font-size: 0.75rem;
+                            margin-right: 6px;
+                          "
+                          (click)="confirmSubtask(sub.taskId, sub.title)"
+                        >
+                          <span>📋 Phê duyệt & Nghiệm thu</span>
+                        </button>
+                      }
+                      <a
+                        [routerLink]="['/tasks', sub.taskId]"
+                        style="
+                          font-size: 12px;
+                          font-weight: 700;
+                          color: #2563eb;
+                          text-decoration: none;
+                        "
+                      >
+                        Chi tiết →
+                      </a>
+                    </td>
+                  </tr>
+
+                  @if (sub.childContributions && sub.childContributions.length > 0) {
+                    <tr style="background: #f8fbff">
+                      <td colspan="6" style="padding: 10px 16px 14px 34px; border-bottom: 1.5px solid #e2e8f0">
+                        <div style="font-size: 11.5px; font-weight: 750; color: #1e40af; margin-bottom: 8px; display: flex; align-items: center; gap: 6px">
+                          <span>↳</span>
+                          <span>Các nhiệm vụ con đã phân rã cho nhân sự trong phòng ban ({{ sub.childContributions.length }} việc):</span>
+                        </div>
+                        <div style="background: #ffffff; border: 1.5px solid #bfdbfe; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.03)">
+                          <table style="width: 100%; border-collapse: collapse; font-size: 12px">
+                            <thead>
+                              <tr style="background: #f1f5f9; color: #475569; font-size: 10.5px; text-transform: uppercase">
+                                <th style="padding: 6px 12px; text-align: left">Nhân sự thực hiện</th>
+                                <th style="padding: 6px 12px; text-align: left">Nhiệm vụ con</th>
+                                <th style="padding: 6px 12px; text-align: left">Trạng thái</th>
+                                <th style="padding: 6px 12px; text-align: left">Tiến độ cá nhân</th>
+                                <th style="padding: 6px 12px; text-align: right">Xem</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              @for (child of sub.childContributions; track child.taskId) {
+                                <tr style="border-bottom: 1px solid #f1f5f9">
+                                  <td style="padding: 7px 12px; width: 25%">
+                                    <strong style="color: #0f172a">{{ child.assignedUserName || 'Chưa gán' }}</strong>
+                                    @if (child.assignedEmployeeCode) {
+                                      <span style="color: #64748b; font-size: 11px"> ({{ child.assignedEmployeeCode }})</span>
+                                    }
+                                  </td>
+                                  <td style="padding: 7px 12px; width: 35%">
+                                    <a [routerLink]="['/tasks', child.taskId]" style="color: #1d4ed8; font-weight: 600; text-decoration: none">
+                                      {{ child.title }}
+                                    </a>
+                                  </td>
+                                  <td style="padding: 7px 12px; width: 15%">
+                                    <span class="status-label" [attr.data-status]="child.status" style="font-size: 10.5px; padding: 2px 7px">
+                                      {{ 'status.' + child.status | translate: child.status }}
+                                    </span>
+                                  </td>
+                                  <td style="padding: 7px 12px; width: 15%">
+                                    <span style="font-weight: 700; color: #1e40af">{{ child.individualProgressPercent }}%</span>
+                                    <span style="color: #64748b; font-size: 11px; margin-left: 4px">(Tỷ trọng: {{ child.weightPercent }}%)</span>
+                                  </td>
+                                  <td style="padding: 7px 12px; width: 18%; text-align: right; white-space: nowrap">
+                                    @if (child.status === 'SUBMITTED' && session.hasPermission('tasks.confirm')) {
+                                      <button
+                                        type="button"
+                                        class="task-nav-btn primary-nav-btn"
+                                        style="min-height: 1.75rem; padding: 0.15rem 0.55rem; font-size: 0.72rem; margin-right: 6px"
+                                        (click)="confirmSubtask(child.taskId, child.title)"
+                                      >
+                                        <span>📋 Phê duyệt</span>
+                                      </button>
+                                    }
+                                    @if (child.assignedUserId === session.identity()?.userId && !isCompanyAdmin()) {
+                                      @if (child.status === 'ASSIGNED') {
+                                        <button
+                                          type="button"
+                                          class="task-nav-btn primary-nav-btn"
+                                          style="min-height: 1.75rem; padding: 0.15rem 0.55rem; font-size: 0.72rem; margin-right: 6px"
+                                          (click)="acceptTaskById(child.taskId, child.title)"
+                                        >
+                                          <span>✓ Nhận</span>
+                                        </button>
+                                      }
+                                      @if (child.status === 'ACCEPTED' || child.status === 'OVERDUE') {
+                                        <button
+                                          type="button"
+                                          class="task-nav-btn primary-nav-btn"
+                                          style="min-height: 1.75rem; padding: 0.15rem 0.55rem; font-size: 0.72rem; margin-right: 6px"
+                                          (click)="startTaskById(child.taskId, child.title, child.status === 'OVERDUE')"
+                                        >
+                                          <span>▶ Bắt đầu</span>
+                                        </button>
+                                      }
+                                    }
+                                    <a [routerLink]="['/tasks', child.taskId]" style="color: #2563eb; font-weight: 700; text-decoration: none; font-size: 11.5px">
+                                      Chi tiết →
+                                    </a>
+                                  </td>
+                                </tr>
+                              }
+                            </tbody>
+                          </table>
+                        </div>
+                      </td>
+                    </tr>
+                  }
+                }
+              </tbody>
+            </table>
+          </div>
+        } @else {
+          <p style="color: #64748b; font-size: 13px; margin: 0; font-style: italic">
+            Nhiệm vụ này hiện chưa được chia thành các phần việc / nhiệm vụ con.
+          </p>
+        }
+      </section>
+    }
 
     <section class="ai-assistant-card" aria-label="AI Task Intelligence">
       <div class="ai-header">
@@ -468,6 +1381,7 @@
         </div>
       }
     </section>
+
     @for (section of sections; track section.key) {
       <section
         class="directory-panel detail-section"
@@ -530,12 +1444,12 @@
         </nav>
       </section>
     }
-    <!-- F3: renders nothing unless the Mentions feature is enabled. -->
+
+    <!-- F3: Watcher section -->
     <bf-work-item-watch [objectType]="'TASK'" [objectId]="detail.task.taskId" />
-    <!-- F4: renders nothing unless the DeadlineReminders feature is enabled. -->
+    <!-- F4: Deadline reminders section -->
     <bf-task-reminders [taskId]="detail.task.taskId" [hasDeadline]="!!detail.task.deadline" />
-    <!-- F6: renders nothing unless the Labels feature is enabled. -->
-    <bf-work-item-labels [objectType]="'TASK'" [objectId]="detail.task.taskId" />
+    <!-- F3: Comments & @Mentions section -->
     <bf-work-item-comments [objectType]="'TASK'" [objectId]="detail.task.taskId" />
     <bf-work-item-attachments [objectType]="'TASK'" [objectId]="detail.task.taskId" />
   }

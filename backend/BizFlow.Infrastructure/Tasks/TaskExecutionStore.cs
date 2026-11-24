@@ -36,6 +36,64 @@ public sealed class TaskExecutionStore(BizFlowDbContext db, ITenantContext conte
         catch { await transaction.DisposeAsync(); throw; }
     }
 
+    public async Task<TaskReportView> RecordProgressReportAsync(Guid tenantId, Guid actorId, Guid taskId, short percent,
+        string content, DateTimeOffset now, CancellationToken cancellationToken)
+    {
+        if (tenantId != context.TenantId || actorId != context.UserId || tenantId == Guid.Empty || actorId == Guid.Empty)
+            throw ApplicationFault.NotFound();
+        var task = await db.WorkTasks.AsNoTracking()
+            .SingleOrDefaultAsync(t => t.TenantId == tenantId && t.Id == taskId && t.DeletedAt == null, cancellationToken)
+            ?? throw ApplicationFault.NotFound();
+        var assignment = await db.TaskAssignments.AsNoTracking()
+            .SingleOrDefaultAsync(a => a.TaskId == taskId && a.EndedAt == null, cancellationToken);
+        if (assignment is null || assignment.UserId != actorId)
+            throw new ApplicationFault(FaultKind.Forbidden, "ACCESS.DENIED",
+                "Chỉ nhân sự được phân công trực tiếp mới có thể gửi báo cáo tiến độ thực hiện nhiệm vụ này.");
+        if (task.Status is not (TaskState.Accepted or TaskState.InProgress or TaskState.Overdue))
+            throw new ApplicationFault(FaultKind.Conflict, "TASK.INVALID_STATE_FOR_PROGRESS",
+                "Chỉ có thể cập nhật báo cáo tiến độ khi nhiệm vụ đã được tiếp nhận hoặc đang trong quá trình thực hiện.");
+        var report = TaskProgressReport.CreateFormalReport(taskId, actorId, percent, content, now);
+        db.TaskProgressReports.Add(report);
+        var actorName = await db.Users.AsNoTracking()
+            .Where(u => u.TenantId == tenantId && u.Id == actorId)
+            .Select(u => u.FullName)
+            .FirstOrDefaultAsync(cancellationToken) ?? "Nhân sự";
+        var notifiedRecipients = new HashSet<Guid> { actorId };
+        if (assignment.AssignedBy != Guid.Empty && notifiedRecipients.Add(assignment.AssignedBy))
+        {
+            db.Notifications.Add(BizFlow.Domain.Notifications.Notification.Create(
+                tenantId,
+                assignment.AssignedBy,
+                BizFlow.Domain.Notifications.NotificationEvent.WatchedItemActivity,
+                $"Báo cáo tiến độ ({percent}%): {task.Title}",
+                $"{actorName}: {content}",
+                $"task-progress:{report.Id:N}:{assignment.AssignedBy:N}",
+                "TASK",
+                task.Id));
+        }
+        var watcherIds = await db.WorkItemWatchers.AsNoTracking()
+            .Where(w => w.TenantId == tenantId && w.ObjectType == BizFlow.Domain.Collaboration.CommentObjectType.Task && w.ObjectId == taskId && w.RemovedAt == null)
+            .Select(w => w.UserId)
+            .ToListAsync(cancellationToken);
+        foreach (var watcherId in watcherIds)
+        {
+            if (notifiedRecipients.Add(watcherId))
+            {
+                db.Notifications.Add(BizFlow.Domain.Notifications.Notification.Create(
+                    tenantId,
+                    watcherId,
+                    BizFlow.Domain.Notifications.NotificationEvent.WatchedItemActivity,
+                    $"Cập nhật tiến độ mục theo dõi ({percent}%): {task.Title}",
+                    $"{actorName}: {content}",
+                    $"task-progress:{report.Id:N}:{watcherId:N}",
+                    "TASK",
+                    task.Id));
+            }
+        }
+        await db.SaveChangesAsync(cancellationToken);
+        return new TaskReportView(report.Id, report.AuthorId, report.Percent, report.Content, report.SubmittedAt);
+    }
+
     private sealed class ExecutionTransaction(BizFlowDbContext db, IDbContextTransaction transaction, Guid tenantId, Guid actorId,
         string? keyHash, WorkTask? task, TaskAssignment? assignment, UserAccount? actor) : ITaskExecutionTransaction
     {

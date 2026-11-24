@@ -17,9 +17,7 @@
   @if (error()) {
     <div class="directory-feedback">
       <p role="alert">{{ error() }}</p>
-      <a mat-stroked-button routerLink="/requests">{{
-        'requestDetail.backToRequests' | translate: 'Back to requests'
-      }}</a>
+      <a mat-stroked-button routerLink="/requests">← Danh sách</a>
     </div>
   }
 
@@ -31,195 +29,152 @@
       <div class="detail-actions">
         @if (canSubmit()) {
           <button
-            mat-flat-button
-            color="primary"
             type="button"
+            class="task-nav-btn primary-nav-btn"
             [disabled]="actionInProgress()"
             (click)="submit()"
           >
-            {{ 'requestDetail.submit' | translate: 'Submit request' }}
+            <span>{{ 'requestDetail.submit' | translate: 'Submit request' }}</span>
           </button>
         }
         @if (canRoute()) {
           <button
-            mat-flat-button
-            color="primary"
             type="button"
+            class="task-nav-btn primary-nav-btn"
             [disabled]="actionInProgress()"
             (click)="openModal('route')"
           >
-            {{
-              detail.status === 'ROUTED'
-                ? ('requestDetail.reroute' | translate: 'Re-route')
-                : ('requestDetail.route' | translate: 'Route request')
-            }}
-          </button>
-          <button
-            mat-stroked-button
-            color="accent"
-            type="button"
-            [disabled]="aiBusy() || actionInProgress()"
-            (click)="recommendRouting()"
-          >
-            {{ 'requestDetail.aiRoute' | translate: '✨ AI Route' }}
+            <span>
+              {{
+                detail.status === 'ROUTED'
+                  ? ('requestDetail.reroute' | translate: 'Re-route')
+                  : ('requestDetail.route' | translate: 'Route request')
+              }}
+            </span>
           </button>
         }
-        @if (
-          detail.status === 'SUBMITTED' ||
-          detail.status === 'ROUTED' ||
-          detail.status === 'RECEIVED' ||
-          detail.status === 'IN_PROGRESS'
-        ) {
+        @if (canUseAiSupport()) {
           <button
-            mat-stroked-button
             type="button"
+            class="task-nav-btn ai-nav-btn btn-ai-hub"
             [disabled]="aiBusy() || actionInProgress()"
-            (click)="analyzeMultiIntent()"
+            (click)="openModal('ai-hub')"
+            title="Mở trung tâm AI hỗ trợ điều phối, phân tách đa mục tiêu và lập đồ thị phân nhánh DAG"
           >
-            {{ 'requestDetail.aiSplit' | translate: '✨ AI Split' }}
-          </button>
-          <button
-            mat-stroked-button
-            type="button"
-            [disabled]="aiBusy() || actionInProgress()"
-            (click)="planBranching()"
-          >
-            ✦ {{ 'ai.tabBranching' | translate: 'Phân nhánh DAG' }}
+            <span>✨ {{ 'requestDetail.aiSupport' | translate: 'AI hỗ trợ xử lý' }}</span>
           </button>
         }
         @if (canReceive()) {
           <button
-            mat-flat-button
-            color="accent"
             type="button"
+            class="task-nav-btn primary-nav-btn"
             [disabled]="actionInProgress()"
             (click)="openModal('receive')"
           >
-            {{ 'requestDetail.receive' | translate: 'Receive request' }}
+            <span>{{ 'requestDetail.receive' | translate: 'Receive request' }}</span>
           </button>
         }
         @if (canStart()) {
           <button
-            mat-flat-button
-            color="primary"
             type="button"
+            class="task-nav-btn primary-nav-btn"
             [disabled]="actionInProgress()"
             (click)="executeStartWork()"
           >
-            {{ 'requestDetail.startWork' | translate: 'Start work' }}
+            <span>{{ 'requestDetail.startWork' | translate: 'Start work' }}</span>
           </button>
         }
         @if (canResolve()) {
           <button
-            mat-flat-button
-            color="primary"
             type="button"
+            class="task-nav-btn primary-nav-btn"
             [disabled]="actionInProgress()"
             (click)="openModal('resolve')"
           >
-            {{ 'requestDetail.resolve' | translate: 'Resolve request' }}
+            <span>{{ 'requestDetail.resolve' | translate: 'Resolve request' }}</span>
           </button>
         }
         @if (canConfirm()) {
           <button
-            mat-flat-button
-            color="primary"
             type="button"
+            class="task-nav-btn primary-nav-btn"
             [disabled]="actionInProgress()"
             (click)="openModal('confirm')"
           >
-            {{ 'requestDetail.reviewConfirm' | translate: 'Review & confirm' }}
+            <span>{{ 'requestDetail.reviewConfirm' | translate: 'Review & confirm' }}</span>
           </button>
         }
         @if (canRevise()) {
           <button
-            mat-flat-button
-            color="primary"
             type="button"
+            class="task-nav-btn primary-nav-btn"
             [disabled]="actionInProgress()"
             (click)="openModal('revise')"
           >
-            {{ 'requestDetail.revise' | translate: 'Revise request' }}
-          </button>
-        }
-        @if (canReject()) {
-          <button
-            mat-stroked-button
-            color="warn"
-            type="button"
-            [disabled]="actionInProgress()"
-            (click)="openModal('reject')"
-          >
-            {{ 'requestDetail.reject' | translate: 'Reject' }}
-          </button>
-        }
-        @if (canCancel()) {
-          <button
-            mat-stroked-button
-            type="button"
-            [disabled]="actionInProgress()"
-            (click)="openModal('cancel')"
-          >
-            {{ 'common.cancel' | translate: 'Cancel' }}
+            <span>{{ 'requestDetail.revise' | translate: 'Revise request' }}</span>
           </button>
         }
         @if (canEscalate()) {
           <button
-            mat-stroked-button
-            color="accent"
             type="button"
+            class="task-nav-btn"
             [disabled]="actionInProgress()"
             (click)="openModal('escalate')"
-            title="Chuyển yêu cầu lên cấp trên (Giám đốc) để phê duyệt"
+            title="Chuyển yêu cầu lên cấp trên (Giám đốc / Quản trị viên) để phê duyệt"
           >
-            ⬆️ {{ 'requestDetail.escalate' | translate: 'Chuyển lên cấp trên duyệt' }}
+            <span>⬆️ {{ 'requestDetail.escalate' | translate: 'Chuyển lên cấp trên duyệt' }}</span>
           </button>
         }
         @if (canDecideElevated()) {
           <button
-            mat-flat-button
-            color="primary"
             type="button"
+            class="task-nav-btn primary-nav-btn"
             [disabled]="actionInProgress()"
             (click)="executeElevatedDecision(true)"
           >
-            ✓ {{ 'requestDetail.approveElevated' | translate: 'Duyệt (cấp trên)' }}
+            <span>✓ {{ 'requestDetail.approveElevated' | translate: 'Duyệt (cấp trên)' }}</span>
           </button>
           <button
-            mat-stroked-button
-            color="warn"
             type="button"
+            class="task-nav-btn danger-nav-btn"
             [disabled]="actionInProgress()"
             (click)="executeElevatedDecision(false)"
           >
-            ✕ {{ 'requestDetail.rejectElevated' | translate: 'Từ chối (cấp trên)' }}
+            <span>✕ {{ 'requestDetail.rejectElevated' | translate: 'Từ chối (cấp trên)' }}</span>
+          </button>
+        }
+        @if (canReject()) {
+          <button
+            type="button"
+            class="task-nav-btn danger-nav-btn"
+            [disabled]="actionInProgress()"
+            (click)="openModal('reject')"
+          >
+            <span>{{ 'requestDetail.rejectBtn' | translate: 'Từ chối' }}</span>
+          </button>
+        } @else if (canCancel()) {
+          <button
+            type="button"
+            class="task-nav-btn danger-nav-btn"
+            [disabled]="actionInProgress()"
+            (click)="openModal('cancel')"
+          >
+            <span>{{ 'requestDetail.cancelBtn' | translate: 'Hủy yêu cầu' }}</span>
           </button>
         }
         @if (canArchive()) {
           <button
-            mat-stroked-button
-            color="warn"
             type="button"
+            class="task-nav-btn danger-nav-btn"
             [disabled]="actionInProgress()"
             (click)="executeArchive()"
           >
-            {{ 'requestDetail.archive' | translate: 'Archive request' }}
+            <span>{{ 'requestDetail.archive' | translate: 'Archive request' }}</span>
           </button>
         }
-        @if (canCreateTask()) {
-          <button
-            mat-flat-button
-            color="accent"
-            type="button"
-            [disabled]="actionInProgress()"
-            (click)="openModal('create-task')"
-          >
-            {{ 'requestDetail.createTask' | translate: '+ Create task' }}
-          </button>
-        }
-        <a mat-stroked-button routerLink="/requests">{{
-          'requestDetail.backToRequests' | translate: 'Back to requests'
-        }}</a>
+        <a class="task-nav-btn" routerLink="/requests">
+          <span>← {{ 'requestDetail.backShort' | translate: 'Danh sách' }}</span>
+        </a>
       </div>
     </div>
 
@@ -325,6 +280,128 @@
     }
 
     <!-- Inline Action Forms / Modals -->
+    @if (activeModal() === 'ai-hub') {
+      <div class="action-card" role="region" aria-label="AI hỗ trợ xử lý yêu cầu">
+        <div
+          style="
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 10px;
+          "
+        >
+          <div>
+            <h3 style="margin: 0; color: #1e3a8a">✨ Trung tâm AI hỗ trợ xử lý yêu cầu</h3>
+            <p class="action-subtext" style="margin: 4px 0 0">
+              Chọn năng lực AI phù hợp với ngữ cảnh yêu cầu hiện tại để tự động gợi ý điều phối,
+              phân tách yêu cầu đa mục tiêu hoặc lập đồ thị phân nhánh DAG.
+            </p>
+          </div>
+          <button mat-stroked-button type="button" (click)="closeModal()">Đóng</button>
+        </div>
+
+        <div
+          style="
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+            gap: 12px;
+            margin-top: 12px;
+          "
+        >
+          @if (canRoute()) {
+            <div
+              style="
+                border: 1px solid #bfdbfe;
+                background: #f8fbff;
+                border-radius: 10px;
+                padding: 14px;
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
+                gap: 10px;
+              "
+            >
+              <div>
+                <strong style="color: #1e40af; font-size: 0.92rem">🎯 AI Điều phối yêu cầu</strong>
+                <p style="font-size: 0.8rem; color: #475569; margin: 6px 0 0">
+                  Phân tích nội dung và dịch vụ để tự động đề xuất phòng ban tiếp nhận tối ưu kèm
+                  lý do điều phối.
+                </p>
+              </div>
+              <button
+                type="button"
+                class="task-nav-btn primary-nav-btn"
+                [disabled]="aiBusy()"
+                (click)="recommendRouting()"
+              >
+                <span>{{ aiBusy() ? 'Đang phân tích…' : '✨ Chạy AI Điều phối' }}</span>
+              </button>
+            </div>
+          }
+
+          <div
+            style="
+              border: 1px solid #c7d2fe;
+              background: #f8faff;
+              border-radius: 10px;
+              padding: 14px;
+              display: flex;
+              flex-direction: column;
+              justify-content: space-between;
+              gap: 10px;
+            "
+          >
+            <div>
+              <strong style="color: #3730a3; font-size: 0.92rem">🧩 AI Phân tách đa mục tiêu</strong>
+              <p style="font-size: 0.8rem; color: #475569; margin: 6px 0 0">
+                Kiểm tra xem yêu cầu có chứa nhiều hạng mục dịch vụ độc lập hay không và tách thành
+                các yêu cầu con.
+              </p>
+            </div>
+            <button
+              type="button"
+              class="task-nav-btn"
+              [disabled]="aiBusy()"
+              (click)="analyzeMultiIntent()"
+            >
+              <span>{{ aiBusy() ? 'Đang phân tích…' : '✨ Chạy AI Phân tách' }}</span>
+            </button>
+          </div>
+
+          <div
+            style="
+              border: 1px solid #bae6fd;
+              background: #f0f9ff;
+              border-radius: 10px;
+              padding: 14px;
+              display: flex;
+              flex-direction: column;
+              justify-content: space-between;
+              gap: 10px;
+            "
+          >
+            <div>
+              <strong style="color: #0369a1; font-size: 0.92rem">✦ Phân nhánh đồ thị DAG</strong>
+              <p style="font-size: 0.8rem; color: #475569; margin: 6px 0 0">
+                Lập kế hoạch thực thi đa luồng song song & tuần tự theo mô hình đồ thị có hướng
+                (DAG).
+              </p>
+            </div>
+            <button
+              type="button"
+              class="task-nav-btn"
+              [disabled]="aiBusy()"
+              (click)="planBranching()"
+            >
+              <span>{{ aiBusy() ? 'Đang lập kế hoạch…' : '✦ Lập đồ thị phân nhánh DAG' }}</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    }
+
     @if (activeModal() === 'route') {
       <div class="action-card" role="region" aria-label="Route request panel">
         <h3>{{ 'requestDetail.routeModalTitle' | translate: 'Route Request' }}</h3>
@@ -1367,8 +1444,6 @@
     <!-- Comments and Collaboration Section -->
     <!-- F3: renders nothing unless the Mentions feature is enabled. -->
     <bf-work-item-watch [objectType]="'REQUEST'" [objectId]="detail.requestId" />
-    <!-- F6: renders nothing unless the Labels feature is enabled. -->
-    <bf-work-item-labels [objectType]="'REQUEST'" [objectId]="detail.requestId" />
     <bf-work-item-comments [objectType]="'REQUEST'" [objectId]="detail.requestId" />
 
     <!-- Attachments and Evidence Section -->

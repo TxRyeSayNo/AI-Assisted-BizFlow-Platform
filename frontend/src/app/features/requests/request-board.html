@@ -1,35 +1,45 @@
 <main id="main-content" class="page-content" tabindex="-1">
-  <nav aria-label="Breadcrumb">
-    <a routerLink="/workspace">{{ 'common.workspace' | translate: 'Không gian làm việc' }}</a>
-    <span aria-hidden="true"> / </span>
-    <a routerLink="/requests">{{ 'requests.title' | translate: 'Yêu cầu' }}</a>
-    <span aria-hidden="true"> / </span>
-    <span>{{ 'requestBoard.title' | translate: 'Request board' }}</span>
-  </nav>
-  <div
-    style="
-      display: flex;
-      justify-content: space-between;
-      align-items: baseline;
-      flex-wrap: wrap;
-      gap: 1rem;
-      margin-bottom: 1rem;
-    "
-  >
-    <h1>{{ 'requestBoard.title' | translate: 'Request board' }}</h1>
-    <div style="display: flex; flex-wrap: wrap; gap: 0.75rem">
-      <a mat-stroked-button routerLink="/requests">{{
-        'taskBoard.viewList' | translate: 'List'
-      }}</a>
+  <div class="task-page-header">
+    <nav class="compact-breadcrumb" aria-label="Breadcrumb">
+      <a routerLink="/workspace">{{ 'common.workspace' | translate: 'Không gian làm việc' }}</a>
+      <span class="sep" aria-hidden="true">/</span>
+      <a routerLink="/requests">{{ 'requests.title' | translate: 'Yêu cầu' }}</a>
+      <span class="sep" aria-hidden="true">/</span>
+      <span class="breadcrumb-current">{{ 'requestBoard.title' | translate: 'Request board' }}</span>
+    </nav>
+    <div class="task-header-row">
+      <div class="header-titles">
+        <h1 class="task-header-title">{{ 'requestBoard.title' | translate: 'Request board' }}</h1>
+        <p class="task-header-subtitle">
+          {{
+            'requestBoard.subtitle'
+              | translate
+                : 'Requests grouped by their current state. Read-only: open a request to act on it.'
+          }}
+        </p>
+      </div>
+      <div class="task-nav-container" aria-label="Request view switch">
+        <a class="task-nav-btn" routerLink="/requests">
+          <span class="nav-btn-icon" aria-hidden="true">≡</span>
+          <span>{{ 'taskBoard.viewList' | translate: 'List' }}</span>
+        </a>
+        <span class="task-nav-btn primary-nav-btn is-current" aria-current="page">
+          <span class="nav-btn-icon" aria-hidden="true">▦</span>
+          <span>{{ 'taskBoard.viewBoard' | translate: 'Board' }}</span>
+        </span>
+        @if (session.hasPermission('requests.create')) {
+          <a
+            class="task-nav-btn primary-nav-btn"
+            routerLink="/requests/new"
+            [title]="'requests.newRequest' | translate: 'New request'"
+          >
+            <span class="nav-btn-icon" aria-hidden="true">+</span>
+            <span>{{ 'requests.newRequest' | translate: 'New request' }}</span>
+          </a>
+        }
+      </div>
     </div>
   </div>
-  <p>
-    {{
-      'requestBoard.subtitle'
-        | translate
-          : 'Requests grouped by their current state. Read-only: open a request to act on it.'
-    }}
-  </p>
 
   <section aria-label="Request board" class="directory-panel" [attr.aria-busy]="busy()">
     <form [formGroup]="filters" (ngSubmit)="apply()" class="filters">
@@ -123,25 +133,27 @@
                       card.title
                     }}</a>
                     <span class="task-meta">
-                      {{
-                        'priorityBadge.' + card.priority
-                          | translate: priorities[card.priority] + ' priority'
-                      }}
+                      <span class="priority-badge" [attr.data-priority]="card.priority">
+                        {{
+                          'priorityBadge.' + card.priority
+                            | translate: priorities[card.priority] + ' priority'
+                        }}
+                      </span>
                     </span>
-                    <span class="task-meta">{{
-                      card.requesterName ?? ('common.none' | translate: 'None')
-                    }}</span>
+                    <span class="task-meta requester-meta">
+                      <span class="meta-icon" aria-hidden="true">👤</span>
+                      <span>{{ card.requesterName ?? ('common.none' | translate: 'None') }}</span>
+                    </span>
                     @if (card.serviceName) {
-                      <span class="task-meta"
-                        >{{ card.serviceName }}
-                        @if (card.categoryName) {
-                          · {{ card.categoryName }}
-                        }
+                      <span class="task-meta service-meta">
+                        <span class="meta-icon" aria-hidden="true">🏷️</span>
+                        <span>{{ card.serviceName }}@if (card.categoryName) { · {{ card.categoryName }} }</span>
                       </span>
                     }
-                    <time class="task-meta" [attr.datetime]="card.updatedAt">{{
-                      card.updatedAt | date: 'short'
-                    }}</time>
+                    <time class="task-meta date-meta" [attr.datetime]="card.updatedAt">
+                      <span class="meta-icon" aria-hidden="true">🕒</span>
+                      <span>{{ card.updatedAt | date: 'short' }}</span>
+                    </time>
                   </article>
                 }
                 @if (column.items.length === 0) {
