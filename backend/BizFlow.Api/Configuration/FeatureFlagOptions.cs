@@ -27,6 +27,15 @@ public sealed class FeatureFlagOptions
     /// <summary>The label catalogue and the labels carried by work items (F6).</summary>
     public bool Labels { get; set; }
 
+    /// <summary>Direct messages between colleagues, with their endpoints and realtime hub (F13).</summary>
+    public bool DirectMessages { get; set; }
+
+    /// <summary>Bulk assign and archive over the existing per-task commands (F10).</summary>
+    public bool BulkActions { get; set; }
+
+    /// <summary>The read-only activity feed inside a task or request (F11).</summary>
+    public bool ActivityFeed { get; set; }
+
     /// <summary>
     /// Hangfire server plus the recurring jobs that feed watcher activity (F3) and deadline
     /// reminders (F4). Unlike the read-only features this one starts a worker and creates the

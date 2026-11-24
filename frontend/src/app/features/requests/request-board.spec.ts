@@ -3,6 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { SessionService } from '../../core/auth/session';
+import { ToastService } from '../../core/toast/toast.service';
 import { RequestBoard, RequestBoardCard, RequestBoardView } from './request-board';
 
 describe('request board', () => {
@@ -62,7 +63,15 @@ describe('request board', () => {
     })),
   });
 
-  it('renders one lane per request state and never offers a drag handle', () => {
+  // A drop event carries only what the component reads from it.
+  const dropEvent = (moved: RequestBoardCard) =>
+    ({
+      previousContainer: { id: 'from' },
+      container: { id: 'to' },
+      item: { data: moved },
+    }) as never;
+
+  it('renders one lane per request state with a drag handle on every card', () => {
     const fixture = TestBed.createComponent(RequestBoard);
     fixture.detectChanges();
     const request = pending();
@@ -76,10 +85,59 @@ describe('request board', () => {
     expect(fixture.nativeElement.textContent).toContain('Hồ sơ nháp A');
     expect(fixture.nativeElement.textContent).toContain('Đã gửi');
     expect(fixture.nativeElement.textContent).toContain('Dịch vụ hạ tầng');
-    // Read-only board: no drag handles anywhere.
-    expect(fixture.nativeElement.querySelector('.card-drag-handle')).toBeNull();
-    expect(fixture.nativeElement.querySelectorAll('.board-card.is-readonly').length).toBe(2);
+    expect(fixture.nativeElement.querySelectorAll('.card-drag-handle').length).toBe(2);
     expect(fixture.nativeElement.querySelector('img')).toBeNull();
+  });
+
+  it('replays only the two request transitions that need no extra information', () => {
+    const fixture = TestBed.createComponent(RequestBoard);
+    pending().flush(view([]));
+
+    // These two are payload-free, so a dropped card can complete them on its own.
+    expect(fixture.componentInstance.canMove('ROUTED', 'RECEIVED')).toBe(true);
+    expect(fixture.componentInstance.canMove('RECEIVED', 'IN_PROGRESS')).toBe(true);
+    // Everything else needs a target, a reason or a resolution.
+    for (const [from, to] of [
+      ['SUBMITTED', 'ROUTED'],
+      ['IN_PROGRESS', 'RESOLVED'],
+      ['RESOLVED', 'CONFIRMED'],
+      ['SUBMITTED', 'REJECTED'],
+      ['ROUTED', 'CANCELLED'],
+      ['CONFIRMED', 'CLOSED'],
+      ['RECEIVED', 'OVERDUE'],
+    ] as [RequestBoardCard['status'], string][])
+      expect(fixture.componentInstance.canMove(from, to)).toBe(false);
+  });
+
+  it('posts the matching endpoint on an allowed drop and reloads the board', () => {
+    const fixture = TestBed.createComponent(RequestBoard);
+    pending().flush(view([card({ status: 'ROUTED' })]));
+
+    fixture.componentInstance.drop(dropEvent(card({ status: 'ROUTED' })), 'RECEIVED');
+
+    const posted = TestBed.inject(HttpTestingController).expectOne(
+      (r) => r.method === 'POST' && r.url === '/api/v1/requests/req-1/receive',
+    );
+    // A retried transition after an uncertain response must not apply twice.
+    expect(posted.request.headers.get('Idempotency-Key')).toBeTruthy();
+    posted.flush({});
+    pending().flush(view([card({ status: 'RECEIVED' })]));
+
+    expect(TestBed.inject(ToastService).toasts()).toEqual([]);
+  });
+
+  it('refuses a drop that would need information the card cannot supply', () => {
+    const fixture = TestBed.createComponent(RequestBoard);
+    pending().flush(view([card({ status: 'IN_PROGRESS' })]));
+
+    fixture.componentInstance.drop(dropEvent(card({ status: 'IN_PROGRESS' })), 'RESOLVED');
+
+    // Nothing is sent, and the person is told to open the request instead.
+    TestBed.inject(HttpTestingController).verify();
+    const toasts = TestBed.inject(ToastService).toasts();
+    expect(toasts.length).toBe(1);
+    expect(toasts[0].type).toBe('error');
+    expect(toasts[0].message).toContain('mở yêu cầu');
   });
 
   it('sends applied filters and keeps requester choices found on the board', () => {

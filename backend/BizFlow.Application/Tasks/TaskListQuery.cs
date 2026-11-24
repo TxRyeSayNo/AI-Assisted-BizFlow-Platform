@@ -6,8 +6,11 @@ using BizFlow.Domain.Tasks;
 
 namespace BizFlow.Application.Tasks;
 
+// F6 added LabelId as the last optional parameter, which keeps every existing caller, named
+// argument and `with` expression source-compatible.
 public sealed record TaskListFilter(int Page = 1, int PageSize = 25, string? Search = null,
-    string? Status = null, string? Priority = null, Guid? RequestId = null, Guid? ParentTaskId = null, bool? IsParentOnly = null);
+    string? Status = null, string? Priority = null, Guid? RequestId = null, Guid? ParentTaskId = null,
+    bool? IsParentOnly = null, Guid? LabelId = null);
 public sealed record TaskListRow(Guid TaskId, string Title, string Status, string Priority,
     DateTimeOffset? Deadline, DateTimeOffset CreatedAt, Guid CreatorId, Guid? RequestId,
     Guid? AssignedUserId, string? AssignedUserName, Guid? AssignedDepartmentId, string? AssignedDepartmentName,
@@ -45,7 +48,7 @@ public sealed class TaskListQuery(ITenantContext context, IAccessSnapshotProvide
         static string? Clean(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
         filter = filter with { Search = Clean(filter.Search), Status = Clean(filter.Status), Priority = Clean(filter.Priority) };
         if (filter.Page < 1 || filter.PageSize is < 1 or > 100 || (long)(filter.Page - 1) * filter.PageSize > int.MaxValue ||
-            filter.Search?.Length > 200 ||
+            filter.Search?.Length > 200 || filter.LabelId == Guid.Empty ||
             (filter.Status is not null && !Enum.GetValues<TaskState>().Any(s => TaskListCodes.State(s) == filter.Status)) ||
             (filter.Priority is not null && !Enum.GetValues<TaskPriority>().Any(p => TaskListCodes.Priority(p) == filter.Priority)))
             throw new ApplicationFault(FaultKind.Validation, "VALIDATION.FAILED", "Use a valid task status, priority, search and page size from 1 to 100.");

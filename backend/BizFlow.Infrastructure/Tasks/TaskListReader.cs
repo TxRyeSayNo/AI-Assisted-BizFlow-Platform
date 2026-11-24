@@ -37,6 +37,13 @@ public sealed class TaskListReader(BizFlowDbContext db) : ITaskListReader
         {
             query = query.Where(t => t.ParentTaskId == null);
         }
+        // F6: only tasks still carrying the label, so a detached label stops narrowing the list.
+        if (filter.LabelId is { } labelId)
+        {
+            query = query.Where(t => db.WorkItemLabels.Any(l => l.ObjectId == t.Id &&
+                l.ObjectType == BizFlow.Domain.Collaboration.CommentObjectType.Task &&
+                l.LabelId == labelId && l.RemovedAt == null));
+        }
         var total = await query.LongCountAsync(cancellationToken);
         var rows = await query.OrderByDescending(t => t.CreatedAt).ThenBy(t => t.Id)
             .Skip(checked((filter.Page - 1) * filter.PageSize)).Take(filter.PageSize)

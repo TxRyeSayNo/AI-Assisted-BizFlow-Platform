@@ -16,6 +16,7 @@ import { WorkItemComments } from '../collaboration/work-item-comments';
 import { WorkItemAttachments } from '../collaboration/work-item-attachments';
 import { WorkItemWatch } from '../collaboration/work-item-watch';
 import { WorkItemLabels } from '../collaboration/work-item-labels';
+import { WorkItemActivity } from '../collaboration/work-item-activity';
 import { TaskReminders } from './task-reminders';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
@@ -71,6 +72,7 @@ interface Detail {
     WorkItemAttachments,
     WorkItemWatch,
     WorkItemLabels,
+    WorkItemActivity,
     TaskReminders,
     TranslatePipe,
   ],

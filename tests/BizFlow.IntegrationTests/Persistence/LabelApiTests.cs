@@ -212,13 +212,22 @@ public sealed class LabelApiTests(PostgresFixture database)
         var titles = filtered.Columns.SelectMany(c => c.Items).Select(i => i.Title).ToArray();
         Assert.Equal("Việc có nhãn", Assert.Single(titles));
 
-        // Removing the label removes the task from that view.
+        // The same narrowing works on the list page, which shares the task read policy.
+        var listed = (await client.GetFromJsonAsync<TaskListPage>($"/api/v1/tasks?labelId={label.LabelId}"))!;
+        Assert.Equal("Việc có nhãn", Assert.Single(listed.Items).Title);
+        // Omitting the parameter leaves the list behaving exactly as it did before F6.
+        Assert.Equal(2, (await client.GetFromJsonAsync<TaskListPage>("/api/v1/tasks"))!.Total);
+
+        // Removing the label removes the task from both views.
         await client.DeleteAsync($"{On(a.TaskId)}/{label.LabelId}");
         Assert.Empty((await client.GetFromJsonAsync<TaskBoardView>(
             $"/api/v1/tasks/board?labelId={label.LabelId}"))!.Columns.SelectMany(c => c.Items));
+        Assert.Empty((await client.GetFromJsonAsync<TaskListPage>($"/api/v1/tasks?labelId={label.LabelId}"))!.Items);
 
         Assert.Equal(HttpStatusCode.UnprocessableEntity,
             (await client.GetAsync($"/api/v1/tasks/board?labelId={Guid.Empty}")).StatusCode);
+        Assert.Equal(HttpStatusCode.UnprocessableEntity,
+            (await client.GetAsync($"/api/v1/tasks?labelId={Guid.Empty}")).StatusCode);
     }
 
     [Fact]

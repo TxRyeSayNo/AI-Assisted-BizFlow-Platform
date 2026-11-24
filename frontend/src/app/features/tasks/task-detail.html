@@ -536,6 +536,8 @@
     <bf-task-reminders [taskId]="detail.task.taskId" [hasDeadline]="!!detail.task.deadline" />
     <!-- F6: renders nothing unless the Labels feature is enabled. -->
     <bf-work-item-labels [objectType]="'TASK'" [objectId]="detail.task.taskId" />
+    <!-- F11: renders nothing unless the ActivityFeed feature is enabled. -->
+    <bf-work-item-activity [objectType]="'TASK'" [objectId]="detail.task.taskId" />
     <bf-work-item-comments [objectType]="'TASK'" [objectId]="detail.task.taskId" />
     <bf-work-item-attachments [objectType]="'TASK'" [objectId]="detail.task.taskId" />
   }

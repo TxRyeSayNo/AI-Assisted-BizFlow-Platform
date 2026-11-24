@@ -15,10 +15,12 @@ namespace BizFlow.Api.Controllers;
 public sealed class FeaturesController(IOptions<FeatureFlagOptions> features) : ControllerBase
 {
     public sealed record FeatureFlagsView(bool Kanban, bool Calendar, bool Mentions,
-        bool DeadlineReminders, bool ReportExport, bool Labels);
+        bool DeadlineReminders, bool ReportExport, bool Labels, bool DirectMessages,
+        bool BulkActions, bool ActivityFeed);
 
     [HttpGet]
     public FeatureFlagsView Get() => new(features.Value.Kanban, features.Value.Calendar,
         features.Value.Mentions, features.Value.DeadlineReminders, features.Value.ReportExport,
-        features.Value.Labels);
+        features.Value.Labels, features.Value.DirectMessages, features.Value.BulkActions,
+        features.Value.ActivityFeed);
 }

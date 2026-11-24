@@ -116,9 +116,17 @@
                   }
                 </span>
               </header>
-              <div class="lane-cards">
+              <div
+                class="lane-cards"
+                cdkDropList
+                [id]="'request-lane-' + column.status"
+                [cdkDropListData]="column"
+                [cdkDropListConnectedTo]="laneIds"
+                (cdkDropListDropped)="drop($event, column.status)"
+              >
                 @for (card of column.items; track card.requestId) {
-                  <article class="board-card is-readonly">
+                  <article class="board-card" cdkDrag [cdkDragData]="card">
+                    <div class="card-drag-handle" cdkDragHandle aria-hidden="true">⋮⋮</div>
                     <a class="task-title" [routerLink]="['/requests', card.requestId]">{{
                       card.title
                     }}</a>

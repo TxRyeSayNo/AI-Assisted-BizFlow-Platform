@@ -1,0 +1,203 @@
+<header class="public-header directory-header">
+  <a class="wordmark" routerLink="/workspace">
+    <span class="brand-mark" aria-hidden="true"></span> BizFlow
+  </a>
+  <span class="tenant-badge">{{ identity()?.tenantName }}</span>
+</header>
+<main id="main-content" class="page-content" tabindex="-1">
+  <nav aria-label="Breadcrumb" class="compact-breadcrumb">
+    <a routerLink="/workspace">{{ 'common.workspace' | translate: 'Workspace' }}</a>
+    <span class="sep" aria-hidden="true">/</span>
+    <span class="breadcrumb-current">{{ 'messages.title' | translate: 'Messages' }}</span>
+  </nav>
+  <h1>
+    {{ 'messages.title' | translate: 'Messages' }}
+    @if (totalUnread() > 0) {
+      <span class="unread-total">{{ totalUnread() }}</span>
+    }
+  </h1>
+  <p class="messages-subtitle">
+    {{
+      'messages.subtitle' | translate: 'Private conversations with colleagues in this workspace.'
+    }}
+    <span class="realtime-status" [attr.data-status]="status()">
+      @switch (status()) {
+        @case ('live') {
+          {{ 'messages.live' | translate: 'Live' }}
+        }
+        @case ('connecting') {
+          {{ 'messages.connecting' | translate: 'Connecting…' }}
+        }
+        @case ('reconnecting') {
+          {{ 'messages.reconnecting' | translate: 'Reconnecting…' }}
+        }
+        @default {
+          {{ 'messages.offline' | translate: 'Offline' }}
+        }
+      }
+    </span>
+  </p>
+
+  @if (!features.directMessages()) {
+    <p role="status" class="directory-feedback">
+      {{ 'messages.unavailable' | translate: 'Messaging is not enabled on this deployment.' }}
+    </p>
+  } @else if (denied()) {
+    <p role="alert" class="directory-feedback">
+      {{ 'messages.denied' | translate: 'You no longer have access to messaging.' }}
+    </p>
+  } @else if (unavailable()) {
+    <p role="status" class="directory-feedback">
+      {{ 'messages.unavailable' | translate: 'Messaging is not enabled on this deployment.' }}
+    </p>
+  } @else if (error()) {
+    <div class="directory-feedback">
+      <p role="alert">
+        {{ 'messages.loadError' | translate: 'Conversations could not be loaded.' }}
+      </p>
+      <button mat-stroked-button type="button" (click)="loadConversations()">
+        {{ 'common.retry' | translate: 'Retry' }}
+      </button>
+    </div>
+  } @else {
+    <div class="messages-layout">
+      <section class="conversation-list" aria-label="Conversations">
+        <mat-form-field appearance="outline" subscriptSizing="dynamic" class="full-width">
+          <mat-label>{{ 'messages.findColleague' | translate: 'Find a colleague' }}</mat-label>
+          <input
+            matInput
+            [ngModel]="search()"
+            (ngModelChange)="search.set($event)"
+            name="colleagueSearch"
+            maxlength="80"
+          />
+        </mat-form-field>
+
+        @if (startable().length > 0) {
+          <ul class="start-list">
+            @for (person of startable(); track person.userId) {
+              <li>
+                <button type="button" [disabled]="sending()" (click)="startWith(person)">
+                  <span class="person-name">{{ person.fullName }}</span>
+                  @if (person.employeeCode) {
+                    <span class="person-code">{{ person.employeeCode }}</span>
+                  }
+                </button>
+              </li>
+            }
+          </ul>
+        }
+
+        @if (busy()) {
+          <p role="status" class="directory-feedback">
+            {{ 'common.loading' | translate: 'Loading…' }}
+          </p>
+        } @else if (conversations().length === 0) {
+          <p role="status" class="directory-feedback">
+            {{
+              'messages.empty' | translate: 'No conversations yet. Search for a colleague above.'
+            }}
+          </p>
+        } @else {
+          <ul class="conversation-items">
+            @for (row of conversations(); track row.conversationId) {
+              <li>
+                <button
+                  type="button"
+                  class="conversation-item"
+                  [class.active]="row.conversationId === openId()"
+                  [attr.aria-current]="row.conversationId === openId() ? 'true' : null"
+                  (click)="openConversation(row.conversationId)"
+                >
+                  <span class="conversation-top">
+                    <span class="person-name">{{ row.otherUserName }}</span>
+                    @if (row.unreadCount > 0) {
+                      <span class="unread-badge">{{ row.unreadCount }}</span>
+                    }
+                  </span>
+                  @if (row.lastMessagePreview) {
+                    <span class="conversation-preview">{{ row.lastMessagePreview }}</span>
+                  }
+                  @if (row.lastMessageAt) {
+                    <time class="conversation-time" [attr.datetime]="row.lastMessageAt">{{
+                      row.lastMessageAt | date: 'short'
+                    }}</time>
+                  }
+                </button>
+              </li>
+            }
+          </ul>
+        }
+      </section>
+
+      <section class="conversation-thread" aria-label="Conversation">
+        @if (open(); as current) {
+          <header class="thread-header">
+            <strong>{{ current.otherUserName }}</strong>
+            @if (current.otherUserEmployeeCode) {
+              <span class="person-code">{{ current.otherUserEmployeeCode }}</span>
+            }
+          </header>
+          <ol class="thread-messages">
+            @for (message of messages(); track message.messageId) {
+              <li class="message" [class.mine]="message.mine">
+                <span class="message-meta">
+                  {{ message.mine ? ('messages.you' | translate: 'You') : message.senderName }}
+                  ·
+                  <time [attr.datetime]="message.createdAt">{{
+                    message.createdAt | date: 'short'
+                  }}</time>
+                  @if (message.editedAt) {
+                    · {{ 'messages.edited' | translate: 'edited' }}
+                  }
+                </span>
+                @if (message.deleted) {
+                  <span class="message-body deleted">{{
+                    'messages.deleted' | translate: 'This message was deleted'
+                  }}</span>
+                } @else {
+                  <span class="message-body">{{ message.body }}</span>
+                  @if (message.mine) {
+                    <button
+                      type="button"
+                      class="message-remove"
+                      [disabled]="sending()"
+                      (click)="remove(message)"
+                    >
+                      {{ 'common.delete' | translate: 'Delete' }}
+                    </button>
+                  }
+                }
+              </li>
+            }
+            @if (messages().length === 0) {
+              <li class="thread-empty">
+                {{ 'messages.noMessages' | translate: 'No messages yet. Say hello.' }}
+              </li>
+            }
+          </ol>
+          <form class="composer" (ngSubmit)="send()">
+            <mat-form-field appearance="outline" subscriptSizing="dynamic" class="full-width">
+              <mat-label>{{ 'messages.compose' | translate: 'Write a message' }}</mat-label>
+              <textarea
+                matInput
+                [(ngModel)]="draft"
+                name="draft"
+                rows="2"
+                maxlength="4000"
+                [readonly]="sending()"
+              ></textarea>
+            </mat-form-field>
+            <button mat-flat-button type="submit" [disabled]="sending() || !draft.trim()">
+              {{ 'messages.send' | translate: 'Send' }}
+            </button>
+          </form>
+        } @else {
+          <p role="status" class="directory-feedback">
+            {{ 'messages.pick' | translate: 'Pick a conversation to read it.' }}
+          </p>
+        }
+      </section>
+    </div>
+  }
+</main>

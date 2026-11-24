@@ -15,6 +15,7 @@ import { WorkItemComments } from '../collaboration/work-item-comments';
 import { WorkItemAttachments } from '../collaboration/work-item-attachments';
 import { WorkItemWatch } from '../collaboration/work-item-watch';
 import { WorkItemLabels } from '../collaboration/work-item-labels';
+import { WorkItemActivity } from '../collaboration/work-item-activity';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
 
 export interface RequestResolutionItemView {
@@ -122,6 +123,7 @@ export interface UserOption {
     WorkItemAttachments,
     WorkItemWatch,
     WorkItemLabels,
+    WorkItemActivity,
     TranslatePipe,
   ],
   templateUrl: './request-detail.html',

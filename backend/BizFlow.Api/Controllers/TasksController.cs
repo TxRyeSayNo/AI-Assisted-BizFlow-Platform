@@ -89,8 +89,11 @@ public sealed class TasksController(TaskListQuery tasks, TaskCreation creation, 
     public Task<TaskListPage> List([FromQuery] int page = 1, [FromQuery] int pageSize = 25,
         [FromQuery] string? search = null, [FromQuery] string? status = null, [FromQuery] string? priority = null,
         [FromQuery] Guid? requestId = null, [FromQuery] Guid? parentTaskId = null, [FromQuery] bool? isParentOnly = null,
+        // F6, additive: omitting it leaves this endpoint behaving exactly as before.
+        [FromQuery] Guid? labelId = null,
         CancellationToken cancellationToken = default) =>
-        tasks.ListAsync(new(page, pageSize, search, status, priority, requestId, parentTaskId, isParentOnly), cancellationToken);
+        tasks.ListAsync(new(page, pageSize, search, status, priority, requestId, parentTaskId, isParentOnly, labelId),
+            cancellationToken);
 
     [JsonUnmappedMemberHandling(JsonUnmappedMemberHandling.Disallow)]
     public sealed record TaskCommentInput(string Content);

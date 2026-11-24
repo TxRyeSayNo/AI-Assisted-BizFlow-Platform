@@ -8,6 +8,9 @@ export interface FeatureFlags {
   deadlineReminders: boolean;
   reportExport: boolean;
   labels: boolean;
+  directMessages: boolean;
+  bulkActions: boolean;
+  activityFeed: boolean;
 }
 
 const allOff: FeatureFlags = {
@@ -17,6 +20,9 @@ const allOff: FeatureFlags = {
   deadlineReminders: false,
   reportExport: false,
   labels: false,
+  directMessages: false,
+  bulkActions: false,
+  activityFeed: false,
 };
 
 /**
@@ -40,6 +46,9 @@ export class FeatureFlagsService {
   readonly deadlineReminders = computed(() => this.state().deadlineReminders);
   readonly reportExport = computed(() => this.state().reportExport);
   readonly labels = computed(() => this.state().labels);
+  readonly directMessages = computed(() => this.state().directMessages);
+  readonly bulkActions = computed(() => this.state().bulkActions);
+  readonly activityFeed = computed(() => this.state().activityFeed);
 
   /** Idempotent: repeated calls from the shell effect issue at most one in-flight request. */
   load(): void {
@@ -54,6 +63,9 @@ export class FeatureFlagsService {
           deadlineReminders: flags?.deadlineReminders === true,
           reportExport: flags?.reportExport === true,
           labels: flags?.labels === true,
+          directMessages: flags?.directMessages === true,
+          bulkActions: flags?.bulkActions === true,
+          activityFeed: flags?.activityFeed === true,
         }),
       error: () => {
         // Allow a later attempt, and stay on the pre-feature behaviour until one succeeds.

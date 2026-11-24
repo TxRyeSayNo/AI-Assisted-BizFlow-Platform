@@ -30,7 +30,8 @@ export class App {
   readonly i18n = inject(I18nService);
   readonly aiAgent = inject(AiAgentService);
   readonly notifCount = inject(NotificationCountService);
-  private readonly features = inject(FeatureFlagsService);
+  // Read in the template to show the messaging entry only where the feature is enabled.
+  readonly features = inject(FeatureFlagsService);
   readonly unreadNotifications = computed(() => this.notifCount.unreadCount());
   private readonly router = inject(Router);
 

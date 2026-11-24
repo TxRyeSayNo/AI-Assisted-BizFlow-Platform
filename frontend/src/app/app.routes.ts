@@ -209,6 +209,13 @@ export const routes: Routes = [
     loadComponent: () => import('./features/sla/sla-profiles').then((m) => m.SlaProfiles),
   },
   {
+    // F13. Messaging is a capability of every active member, so tenant membership is the only
+    // gate; the server refuses the endpoints outright when the feature flag is off.
+    path: 'messages',
+    canActivate: [tenantGuard],
+    loadComponent: () => import('./features/messaging/messages').then((m) => m.Messages),
+  },
+  {
     path: 'notifications',
     canActivate: [tenantGuard],
     loadComponent: () =>

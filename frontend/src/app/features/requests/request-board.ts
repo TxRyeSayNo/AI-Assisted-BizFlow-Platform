@@ -1,3 +1,4 @@
+import { CdkDragDrop, DragDropModule } from '@angular/cdk/drag-drop';
 import { DatePipe } from '@angular/common';
 import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
 import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
@@ -10,6 +11,8 @@ import { MatSelectModule } from '@angular/material/select';
 import { RouterLink } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { SessionService } from '../../core/auth/session';
+import { I18nService } from '../../core/i18n/i18n.service';
+import { ToastService } from '../../core/toast/toast.service';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
 
 const states = {
@@ -53,15 +56,28 @@ export interface RequestBoardView {
 }
 
 /**
- * Read-only board over the request list. A request advances through nine separate commands, most
- * of which require a payload a dropped card cannot supply, so cards are not draggable here: each
- * one links to the request detail page where those commands already live.
+ * Which existing endpoint a drop replays, keyed by `from -> to`. Only the two request transitions
+ * that need no payload are offered: receiving a routed request and starting work on a received
+ * one. Everything else a request can do — routing, rejecting, resolving, confirming, cancelling,
+ * escalating — requires a target, a reason or a resolution that a dropped card cannot invent, so
+ * those lanes refuse the drop and point the person at the request itself.
+ */
+const transitions: Record<string, { path: string; permission: string }> = {
+  'ROUTED>RECEIVED': { path: 'receive', permission: 'requests.receive' },
+  'RECEIVED>IN_PROGRESS': { path: 'start', permission: 'requests.process' },
+};
+
+/**
+ * Board over the request list. Cards can be dragged across the two payload-free transitions
+ * above; every other lane links to the request detail page, where the remaining commands live
+ * exactly as they always have.
  */
 @Component({
   selector: 'bf-request-board',
   imports: [
     RouterLink,
     DatePipe,
+    DragDropModule,
     ReactiveFormsModule,
     MatButtonModule,
     MatFormFieldModule,
@@ -90,8 +106,70 @@ export class RequestBoard {
   readonly priorities = priorities;
   readonly priorityOptions = Object.entries(priorities);
 
+  private readonly toast = inject(ToastService);
+  private readonly i18n = inject(I18nService);
+  private moving = false;
+
   private readonly seenRequesters = signal<Map<string, string>>(new Map());
   readonly requesterOptions = computed(() => [...this.seenRequesters().entries()]);
+
+  /** Lane ids stay stable so a lane can receive a card from any other lane. */
+  readonly laneIds = Object.keys(states).map((status) => 'request-lane-' + status);
+
+  /** True when a card in `from` could legitimately be dropped into `to`. */
+  canMove(from: string, to: string): boolean {
+    return transitions[from + '>' + to] !== undefined;
+  }
+
+  drop(event: CdkDragDrop<RequestBoardColumn>, target: string) {
+    // The card is never moved optimistically: the board reloads once the transition really
+    // succeeded, so a refused drop leaves the lane exactly as it was.
+    if (event.previousContainer === event.container || this.moving) return;
+    const card = event.item.data as RequestBoardCard;
+    const plan = transitions[card.status + '>' + target];
+    if (!plan) {
+      this.toast.error(
+        this.i18n.t(
+          'requestBoard.invalidTransition',
+          'Bước này cần thêm thông tin. Hãy mở yêu cầu để thực hiện.',
+        ),
+      );
+      return;
+    }
+    if (!this.session.hasPermission(plan.permission)) {
+      this.toast.error(
+        this.i18n.t(
+          'taskBoard.noPermission',
+          'Bạn không có quyền thực hiện chuyển trạng thái này.',
+        ),
+      );
+      return;
+    }
+    this.moving = true;
+    this.http
+      .post(
+        `/api/v1/requests/${encodeURIComponent(card.requestId)}/${plan.path}`,
+        {},
+        // A retried transition after an uncertain response must not apply twice.
+        { headers: { 'Idempotency-Key': crypto.randomUUID() } },
+      )
+      .pipe(takeUntilDestroyed(this.destroy))
+      .subscribe({
+        next: () => {
+          this.moving = false;
+          this.load();
+        },
+        error: (failure: HttpErrorResponse) => {
+          this.moving = false;
+          // Only a 4xx carries a curated application fault message; a 5xx body is never shown.
+          const curated = failure?.status < 500 ? failure?.error?.message : null;
+          this.toast.error(
+            curated ?? this.i18n.t('requestBoard.errMove', 'Không chuyển được trạng thái yêu cầu.'),
+          );
+          this.load();
+        },
+      });
+  }
 
   constructor() {
     this.load();

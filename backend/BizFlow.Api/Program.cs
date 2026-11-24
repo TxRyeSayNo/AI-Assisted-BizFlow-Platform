@@ -72,6 +72,16 @@ builder.Services.AddScoped<BizFlow.Application.Collaboration.IWorkItemWatchStore
 // Labels (F6). New tables only; task and request storage is untouched.
 builder.Services.AddScoped<BizFlow.Application.Collaboration.LabelService>();
 builder.Services.AddScoped<BizFlow.Application.Collaboration.ILabelStore, BizFlow.Infrastructure.Collaboration.LabelStore>();
+// Direct messages (F13). New tables, new endpoints and a hub of their own; the notification hub
+// and its connection registry are left untouched.
+// Bulk actions (F10) and the in-item activity feed (F11). Both reuse existing commands and the
+// existing audit reader; neither adds a table.
+builder.Services.AddScoped<BizFlow.Application.Tasks.TaskBulkOperations>();
+builder.Services.AddScoped<BizFlow.Application.Collaboration.WorkItemActivityQuery>();
+builder.Services.AddScoped<BizFlow.Application.Collaboration.IWorkItemActivityStore, BizFlow.Infrastructure.Collaboration.WorkItemActivityStore>();
+builder.Services.AddScoped<BizFlow.Application.Messaging.DirectMessageService>();
+builder.Services.AddScoped<BizFlow.Application.Messaging.IDirectMessageStore, BizFlow.Infrastructure.Messaging.DirectMessageStore>();
+builder.Services.AddScoped<BizFlow.Application.Messaging.IDirectMessageUpdates, BizFlow.Api.Realtime.SignalRDirectMessageUpdates>();
 // Recurring jobs (F3 watcher activity, F4 deadline reminders). Registers nothing when the
 // Features:BackgroundJobs flag is off.
 BizFlow.Api.Configuration.BackgroundJobRegistration.AddBizFlowBackgroundJobs(builder.Services, builder.Configuration);
@@ -232,6 +242,8 @@ app.MapGet("/health/ready", HealthEndpoints.ReadyAsync).AllowAnonymous();
 if (app.Environment.IsDevelopment()) app.MapOpenApi();
 app.MapControllers();
 app.MapHub<BizFlow.Api.Realtime.NotificationHub>(BizFlow.Api.Realtime.NotificationHub.Path,
+    options => options.CloseOnAuthenticationExpiration = true);
+app.MapHub<BizFlow.Api.Realtime.ChatHub>(BizFlow.Api.Realtime.ChatHub.Path,
     options => options.CloseOnAuthenticationExpiration = true);
 BizFlow.Api.Configuration.BackgroundJobRegistration.UseBizFlowBackgroundJobs(app);
 

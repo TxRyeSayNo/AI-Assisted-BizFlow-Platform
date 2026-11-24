@@ -69,6 +69,10 @@ public sealed class BizFlowDbContext(DbContextOptions<BizFlowDbContext> options,
     // F6: the label catalogue and the labels carried by work items.
     public DbSet<Label> Labels => Set<Label>();
     public DbSet<WorkItemLabel> WorkItemLabels => Set<WorkItemLabel>();
+    // F13: direct messages between colleagues.
+    public DbSet<BizFlow.Domain.Messaging.ChatConversation> ChatConversations => Set<BizFlow.Domain.Messaging.ChatConversation>();
+    public DbSet<BizFlow.Domain.Messaging.ChatParticipant> ChatParticipants => Set<BizFlow.Domain.Messaging.ChatParticipant>();
+    public DbSet<BizFlow.Domain.Messaging.ChatMessage> ChatMessages => Set<BizFlow.Domain.Messaging.ChatMessage>();
 
     protected override void OnModelCreating(ModelBuilder model)
     {
@@ -99,6 +103,11 @@ public sealed class BizFlowDbContext(DbContextOptions<BizFlowDbContext> options,
         // F6, likewise.
         model.Entity<Label>().HasQueryFilter(x => CurrentUserId != null && CurrentTenantId != null && x.TenantId == CurrentTenantId);
         model.Entity<WorkItemLabel>().HasQueryFilter(x => CurrentUserId != null && CurrentTenantId != null && x.TenantId == CurrentTenantId);
+        // F13. Tenant-scoped like the rest; participation is then enforced by the message store,
+        // so a conversation the caller is not in never appears in any result.
+        model.Entity<BizFlow.Domain.Messaging.ChatConversation>().HasQueryFilter(x => CurrentUserId != null && CurrentTenantId != null && x.TenantId == CurrentTenantId);
+        model.Entity<BizFlow.Domain.Messaging.ChatParticipant>().HasQueryFilter(x => CurrentUserId != null && CurrentTenantId != null && x.TenantId == CurrentTenantId);
+        model.Entity<BizFlow.Domain.Messaging.ChatMessage>().HasQueryFilter(x => CurrentUserId != null && CurrentTenantId != null && x.TenantId == CurrentTenantId);
         model.Entity<AIInteraction>().HasQueryFilter(x => CurrentUserId != null && CurrentTenantId != null && x.TenantId == CurrentTenantId);
         model.Entity<AIRecommendation>().HasQueryFilter(x => CurrentUserId != null && CurrentTenantId != null && x.TenantId == CurrentTenantId);
         model.Entity<AIAgentAction>().HasQueryFilter(x => CurrentUserId != null && CurrentTenantId != null && x.TenantId == CurrentTenantId);
@@ -352,6 +361,57 @@ public sealed class BizFlowDbContext(DbContextOptions<BizFlowDbContext> options,
                         }
                         else if (!await Requests.AnyAsync(r => r.Id == watcher.ObjectId, cancellationToken)) throw Denied();
                     }
+                    break;
+                // F13. A conversation is opened by one of its own participants, and afterwards
+                // only its last-activity stamp moves.
+                case BizFlow.Domain.Messaging.ChatConversation conversation:
+                    AssertTenant(conversation.TenantId);
+                    if (entry.State == EntityState.Added)
+                    {
+                        if (conversation.CreatedBy != CurrentUserId) throw Denied();
+                        if (!await Users.AnyAsync(u => u.Id == conversation.CreatedBy, cancellationToken)) throw Denied();
+                    }
+                    else if (entry.Properties.Any(p => p.IsModified &&
+                        p.Metadata.Name != nameof(BizFlow.Domain.Messaging.ChatConversation.LastMessageAt))) throw Denied();
+                    break;
+                // F13. Participants are written when the conversation opens; afterwards a person
+                // may only move their own read marker or leave.
+                case BizFlow.Domain.Messaging.ChatParticipant participant:
+                    AssertTenant(participant.TenantId);
+                    if (entry.State == EntityState.Modified)
+                    {
+                        if (entry.Properties.Any(p => p.IsModified && p.Metadata.Name is not
+                            (nameof(BizFlow.Domain.Messaging.ChatParticipant.LastReadAt) or
+                             nameof(BizFlow.Domain.Messaging.ChatParticipant.LeftAt)))) throw Denied();
+                        if (participant.UserId != CurrentUserId) throw Denied();
+                    }
+                    else
+                    {
+                        if (!await Users.AnyAsync(u => u.Id == participant.UserId, cancellationToken)) throw Denied();
+                        // The conversation is normally created in this very unit of work, so look
+                        // at the pending entries before falling back to what is already stored.
+                        var opening = ChangeTracker.Entries<BizFlow.Domain.Messaging.ChatConversation>()
+                            .Any(e => e.State == EntityState.Added &&
+                                e.Entity.Id == participant.ConversationId &&
+                                e.Entity.CreatedBy == CurrentUserId);
+                        if (!opening && !await ChatConversations.AnyAsync(c => c.Id == participant.ConversationId &&
+                            c.CreatedBy == CurrentUserId, cancellationToken)) throw Denied();
+                    }
+                    break;
+                // F13. A message is written by its own sender, and only its own sender may later
+                // edit or soft-delete it.
+                case BizFlow.Domain.Messaging.ChatMessage message:
+                    AssertTenant(message.TenantId);
+                    if (message.SenderId != CurrentUserId) throw Denied();
+                    if (entry.State == EntityState.Added)
+                    {
+                        if (!await ChatParticipants.AnyAsync(p => p.ConversationId == message.ConversationId &&
+                            p.UserId == CurrentUserId && p.LeftAt == null, cancellationToken)) throw Denied();
+                    }
+                    else if (entry.Properties.Any(p => p.IsModified && p.Metadata.Name is not
+                        (nameof(BizFlow.Domain.Messaging.ChatMessage.Body) or
+                         nameof(BizFlow.Domain.Messaging.ChatMessage.EditedAt) or
+                         nameof(BizFlow.Domain.Messaging.ChatMessage.DeletedAt)))) throw Denied();
                     break;
                 // F6. The catalogue is tenant data; retiring a label is a soft change, and its
                 // identity and creator never move.
