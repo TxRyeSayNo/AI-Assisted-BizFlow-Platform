@@ -197,9 +197,11 @@
                     </div>
                   }
 
-                  <div class="message-text" style="white-space: pre-wrap">
-                    {{ cleanText(msg.text) }}
-                  </div>
+                  @if (msg.sender === 'robot') {
+                    <bf-agent-message-content [text]="msg.text" />
+                  } @else {
+                    <div class="message-text" style="white-space: pre-wrap">{{ msg.text }}</div>
+                  }
 
                   <!-- Interactive Clarification Questionnaire Card (ChatGPT Agent style) -->
                   @if (msg.questionnaire && !msg.questionnaireAnswered) {
@@ -638,16 +640,16 @@
                   </div>
                   <h5 class="empty-title">Chưa có nhánh nhiệm vụ nào</h5>
                   <p class="empty-desc">
-                    Bạn có thể bấm nút bên dưới để AI tự động phân rã một kế hoạch mẫu liên phòng
-                    ban, hoặc gõ yêu cầu trong Chatbox.
+                    Hãy trao đổi mục tiêu trong cuộc trò chuyện để Agent đề xuất các nhiệm vụ phù
+                    hợp.
                   </p>
                   @if (canCreateTasks()) {
                     <button
                       type="button"
                       class="btn-start-decompose"
-                      (click)="agent.initDefaultBranches()"
+                      (click)="agent.closeBranchModal(); agent.setTab('chat')"
                     >
-                      Bóc tách kế hoạch mẫu ngay
+                      Trao đổi với Agent
                     </button>
                   }
                 </div>

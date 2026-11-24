@@ -1,0 +1,59 @@
+<ng-template #inline let-parts>
+  @for (part of parts; track $index) {
+    @if (part.dateTime) {
+      <time class="event-time" [attr.datetime]="part.dateTime" [attr.title]="part.dateTime">
+        <span class="event-time-value">{{ part.text }}</span>
+        <span class="event-time-zone">{{ part.zone }}</span>
+      </time>
+    } @else if (part.strong) {
+      <strong>{{ part.text }}</strong>
+    } @else {
+      <span>{{ part.text }}</span>
+    }
+  }
+</ng-template>
+@for (block of blocks(); track $index) {
+  @switch (block.kind) {
+    @case ('heading') {
+      <h4>
+        <ng-container
+          [ngTemplateOutlet]="inline"
+          [ngTemplateOutletContext]="{ $implicit: block.items[0] }"
+        />
+      </h4>
+    }
+    @case ('list') {
+      @if (block.ordered) {
+        <ol>
+          @for (item of block.items; track $index) {
+            <li>
+              <ng-container
+                [ngTemplateOutlet]="inline"
+                [ngTemplateOutletContext]="{ $implicit: item }"
+              />
+            </li>
+          }
+        </ol>
+      } @else {
+        <ul>
+          @for (item of block.items; track $index) {
+            <li>
+              <ng-container
+                [ngTemplateOutlet]="inline"
+                [ngTemplateOutletContext]="{ $implicit: item }"
+              />
+            </li>
+          }
+        </ul>
+      }
+    }
+    @default {
+      <p>
+        <ng-container
+          [ngTemplateOutlet]="inline"
+          [ngTemplateOutletContext]="{ $implicit: block.items[0] }"
+        />
+      </p>
+    }
+  }
+}

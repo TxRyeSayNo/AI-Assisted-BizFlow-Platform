@@ -10,7 +10,7 @@ public enum NotificationEvent
     DeadlineWarning, Overdue, Escalation, ApprovalRequired,
     // F3, additive: an "@" mention, and activity on an item the recipient chose to watch.
     // Existing events keep their names and their stored values, so old notifications are unchanged.
-    Mentioned, WatchedItemActivity
+    Mentioned, WatchedItemActivity, Announcement, MeetingInvitation
 }
 
 public sealed class Notification

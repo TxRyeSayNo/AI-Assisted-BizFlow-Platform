@@ -618,6 +618,10 @@ public sealed class BizFlowDbContext(DbContextOptions<BizFlowDbContext> options,
                 case AiVectorMemory memory:
                     AssertTenant(memory.TenantId);
                     break;
+                case AiLearnedChoice choice:
+                    AssertTenant(choice.TenantId);
+                    if (choice.Scope == "PERSONAL" && choice.UserId != CurrentUserId) throw Denied();
+                    break;
                 default:
                     // New entities must explicitly declare their persistence boundary.
                     throw new InvalidOperationException($"No persistence boundary registered for {entry.Metadata.ClrType.Name}.");

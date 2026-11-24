@@ -1034,6 +1034,16 @@ public sealed class AiAssistanceService(
         // Check required tool permission
         await authorizer.AuthorizeAsync(tool.RequiredPermission, new(tenantId), cancellationToken: cancellationToken);
 
+        if (tool.Parameters != null)
+        {
+            System.Text.Json.Nodes.JsonObject args;
+            try { args = System.Text.Json.Nodes.JsonNode.Parse(command.ArgsJson) as System.Text.Json.Nodes.JsonObject ?? throw new JsonException(); }
+            catch (JsonException) { throw new ApplicationFault(FaultKind.Validation, "AI.INVALID_ARGUMENTS", "Tham số công cụ phải là một đối tượng JSON hợp lệ."); }
+            var missing = AgentToolSchemas.MissingOrInvalid(tool.Name, args, clock.GetUtcNow());
+            if (missing.Count > 0)
+                throw new ApplicationFault(FaultKind.Validation, "AI.MISSING_INFORMATION", "Cần bổ sung: " + string.Join(", ", missing.Values));
+        }
+
         var interaction = await store.RecordInteractionAsync(
             tenantId, userId, "ai.010", "tool-orchestrator", null, null,
             AIInteractionStatus.Succeeded, 50, null, cancellationToken);

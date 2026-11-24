@@ -13,7 +13,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace BizFlow.Infrastructure.AI;
 
-public sealed class AiActionDispatcher(BizFlowDbContext dbContext) : IAiActionDispatcher
+public sealed class AiActionDispatcher(BizFlowDbContext dbContext, IAgentNotificationService? notificationService = null) : IAiActionDispatcher
 {
     public async Task<object?> DispatchToolAsync(
         Guid tenantId,
@@ -27,6 +27,10 @@ public sealed class AiActionDispatcher(BizFlowDbContext dbContext) : IAiActionDi
 
         switch (toolName.ToLowerInvariant())
         {
+            case "send_meeting_notification":
+            case "send_department_notification":
+                if (notificationService == null) throw new ApplicationFault(FaultKind.Unavailable, "AI.TOOL_UNAVAILABLE", "Dịch vụ gửi thông báo chưa được cấu hình.");
+                return await notificationService.SendAsync(tenantId, userId, toolName, argsJson, cancellationToken);
             case "create_task_draft":
             {
                 var title = root.TryGetProperty("title", out var tp) ? tp.GetString() ?? "" : "Nhiệm vụ mới từ AI";

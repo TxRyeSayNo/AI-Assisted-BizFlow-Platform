@@ -107,8 +107,8 @@ internal sealed class AIAgentActionModelConfiguration : IEntityTypeConfiguration
             .IsRequired();
         b.Property(a => a.ExecutionStatus)
             .HasConversion(
-                v => v.ToString().ToUpperInvariant(),
-                v => Enum.Parse<AgentExecutionStatus>(v, true))
+                v => v == AgentExecutionStatus.NotExecuted ? "NOT_EXECUTED" : v.ToString().ToUpperInvariant(),
+                v => v == "NOT_EXECUTED" ? AgentExecutionStatus.NotExecuted : Enum.Parse<AgentExecutionStatus>(v, true))
             .HasMaxLength(32)
             .IsRequired();
         b.Property(a => a.ResultRef).HasMaxLength(255);

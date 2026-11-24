@@ -1,6 +1,7 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
+import { signal } from '@angular/core';
 import { SessionService } from '../auth/session';
 import { AiAgentService, SubtaskBranch } from './ai-agent.service';
 
@@ -41,6 +42,42 @@ describe('AiAgentService - Unified AI Agent Workspace', () => {
     expect(service.messages()[0].sender).toBe('robot');
     expect(service.activeTab()).toBe('chat');
     expect(service.isOpen()).toBe(false);
+  });
+
+  it('opens an empty branch view without fabricating task proposals', () => {
+    service.openBranchModal();
+    expect(service.branches()).toEqual([]);
+    expect(service.isBranchModalOpen()).toBe(true);
+  });
+
+  it('isolates conversation storage when switching users and tenants', () => {
+    TestBed.resetTestingModule();
+    const identity = signal({ userId: 'alice', tenantId: 'company-a', fullName: 'Alice' });
+    TestBed.configureTestingModule({
+      providers: [
+        AiAgentService,
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        { provide: SessionService, useValue: { ...mockSession, identity } },
+      ],
+    });
+    service = TestBed.inject(AiAgentService);
+    http = TestBed.inject(HttpTestingController);
+    TestBed.tick();
+    service.messages.set([
+      { id: 'private', sender: 'user', text: 'Alice private goal', time: '10:00' },
+    ]);
+    const firstConversation = service.currentSessionId();
+    identity.set({ userId: 'bob', tenantId: 'company-a', fullName: 'Bob' });
+    TestBed.tick();
+    expect(service.messages().some((m) => m.text.includes('Alice private goal'))).toBe(false);
+    expect(service.currentSessionId()).not.toBe(firstConversation);
+    identity.set({ userId: 'alice', tenantId: 'company-b', fullName: 'Alice' });
+    TestBed.tick();
+    expect(service.messages().some((m) => m.text.includes('Alice private goal'))).toBe(false);
+    identity.set({ userId: 'alice', tenantId: 'company-a', fullName: 'Alice' });
+    TestBed.tick();
+    expect(service.messages().some((m) => m.text === 'Alice private goal')).toBe(true);
   });
 
   it('opens and closes workspace and manages tabs', () => {
@@ -166,7 +203,7 @@ describe('AiAgentService - Unified AI Agent Workspace', () => {
     expect(service.branches().every((b) => b.status === 'created')).toBe(true);
   });
 
-  it('handles in-place natural language modification of branch department', () => {
+  it('updates branch department through the explicit editor', () => {
     const branches: SubtaskBranch[] = [
       {
         id: 'b-1',
@@ -185,13 +222,11 @@ describe('AiAgentService - Unified AI Agent Workspace', () => {
     service.branches.set(branches);
 
     // User chats: "Đổi phòng ban nhánh 1 thành IT"
-    const handled = service.handleInPlaceMutation('Đổi phòng ban nhánh 1 thành IT');
-    expect(handled).toBe(true);
+    service.updateBranch('b-1', { departmentName: 'IT' });
     expect(service.branches()[0].departmentName).toBe('IT');
-    expect(service.messages().some((m) => m.text.includes('nhánh #1'))).toBe(true);
   });
 
-  it('handles in-place natural language modification of branch title', () => {
+  it('updates branch title through the explicit editor', () => {
     const branches: SubtaskBranch[] = [
       {
         id: 'b-1',
@@ -209,14 +244,11 @@ describe('AiAgentService - Unified AI Agent Workspace', () => {
 
     service.branches.set(branches);
 
-    const handled = service.handleInPlaceMutation(
-      'Đổi tiêu đề nhánh 1 thành Kiểm thử bảo mật toàn diện',
-    );
-    expect(handled).toBe(true);
+    service.updateBranch('b-1', { title: 'Kiểm thử bảo mật toàn diện' });
     expect(service.branches()[0].title).toBe('Kiểm thử bảo mật toàn diện');
   });
 
-  it('handles in-place deletion and addition of branches', () => {
+  it('deletes and adds branches through explicit controls', () => {
     const branches: SubtaskBranch[] = [
       {
         id: 'b-1',
@@ -247,14 +279,12 @@ describe('AiAgentService - Unified AI Agent Workspace', () => {
     service.branches.set(branches);
 
     // Delete branch 1
-    const deleted = service.handleInPlaceMutation('Xóa nhánh 1');
-    expect(deleted).toBe(true);
+    service.deleteBranch(0);
     expect(service.branches().length).toBe(1);
     expect(service.branches()[0].title).toBe('Nhánh 2');
 
     // Add branch
-    const added = service.handleInPlaceMutation('Thêm nhánh mới: Cấu hình tường lửa');
-    expect(added).toBe(true);
+    service.addCustomBranch('Cấu hình tường lửa');
     expect(service.branches().length).toBe(2);
     expect(service.branches()[1].title).toContain('Cấu hình tường lửa');
   });

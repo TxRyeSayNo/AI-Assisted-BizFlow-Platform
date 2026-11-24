@@ -182,7 +182,8 @@ public sealed record ExecuteAiActionCommand(
     string ToolName,
     string ArgsJson,
     bool Confirmed = false,
-    string? ConfirmationToken = null);
+    string? ConfirmationToken = null,
+    string? ConversationId = null);
 
 public sealed record ExecuteAiActionResult(
     Guid ActionId,
@@ -208,7 +209,8 @@ public sealed record AiTenantContextData(
     IReadOnlyList<AiDepartmentInfo> Departments,
     IReadOnlyList<AiUserInfo> Users,
     IReadOnlyList<AiWorkflowInfo> Workflows,
-    IReadOnlyList<AiSlaInfo> Slas);
+    IReadOnlyList<AiSlaInfo> Slas,
+    string TimeZone = "UTC");
 
 public sealed record AiTaskContextData(
     Guid TaskId,

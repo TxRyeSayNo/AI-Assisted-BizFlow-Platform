@@ -44,6 +44,48 @@ public sealed class AiAutonomousAgentTests
     // =========================================================================
 
     [Fact]
+    public async Task PersonalPreferenceDoesNotOverwriteOrReuseTenantWideChoice()
+    {
+        var tenantId = Guid.NewGuid();
+        var userId = Guid.NewGuid();
+        using var db = CreateInMemoryDbContext(tenantId, userId);
+        var store = new AiLearnedChoiceStore(db);
+        await store.RecordChoiceAsync(tenantId, null, "preference", "short", "Company shared preference", "TENANT", DateTimeOffset.UtcNow);
+        await store.RecordChoiceAsync(tenantId, userId, "preference", "short", "My private preference", "PERSONAL", DateTimeOffset.UtcNow);
+        var choices = await store.ListChoicesAsync(tenantId, userId);
+        Assert.Equal(2, choices.Count);
+        Assert.Contains(choices, c => c.UserId == userId && c.Scope == "PERSONAL");
+        var otherUser = await store.ListChoicesAsync(tenantId, Guid.NewGuid());
+        Assert.Single(otherUser);
+        Assert.Equal("TENANT", otherUser[0].Scope);
+    }
+
+    [Fact]
+    public async Task PersonalMemory_IsolatedByOwnerForSearchAndRecentReads()
+    {
+        var tenantId = Guid.NewGuid();
+        var alice = Guid.NewGuid();
+        var bob = Guid.NewGuid();
+        using var db = CreateInMemoryDbContext(tenantId, alice);
+        var embedding = new AiEmbeddingService(new ConfigurationBuilder().Build());
+        var aliceStore = new AiVectorMemoryStore(db, embedding, new FakeTenantContext(tenantId, alice));
+        var bobStore = new AiVectorMemoryStore(db, embedding, new FakeTenantContext(tenantId, bob));
+        await aliceStore.StoreMemoryAsync(tenantId, "USER", "Alice private", "Prefer short answers", "{\"userId\":\"" + bob + "\"}");
+        await bobStore.StoreMemoryAsync(tenantId, "USER", "Bob private", "Prefer detailed answers", null);
+        await aliceStore.StoreMemoryAsync(tenantId, "POLICY", "Shared", "Company policy", null);
+        var recent = await aliceStore.GetRecentMemoriesAsync(tenantId);
+        Assert.Contains(recent, m => m.Title == "Alice private");
+        Assert.Contains(recent, m => m.Title == "Shared");
+        Assert.DoesNotContain(recent, m => m.Title == "Bob private");
+        var search = await bobStore.SearchMemoriesAsync(tenantId, "answers", minScore: -1);
+        Assert.DoesNotContain(search, m => m.Title == "Alice private");
+        Assert.Contains(search, m => m.Title == "Bob private");
+        var anonymous = new AiVectorMemoryStore(db, embedding);
+        Assert.DoesNotContain(await anonymous.GetRecentMemoriesAsync(tenantId), m => m.MemoryScope == "USER");
+        await Assert.ThrowsAsync<ApplicationFault>(() => anonymous.StoreMemoryAsync(tenantId, "USER", "Unowned", "data", null));
+    }
+
+    [Fact]
     public void VectorMemory_CosineSimilarity_ReturnsHighForSemanticallyRelatedTexts()
     {
         // Arrange

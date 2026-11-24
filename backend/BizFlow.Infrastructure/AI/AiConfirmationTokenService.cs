@@ -118,13 +118,12 @@ public sealed class AiConfirmationTokenService : IAiConfirmationTokenService
 
         // 8. Replay check (single-use token)
         var cacheKey = $"consumed_ai_action_token:{payload.Nonce}";
-        if (_cache.TryGetValue(cacheKey, out _))
-            throw new ApplicationFault(FaultKind.Conflict, "AI.CONFIRMATION_ALREADY_USED", "This confirmation token has already been executed.");
-
-        var remainingTime = payload.ExpiresAt - _clock.GetUtcNow();
-        if (remainingTime > TimeSpan.Zero)
+        lock (_cache)
         {
-            _cache.Set(cacheKey, true, remainingTime);
+            if (_cache.TryGetValue(cacheKey, out _))
+                throw new ApplicationFault(FaultKind.Conflict, "AI.CONFIRMATION_ALREADY_USED", "This confirmation token has already been executed.");
+            var remainingTime = payload.ExpiresAt - _clock.GetUtcNow();
+            if (remainingTime > TimeSpan.Zero) _cache.Set(cacheKey, true, remainingTime);
         }
 
         return payload;

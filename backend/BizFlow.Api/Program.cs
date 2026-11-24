@@ -176,6 +176,7 @@ builder.Services.AddSingleton<BizFlow.Application.AI.IAiToolRegistry, BizFlow.In
 builder.Services.AddSingleton<BizFlow.Application.AI.IAiConfirmationTokenService, BizFlow.Infrastructure.AI.AiConfirmationTokenService>();
 builder.Services.AddScoped<BizFlow.Application.AI.IRequestSplitStore, BizFlow.Infrastructure.AI.RequestSplitStore>();
 builder.Services.AddScoped<BizFlow.Application.AI.IAiActionDispatcher, BizFlow.Infrastructure.AI.AiActionDispatcher>();
+builder.Services.AddScoped<BizFlow.Application.AI.IAgentNotificationService, BizFlow.Infrastructure.AI.AgentNotificationService>();
 builder.Services.AddScoped<BizFlow.Application.AI.AiAssistanceService>();
 builder.Services.AddScoped<BizFlow.Application.AI.ITaskDecompositionStore, BizFlow.Infrastructure.AI.TaskDecompositionStore>();
 builder.Services.AddScoped<BizFlow.Application.AI.IAiTaskDecompositionService, BizFlow.Application.AI.AiTaskDecompositionService>();

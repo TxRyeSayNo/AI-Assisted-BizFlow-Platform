@@ -82,12 +82,13 @@ public sealed class LlmConversationalAgentAndMemoryTests
         public bool IsConfigured { get; set; } = true;
         public string? NextResponseContent { get; set; }
         public List<string> PromptsReceived { get; } = [];
+        public Queue<string> Responses { get; } = new();
 
         public Task<AiModelResponse> CompleteAsync(string prompt, string systemInstructions, CancellationToken cancellationToken = default)
         {
             PromptsReceived.Add(prompt);
             return Task.FromResult(new AiModelResponse(
-                NextResponseContent ?? "{}",
+                Responses.Count > 0 ? Responses.Dequeue() : NextResponseContent ?? "{}",
                 "mock-gpt-4o",
                 50,
                 100,
@@ -206,192 +207,179 @@ public sealed class LlmConversationalAgentAndMemoryTests
             _decomposition,
             _clock,
             modelClient: useLlm ? _modelClient : null,
+            toolRegistry: new BizFlow.Infrastructure.AI.AiToolRegistry(),
             learnedChoiceStore: _learnedChoiceStore,
             conversationStateManager: _stateManager);
     }
 
-    [Fact]
-    public async Task TestC1_WhenLlmReturnsDynamicQuestions_BuildsStructuredClarificationForm()
+    [Theory]
+    [InlineData("Tôi đang mất tập trung, giúp tôi chọn cách làm việc")]
+    [InlineData("Xin chào")]
+    [InlineData("chuẩn bị cuộc họp")]
+    [InlineData("Tôi cần thiết kế thí nghiệm cho ý tưởng mới")]
+    public async Task EveryNaturalLanguageRequestUsesModelWithoutScenarioRouting(string message)
     {
-        var sut = CreateSut(useLlm: true);
-
-        _modelClient.NextResponseContent = """
-        {
-          "intent": "WORK_PLAN",
-          "isComplete": false,
-          "topic": "Xây dựng cổng thanh toán trực tuyến",
-          "riskAnalysis": "Nếu tích hợp cổng thanh toán mà chưa xác định ngân hàng đối tác và tiêu chuẩn PCI-DSS, dự án sẽ có nguy cơ rủi ro bảo mật tài chính.",
-          "agentThought": "Yêu cầu cần làm rõ đơn vị trung gian thanh toán và hạn định go-live.",
-          "dynamicQuestions": [
-            {
-              "id": "q_payment_gateway",
-              "title": "Cổng thanh toán hoặc ngân hàng đối tác",
-              "type": "single_choice",
-              "options": [
-                { "id": "vnpay", "label": "VNPay QR", "isDefault": true },
-                { "id": "momo", "label": "MoMo Business" },
-                { "id": "stripe", "label": "Stripe International" }
-              ],
-              "required": true,
-              "allowCustomInput": true
-            },
-            {
-              "id": "q_target_golive",
-              "title": "Hạn định hoàn thành (Go-live)",
-              "type": "single_choice",
-              "options": [
-                { "id": "2w", "label": "Trong 2 tuần" },
-                { "id": "1m", "label": "Trong 1 tháng", "isDefault": true }
-              ],
-              "required": true,
-              "allowCustomInput": true
-            }
-          ]
-        }
-        """;
-
-        var command = new RobotChatCommand("Lên kế hoạch tích hợp thanh toán trực tuyến cho website");
-        var result = await sut.ProcessMessageAsync(command);
-
-        Assert.Equal("AGENT_CLARIFICATION_REQUIRED", result.RecognizedCommand);
-        Assert.NotNull(result.Questionnaire);
-        Assert.Equal(2, result.Questionnaire.Questions.Count);
-        Assert.Equal("q_payment_gateway", result.Questionnaire.Questions[0].Id);
-        Assert.Equal("single_choice", result.Questionnaire.Questions[0].Type);
-        Assert.True(result.Questionnaire.Questions[0].AllowCustomInput);
-        Assert.Contains("PCI-DSS", result.Questionnaire.RiskAnalysis);
-        Assert.Contains("đơn vị trung gian", result.AgentThought);
+        _modelClient.NextResponseContent = """{"reply":"Hãy bắt đầu từ mục tiêu của bạn."}""";
+        var response = await CreateSut().ProcessMessageAsync(new(message));
+        Assert.Equal("AGENT_REPLY", response.RecognizedCommand);
+        Assert.Null(response.Questionnaire);
+        Assert.Single(_modelClient.PromptsReceived);
+        Assert.Contains(message, System.Text.Json.JsonDocument.Parse(_modelClient.PromptsReceived[0]).RootElement.GetProperty("message").GetString());
     }
 
     [Fact]
-    public async Task TestC2_MultiTurnSessionState_RetainsExtractedSlotsAcrossTurns()
+    public async Task Reply_preserves_headings_and_key_fact_emphasis_for_safe_chat_renderer()
     {
-        var sut = CreateSut(useLlm: false);
-        var convId = "session_test_123";
-
-        // Turn 1: Meeting prompt without full details -> triggers clarification and saves session
-        var turn1 = await sut.ProcessMessageAsync(new RobotChatCommand("Chuẩn bị cuộc họp với các phòng ban", ConversationId: convId));
-        Assert.Equal("AGENT_CLARIFICATION_REQUIRED", turn1.RecognizedCommand);
-
-        var savedState = await _stateManager.GetStateAsync(_tenantId, _userId, convId);
-        Assert.NotNull(savedState);
-        Assert.NotNull(savedState.PendingClarification);
-
-        // Turn 2: User provides follow-up details in natural language
-        var turn2 = await sut.ProcessMessageAsync(new RobotChatCommand("Họp lúc 9h sáng mai tại phòng họp Lớn, có Ban Giám đốc và IT tham gia", ConversationId: convId));
-        Assert.NotNull(turn2.ActionCards);
-        Assert.Contains(turn2.ActionCards, c => c.ActionType == "OPEN_DECOMPOSITION");
-
-        // Session state should now be cleared
-        var clearedState = await _stateManager.GetStateAsync(_tenantId, _userId, convId);
-        Assert.Null(clearedState);
+        const string formatted = "### Kết luận\n**Ưu tiên:** Hoàn thành báo cáo.\n- Kiểm tra chứng từ";
+        _modelClient.NextResponseContent = System.Text.Json.JsonSerializer.Serialize(new { answerOnly = true, reply = formatted });
+        var response = await CreateSut().ProcessMessageAsync(new("Tóm tắt công việc"));
+        Assert.Equal(formatted, response.Response);
     }
 
     [Fact]
-    public async Task TestC3_WhenLlmDeterminesCompleteness_ExecutesDecompositionDirectly()
+    public async Task ToolResultIsFedBackToModelBeforeFinalAnswer()
     {
-        var sut = CreateSut(useLlm: true);
-
-        _modelClient.NextResponseContent = """
-        {
-          "intent": "WORK_PLAN",
-          "isComplete": true,
-          "topic": "Chuyển đổi văn phòng mới",
-          "extractedSlots": {
-            "time": "Chủ nhật tuần này",
-            "destination": "Tầng 5 Keangnam",
-            "department": "Phòng Hành chính chủ trì"
-          },
-          "agentThought": "Thông tin đã đầy đủ về thời gian, địa điểm và phòng ban chủ trì. Tiến hành phân rã công việc."
-        }
-        """;
-
-        var command = new RobotChatCommand("Chuyển văn phòng mới vào chủ nhật tuần này sang Tầng 5 Keangnam, Phòng Hành chính chủ trì");
-        var result = await sut.ProcessMessageAsync(command);
-
-        Assert.Equal("/task", result.RecognizedCommand);
-        Assert.NotNull(result.ActionCards);
-        Assert.Contains(result.ActionCards, c => c.ActionType == "OPEN_DECOMPOSITION");
+        _modelClient.Responses.Enqueue("""{"toolCall":{"name":"list_tasks","arguments":{"page":1}}}""");
+        _modelClient.Responses.Enqueue("""{"reply":"Danh sách hiện tại chưa có công việc."}""");
+        var response = await CreateSut().ProcessMessageAsync(new("Tôi nên làm gì trước?"));
+        Assert.Equal("AGENT_REPLY", response.RecognizedCommand);
+        Assert.Equal(2, _modelClient.PromptsReceived.Count);
+        Assert.Contains("\"total\":0", _modelClient.PromptsReceived[1]);
+        Assert.Contains("list_tasks", _modelClient.PromptsReceived[1]);
     }
 
     [Fact]
-    public async Task TestD1_WhenUserSubmitsQuestionnaireAnswers_RecordsChoicesInLearnedChoiceStore()
+    public async Task ConversationStateRetainsHistoryAndSeparatesConversations()
     {
-        var sut = CreateSut(useLlm: false);
-
-        var answers = new List<AgentAnswerDto>
-        {
-            new("q_meeting_format", ["loc1"], CustomText: "Phòng họp Ban Điều Hành Tầng 8"),
-            new("q_meeting_time", ["t1"])
-        };
-
-        var command = new RobotChatCommand(
-            "Xác nhận thông tin",
-            FormId: "form_meeting",
-            FormAnswers: answers);
-
-        var result = await sut.ProcessMessageAsync(command);
-
-        Assert.NotEmpty(_learnedChoiceStore.Choices);
-        var recordedCustom = _learnedChoiceStore.Choices.FirstOrDefault(c => c.ChoiceValue.Contains("Phòng họp Ban Điều Hành"));
-        Assert.NotNull(recordedCustom);
-        Assert.Equal("meeting_format", recordedCustom.SemanticKey);
+        _modelClient.NextResponseContent = """{"reply":"Bạn cần thêm thông tin nào?"}""";
+        var sut = CreateSut();
+        await sut.ProcessMessageAsync(new("Mục tiêu Alpha", ConversationId: "a"));
+        await sut.ProcessMessageAsync(new("Thêm chi tiết", ConversationId: "a"));
+        Assert.Contains("Mục tiêu Alpha", System.Text.Json.JsonSerializer.Deserialize<System.Text.Json.JsonElement>(_modelClient.PromptsReceived[1]).GetProperty("history")[0].GetProperty("text").GetString());
+        await sut.ProcessMessageAsync(new("Mục tiêu Beta", ConversationId: "b"));
+        Assert.DoesNotContain("Alpha", _modelClient.PromptsReceived[2]);
     }
 
     [Fact]
-    public async Task TestD2_WhenLearnedChoicesExist_EnrichesOptionsWithFrequentlyUsedBadgeAndRecommendation()
+    public async Task RememberedPreferenceIsUsedOnLaterTurnsButOtherUsersAreExcluded()
     {
-        // Pre-seed a frequently used choice in the memory store
-        await _learnedChoiceStore.RecordChoiceAsync(
-            _tenantId,
-            _userId,
-            "meeting_format",
-            "Phòng VIP Tầng 10",
-            "Phòng VIP Tầng 10",
-            "PERSONAL",
-            _clock.GetUtcNow());
-
-        var sut = CreateSut(useLlm: false);
-
-        var result = await sut.ProcessMessageAsync(new RobotChatCommand("Tổ chức cuộc họp ban giám đốc"));
-
-        Assert.NotNull(result.Questionnaire);
-        var formatQuestion = result.Questionnaire.Questions.FirstOrDefault(q => q.Id == "q_meeting_format");
-        Assert.NotNull(formatQuestion);
-        Assert.NotNull(formatQuestion.Options);
-
-        var learnedOpt = formatQuestion.Options.FirstOrDefault(o => o.Label.Contains("Phòng VIP Tầng 10"));
-        Assert.NotNull(learnedOpt);
-        Assert.Contains("Thường dùng", learnedOpt.Label);
-        Assert.True(learnedOpt.IsDefault);
+        await _learnedChoiceStore.RecordChoiceAsync(_tenantId, Guid.NewGuid(), "preference", "secret", "OTHER_USER_SECRET", "PERSONAL", _clock.GetUtcNow());
+        var sut = CreateSut();
+        await sut.ProcessMessageAsync(new("/remember Trả lời ngắn gọn"));
+        _modelClient.NextResponseContent = """{"reply":"Được."}""";
+        await sut.ProcessMessageAsync(new("Giúp tôi sắp xếp công việc"));
+        var input = System.Text.Json.JsonDocument.Parse(_modelClient.PromptsReceived.Single()).RootElement;
+        Assert.Equal("Trả lời ngắn gọn", input.GetProperty("preferences")[0].GetProperty("choiceValue").GetString());
+        Assert.DoesNotContain("OTHER_USER_SECRET", _modelClient.PromptsReceived.Single());
     }
 
     [Fact]
-    public async Task TestD3_LearnedChoices_PromoteToTenantScope_AllowsTenantWideReuse()
+    public async Task ModelCannotSilentlySaveInferredPreference()
     {
-        var otherUserId = Guid.NewGuid();
+        _modelClient.NextResponseContent = """{"toolCall":{"name":"remember_preference","arguments":{"content":"Ưu tiên họp sáng"}}}""";
+        var response = await CreateSut().ProcessMessageAsync(new("Tôi đang bận"));
+        Assert.Equal("AGENT_MEMORY_PROPOSAL", response.RecognizedCommand);
+        Assert.Empty(_learnedChoiceStore.Choices);
+    }
 
-        // 1. User records a personal choice
-        var choice = await _learnedChoiceStore.RecordChoiceAsync(
-            _tenantId,
-            _userId,
-            "deliverable",
-            "Tài liệu Kiến trúc Phần mềm (SAD)",
-            "Tài liệu Kiến trúc Phần mềm (SAD)",
-            "PERSONAL",
-            _clock.GetUtcNow());
+    [Fact]
+    public async Task DecompositionIsAnExplicitModelToolAndReturnsPreview()
+    {
+        _modelClient.NextResponseContent = """{"toolCall":{"name":"decompose","arguments":{"prompt":"Mục tiêu đã thống nhất"}}}""";
+        var response = await CreateSut().ProcessMessageAsync(new("Lập kế hoạch giúp tôi"));
+        Assert.Equal("AGENT_PLAN", response.RecognizedCommand);
+        Assert.Equal("OPEN_DECOMPOSITION", Assert.Single(response.ActionCards!).ActionType);
+    }
 
-        // Other user cannot see personal choice
-        var otherUserChoices = await _learnedChoiceStore.GetRelevantChoicesAsync(_tenantId, otherUserId, "deliverable");
-        Assert.Empty(otherUserChoices);
+    [Fact]
+    public async Task UnknownToolsAreRejectedAndLoopIsBounded()
+    {
+        _modelClient.NextResponseContent = """{"toolCall":{"name":"delete_database","arguments":{}}}""";
+        var response = await CreateSut().ProcessMessageAsync(new("Làm giúp tôi"));
+        Assert.Equal("AGENT_STEP_LIMIT", response.RecognizedCommand);
+        Assert.Equal(5, _modelClient.PromptsReceived.Count);
+        Assert.Contains("TOOL_NOT_ALLOWED", _modelClient.PromptsReceived[1]);
+    }
 
-        // 2. Admin promotes choice to tenant scope
-        var promoted = await _learnedChoiceStore.PromoteToTenantScopeAsync(_tenantId, _learnedChoiceStore.Choices[0].Id);
-        Assert.True(promoted);
+    [Theory]
+    [InlineData("not json")]
+    [InlineData("{}")]
+    [InlineData("{\"reply\":\"\"}")]
+    public async Task InvalidModelResponseNeverFallsBackToScript(string content)
+    {
+        _modelClient.NextResponseContent = content;
+        var response = await CreateSut().ProcessMessageAsync(new("chuẩn bị họp"));
+        Assert.Equal("AGENT_UNAVAILABLE", response.RecognizedCommand);
+        Assert.Null(response.Questionnaire);
+    }
 
-        // Now other user can see the tenant-wide learned choice!
-        var choicesAfterPromotion = await _learnedChoiceStore.GetRelevantChoicesAsync(_tenantId, otherUserId, "deliverable");
-        Assert.NotEmpty(choicesAfterPromotion);
-        Assert.Equal("TENANT", choicesAfterPromotion[0].Scope);
+    [Fact]
+    public async Task MissingModelReportsUnavailable()
+    {
+        var response = await CreateSut(useLlm: false).ProcessMessageAsync(new("hôm nay tôi cần làm gì?"));
+        Assert.Equal("AGENT_UNAVAILABLE", response.RecognizedCommand);
+    }
+
+    [Fact]
+    public async Task Supplemental_facts_are_merged_and_questions_for_known_fields_are_suppressed()
+    {
+        _modelClient.Responses.Enqueue("""{"plan":{"goal":"Gửi thông báo họp ngày mai","toolName":"send_meeting_notification","arguments":{}}}""");
+        _modelClient.Responses.Enqueue("""{"plan":{"goal":"Gửi thông báo họp ngày mai","toolName":"send_meeting_notification","arguments":{"topic":"Báo cáo tổng kết Quý 4","recipientScope":"ALL_COMPANY"}},"questions":[{"field":"topic","question":"Nội dung cụ thể là gì?"},{"field":"recipientScope","question":"Những phòng ban nào?"},{"field":"startsAt","question":"Họp lúc mấy giờ?"}]}""");
+        var sut = CreateSut();
+        await sut.ProcessMessageAsync(new("Gửi thông báo chuẩn bị họp ngày mai", ConversationId: "q4"));
+        var response = await sut.ProcessMessageAsync(new("Nội dung về báo cáo tổng kết công ty Quý 4, toàn thể công ty", ConversationId: "q4"));
+        Assert.Equal("AGENT_CLARIFICATION_REQUIRED", response.RecognizedCommand);
+        Assert.Contains("Báo cáo tổng kết Quý 4", response.Response);
+        Assert.Contains("Toàn thể công ty", response.Response);
+        Assert.Contains("Họp lúc mấy giờ?", response.Response);
+        Assert.DoesNotContain("Nội dung cụ thể là gì?", response.Response);
+        Assert.DoesNotContain("Những phòng ban nào?", response.Response);
+        var saved = await _stateManager.GetStateAsync(_tenantId, _userId, "q4");
+        Assert.Contains("ALL_COMPANY", saved!.WorkPlan!.ArgumentsJson);
+    }
+
+    [Fact]
+    public async Task Client_history_can_supply_newer_events_without_discarding_persisted_work_plan()
+    {
+        _modelClient.NextResponseContent = """{"reply":"Đã nhận thông tin"}""";
+        var sut = CreateSut();
+        await sut.ProcessMessageAsync(new("Lượt cũ", ConversationId: "history"));
+        await sut.ProcessMessageAsync(new("Lượt mới", History: [new("user", "Thông tin mới hơn trong giao diện")], ConversationId: "history"));
+        Assert.Contains("Thông tin mới hơn trong giao diện", System.Text.Json.JsonDocument.Parse(_modelClient.PromptsReceived[1]).RootElement.GetProperty("history")[0].GetProperty("text").GetString());
+    }
+
+    [Fact]
+    public async Task Ignoring_supplemental_message_is_retried_before_returning_repeated_questions()
+    {
+        _modelClient.Responses.Enqueue("""{"plan":{"toolName":"send_meeting_notification","arguments":{}}}""");
+        _modelClient.Responses.Enqueue("""{"reply":"Nội dung là gì?"}""");
+        _modelClient.Responses.Enqueue("""{"plan":{"toolName":"send_meeting_notification","arguments":{"topic":"Báo cáo Quý 4","recipientScope":"ALL_COMPANY"}}}""");
+        var sut = CreateSut();
+        await sut.ProcessMessageAsync(new("Chuẩn bị họp ngày mai", ConversationId: "repair"));
+        var response = await sut.ProcessMessageAsync(new("Báo cáo Quý 4, toàn công ty", ConversationId: "repair"));
+        Assert.Equal(3, _modelClient.PromptsReceived.Count);
+        Assert.Contains("WORK_PLAN_UPDATE_REQUIRED", _modelClient.PromptsReceived[2]);
+        Assert.Contains("Báo cáo Quý 4", response.Response);
+        Assert.DoesNotContain("Nội dung là gì?", response.Response);
+    }
+
+    [Fact]
+    public async Task Model_cannot_invent_a_meeting_hour_or_use_an_assistant_summary_as_user_evidence()
+    {
+        _modelClient.NextResponseContent = """{"activityType":"MEETING","plan":{"toolName":"send_meeting_notification","arguments":{"topic":"Quý 4","recipientScope":"ALL_COMPANY","startsAt":"2030-01-02T09:00:00+07:00"}}}""";
+        var response = await CreateSut().ProcessMessageAsync(new("Họp báo cáo Quý 4 ngày mai, toàn công ty",
+            History: [new("robot", "Cuộc họp lúc 9h sáng")], ConversationId: "no-invented-hour"));
+        Assert.Equal("AGENT_CLARIFICATION_REQUIRED", response.RecognizedCommand);
+        Assert.Null(response.ActionCards);
+        var state = await _stateManager.GetStateAsync(_tenantId, _userId, "no-invented-hour");
+        Assert.DoesNotContain("startsAt", state!.WorkPlan!.ArgumentsJson);
+    }
+
+    [Fact]
+    public async Task CancelledRequestPropagatesCancellation()
+    {
+        using var cts = new CancellationTokenSource();
+        cts.Cancel();
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => CreateSut().ProcessMessageAsync(new("Xin chào"), cts.Token));
     }
 }

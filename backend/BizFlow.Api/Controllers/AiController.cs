@@ -18,7 +18,8 @@ public sealed class AiController(
     ITenantContext tenantContext,
     IAiVectorMemoryStore? vectorMemoryStore = null,
     IProactiveAgentScanner? proactiveScanner = null,
-    IAiSelfReflectionService? selfReflectionService = null) : ControllerBase
+    IAiSelfReflectionService? selfReflectionService = null,
+    IConversationStateManager? conversationStateManager = null) : ControllerBase
 {
     // FR-AI-001: Assist task creation
     [HttpPost("task-assistance")]
@@ -106,7 +107,26 @@ public sealed class AiController(
         [FromBody] ExecuteAiActionCommand command,
         CancellationToken cancellationToken = default)
     {
+        ConversationState? pendingState = null;
+        var notificationAction = command.ToolName is "send_meeting_notification" or "send_department_notification";
+        if (notificationAction && string.IsNullOrWhiteSpace(command.ConversationId))
+            throw new ApplicationFault(FaultKind.Validation, "AI.CONVERSATION_REQUIRED", "Gửi thông báo cần gắn với cuộc hội thoại và bản xem trước.");
+        if (command.Confirmed && conversationStateManager != null && command.ConversationId is { Length: > 0 and <= 100 } requestedConversation &&
+            tenantContext.TenantId is { } requestedTenant && tenantContext.UserId is { } requestedUser)
+        {
+            pendingState = await conversationStateManager.GetStateAsync(requestedTenant, requestedUser, requestedConversation, cancellationToken);
+            if ((notificationAction || pendingState?.WorkPlan != null) &&
+                (pendingState?.WorkPlan is not { Completed: false } pending || pending.ConfirmationToken != command.ConfirmationToken || pending.ConfirmationArgsJson != command.ArgsJson))
+                throw new ApplicationFault(FaultKind.Conflict, "AI.CONFIRMATION_SUPERSEDED", "Bản đề xuất đã được sửa, hủy hoặc thực hiện. Vui lòng dùng bản xem trước mới nhất.");
+        }
         var result = await aiService.ExecuteActionAsync(command, cancellationToken);
+        if (result.ExecutionStatus == "SUCCEEDED" && conversationStateManager != null && command.ConversationId is { Length: > 0 and <= 100 } conversationId &&
+            tenantContext.TenantId is { } tenantId && tenantContext.UserId is { } userId)
+        {
+            var state = await conversationStateManager.GetStateAsync(tenantId, userId, conversationId, cancellationToken);
+            if (state?.WorkPlan is { } plan && plan.ConfirmationToken == command.ConfirmationToken && plan.ConfirmationArgsJson == command.ArgsJson)
+                await conversationStateManager.SaveStateAsync(state with { WorkPlan = plan with { Completed = true, ConfirmationToken = null, ConfirmationArgsJson = null } }, cancellationToken);
+        }
         return Ok(result);
     }
 

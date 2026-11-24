@@ -16,6 +16,7 @@ import { Router } from '@angular/router';
 import { SessionService } from '../../core/auth/session';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
+import { AgentMessageContentComponent } from './agent-message-content';
 import {
   AiAgentService,
   ChatMessage,
@@ -26,7 +27,7 @@ import {
 @Component({
   selector: 'bf-robot-widget',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslatePipe],
+  imports: [CommonModule, FormsModule, TranslatePipe, AgentMessageContentComponent],
   templateUrl: './robot-widget.html',
   styleUrls: ['./robot-widget.scss', './robot-branching.scss'],
 })
@@ -220,12 +221,6 @@ export class RobotWidgetComponent implements OnInit {
     this.inputMessage.set('');
     this.scrollToBottom();
 
-    // 1. Check if user is asking to modify the current branching view in real time
-    if (this.agent.handleInPlaceMutation(text)) {
-      this.scrollToBottom();
-      return;
-    }
-
     this.agent.busy.set(true);
 
     // Prior conversation history for multi-turn context (excluding initial welcome placeholder)
@@ -233,16 +228,18 @@ export class RobotWidgetComponent implements OnInit {
       .messages()
       .slice(0, -1)
       .filter((m) => m.id !== 'welcome')
-      .slice(-8)
+      .slice(-20)
       .map((m) => ({ sender: m.sender, text: m.text }));
 
     const payload: {
       message: string;
       locale: string;
+      conversationId: string;
       history?: Array<{ sender: string; text: string }>;
     } = {
       message: text,
       locale: this.i18n.currentLanguage(),
+      conversationId: this.agent.currentSessionId(),
     };
     if (priorHistory.length > 0) {
       payload.history = priorHistory;
@@ -260,6 +257,7 @@ export class RobotWidgetComponent implements OnInit {
       .pipe(takeUntilDestroyed(this.destroy))
       .subscribe({
         next: (res) => {
+          if (this.agent.currentSessionId() !== payload.conversationId) return;
           this.agent.busy.set(false);
 
           // Check if response contains decomposition proposals
@@ -297,11 +295,18 @@ export class RobotWidgetComponent implements OnInit {
           this.scrollToBottom();
         },
         error: (err) => {
+          if (this.agent.currentSessionId() !== payload.conversationId) return;
           this.agent.busy.set(false);
           const errorText =
-            err?.status === 403
-              ? '🔒 Bạn không có quyền sử dụng tính năng AI Agent này.'
-              : '⚠️ Không thể kết nối với máy chủ AI Agent vào lúc này. Vui lòng kiểm tra kết nối mạng hoặc thử lại sau.';
+            err?.status === 0
+              ? 'Không thể kết nối với máy chủ AI Agent. Vui lòng kiểm tra kết nối mạng hoặc thử lại sau.'
+              : err?.status === 401
+                ? 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại để tiếp tục.'
+                : err?.status === 403
+                  ? 'Bạn không có quyền sử dụng tính năng AI Agent này.'
+                  : err?.status === 429
+                    ? 'Dịch vụ đang nhận quá nhiều yêu cầu. Vui lòng thử lại sau.'
+                    : 'Máy chủ gặp lỗi khi xử lý yêu cầu AI Agent. Vui lòng thử lại sau.';
           const robotMsg: ChatMessage = {
             id: crypto.randomUUID(),
             sender: 'robot',
@@ -343,31 +348,54 @@ export class RobotWidgetComponent implements OnInit {
 
     // 2. Action confirmation
     if (card.actionType === 'CONFIRM_ACTION') {
+      if (this.agent.busy()) return;
+      const conversationId = this.agent.currentSessionId();
       this.agent.busy.set(true);
       this.http
-        .post<{ success: boolean; resultJson?: string; error?: string }>(
-          card.linkUrl || '/api/v1/ai/actions/execute',
-          {
-            toolName: card.payload?.toolName,
-            argsJson: card.payload?.argsJson,
-            confirmed: true,
-            confirmationToken: card.payload?.confirmationToken,
-          },
-        )
+        .post<{
+          executionStatus: string;
+          output?: { deliveredCount?: number; alreadyDeliveredCount?: number };
+          message?: string;
+        }>(card.linkUrl || '/api/v1/ai/actions/execute', {
+          toolName: card.payload?.toolName,
+          argsJson: card.payload?.argsJson,
+          confirmed: true,
+          confirmationToken: card.payload?.confirmationToken,
+          conversationId,
+        })
         .pipe(takeUntilDestroyed(this.destroy))
         .subscribe({
           next: (res) => {
+            if (this.agent.currentSessionId() !== conversationId) return;
             this.agent.busy.set(false);
+            const succeeded = res.executionStatus === 'SUCCEEDED';
+            const resultText = succeeded
+              ? typeof res.output?.deliveredCount === 'number'
+                ? `Đã gửi thông báo trong ứng dụng tới ${res.output.deliveredCount} người nhận. ${res.output.alreadyDeliveredCount ?? 0} người đã nhận trước đó nên không gửi trùng.`
+                : `${card.title} thành công.`
+              : 'Hành động chưa được thực hiện.';
+            if (succeeded)
+              this.agent.messages.update((messages) =>
+                messages.map((message) => ({
+                  ...message,
+                  actionCards: message.actionCards?.filter(
+                    (action) =>
+                      action.payload?.confirmationToken !== card.payload?.confirmationToken,
+                  ),
+                })),
+              );
             const msg: ChatMessage = {
               id: crypto.randomUUID(),
               sender: 'robot',
-              text: res.success ? `${card.title} thành công.` : `Thất bại: ${res.error}`,
+              text: resultText,
               time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
             };
             this.agent.messages.update((list) => [...list, msg]);
+            this.agent.persistCurrentSession();
             this.scrollToBottom();
           },
           error: (err) => {
+            if (this.agent.currentSessionId() !== conversationId) return;
             this.agent.busy.set(false);
             const msg: ChatMessage = {
               id: crypto.randomUUID(),

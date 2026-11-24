@@ -14,11 +14,21 @@ public sealed record ConversationState(
     List<string> MissingSlots,
     AgentClarificationFormDto? PendingClarification,
     List<RobotChatMessageDto> MessageHistory,
-    DateTimeOffset LastActiveAt)
+    DateTimeOffset LastActiveAt,
+    AgentWorkPlan? WorkPlan = null)
 {
     public static ConversationState CreateInitial(Guid tenantId, Guid userId, string conversationId, DateTimeOffset now) =>
         new(conversationId, tenantId, userId, null, new(StringComparer.OrdinalIgnoreCase), [], null, [], now);
 }
+
+public sealed record AgentWorkPlan(
+    string Goal,
+    string ToolName,
+    string ArgumentsJson,
+    Guid OperationId,
+    string? ConfirmationToken = null,
+    string? ConfirmationArgsJson = null,
+    bool Completed = false);
 
 public interface IConversationStateManager
 {

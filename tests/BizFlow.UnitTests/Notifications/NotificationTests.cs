@@ -25,7 +25,7 @@ public sealed class NotificationTests
     public void Event_catalog_and_identifiers_fail_closed()
     {
         // 16 original SSS §22 events plus the two F3 additions, Mentioned and WatchedItemActivity.
-        Assert.Equal(18, Enum.GetValues<NotificationEvent>().Length);
+        Assert.Equal(20, Enum.GetValues<NotificationEvent>().Length);
         Assert.Contains(NotificationEvent.Mentioned, Enum.GetValues<NotificationEvent>());
         Assert.Contains(NotificationEvent.WatchedItemActivity, Enum.GetValues<NotificationEvent>());
         Assert.Throws<ArgumentOutOfRangeException>(() => Notification.Create(Guid.NewGuid(), Guid.NewGuid(), (NotificationEvent)999, "Title", "Content", "event"));

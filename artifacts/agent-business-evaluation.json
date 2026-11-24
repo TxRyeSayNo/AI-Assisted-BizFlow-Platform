@@ -1,0 +1,46 @@
+{
+  "timestampUtc": "2026-11-24T06:17:55Z",
+  "writesConfirmed": 0,
+  "checks": [
+    {
+      "check": "meeting_followups_and_correction",
+      "passed": true,
+      "seconds": 21.52
+    },
+    {
+      "check": "business_announcement_and_revision",
+      "passed": true,
+      "seconds": 6.07
+    },
+    {
+      "check": "unseen_task_draft",
+      "passed": true,
+      "seconds": 3.44
+    },
+    {
+      "check": "prioritize_actual_accessible_work",
+      "passed": true,
+      "seconds": 10.42
+    },
+    {
+      "check": "lookup_people_without_internal_ids",
+      "passed": true,
+      "seconds": 4.4
+    },
+    {
+      "check": "lookup_business_requests",
+      "passed": true,
+      "seconds": 4.5
+    },
+    {
+      "check": "unsupported_email_and_scheduling",
+      "passed": true,
+      "seconds": 3.01
+    },
+    {
+      "check": "advisory_without_unrequested_writes",
+      "passed": true,
+      "seconds": 3.8
+    }
+  ]
+}

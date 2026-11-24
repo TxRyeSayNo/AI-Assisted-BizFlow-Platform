@@ -21,6 +21,10 @@ public interface IAiModelClient
         string prompt,
         string systemInstructions,
         CancellationToken cancellationToken = default);
+
+    Task<AiModelResponse> CompleteConversationAsync(string contextPrompt, string systemInstructions,
+        IReadOnlyList<RobotChatMessageDto> history, string userMessage, CancellationToken cancellationToken = default) =>
+        CompleteAsync(contextPrompt, systemInstructions, cancellationToken);
 }
 
 public interface IAiStore
@@ -76,7 +80,8 @@ public sealed record AiToolDefinition(
     string Name,
     string Description,
     string RequiredPermission,
-    bool RequiresConfirmation);
+    bool RequiresConfirmation,
+    JsonElement? Parameters = null);
 
 public interface IAiToolRegistry
 {

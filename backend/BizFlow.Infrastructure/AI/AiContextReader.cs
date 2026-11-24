@@ -82,7 +82,8 @@ public sealed class AiContextReader(BizFlowDbContext dbContext) : IAiContextRead
             select new AiSlaInfo(v.Id, p.Id, p.Name, 480)
         ).ToListAsync(cancellationToken);
 
-        return new AiTenantContextData(tenantId, services, departments, userList, workflows, slas);
+        var timeZone = await dbContext.Tenants.Where(t => t.Id == tenantId).Select(t => t.TimeZone).SingleAsync(cancellationToken);
+        return new AiTenantContextData(tenantId, services, departments, userList, workflows, slas, timeZone);
     }
 
     public async Task<AiTaskContextData?> GetTaskContextAsync(Guid tenantId, Guid taskId, CancellationToken cancellationToken = default)

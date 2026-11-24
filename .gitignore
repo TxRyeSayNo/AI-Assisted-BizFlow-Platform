@@ -20,3 +20,4 @@ test-results-real/
 
 __pycache__/
 *.py
+!scripts/evaluate_personal_agent.py

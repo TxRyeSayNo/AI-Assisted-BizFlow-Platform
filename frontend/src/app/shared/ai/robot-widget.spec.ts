@@ -89,6 +89,7 @@ describe('RobotWidgetComponent', () => {
     expect(req.request.body).toEqual({
       message: 'Hôm nay tôi có deadline nào không?',
       locale: 'vi',
+      conversationId: component.agent.currentSessionId(),
     });
 
     req.flush({
@@ -109,6 +110,36 @@ describe('RobotWidgetComponent', () => {
     expect(lastMsg.sender).toBe('robot');
     expect(lastMsg.text).toContain('Triển khai Robot Chatbot');
     expect(lastMsg.actionCards?.length).toBe(1);
+  });
+
+  it('distinguishes a server failure from a network connection failure', () => {
+    fixture.detectChanges();
+    component.inputMessage.set('Lập kế hoạch họp');
+    component.sendMessage();
+    http
+      .expectOne('/api/v1/ai/chat')
+      .flush(
+        { code: 'INTERNAL.ERROR', message: 'internal details must not be displayed' },
+        { status: 500, statusText: 'Internal Server Error' },
+      );
+    const response = component.messages().at(-1)!.text;
+    expect(response).toContain('Máy chủ gặp lỗi');
+    expect(response).not.toContain('kết nối mạng');
+    expect(response).not.toContain('internal details');
+  });
+
+  it('sends free-form branch requests to the Agent and ignores replies after switching conversations', () => {
+    fixture.detectChanges();
+    component.inputMessage.set('Đổi tiêu đề nhánh 1 thành mục tiêu mới');
+    component.sendMessage();
+    const req = http.expectOne('/api/v1/ai/chat');
+    expect(req.request.body.conversationId).toBe(component.agent.currentSessionId());
+    component.agent.startNewChat();
+    req.flush({
+      response: 'Reply belonging to the previous conversation',
+      recognizedCommand: 'AGENT_REPLY',
+    });
+    expect(component.messages().some((m) => m.text.includes('previous conversation'))).toBe(false);
   });
 
   it('navigates when action card is clicked', () => {
@@ -143,14 +174,46 @@ describe('RobotWidgetComponent', () => {
       argsJson: '{"title":"Test"}',
       confirmed: true,
       confirmationToken: 'valid-test-token',
+      conversationId: component.agent.currentSessionId(),
     });
 
-    req.flush({ success: true, resultJson: '{"id":"task-123"}' });
+    req.flush({ executionStatus: 'SUCCEEDED', output: { taskId: 'task-123' } });
 
     expect(component.busy()).toBe(false);
     const lastMsg = component.messages()[component.messages().length - 1];
     expect(lastMsg.sender).toBe('robot');
     expect(lastMsg.text).toContain('thành công');
+  });
+
+  it('displays actual notification delivery counts and removes the consumed confirmation card', () => {
+    const card = {
+      actionType: 'CONFIRM_ACTION',
+      title: 'Gửi thông báo',
+      payload: {
+        toolName: 'send_department_notification',
+        argsJson: '{}',
+        confirmationToken: 'notice-token',
+      },
+    };
+    component.agent.messages.set([
+      {
+        id: 'proposal',
+        sender: 'robot',
+        text: 'Sẽ gửi tới hai người',
+        time: '12:00',
+        actionCards: [card],
+      },
+    ]);
+    component.executeAction(card);
+    component.executeAction(card);
+    const request = http.expectOne('/api/v1/ai/actions/execute');
+    request.flush({
+      executionStatus: 'SUCCEEDED',
+      output: { deliveredCount: 2, alreadyDeliveredCount: 0 },
+    });
+    expect(component.messages().at(-1)!.text).toContain('2 người nhận');
+    expect(component.messages()[0].actionCards).toEqual([]);
+    expect(component.messages().at(-1)!.text).not.toContain('undefined');
   });
 
   it('sends quick prompt when chip is clicked', () => {
@@ -161,6 +224,7 @@ describe('RobotWidgetComponent', () => {
     expect(req.request.body).toEqual({
       message: '/task Cài đặt PostgreSQL 18',
       locale: 'vi',
+      conversationId: component.agent.currentSessionId(),
     });
     req.flush({
       response: 'Đã phân rã yêu cầu thành 2 nhiệm vụ đề xuất.',

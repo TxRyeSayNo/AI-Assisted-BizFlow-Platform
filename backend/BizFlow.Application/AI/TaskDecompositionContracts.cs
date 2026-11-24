@@ -3,7 +3,8 @@ using System.ComponentModel.DataAnnotations;
 namespace BizFlow.Application.AI;
 
 public sealed record TaskDecompositionPreviewCommand(
-    [Required, StringLength(4000, MinimumLength = 3)] string Prompt);
+    [Required, StringLength(4000, MinimumLength = 3)] string Prompt,
+    bool RequireModel = false);
 
 public sealed record TaskDecompositionProposalDto(
     string Title,

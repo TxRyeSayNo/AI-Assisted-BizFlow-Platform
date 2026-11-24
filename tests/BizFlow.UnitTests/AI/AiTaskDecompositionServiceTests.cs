@@ -108,6 +108,18 @@ public sealed class AiTaskDecompositionServiceTests
     }
 
     [Fact]
+    public async Task AgentPreview_RequiresValidModelOutputWithoutDeterministicFallback()
+    {
+        var store = new FakeTaskDecompositionStore();
+        var service = new AiTaskDecompositionService(new FakeTenantContext(Guid.NewGuid(), Guid.NewGuid()),
+            new FakeResourceAuthorizer(), new FakeAiContextReader(), store, TimeProvider.System,
+            new FakeAiModelClient(true, "{}"));
+        var fault = await Assert.ThrowsAsync<ApplicationFault>(() => service.PreviewAsync(new("chuẩn bị cuộc họp", RequireModel: true)));
+        Assert.Equal("AI.PLAN_UNAVAILABLE", fault.Code);
+        Assert.Equal(0, store.PersistCallCount);
+    }
+
+    [Fact]
     public async Task PreviewAsync_WithoutOpenAi_ProducesDeterministicProposals_AndNeverWritesToDatabase()
     {
         var tenantId = Guid.NewGuid();

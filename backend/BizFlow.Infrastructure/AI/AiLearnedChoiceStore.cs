@@ -31,7 +31,8 @@ public sealed class AiLearnedChoiceStore(BizFlowDbContext dbContext) : IAiLearne
                 c.TenantId == tenantId &&
                 c.SemanticKey == normKey &&
                 c.ChoiceValue == normValue &&
-                (c.Scope == "TENANT" || c.UserId == userId),
+                c.Scope == (isTenantScope ? "TENANT" : "PERSONAL") &&
+                (isTenantScope || c.UserId == userId),
                 cancellationToken);
 
         if (existing != null)

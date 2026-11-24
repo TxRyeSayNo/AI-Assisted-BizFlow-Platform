@@ -1,9 +1,12 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using BizFlow.Application.AI;
+using BizFlow.Application.Common;
+using BizFlow.Application.Security;
 using BizFlow.Domain.AI;
 using BizFlow.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -14,11 +17,13 @@ public sealed class AiVectorMemoryStore : IAiVectorMemoryStore
 {
     private readonly BizFlowDbContext _dbContext;
     private readonly IAiEmbeddingService _embeddingService;
+    private readonly ITenantContext? _tenantContext;
 
-    public AiVectorMemoryStore(BizFlowDbContext dbContext, IAiEmbeddingService embeddingService)
+    public AiVectorMemoryStore(BizFlowDbContext dbContext, IAiEmbeddingService embeddingService, ITenantContext? tenantContext = null)
     {
         _dbContext = dbContext;
         _embeddingService = embeddingService;
+        _tenantContext = tenantContext;
     }
 
     public async Task<AiVectorMemory> StoreMemoryAsync(
@@ -29,6 +34,12 @@ public sealed class AiVectorMemoryStore : IAiVectorMemoryStore
         string? metadataJson,
         CancellationToken cancellationToken = default)
     {
+        if (scope.Trim().Equals("USER", StringComparison.OrdinalIgnoreCase))
+        {
+            if (_tenantContext?.UserId is not { } userId || _tenantContext.TenantId != tenantId)
+                throw new ApplicationFault(FaultKind.Forbidden, "AI.MEMORY_OWNER_REQUIRED", "Personal memory requires its authenticated owner.");
+            metadataJson = JsonSerializer.Serialize(new { userId });
+        }
         var embedding = await _embeddingService.GenerateEmbeddingAsync($"{title}\n{content}", cancellationToken);
         var memory = AiVectorMemory.Create(
             tenantId,
@@ -68,12 +79,11 @@ public sealed class AiVectorMemoryStore : IAiVectorMemoryStore
 
         var candidates = await queryable
             .OrderByDescending(m => m.CreatedAt)
-            .Take(100)
             .ToListAsync(cancellationToken);
 
         var scored = new List<AiMemorySearchResult>();
 
-        foreach (var item in candidates)
+        foreach (var item in candidates.Where(CanRead).Take(100))
         {
             var itemEmbedding = item.GetEmbedding();
             if (itemEmbedding.Length == 0)
@@ -113,10 +123,22 @@ public sealed class AiVectorMemoryStore : IAiVectorMemoryStore
             queryable = queryable.Where(m => m.MemoryScope == normScope);
         }
 
-        return await queryable
+        var candidates = await queryable
             .OrderByDescending(m => m.CreatedAt)
-            .Take(limit)
             .ToListAsync(cancellationToken);
+        return candidates.Where(CanRead).Take(limit).ToList();
+    }
+
+    private bool CanRead(AiVectorMemory memory)
+    {
+        if (!memory.MemoryScope.Equals("USER", StringComparison.OrdinalIgnoreCase)) return true;
+        if (_tenantContext?.TenantId != memory.TenantId || _tenantContext.UserId is not { } userId) return false;
+        try
+        {
+            using var metadata = JsonDocument.Parse(memory.MetadataJson ?? "{}");
+            return metadata.RootElement.TryGetProperty("userId", out var owner) && owner.TryGetGuid(out var id) && id == userId;
+        }
+        catch (Exception ex) when (ex is JsonException or InvalidOperationException) { return false; }
     }
 
     public static float ComputeCosineSimilarity(float[] a, float[] b)

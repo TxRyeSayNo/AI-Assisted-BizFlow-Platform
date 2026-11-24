@@ -859,7 +859,7 @@ namespace BizFlow.Infrastructure.Persistence.Migrations
                         {
                             t.HasCheckConstraint("CK_Notification_Text", "length(btrim(\"Title\")) > 0 AND length(btrim(\"Content\")) > 0 AND length(btrim(\"IdempotencyKey\")) > 0");
 
-                            t.HasCheckConstraint("CK_Notification_Type", "\"Type\" IN ('TaskAssigned','TaskAccepted','TaskRejected','ProgressSubmitted','ResultSubmitted','TaskConfirmed','RequestSubmitted','RequestRouted','RequestReceived','RequestResolved','RequestRejected','RequestRevised','DeadlineWarning','Overdue','Escalation','ApprovalRequired','Mentioned','WatchedItemActivity')");
+                            t.HasCheckConstraint("CK_Notification_Type", "\"Type\" IN ('TaskAssigned','TaskAccepted','TaskRejected','ProgressSubmitted','ResultSubmitted','TaskConfirmed','RequestSubmitted','RequestRouted','RequestReceived','RequestResolved','RequestRejected','RequestRevised','DeadlineWarning','Overdue','Escalation','ApprovalRequired','Mentioned','WatchedItemActivity','Announcement','MeetingInvitation')");
                         });
                 });
 

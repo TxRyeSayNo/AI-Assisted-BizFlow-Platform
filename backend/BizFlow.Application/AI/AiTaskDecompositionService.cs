@@ -54,7 +54,7 @@ public sealed class AiTaskDecompositionService(
                     Available departments in tenant: [{deptSummary}].
                     Match each task to the most appropriate departmentId and departmentName.
 
-                    Return ONLY a JSON array of objects with:
+                    Return ONLY a JSON object with a "proposals" array of objects with:
                     - "title": concise task title (string, max 100 chars)
                     - "description": clear instructions and deliverables (string)
                     - "type": "SupportRequest" or "Assignment"
@@ -106,7 +106,7 @@ public sealed class AiTaskDecompositionService(
                         if (deptId == null && elem.TryGetProperty("departmentName", out var dnameProp))
                         {
                             var nameStr = dnameProp.GetString();
-                            var matched = context.Departments.FirstOrDefault(d => d.Name.Contains(nameStr ?? "", StringComparison.OrdinalIgnoreCase));
+                            var matched = string.IsNullOrWhiteSpace(nameStr) ? null : context.Departments.FirstOrDefault(d => d.Name.Equals(nameStr, StringComparison.OrdinalIgnoreCase));
                             if (matched != null)
                             {
                                 deptId = matched.DepartmentId;
@@ -131,14 +131,15 @@ public sealed class AiTaskDecompositionService(
                             Description: desc ?? "",
                             Type: type,
                             DepartmentId: deptId,
-                            DepartmentName: deptName ?? (context.Departments.FirstOrDefault()?.Name ?? "General"),
+                            DepartmentName: deptName ?? (command.RequireModel ? null : context.Departments.FirstOrDefault()?.Name ?? "General"),
                             Priority: priority ?? "MEDIUM",
                             ChecklistItems: checklist,
                             Reasoning: reasoning));
                     }
                 }
             }
-            catch
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { throw; }
+            catch when (!command.RequireModel)
             {
                 // Fall back to deterministic rule-based decomposition
             }
@@ -146,6 +147,8 @@ public sealed class AiTaskDecompositionService(
 
         if (proposals.Count == 0)
         {
+            if (command.RequireModel)
+                throw new ApplicationFault(FaultKind.Unavailable, "AI.PLAN_UNAVAILABLE", "Mô hình chưa tạo được kế hoạch hợp lệ. Vui lòng thử lại.");
             proposals.AddRange(DecomposeDeterministically(prompt, context));
         }
 
