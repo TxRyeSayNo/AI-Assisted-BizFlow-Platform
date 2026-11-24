@@ -125,7 +125,14 @@ public sealed partial class TaskListApiTests
         var result = (await (await CreateAsync(client, new { title = "Replay guard" }, Guid.NewGuid().ToString())).Content.ReadFromJsonAsync<TaskCreatedView>())!;
         await using var db = isolated.Create(a.User, a.Tenant);
         var error = await Assert.ThrowsAsync<PostgresException>(() => db.GetService<IMigrator>().MigrateAsync("20261005055653_TaskCreationPermission"));
-        Assert.Contains("replay protection", error.MessageText);
+        // Two guards now stand on this path, and a rollback runs them newest first: the later
+        // TaskParentTaskAndAiLearnedChoice refuses to discard task history, and behind it
+        // TaskCreationReplayProtection refuses to drop the replay evidence. Whichever speaks first,
+        // the rollback must be refused and leave both protections in place.
+        Assert.Contains(error.MessageText,
+            new[] { "Cannot discard task history during rollback", "Task replay evidence exists; replay protection cannot be removed." },
+            StringComparer.Ordinal);
+        Assert.Contains("20261111090436_TaskParentTaskAndAiLearnedChoice", await db.Database.GetAppliedMigrationsAsync());
         Assert.Contains("20261006033038_TaskCreationReplayProtection", await db.Database.GetAppliedMigrationsAsync());
         var duplicate = await Assert.ThrowsAsync<PostgresException>(() => db.Database.ExecuteSqlInterpolatedAsync($"""
             INSERT INTO "AuditLog" ("AuditLogId","TenantId","ActorType","ActorId","Action","ObjectType","ObjectId","AfterJson","MetadataJson","CreatedAt")

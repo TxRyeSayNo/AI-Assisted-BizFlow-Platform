@@ -16,13 +16,20 @@ public sealed class SeedDevDatabase
     [Fact]
     public async Task Seed_Dev_Database_With_Accounts()
     {
+        // The default matches deploy/.env.example, which is what docker compose brings up. A
+        // machine whose local database differs overrides it with ConnectionStrings__BizFlow.
         var connectionString = Environment.GetEnvironmentVariable("ConnectionStrings__BizFlow")
-            ?? "Host=127.0.0.1;Port=5433;Database=bizflow;Username=bizflow;Password=bizflow_secret_123";
+            ?? "Host=127.0.0.1;Port=5432;Database=bizflow;Username=bizflow;Password=replace-with-a-unique-local-secret";
         var options = new DbContextOptionsBuilder<BizFlowDbContext>()
             .UseBizFlowPostgres(connectionString)
             .Options;
 
         await using var db = new BizFlowDbContext(options, new Context(null, null));
+
+        // This seeds a developer's own database for hand testing; it asserts nothing about the
+        // product. With no such database reachable there is nothing to seed, so it stands down
+        // instead of reddening a suite whose real checks run against their own containers.
+        if (!await ReachableAsync(db)) return;
 
         var now = DateTimeOffset.UtcNow;
         var hasher = new PasswordHasher<UserAccount>();
@@ -113,21 +120,50 @@ public sealed class SeedDevDatabase
             """);
 
         // Seed Platform Administrator (platform@bizflow.local / Password123!)
-        var platformUserId = Guid.Parse("019f8000-0000-7000-8000-000000000001");
+        //
+        // A platform administrator may already be there under a different id — from an earlier run
+        // of this seeder or from the deploy scripts — and what collides then is the employee code,
+        // not the id. So the account is found by its code first, and only created when it is really
+        // missing; the role assignment then goes to whichever account is the live one.
         var platformRole = await db.Roles.IgnoreQueryFilters().FirstAsync(r => r.IsSystem && r.Name == "PLATFORM_ADMIN");
+        var existing = await db.Database
+            .SqlQueryRaw<Guid>("""SELECT "UserId" AS "Value" FROM "User" WHERE "NormalizedEmployeeCode" = 'SUPERADMIN' LIMIT 1""")
+            .ToListAsync();
+        var platformUserId = existing.Count > 0 ? existing[0] : Guid.Parse("019f8000-0000-7000-8000-000000000001");
+        if (existing.Count == 0)
+        {
+            await db.Database.ExecuteSqlInterpolatedAsync($"""
+                INSERT INTO "User" ("UserId", "TenantId", "IsPlatformAdministrator", "EmployeeCode", "NormalizedEmployeeCode",
+                    "Email", "NormalizedEmail", "FullName", "PasswordHash", "SecurityStamp", "DepartmentId", "Status",
+                    "AccessFailedCount", "MustChangePassword", "CreatedAt", "UpdatedAt")
+                VALUES ({platformUserId}, NULL, TRUE, 'SUPERADMIN', 'SUPERADMIN', 'platform@bizflow.local', 'PLATFORM@BIZFLOW.LOCAL',
+                    'Platform Administrator', {adminHash}, {Guid.NewGuid().ToString("N")}, NULL, 'ACTIVE'::user_status,
+                    0, FALSE, {now}, {now})
+                ON CONFLICT ("UserId") DO NOTHING;
+                """);
+        }
         await db.Database.ExecuteSqlInterpolatedAsync($"""
-            INSERT INTO "User" ("UserId", "TenantId", "IsPlatformAdministrator", "EmployeeCode", "NormalizedEmployeeCode",
-                "Email", "NormalizedEmail", "FullName", "PasswordHash", "SecurityStamp", "DepartmentId", "Status",
-                "AccessFailedCount", "MustChangePassword", "CreatedAt", "UpdatedAt")
-            VALUES ({platformUserId}, NULL, TRUE, 'SUPERADMIN', 'SUPERADMIN', 'platform@bizflow.local', 'PLATFORM@BIZFLOW.LOCAL',
-                'Platform Administrator', {adminHash}, {Guid.NewGuid().ToString("N")}, NULL, 'ACTIVE'::user_status,
-                0, FALSE, {now}, {now})
-            ON CONFLICT ("UserId") DO NOTHING;
-
             INSERT INTO "UserRole" ("UserId", "RoleId")
             VALUES ({platformUserId}, {platformRole.Id})
             ON CONFLICT DO NOTHING;
             """);
+    }
+
+    /// <summary>
+    /// Whether the configured development database answers. The connection retries on transient
+    /// faults, so a refused connection surfaces as an exception rather than a false; either way the
+    /// answer here is simply "no".
+    /// </summary>
+    private static async Task<bool> ReachableAsync(BizFlowDbContext db)
+    {
+        try
+        {
+            return await db.Database.CanConnectAsync();
+        }
+        catch (Exception failure) when (failure is not OperationCanceledException)
+        {
+            return false;
+        }
     }
 }
 
