@@ -12,6 +12,7 @@ import { Subscription } from 'rxjs';
 import { SessionService } from '../../core/auth/session';
 import { FeatureFlagsService } from '../../core/features/feature-flags.service';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
+import { SavedFilters } from './saved-filters';
 
 const states = {
   DRAFT: 'Draft',
@@ -58,6 +59,7 @@ interface TaskPage {
     MatFormFieldModule,
     MatInputModule,
     MatSelectModule,
+    SavedFilters,
     TranslatePipe,
   ],
   templateUrl: './tasks.html',
@@ -89,6 +91,32 @@ export class Tasks {
   apply() {
     this.applied = this.filters.getRawValue();
     this.load(1);
+  }
+
+  /**
+   * F12: the applied filters as a query string, for the saved-filter strip to store. Only the
+   * filters are included — never the page — so applying a saved filter starts at the first page.
+   */
+  currentQuery(): string {
+    let params = new HttpParams();
+    for (const [key, value] of Object.entries(this.applied)) {
+      if (value.trim()) params = params.set(key, value.trim());
+    }
+    return params.toString();
+  }
+
+  /**
+   * F12: applies a saved filter. Only the three fields this list actually filters on are read, so
+   * a stale or hand-edited saved query cannot smuggle anything else into the request.
+   */
+  applySaved(query: string) {
+    const parsed = new HttpParams({ fromString: query });
+    this.filters.setValue({
+      search: parsed.get('search') ?? '',
+      status: parsed.get('status') ?? '',
+      priority: parsed.get('priority') ?? '',
+    });
+    this.apply();
   }
   load(page: number) {
     this.request?.unsubscribe();

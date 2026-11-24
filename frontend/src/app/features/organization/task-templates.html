@@ -1,0 +1,186 @@
+<main id="main-content" class="page-content" tabindex="-1">
+  <nav aria-label="Breadcrumb">
+    <a routerLink="/workspace">{{ 'common.workspace' | translate: 'Workspace' }}</a>
+    <span aria-hidden="true"> / </span>
+    <a routerLink="/settings">{{ 'nav.settings' | translate: 'Settings' }}</a>
+    <span aria-hidden="true"> / </span>
+    <span>{{ 'templates.title' | translate: 'Task templates' }}</span>
+  </nav>
+  <h1>{{ 'templates.title' | translate: 'Task templates' }}</h1>
+  <p>
+    {{
+      'templates.subtitle'
+        | translate
+          : 'Tasks you create again and again. Give a template a schedule and it also creates them on its own; retiring it stops that and leaves the tasks it already made untouched.'
+    }}
+  </p>
+
+  <section aria-label="Task template catalogue" class="directory-panel" [attr.aria-busy]="busy()">
+    @if (canManage()) {
+      <form [formGroup]="form" (ngSubmit)="submit()" class="filters">
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>{{ 'templates.name' | translate: 'Template name' }}</mat-label>
+          <input matInput formControlName="name" maxlength="120" [readonly]="busy()" />
+        </mat-form-field>
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>{{ 'templates.taskTitle' | translate: 'Task title' }}</mat-label>
+          <input matInput formControlName="titleTemplate" maxlength="200" [readonly]="busy()" />
+        </mat-form-field>
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>{{ 'templates.description' | translate: 'Description' }}</mat-label>
+          <input matInput formControlName="description" maxlength="400" [readonly]="busy()" />
+        </mat-form-field>
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>{{ 'templates.priority' | translate: 'Priority' }}</mat-label>
+          <select matNativeControl formControlName="priority" [disabled]="busy()">
+            <option value="">{{ 'templates.priorityDefault' | translate: 'Default' }}</option>
+            <option value="LOW">{{ 'priority.LOW' | translate: 'Low' }}</option>
+            <option value="MEDIUM">{{ 'priority.MEDIUM' | translate: 'Medium' }}</option>
+            <option value="HIGH">{{ 'priority.HIGH' | translate: 'High' }}</option>
+          </select>
+        </mat-form-field>
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>{{ 'templates.offset' | translate: 'Deadline in days' }}</mat-label>
+          <input matInput formControlName="deadlineOffsetDays" maxlength="3" [readonly]="busy()" />
+        </mat-form-field>
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>{{ 'templates.recurrence' | translate: 'Repeat' }}</mat-label>
+          <select matNativeControl formControlName="recurrenceFrequency" [disabled]="busy()">
+            <option value="">{{ 'templates.noRecurrence' | translate: 'Never' }}</option>
+            <option value="DAILY">{{ 'templates.daily' | translate: 'Daily' }}</option>
+            <option value="WEEKLY">{{ 'templates.weekly' | translate: 'Weekly' }}</option>
+            <option value="MONTHLY">{{ 'templates.monthly' | translate: 'Monthly' }}</option>
+          </select>
+        </mat-form-field>
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>{{ 'templates.day' | translate: 'Day (1-7 weekly, 1-28 monthly)' }}</mat-label>
+          <input matInput formControlName="recurrenceDay" maxlength="2" [readonly]="busy()" />
+        </mat-form-field>
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>{{ 'templates.hour' | translate: 'Hour (UTC)' }}</mat-label>
+          <input matInput formControlName="recurrenceHourUtc" maxlength="2" [readonly]="busy()" />
+        </mat-form-field>
+        <button mat-flat-button type="submit" [disabled]="busy()">
+          @if (editingId()) {
+            {{ 'common.save' | translate: 'Save' }}
+          } @else {
+            {{ 'templates.create' | translate: 'Create template' }}
+          }
+        </button>
+        @if (editingId()) {
+          <button mat-stroked-button type="button" [disabled]="busy()" (click)="cancelEdit()">
+            {{ 'common.cancel' | translate: 'Cancel' }}
+          </button>
+        }
+      </form>
+    }
+
+    <button mat-stroked-button type="button" [disabled]="busy()" (click)="toggleArchivedView()">
+      @if (includeArchived()) {
+        {{ 'templates.hideArchived' | translate: 'Hide retired' }}
+      } @else {
+        {{ 'templates.showArchived' | translate: 'Show retired' }}
+      }
+    </button>
+
+    @if (busy()) {
+      <p role="status" class="directory-feedback">{{ 'common.loading' | translate: 'Loading…' }}</p>
+    } @else if (denied()) {
+      <p role="alert" class="directory-feedback">
+        {{ 'templates.denied' | translate: 'You no longer have access to the template catalogue.' }}
+      </p>
+    } @else if (unavailable()) {
+      <p role="status" class="directory-feedback">
+        {{
+          'templates.unavailable' | translate: 'Task templates are not enabled on this deployment.'
+        }}
+      </p>
+    } @else if (error()) {
+      <p role="alert" class="directory-feedback">
+        {{ 'templates.errLoad' | translate: 'The template catalogue could not be loaded.' }}
+      </p>
+    } @else if (items().length === 0) {
+      <p role="status" class="directory-feedback">
+        {{ 'templates.empty' | translate: 'No templates yet.' }}
+      </p>
+    } @else {
+      <table>
+        <caption class="visually-hidden">
+          {{
+            'templates.title' | translate: 'Task templates'
+          }}
+        </caption>
+        <thead>
+          <tr>
+            <th scope="col">{{ 'templates.name' | translate: 'Template name' }}</th>
+            <th scope="col">{{ 'templates.taskTitle' | translate: 'Task title' }}</th>
+            <th scope="col">{{ 'templates.recurrence' | translate: 'Repeat' }}</th>
+            <th scope="col">{{ 'templates.nextRun' | translate: 'Next run' }}</th>
+            <th scope="col">{{ 'common.actions' | translate: 'Actions' }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (template of items(); track template.templateId) {
+            <tr>
+              <td>
+                {{ template.name }}
+                @if (template.archived) {
+                  <span class="muted">({{ 'templates.archived' | translate: 'retired' }})</span>
+                }
+              </td>
+              <td>{{ template.titleTemplate }}</td>
+              <td>
+                @if (template.recurrenceFrequency) {
+                  {{ scheduleLabel(template) }}
+                } @else {
+                  <span class="muted">{{ 'templates.noRecurrence' | translate: 'Never' }}</span>
+                }
+              </td>
+              <td>
+                @if (template.nextRunAt) {
+                  <time [attr.datetime]="template.nextRunAt">{{ template.nextRunAt }}</time>
+                } @else {
+                  <span class="muted">—</span>
+                }
+              </td>
+              <td>
+                @if (canCreateTasks() && !template.archived) {
+                  <button
+                    mat-stroked-button
+                    type="button"
+                    [disabled]="busy()"
+                    (click)="instantiate(template)"
+                  >
+                    {{ 'templates.useNow' | translate: 'Create task' }}
+                  </button>
+                }
+                @if (canManage()) {
+                  <button
+                    mat-stroked-button
+                    type="button"
+                    [disabled]="busy()"
+                    (click)="startEdit(template)"
+                  >
+                    {{ 'common.edit' | translate: 'Edit' }}
+                  </button>
+                  <button
+                    mat-stroked-button
+                    type="button"
+                    [disabled]="busy()"
+                    (click)="setArchived(template, !template.archived)"
+                  >
+                    @if (template.archived) {
+                      {{ 'templates.restore' | translate: 'Restore' }}
+                    } @else {
+                      {{ 'templates.archive' | translate: 'Retire' }}
+                    }
+                  </button>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </section>
+</main>

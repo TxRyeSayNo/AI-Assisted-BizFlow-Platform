@@ -16,11 +16,13 @@ public sealed class FeaturesController(IOptions<FeatureFlagOptions> features) : 
 {
     public sealed record FeatureFlagsView(bool Kanban, bool Calendar, bool Mentions,
         bool DeadlineReminders, bool ReportExport, bool Labels, bool DirectMessages,
-        bool BulkActions, bool ActivityFeed, bool TaskDependencies);
+        bool BulkActions, bool ActivityFeed, bool TaskDependencies, bool TaskTemplates,
+        bool SavedFilters);
 
     [HttpGet]
     public FeatureFlagsView Get() => new(features.Value.Kanban, features.Value.Calendar,
         features.Value.Mentions, features.Value.DeadlineReminders, features.Value.ReportExport,
         features.Value.Labels, features.Value.DirectMessages, features.Value.BulkActions,
-        features.Value.ActivityFeed, features.Value.TaskDependencies);
+        features.Value.ActivityFeed, features.Value.TaskDependencies, features.Value.TaskTemplates,
+        features.Value.SavedFilters);
 }

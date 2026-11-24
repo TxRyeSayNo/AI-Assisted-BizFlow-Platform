@@ -70,6 +70,8 @@ public sealed class BizFlowDbContext(DbContextOptions<BizFlowDbContext> options,
     public DbSet<Label> Labels => Set<Label>();
     public DbSet<WorkItemLabel> WorkItemLabels => Set<WorkItemLabel>();
     public DbSet<TaskDependency> TaskDependencies => Set<TaskDependency>();
+    public DbSet<TaskTemplate> TaskTemplates => Set<TaskTemplate>();
+    public DbSet<SavedFilter> SavedFilters => Set<SavedFilter>();
     // F13: direct messages between colleagues.
     public DbSet<BizFlow.Domain.Messaging.ChatConversation> ChatConversations => Set<BizFlow.Domain.Messaging.ChatConversation>();
     public DbSet<BizFlow.Domain.Messaging.ChatParticipant> ChatParticipants => Set<BizFlow.Domain.Messaging.ChatParticipant>();
@@ -105,6 +107,10 @@ public sealed class BizFlowDbContext(DbContextOptions<BizFlowDbContext> options,
         model.Entity<Label>().HasQueryFilter(x => CurrentUserId != null && CurrentTenantId != null && x.TenantId == CurrentTenantId);
         model.Entity<WorkItemLabel>().HasQueryFilter(x => CurrentUserId != null && CurrentTenantId != null && x.TenantId == CurrentTenantId);
         model.Entity<TaskDependency>().HasQueryFilter(x => CurrentUserId != null && CurrentTenantId != null && x.TenantId == CurrentTenantId);
+        model.Entity<TaskTemplate>().HasQueryFilter(x => CurrentUserId != null && CurrentTenantId != null && x.TenantId == CurrentTenantId);
+        // F12. A saved filter is private to its owner, so the filter narrows to the signed-in user
+        // as well as the tenant: nobody can read a colleague's saved filters even by id.
+        model.Entity<SavedFilter>().HasQueryFilter(x => CurrentUserId != null && CurrentTenantId != null && x.TenantId == CurrentTenantId && x.UserId == CurrentUserId);
         // F13. Tenant-scoped like the rest; participation is then enforced by the message store,
         // so a conversation the caller is not in never appears in any result.
         model.Entity<BizFlow.Domain.Messaging.ChatConversation>().HasQueryFilter(x => CurrentUserId != null && CurrentTenantId != null && x.TenantId == CurrentTenantId);
@@ -441,6 +447,19 @@ public sealed class BizFlowDbContext(DbContextOptions<BizFlowDbContext> options,
                         }
                         else if (!await Requests.AnyAsync(r => r.Id == attachedLabel.ObjectId, cancellationToken)) throw Denied();
                     }
+                    break;
+                // F8/F9. A template is tenant configuration; retiring one is a soft change, and its
+                // identity and creator never move. The recurring job opens the workspace as the
+                // template's owner, so that write satisfies the same rule as a person's edit.
+                case TaskTemplate template:
+                    AssertTenant(template.TenantId);
+                    if (entry.State == EntityState.Added && template.CreatedBy != CurrentUserId) throw Denied();
+                    if (!await Users.AnyAsync(u => u.Id == template.CreatedBy, cancellationToken)) throw Denied();
+                    break;
+                // F12. A saved filter belongs to the signed-in person and to nobody else.
+                case SavedFilter filter:
+                    AssertTenant(filter.TenantId);
+                    if (filter.UserId != CurrentUserId) throw Denied();
                     break;
                 // F7. A dependency is drawn between two tasks of this tenant by whoever can open
                 // them, and unlinking only ever flips RemovedAt.

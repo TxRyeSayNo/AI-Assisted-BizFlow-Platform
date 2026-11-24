@@ -82,6 +82,11 @@ builder.Services.AddScoped<BizFlow.Application.Collaboration.IWorkItemActivitySt
 // Task dependencies (F7). Advisory links only: the task lifecycle policy is untouched.
 builder.Services.AddScoped<BizFlow.Application.Tasks.TaskDependencyService>();
 builder.Services.AddScoped<BizFlow.Application.Tasks.ITaskDependencyStore, BizFlow.Infrastructure.Tasks.TaskDependencyStore>();
+// Task templates with optional recurrence (F8 + F9) and saved list filters (F12).
+builder.Services.AddScoped<BizFlow.Application.Tasks.TaskTemplateService>();
+builder.Services.AddScoped<BizFlow.Application.Tasks.ITaskTemplateStore, BizFlow.Infrastructure.Tasks.TaskTemplateStore>();
+builder.Services.AddScoped<BizFlow.Application.Tasks.SavedFilterService>();
+builder.Services.AddScoped<BizFlow.Application.Tasks.ISavedFilterStore, BizFlow.Infrastructure.Tasks.SavedFilterStore>();
 builder.Services.AddScoped<BizFlow.Application.Messaging.DirectMessageService>();
 builder.Services.AddScoped<BizFlow.Application.Messaging.IDirectMessageStore, BizFlow.Infrastructure.Messaging.DirectMessageStore>();
 builder.Services.AddScoped<BizFlow.Application.Messaging.IDirectMessageUpdates, BizFlow.Api.Realtime.SignalRDirectMessageUpdates>();

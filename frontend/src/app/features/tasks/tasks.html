@@ -112,6 +112,12 @@
         {{ 'common.applyFilters' | translate: 'Apply filters' }}
       </button>
     </form>
+    <!-- F12: renders nothing unless the SavedFilters feature is enabled. -->
+    <bf-saved-filters
+      [scope]="'TASK'"
+      [currentQuery]="currentQuery()"
+      (apply)="applySaved($event)"
+    />
     @if (busy()) {
       <p role="status" class="directory-feedback">
         {{ 'tasks.loadingTasks' | translate: 'Loading tasks…' }}

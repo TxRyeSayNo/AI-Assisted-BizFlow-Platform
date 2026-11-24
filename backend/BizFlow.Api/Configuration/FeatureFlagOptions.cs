@@ -43,6 +43,17 @@ public sealed class FeatureFlagOptions
     public bool TaskDependencies { get; set; }
 
     /// <summary>
+    /// Task templates and their optional recurrence (F8 + F9 — one catalogue, because a template
+    /// and a repeating task are the same thing with and without a schedule). The recurring sweep
+    /// additionally needs <see cref="BackgroundJobs"/>; with this flag on but that one off the
+    /// catalogue works and nothing fires on its own.
+    /// </summary>
+    public bool TaskTemplates { get; set; }
+
+    /// <summary>A person's own saved list filters (F12).</summary>
+    public bool SavedFilters { get; set; }
+
+    /// <summary>
     /// Hangfire server plus the recurring jobs that feed watcher activity (F3) and deadline
     /// reminders (F4). Unlike the read-only features this one starts a worker and creates the
     /// Hangfire schema, so it stays off unless a deployment asks for it — that also keeps it out

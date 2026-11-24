@@ -267,6 +267,14 @@ export const routes: Routes = [
     loadComponent: () => import('./features/organization/settings').then((m) => m.Settings),
   },
   {
+    // F8+F9. The server enforces roles.configure on every catalogue change, and creating a task
+    // from a template still needs tasks.create; this guard is a convenience.
+    path: 'settings/task-templates',
+    canActivate: [tenantGuard],
+    loadComponent: () =>
+      import('./features/organization/task-templates').then((m) => m.TaskTemplates),
+  },
+  {
     // F6. The server enforces roles.configure on every mutation; this guard is a convenience,
     // and reading the catalogue needs only tenant membership.
     path: 'settings/labels',

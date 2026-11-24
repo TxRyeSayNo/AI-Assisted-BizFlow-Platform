@@ -1,5 +1,6 @@
 using BizFlow.Infrastructure.Collaboration;
 using BizFlow.Infrastructure.Notifications;
+using BizFlow.Infrastructure.Tasks;
 using Hangfire;
 using Hangfire.PostgreSql;
 
@@ -15,6 +16,7 @@ internal static class BackgroundJobRegistration
 {
     internal const string WatchedItemActivityJob = "f3-watched-item-activity";
     internal const string DeadlineReminderJob = "f4-deadline-reminders";
+    internal const string RecurringTaskJob = "f8-recurring-tasks";
 
     internal static bool Enabled(IConfiguration configuration) =>
         configuration.GetValue($"{FeatureFlagOptions.SectionName}:{nameof(FeatureFlagOptions.BackgroundJobs)}", false);
@@ -25,6 +27,7 @@ internal static class BackgroundJobRegistration
         // future on-demand endpoint; only the scheduler is conditional.
         services.AddScoped<IWatchedItemActivityNotifier, WatchedItemActivityNotifier>();
         services.AddScoped<IDeadlineReminderDispatcher, DeadlineReminderDispatcher>();
+        services.AddScoped<IRecurringTaskDispatcher, RecurringTaskDispatcher>();
         if (!Enabled(configuration)) return;
         var connection = configuration.GetConnectionString("BizFlow")
             ?? throw new InvalidOperationException("ConnectionStrings:BizFlow is required for background jobs.");
@@ -52,5 +55,12 @@ internal static class BackgroundJobRegistration
             DeadlineReminderJob,
             dispatcher => dispatcher.SweepAsync(CancellationToken.None),
             "*/5 * * * *");
+        // F8 schedules land on the hour, so checking a few minutes past each one is enough. The
+        // sweep steps every schedule forward from "now", so a skipped hour never queues a backlog.
+        if (app.Configuration.GetValue($"{FeatureFlagOptions.SectionName}:{nameof(FeatureFlagOptions.TaskTemplates)}", false))
+            jobs.AddOrUpdate<IRecurringTaskDispatcher>(
+                RecurringTaskJob,
+                dispatcher => dispatcher.SweepAsync(CancellationToken.None),
+                "2 * * * *");
     }
 }

@@ -1951,6 +1951,63 @@ namespace BizFlow.Infrastructure.Persistence.Migrations
                         });
                 });
 
+            modelBuilder.Entity("BizFlow.Domain.Tasks.SavedFilter", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("SavedFilterId");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(80)
+                        .HasColumnType("character varying(80)");
+
+                    b.Property<string>("NormalizedName")
+                        .IsRequired()
+                        .HasMaxLength(80)
+                        .HasColumnType("character varying(80)");
+
+                    b.Property<string>("Query")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<DateTimeOffset?>("RemovedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Scope")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("TenantId", "UserId", "Scope", "NormalizedName")
+                        .IsUnique();
+
+                    b.ToTable("SavedFilter", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_SavedFilter_Name", "length(btrim(\"Name\")) > 0");
+
+                            t.HasCheckConstraint("CK_SavedFilter_Scope", "\"Scope\" IN ('TASK','REQUEST')");
+                        });
+                });
+
             modelBuilder.Entity("BizFlow.Domain.Tasks.TaskAssignment", b =>
                 {
                     b.Property<Guid>("Id")
@@ -2171,6 +2228,92 @@ namespace BizFlow.Infrastructure.Persistence.Migrations
                     b.ToTable("TaskResult", null, t =>
                         {
                             t.HasCheckConstraint("CK_TaskResult_Revision", "\"RevisionNo\" > 0");
+                        });
+                });
+
+            modelBuilder.Entity("BizFlow.Domain.Tasks.TaskTemplate", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("TaskTemplateId");
+
+                    b.Property<DateTimeOffset?>("ArchivedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<int?>("DeadlineOffsetDays")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)");
+
+                    b.Property<DateTimeOffset?>("LastRunAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)");
+
+                    b.Property<DateTimeOffset?>("NextRunAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("NormalizedName")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)");
+
+                    b.Property<string>("Priority")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<int?>("RecurrenceDay")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("RecurrenceFrequency")
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
+                    b.Property<int?>("RecurrenceHourUtc")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("TitleTemplate")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedBy");
+
+                    b.HasIndex("NextRunAt")
+                        .HasFilter("\"NextRunAt\" IS NOT NULL AND \"ArchivedAt\" IS NULL");
+
+                    b.HasIndex("TenantId", "NormalizedName")
+                        .IsUnique();
+
+                    b.ToTable("TaskTemplate", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_TaskTemplate_DeadlineOffset", "\"DeadlineOffsetDays\" IS NULL OR \"DeadlineOffsetDays\" BETWEEN 0 AND 365");
+
+                            t.HasCheckConstraint("CK_TaskTemplate_Name", "length(btrim(\"Name\")) > 0");
+
+                            t.HasCheckConstraint("CK_TaskTemplate_Recurrence", "\"RecurrenceFrequency\" IS NULL OR \"RecurrenceFrequency\" IN ('DAILY','WEEKLY','MONTHLY')");
+
+                            t.HasCheckConstraint("CK_TaskTemplate_RecurrenceShape", "(\"RecurrenceFrequency\" IS NULL AND \"RecurrenceDay\" IS NULL AND \"RecurrenceHourUtc\" IS NULL\n   AND \"NextRunAt\" IS NULL)\nOR (\"RecurrenceFrequency\" = 'DAILY' AND \"RecurrenceDay\" IS NULL\n   AND \"RecurrenceHourUtc\" BETWEEN 0 AND 23)\nOR (\"RecurrenceFrequency\" = 'WEEKLY' AND \"RecurrenceDay\" BETWEEN 1 AND 7\n   AND \"RecurrenceHourUtc\" BETWEEN 0 AND 23)\nOR (\"RecurrenceFrequency\" = 'MONTHLY' AND \"RecurrenceDay\" BETWEEN 1 AND 28\n   AND \"RecurrenceHourUtc\" BETWEEN 0 AND 23)");
                         });
                 });
 
@@ -3235,6 +3378,21 @@ namespace BizFlow.Infrastructure.Persistence.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("BizFlow.Domain.Tasks.SavedFilter", b =>
+                {
+                    b.HasOne("BizFlow.Domain.Tenancy.Tenant", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("BizFlow.Domain.Organization.UserAccount", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("BizFlow.Domain.Tasks.TaskAssignment", b =>
                 {
                     b.HasOne("BizFlow.Domain.Organization.UserAccount", null)
@@ -3327,6 +3485,21 @@ namespace BizFlow.Infrastructure.Persistence.Migrations
                     b.HasOne("BizFlow.Domain.Tasks.WorkTask", null)
                         .WithMany()
                         .HasForeignKey("TaskId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("BizFlow.Domain.Tasks.TaskTemplate", b =>
+                {
+                    b.HasOne("BizFlow.Domain.Organization.UserAccount", null)
+                        .WithMany()
+                        .HasForeignKey("CreatedBy")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("BizFlow.Domain.Tenancy.Tenant", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });
