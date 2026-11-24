@@ -2058,6 +2058,50 @@ namespace BizFlow.Infrastructure.Persistence.Migrations
                         });
                 });
 
+            modelBuilder.Entity("BizFlow.Domain.Tasks.TaskDependency", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("TaskDependencyId");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("DependsOnTaskId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("RemovedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("TaskId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedBy");
+
+                    b.HasIndex("DependsOnTaskId");
+
+                    b.HasIndex("TaskId");
+
+                    b.HasIndex("TenantId", "DependsOnTaskId", "RemovedAt");
+
+                    b.HasIndex("TenantId", "TaskId", "DependsOnTaskId")
+                        .IsUnique();
+
+                    b.ToTable("TaskDependency", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_TaskDependency_NotSelf", "\"TaskId\" <> \"DependsOnTaskId\"");
+                        });
+                });
+
             modelBuilder.Entity("BizFlow.Domain.Tasks.TaskProgressReport", b =>
                 {
                     b.Property<Guid>("Id")
@@ -3226,6 +3270,33 @@ namespace BizFlow.Infrastructure.Persistence.Migrations
                     b.HasOne("BizFlow.Domain.Tasks.WorkTask", null)
                         .WithMany()
                         .HasForeignKey("TaskId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("BizFlow.Domain.Tasks.TaskDependency", b =>
+                {
+                    b.HasOne("BizFlow.Domain.Organization.UserAccount", null)
+                        .WithMany()
+                        .HasForeignKey("CreatedBy")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("BizFlow.Domain.Tasks.WorkTask", null)
+                        .WithMany()
+                        .HasForeignKey("DependsOnTaskId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("BizFlow.Domain.Tasks.WorkTask", null)
+                        .WithMany()
+                        .HasForeignKey("TaskId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("BizFlow.Domain.Tenancy.Tenant", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });

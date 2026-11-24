@@ -37,6 +37,12 @@ public sealed class FeatureFlagOptions
     public bool ActivityFeed { get; set; }
 
     /// <summary>
+    /// Advisory links between tasks — what waits for what (F7). Advisory because the task lifecycle
+    /// is unchanged: an open predecessor warns, it never blocks.
+    /// </summary>
+    public bool TaskDependencies { get; set; }
+
+    /// <summary>
     /// Hangfire server plus the recurring jobs that feed watcher activity (F3) and deadline
     /// reminders (F4). Unlike the read-only features this one starts a worker and creates the
     /// Hangfire schema, so it stays off unless a deployment asks for it — that also keeps it out

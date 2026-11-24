@@ -79,6 +79,9 @@ builder.Services.AddScoped<BizFlow.Application.Collaboration.ILabelStore, BizFlo
 builder.Services.AddScoped<BizFlow.Application.Tasks.TaskBulkOperations>();
 builder.Services.AddScoped<BizFlow.Application.Collaboration.WorkItemActivityQuery>();
 builder.Services.AddScoped<BizFlow.Application.Collaboration.IWorkItemActivityStore, BizFlow.Infrastructure.Collaboration.WorkItemActivityStore>();
+// Task dependencies (F7). Advisory links only: the task lifecycle policy is untouched.
+builder.Services.AddScoped<BizFlow.Application.Tasks.TaskDependencyService>();
+builder.Services.AddScoped<BizFlow.Application.Tasks.ITaskDependencyStore, BizFlow.Infrastructure.Tasks.TaskDependencyStore>();
 builder.Services.AddScoped<BizFlow.Application.Messaging.DirectMessageService>();
 builder.Services.AddScoped<BizFlow.Application.Messaging.IDirectMessageStore, BizFlow.Infrastructure.Messaging.DirectMessageStore>();
 builder.Services.AddScoped<BizFlow.Application.Messaging.IDirectMessageUpdates, BizFlow.Api.Realtime.SignalRDirectMessageUpdates>();

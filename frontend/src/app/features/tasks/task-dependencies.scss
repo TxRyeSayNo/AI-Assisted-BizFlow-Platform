@@ -1,0 +1,118 @@
+// F7: what a task waits for and what waits on it. The warning about an open predecessor is styled
+// as information rather than an error, because it never blocks anything.
+.task-dependencies {
+  margin: 0.75rem 0;
+
+  h3 {
+    font-size: 0.9375rem;
+    margin: 0 0 0.35rem;
+  }
+
+  h4 {
+    font-size: 0.8125rem;
+    margin: 0.5rem 0 0.2rem;
+    opacity: 0.8;
+  }
+}
+
+.dependency-warning {
+  margin: 0 0 0.4rem;
+  padding: 0.35rem 0.5rem;
+  border-left: 3px solid #b26a00;
+  background: rgb(178 106 0 / 8%);
+  font-size: 0.8125rem;
+}
+
+.dependency-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+
+  li {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.15rem 0;
+    font-size: 0.8125rem;
+    overflow-wrap: anywhere;
+  }
+}
+
+// An unfinished predecessor is marked by a bar as well as by its state text, so the meaning does
+// not rest on colour alone.
+.dependency-open {
+  border-left: 3px solid #b26a00;
+  padding-left: 0.4rem;
+}
+
+.dependency-status {
+  font-size: 0.75rem;
+  opacity: 0.7;
+  text-transform: capitalize;
+}
+
+.dependency-remove {
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  line-height: 1;
+  padding: 0 0 0 0.15rem;
+  opacity: 0.6;
+
+  &:hover:not(:disabled),
+  &:focus-visible {
+    opacity: 1;
+  }
+}
+
+.dependency-none {
+  margin: 0;
+  font-size: 0.75rem;
+  opacity: 0.6;
+}
+
+.dependency-search {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 0.6rem;
+
+  label {
+    font-size: 0.75rem;
+    opacity: 0.75;
+    flex: 1 1 100%;
+  }
+
+  input {
+    font: inherit;
+    font-size: 0.8125rem;
+    padding: 0.25rem 0.4rem;
+    min-width: 12rem;
+    flex: 1 1 12rem;
+  }
+}
+
+.dependency-candidates {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  flex: 1 1 100%;
+
+  button {
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+    font: inherit;
+    font-size: 0.8125rem;
+    padding: 0.15rem 0;
+    text-align: left;
+
+    &:disabled {
+      cursor: default;
+      opacity: 0.6;
+    }
+  }
+}

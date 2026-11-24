@@ -18,6 +18,7 @@ import { WorkItemWatch } from '../collaboration/work-item-watch';
 import { WorkItemLabels } from '../collaboration/work-item-labels';
 import { WorkItemActivity } from '../collaboration/work-item-activity';
 import { TaskReminders } from './task-reminders';
+import { TaskDependencies } from './task-dependencies';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
 
@@ -74,6 +75,7 @@ interface Detail {
     WorkItemLabels,
     WorkItemActivity,
     TaskReminders,
+    TaskDependencies,
     TranslatePipe,
   ],
   templateUrl: './task-detail.html',

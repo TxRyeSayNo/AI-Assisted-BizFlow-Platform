@@ -69,6 +69,7 @@ public sealed class BizFlowDbContext(DbContextOptions<BizFlowDbContext> options,
     // F6: the label catalogue and the labels carried by work items.
     public DbSet<Label> Labels => Set<Label>();
     public DbSet<WorkItemLabel> WorkItemLabels => Set<WorkItemLabel>();
+    public DbSet<TaskDependency> TaskDependencies => Set<TaskDependency>();
     // F13: direct messages between colleagues.
     public DbSet<BizFlow.Domain.Messaging.ChatConversation> ChatConversations => Set<BizFlow.Domain.Messaging.ChatConversation>();
     public DbSet<BizFlow.Domain.Messaging.ChatParticipant> ChatParticipants => Set<BizFlow.Domain.Messaging.ChatParticipant>();
@@ -103,6 +104,7 @@ public sealed class BizFlowDbContext(DbContextOptions<BizFlowDbContext> options,
         // F6, likewise.
         model.Entity<Label>().HasQueryFilter(x => CurrentUserId != null && CurrentTenantId != null && x.TenantId == CurrentTenantId);
         model.Entity<WorkItemLabel>().HasQueryFilter(x => CurrentUserId != null && CurrentTenantId != null && x.TenantId == CurrentTenantId);
+        model.Entity<TaskDependency>().HasQueryFilter(x => CurrentUserId != null && CurrentTenantId != null && x.TenantId == CurrentTenantId);
         // F13. Tenant-scoped like the rest; participation is then enforced by the message store,
         // so a conversation the caller is not in never appears in any result.
         model.Entity<BizFlow.Domain.Messaging.ChatConversation>().HasQueryFilter(x => CurrentUserId != null && CurrentTenantId != null && x.TenantId == CurrentTenantId);
@@ -438,6 +440,23 @@ public sealed class BizFlowDbContext(DbContextOptions<BizFlowDbContext> options,
                             if (!await WorkTasks.AnyAsync(t => t.Id == attachedLabel.ObjectId, cancellationToken)) throw Denied();
                         }
                         else if (!await Requests.AnyAsync(r => r.Id == attachedLabel.ObjectId, cancellationToken)) throw Denied();
+                    }
+                    break;
+                // F7. A dependency is drawn between two tasks of this tenant by whoever can open
+                // them, and unlinking only ever flips RemovedAt.
+                case TaskDependency dependency:
+                    AssertTenant(dependency.TenantId);
+                    if (entry.State == EntityState.Modified)
+                    {
+                        if (entry.Properties.Any(p => p.IsModified &&
+                            p.Metadata.Name != nameof(TaskDependency.RemovedAt))) throw Denied();
+                    }
+                    else
+                    {
+                        if (dependency.CreatedBy != CurrentUserId) throw Denied();
+                        if (dependency.TaskId == dependency.DependsOnTaskId) throw Denied();
+                        if (!await WorkTasks.AnyAsync(t => t.Id == dependency.TaskId, cancellationToken)) throw Denied();
+                        if (!await WorkTasks.AnyAsync(t => t.Id == dependency.DependsOnTaskId, cancellationToken)) throw Denied();
                     }
                     break;
                 // F3. A mention is written once, by the author of the comment it belongs to.

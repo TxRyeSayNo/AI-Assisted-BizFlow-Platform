@@ -11,6 +11,7 @@ export interface FeatureFlags {
   directMessages: boolean;
   bulkActions: boolean;
   activityFeed: boolean;
+  taskDependencies: boolean;
 }
 
 const allOff: FeatureFlags = {
@@ -23,6 +24,7 @@ const allOff: FeatureFlags = {
   directMessages: false,
   bulkActions: false,
   activityFeed: false,
+  taskDependencies: false,
 };
 
 /**
@@ -49,6 +51,7 @@ export class FeatureFlagsService {
   readonly directMessages = computed(() => this.state().directMessages);
   readonly bulkActions = computed(() => this.state().bulkActions);
   readonly activityFeed = computed(() => this.state().activityFeed);
+  readonly taskDependencies = computed(() => this.state().taskDependencies);
 
   /** Idempotent: repeated calls from the shell effect issue at most one in-flight request. */
   load(): void {
@@ -66,6 +69,7 @@ export class FeatureFlagsService {
           directMessages: flags?.directMessages === true,
           bulkActions: flags?.bulkActions === true,
           activityFeed: flags?.activityFeed === true,
+          taskDependencies: flags?.taskDependencies === true,
         }),
       error: () => {
         // Allow a later attempt, and stay on the pre-feature behaviour until one succeeds.
