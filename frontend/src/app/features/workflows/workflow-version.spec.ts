@@ -80,7 +80,9 @@ describe('workflow version view', () => {
     expect(request.request.method).toBe('POST');
     expect(request.request.body).toEqual({});
     fixture.detectChanges();
-    const btn = fixture.nativeElement.querySelector('.header-actions button.btn-primary') as HTMLButtonElement;
+    const btn = fixture.nativeElement.querySelector(
+      '.header-actions button.btn-primary',
+    ) as HTMLButtonElement;
     expect(btn?.disabled).toBe(true);
     request.flush({
       workflowId: 'workflow',
@@ -156,7 +158,9 @@ describe('workflow version view', () => {
     comp.openAiModal();
     expect(comp.showAiModal()).toBe(true);
 
-    comp.aiDocText.set('Bước 1: Tiếp nhận hồ sơ. Bước 2: Trưởng phòng phê duyệt. Bước 3: Hoàn tất.');
+    comp.aiDocText.set(
+      'Bước 1: Tiếp nhận hồ sơ. Bước 2: Trưởng phòng phê duyệt. Bước 3: Hoàn tất.',
+    );
     comp.runAiDocumentAnalysis();
 
     const http = TestBed.inject(HttpTestingController);

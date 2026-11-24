@@ -63,6 +63,12 @@ public sealed class BizFlowDbContext(DbContextOptions<BizFlowDbContext> options,
     public DbSet<WorkflowStep> WorkflowSteps => Set<WorkflowStep>();
     public DbSet<WorkflowTransition> WorkflowTransitions => Set<WorkflowTransition>();
     public DbSet<AiVectorMemory> AIVectorMemories => Set<AiVectorMemory>();
+    // F3: watchers and comment mentions.
+    public DbSet<WorkItemWatcher> WorkItemWatchers => Set<WorkItemWatcher>();
+    public DbSet<CommentMention> CommentMentions => Set<CommentMention>();
+    // F6: the label catalogue and the labels carried by work items.
+    public DbSet<Label> Labels => Set<Label>();
+    public DbSet<WorkItemLabel> WorkItemLabels => Set<WorkItemLabel>();
 
     protected override void OnModelCreating(ModelBuilder model)
     {
@@ -87,6 +93,12 @@ public sealed class BizFlowDbContext(DbContextOptions<BizFlowDbContext> options,
         model.Entity<Confirmation>().HasQueryFilter(x => CurrentUserId != null && CurrentTenantId != null && x.TenantId == CurrentTenantId);
         model.Entity<Comment>().HasQueryFilter(x => CurrentUserId != null && CurrentTenantId != null && x.TenantId == CurrentTenantId && x.DeletedAt == null);
         model.Entity<Attachment>().HasQueryFilter(x => CurrentUserId != null && CurrentTenantId != null && x.TenantId == CurrentTenantId && x.DeletedAt == null);
+        // F3, same fail-closed tenant shape as the collaboration tables above.
+        model.Entity<WorkItemWatcher>().HasQueryFilter(x => CurrentUserId != null && CurrentTenantId != null && x.TenantId == CurrentTenantId);
+        model.Entity<CommentMention>().HasQueryFilter(x => CurrentUserId != null && CurrentTenantId != null && x.TenantId == CurrentTenantId);
+        // F6, likewise.
+        model.Entity<Label>().HasQueryFilter(x => CurrentUserId != null && CurrentTenantId != null && x.TenantId == CurrentTenantId);
+        model.Entity<WorkItemLabel>().HasQueryFilter(x => CurrentUserId != null && CurrentTenantId != null && x.TenantId == CurrentTenantId);
         model.Entity<AIInteraction>().HasQueryFilter(x => CurrentUserId != null && CurrentTenantId != null && x.TenantId == CurrentTenantId);
         model.Entity<AIRecommendation>().HasQueryFilter(x => CurrentUserId != null && CurrentTenantId != null && x.TenantId == CurrentTenantId);
         model.Entity<AIAgentAction>().HasQueryFilter(x => CurrentUserId != null && CurrentTenantId != null && x.TenantId == CurrentTenantId);
@@ -316,6 +328,64 @@ public sealed class BizFlowDbContext(DbContextOptions<BizFlowDbContext> options,
                             if (!isAdmin) throw Denied();
                         }
                     }
+                    break;
+                // F3. A person may only subscribe or unsubscribe themselves; the activity sweep
+                // runs as a system actor and may advance nothing but the notification watermark.
+                case WorkItemWatcher watcher:
+                    AssertTenant(watcher.TenantId);
+                    if (entry.State == EntityState.Modified)
+                    {
+                        // The sweep advances the watermark; only the watcher themselves may stop
+                        // or resume their own subscription, which is a soft change.
+                        if (entry.Properties.Any(p => p.IsModified &&
+                            p.Metadata.Name is not (nameof(WorkItemWatcher.LastNotifiedAt) or nameof(WorkItemWatcher.RemovedAt)))) throw Denied();
+                        if (entry.Properties.Any(p => p.IsModified && p.Metadata.Name == nameof(WorkItemWatcher.RemovedAt))
+                            && watcher.UserId != CurrentUserId) throw Denied();
+                    }
+                    else
+                    {
+                        if (watcher.UserId != CurrentUserId) throw Denied();
+                        if (!await Users.AnyAsync(u => u.Id == watcher.UserId, cancellationToken)) throw Denied();
+                        if (watcher.ObjectType == CommentObjectType.Task)
+                        {
+                            if (!await WorkTasks.AnyAsync(t => t.Id == watcher.ObjectId, cancellationToken)) throw Denied();
+                        }
+                        else if (!await Requests.AnyAsync(r => r.Id == watcher.ObjectId, cancellationToken)) throw Denied();
+                    }
+                    break;
+                // F6. The catalogue is tenant data; retiring a label is a soft change, and its
+                // identity and creator never move.
+                case Label label:
+                    AssertTenant(label.TenantId);
+                    if (entry.State == EntityState.Added && label.CreatedBy != CurrentUserId) throw Denied();
+                    if (!await Users.AnyAsync(u => u.Id == label.CreatedBy, cancellationToken)) throw Denied();
+                    break;
+                // F6. A label is attached to an item by whoever can open that item, and detaching
+                // only ever flips RemovedAt.
+                case WorkItemLabel attachedLabel:
+                    AssertTenant(attachedLabel.TenantId);
+                    if (entry.State == EntityState.Modified)
+                    {
+                        if (entry.Properties.Any(p => p.IsModified &&
+                            p.Metadata.Name != nameof(WorkItemLabel.RemovedAt))) throw Denied();
+                    }
+                    else
+                    {
+                        if (attachedLabel.CreatedBy != CurrentUserId) throw Denied();
+                        if (!await Labels.AnyAsync(l => l.Id == attachedLabel.LabelId, cancellationToken)) throw Denied();
+                        if (attachedLabel.ObjectType == CommentObjectType.Task)
+                        {
+                            if (!await WorkTasks.AnyAsync(t => t.Id == attachedLabel.ObjectId, cancellationToken)) throw Denied();
+                        }
+                        else if (!await Requests.AnyAsync(r => r.Id == attachedLabel.ObjectId, cancellationToken)) throw Denied();
+                    }
+                    break;
+                // F3. A mention is written once, by the author of the comment it belongs to.
+                case CommentMention mention:
+                    AssertTenant(mention.TenantId);
+                    if (entry.State != EntityState.Added || mention.MentionedByUserId != CurrentUserId) throw Denied();
+                    if (!await Comments.AnyAsync(c => c.Id == mention.CommentId, cancellationToken)) throw Denied();
+                    if (!await Users.AnyAsync(u => u.Id == mention.MentionedUserId, cancellationToken)) throw Denied();
                     break;
                 case Attachment attachment:
                     AssertTenant(attachment.TenantId);

@@ -13,6 +13,8 @@ import { I18nService } from '../../core/i18n/i18n.service';
 import { requestPriorities, requestStates } from './requests';
 import { WorkItemComments } from '../collaboration/work-item-comments';
 import { WorkItemAttachments } from '../collaboration/work-item-attachments';
+import { WorkItemWatch } from '../collaboration/work-item-watch';
+import { WorkItemLabels } from '../collaboration/work-item-labels';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
 
 export interface RequestResolutionItemView {
@@ -118,6 +120,8 @@ export interface UserOption {
     MatSelectModule,
     WorkItemComments,
     WorkItemAttachments,
+    WorkItemWatch,
+    WorkItemLabels,
     TranslatePipe,
   ],
   templateUrl: './request-detail.html',
@@ -274,7 +278,10 @@ export class RequestDetail implements OnInit {
   }
 
   canDecideElevated(): boolean {
-    return this.escalation()?.state === 'PENDING' && this.session.hasPermission('requests.approve.elevated');
+    return (
+      this.escalation()?.state === 'PENDING' &&
+      this.session.hasPermission('requests.approve.elevated')
+    );
   }
 
   executeEscalate() {

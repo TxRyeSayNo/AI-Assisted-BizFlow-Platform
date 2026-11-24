@@ -133,11 +133,21 @@
               <tr>
                 <th scope="col" class="col-type">{{ 'search.col.type' | translate: 'Loại' }}</th>
                 <th scope="col" class="col-title">{{ 'common.title' | translate: 'Tiêu đề' }}</th>
-                <th scope="col" class="col-status">{{ 'common.status' | translate: 'Trạng thái' }}</th>
-                <th scope="col" class="col-priority">{{ 'common.priority' | translate: 'Độ ưu tiên' }}</th>
-                <th scope="col" class="col-owner">{{ 'search.col.owner' | translate: 'Người phụ trách / Người tạo' }}</th>
-                <th scope="col" class="col-created">{{ 'search.col.created' | translate: 'Ngày tạo' }}</th>
-                <th scope="col" class="col-actions">{{ 'common.actions' | translate: 'Thao tác' }}</th>
+                <th scope="col" class="col-status">
+                  {{ 'common.status' | translate: 'Trạng thái' }}
+                </th>
+                <th scope="col" class="col-priority">
+                  {{ 'common.priority' | translate: 'Độ ưu tiên' }}
+                </th>
+                <th scope="col" class="col-owner">
+                  {{ 'search.col.owner' | translate: 'Người phụ trách / Người tạo' }}
+                </th>
+                <th scope="col" class="col-created">
+                  {{ 'search.col.created' | translate: 'Ngày tạo' }}
+                </th>
+                <th scope="col" class="col-actions">
+                  {{ 'common.actions' | translate: 'Thao tác' }}
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -193,7 +203,9 @@
                     </span>
                   </td>
                   <td>
-                    <span class="actor-name">{{ item.creatorOrRequesterName ?? ('common.unknown' | translate: 'Unknown') }}</span>
+                    <span class="actor-name">{{
+                      item.creatorOrRequesterName ?? ('common.unknown' | translate: 'Unknown')
+                    }}</span>
                   </td>
                   <td>
                     <span class="date-text">{{ item.createdAt | date: 'short' }}</span>

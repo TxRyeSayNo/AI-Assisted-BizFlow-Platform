@@ -12,11 +12,7 @@ describe('tenant people directory', () => {
   );
   afterEach(() => {
     const http = TestBed.inject(HttpTestingController);
-    http
-      .match((r) => r.url.startsWith('/api/v1/departments'))
-      .forEach((r) => {
-        if (!r.cancelled) r.flush({ items: [] });
-      });
+    http.match((r) => r.url.startsWith('/api/v1/departments')).forEach((r) => r.flush({ items: [] }));
     http.verify();
   });
   const pending = () =>

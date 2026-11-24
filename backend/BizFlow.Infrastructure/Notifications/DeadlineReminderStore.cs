@@ -35,7 +35,7 @@ public sealed class DeadlineReminderStore(BizFlowDbContext db) : IDeadlineRemind
             .SingleOrDefaultAsync(s => s.Id == reminderId && s.TenantId == tenantId, cancellationToken);
     }
 
-    public async Task SaveScheduleAsync(DeadlineReminderSchedule schedule, CancellationToken cancellationToken)
+    public async Task<DeadlineReminderSchedule> SaveScheduleAsync(DeadlineReminderSchedule schedule, CancellationToken cancellationToken)
     {
         var existing = await db.DeadlineReminderSchedules
             .SingleOrDefaultAsync(s => s.TenantId == schedule.TenantId &&
@@ -45,10 +45,15 @@ public sealed class DeadlineReminderStore(BizFlowDbContext db) : IDeadlineRemind
 
         if (existing is not null)
         {
-            db.DeadlineReminderSchedules.Remove(existing);
+            // Re-arm the row that is already there. Removing it first would be a hard delete,
+            // which the context refuses, and inserting a second row would break the unique index
+            // on (TenantId, TaskId, UserId, TriggerType).
+            existing.Reschedule(schedule.LeadTimeMinutes, schedule.RemindAt);
+            return existing;
         }
 
         db.DeadlineReminderSchedules.Add(schedule);
+        return schedule;
     }
 
     public Task SaveChangesAsync(CancellationToken cancellationToken)

@@ -23,7 +23,8 @@ import { SessionService } from '../../core/auth/session';
       <p>{{ data.title }}</p>
       <p>
         Xác nhận bạn sẽ tiếp nhận và thực hiện nhiệm vụ này. Nếu nhiệm vụ đang thuộc hàng đợi phòng
-        ban, thao tác sẽ gán trực tiếp cho bạn. Hệ thống sẽ kiểm tra lại phân công và quyền hạn hiện tại.
+        ban, thao tác sẽ gán trực tiếp cho bạn. Hệ thống sẽ kiểm tra lại phân công và quyền hạn hiện
+        tại.
       </p>
       @if (error()) {
         <p role="alert">{{ error() }}</p>

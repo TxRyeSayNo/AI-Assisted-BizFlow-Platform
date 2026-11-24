@@ -256,8 +256,14 @@ describe('TaskDecompositionPreview Component', () => {
     previewReq.flush({
       originalPrompt: '1. Cài đặt database\n2. Cấu hình backup',
       proposals: [
-        { title: 'Cài đặt database', description: '', type: 'Assignment', priority: 'HIGH', checklistItems: [] }
-      ]
+        {
+          title: 'Cài đặt database',
+          description: '',
+          type: 'Assignment',
+          priority: 'HIGH',
+          checklistItems: [],
+        },
+      ],
     });
 
     expect(component.proposals().length).toBe(1);

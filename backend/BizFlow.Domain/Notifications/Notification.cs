@@ -7,7 +7,10 @@ public enum NotificationEvent
 {
     TaskAssigned, TaskAccepted, TaskRejected, ProgressSubmitted, ResultSubmitted, TaskConfirmed,
     RequestSubmitted, RequestRouted, RequestReceived, RequestResolved, RequestRejected, RequestRevised,
-    DeadlineWarning, Overdue, Escalation, ApprovalRequired
+    DeadlineWarning, Overdue, Escalation, ApprovalRequired,
+    // F3, additive: an "@" mention, and activity on an item the recipient chose to watch.
+    // Existing events keep their names and their stored values, so old notifications are unchanged.
+    Mentioned, WatchedItemActivity
 }
 
 public sealed class Notification

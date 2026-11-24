@@ -52,16 +52,15 @@ import { TranslatePipe } from '../../core/i18n/translate.pipe';
               }}
             </h3>
             <p>
-              {{ configuredModulesCount() }}/5 mô-đun vận hành cốt lõi đã được cấu hình cho doanh nghiệp.
+              {{ configuredModulesCount() }}/5 mô-đun vận hành cốt lõi đã được cấu hình cho doanh
+              nghiệp.
             </p>
           </div>
           <div class="progress-bar-container">
             <div class="progress-bar-wrap">
               <div class="progress-fill" [style.width.%]="readinessPercent()"></div>
             </div>
-            <div class="progress-percent-badge">
-              {{ readinessPercent() }}% Sẵn sàng
-            </div>
+            <div class="progress-percent-badge">{{ readinessPercent() }}% Sẵn sàng</div>
           </div>
         </section>
 

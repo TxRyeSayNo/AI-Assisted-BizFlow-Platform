@@ -225,6 +225,59 @@ public sealed class AuthenticationApiTests(PostgresFixture database)
     }
 
     [Fact]
+    public async Task Workspace_enforcement_and_platform_admin_login_isolation()
+    {
+        var account = await SeedAsync();
+        await using var db = database.Create(database.PlatformUserId, null);
+        var platform = await db.Users.IgnoreQueryFilters().SingleAsync(u => u.Id == database.PlatformUserId);
+        var hash = new PasswordHasher<UserAccount>().HashPassword(platform, TestPassword);
+        await db.Database.ExecuteSqlInterpolatedAsync($"UPDATE \"User\" SET \"PasswordHash\" = {hash} WHERE \"UserId\" = {platform.Id}");
+
+        await using var factory = new AuthenticationFactory(database);
+        using var client = factory.CreateClient();
+
+        // (a) user tenant + bỏ trống workspace -> 401 AUTH.INVALID_CREDENTIALS
+        using var tenantWithoutWorkspace = await client.PostAsJsonAsync("/api/v1/auth/login", new
+        {
+            identifier = account.Code,
+            password = TestPassword,
+            tenantKey = (string?)null
+        });
+        Assert.Equal(HttpStatusCode.Unauthorized, tenantWithoutWorkspace.StatusCode);
+        var errA = await tenantWithoutWorkspace.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal("AUTH.INVALID_CREDENTIALS", errA.GetProperty("code").GetString());
+
+        // (b) user tenant + đúng workspace -> 200
+        using var tenantWithWorkspace = await client.PostAsJsonAsync("/api/v1/auth/login", new
+        {
+            identifier = account.Code,
+            password = TestPassword,
+            tenantKey = account.Key
+        });
+        Assert.Equal(HttpStatusCode.OK, tenantWithWorkspace.StatusCode);
+
+        // (c) Super Admin + bỏ trống workspace -> 200
+        using var platformWithoutWorkspace = await client.PostAsJsonAsync("/api/v1/auth/login", new
+        {
+            identifier = "PLATFORM",
+            password = TestPassword,
+            tenantKey = (string?)null
+        });
+        Assert.Equal(HttpStatusCode.OK, platformWithoutWorkspace.StatusCode);
+
+        // (d) Super Admin + có workspace -> 401 AUTH.INVALID_CREDENTIALS
+        using var platformWithWorkspace = await client.PostAsJsonAsync("/api/v1/auth/login", new
+        {
+            identifier = "PLATFORM",
+            password = TestPassword,
+            tenantKey = account.Key
+        });
+        Assert.Equal(HttpStatusCode.Unauthorized, platformWithWorkspace.StatusCode);
+        var errD = await platformWithWorkspace.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal("AUTH.INVALID_CREDENTIALS", errD.GetProperty("code").GetString());
+    }
+
+    [Fact]
     public async Task Expired_refresh_and_forged_access_tokens_are_rejected()
     {
         var account = await SeedAsync();

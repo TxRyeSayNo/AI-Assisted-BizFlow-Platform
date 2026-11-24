@@ -1,0 +1,157 @@
+<main id="main-content" class="page-content" tabindex="-1">
+  <nav aria-label="Breadcrumb">
+    <a routerLink="/workspace">{{ 'common.workspace' | translate: 'Không gian làm việc' }}</a>
+    <span aria-hidden="true"> / </span>
+    <a routerLink="/requests">{{ 'requests.title' | translate: 'Yêu cầu' }}</a>
+    <span aria-hidden="true"> / </span>
+    <span>{{ 'requestBoard.title' | translate: 'Request board' }}</span>
+  </nav>
+  <div
+    style="
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    "
+  >
+    <h1>{{ 'requestBoard.title' | translate: 'Request board' }}</h1>
+    <div style="display: flex; flex-wrap: wrap; gap: 0.75rem">
+      <a mat-stroked-button routerLink="/requests">{{
+        'taskBoard.viewList' | translate: 'List'
+      }}</a>
+    </div>
+  </div>
+  <p>
+    {{
+      'requestBoard.subtitle'
+        | translate
+          : 'Requests grouped by their current state. Read-only: open a request to act on it.'
+    }}
+  </p>
+
+  <section aria-label="Request board" class="directory-panel" [attr.aria-busy]="busy()">
+    <form [formGroup]="filters" (ngSubmit)="apply()" class="filters">
+      <mat-form-field appearance="outline" subscriptSizing="dynamic"
+        ><mat-label>{{
+          'requests.searchPlaceholder' | translate: 'Search request title'
+        }}</mat-label
+        ><input matInput formControlName="search" maxlength="200" [readonly]="busy()"
+      /></mat-form-field>
+      <mat-form-field appearance="outline" subscriptSizing="dynamic"
+        ><mat-label>{{ 'common.priority' | translate: 'Priority' }}</mat-label
+        ><mat-select formControlName="priority"
+          ><mat-option value="">{{
+            'common.allPriorities' | translate: 'All priorities'
+          }}</mat-option>
+          @for (option of priorityOptions; track option[0]) {
+            <mat-option [value]="option[0]">{{
+              'priority.' + option[0] | translate: option[1]
+            }}</mat-option>
+          }
+        </mat-select></mat-form-field
+      >
+      <mat-form-field appearance="outline" subscriptSizing="dynamic"
+        ><mat-label>{{ 'requestBoard.filterRequester' | translate: 'Requester' }}</mat-label
+        ><mat-select formControlName="requesterId"
+          ><mat-option value="">{{
+            'requestBoard.allRequesters' | translate: 'Everyone'
+          }}</mat-option>
+          @for (option of requesterOptions(); track option[0]) {
+            <mat-option [value]="option[0]">{{ option[1] }}</mat-option>
+          }
+        </mat-select></mat-form-field
+      >
+      <button mat-flat-button type="submit" [disabled]="busy()">
+        {{ 'common.applyFilters' | translate: 'Apply filters' }}
+      </button>
+      <button mat-stroked-button type="button" [disabled]="busy()" (click)="reset()">
+        {{ 'common.reset' | translate: 'Reset' }}
+      </button>
+    </form>
+
+    @if (busy()) {
+      <p role="status" class="directory-feedback">
+        {{ 'requestBoard.loading' | translate: 'Loading board…' }}
+      </p>
+    } @else if (denied()) {
+      <p role="alert" class="directory-feedback">
+        {{ 'requests.denied' | translate: 'You no longer have access to this request list.' }}
+      </p>
+    } @else if (unavailable()) {
+      <p role="status" class="directory-feedback">
+        {{ 'taskBoard.unavailable' | translate: 'The board is not enabled on this deployment.' }}
+        <a routerLink="/requests">{{ 'taskBoard.viewList' | translate: 'List' }}</a>
+      </p>
+    } @else if (error()) {
+      <div class="directory-feedback">
+        <p role="alert">
+          {{
+            'requestBoard.loadError' | translate: 'The board could not be loaded. Please try again.'
+          }}
+        </p>
+        <button mat-stroked-button type="button" (click)="load()">
+          {{ 'common.retry' | translate: 'Retry' }}
+        </button>
+      </div>
+    } @else if (result(); as data) {
+      <div class="board-scroll">
+        <div class="board">
+          @for (column of data.columns; track column.status) {
+            <section
+              class="board-lane"
+              [attr.data-status]="column.status"
+              [attr.aria-label]="'status.' + column.status | translate: states[column.status]"
+            >
+              <header class="lane-header">
+                <h2 class="lane-title">
+                  {{ 'status.' + column.status | translate: states[column.status] }}
+                </h2>
+                <span class="lane-count" role="status">
+                  @if (column.total > column.items.length) {
+                    {{ column.items.length }}/{{ column.total }}
+                  } @else {
+                    {{ column.total }}
+                  }
+                </span>
+              </header>
+              <div class="lane-cards">
+                @for (card of column.items; track card.requestId) {
+                  <article class="board-card is-readonly">
+                    <a class="task-title" [routerLink]="['/requests', card.requestId]">{{
+                      card.title
+                    }}</a>
+                    <span class="task-meta">
+                      {{
+                        'priorityBadge.' + card.priority
+                          | translate: priorities[card.priority] + ' priority'
+                      }}
+                    </span>
+                    <span class="task-meta">{{
+                      card.requesterName ?? ('common.none' | translate: 'None')
+                    }}</span>
+                    @if (card.serviceName) {
+                      <span class="task-meta"
+                        >{{ card.serviceName }}
+                        @if (card.categoryName) {
+                          · {{ card.categoryName }}
+                        }
+                      </span>
+                    }
+                    <time class="task-meta" [attr.datetime]="card.updatedAt">{{
+                      card.updatedAt | date: 'short'
+                    }}</time>
+                  </article>
+                }
+                @if (column.items.length === 0) {
+                  <p class="lane-empty">{{ 'taskBoard.laneEmpty' | translate: 'Nothing here' }}</p>
+                }
+              </div>
+            </section>
+          }
+        </div>
+      </div>
+    }
+  </section>
+</main>

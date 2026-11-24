@@ -10,7 +10,18 @@ describe('tenant department directory', () => {
       providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
     }),
   );
-  afterEach(() => TestBed.inject(HttpTestingController).verify());
+  afterEach(() => {
+    const http = TestBed.inject(HttpTestingController);
+    // The directory also side-loads the whole department list for the parent selector
+    // (departments.ts -> loadAllDepartments). It carries its query inside the URL, so the
+    // pending() predicate below never matches it. Draining it here keeps verify() strict
+    // about every request these tests do assert on.
+    http
+      .match('/api/v1/departments?pageSize=200')
+      .filter((r) => !r.cancelled)
+      .forEach((r) => r.flush({ items: [], total: 0, page: 1, pageSize: 200 }));
+    http.verify();
+  });
   const pending = () =>
     TestBed.inject(HttpTestingController).expectOne((r) => r.url === '/api/v1/departments');
   const empty = { items: [], total: 0, page: 1, pageSize: 25 };

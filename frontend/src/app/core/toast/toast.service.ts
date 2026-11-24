@@ -88,9 +88,7 @@ export class ToastService {
     }
 
     // Mark as leaving for smooth exit animation
-    this.toasts.update((list) =>
-      list.map((t) => (t.id === id ? { ...t, leaving: true } : t)),
-    );
+    this.toasts.update((list) => list.map((t) => (t.id === id ? { ...t, leaving: true } : t)));
 
     setTimeout(() => {
       this.toasts.update((list) => list.filter((t) => t.id !== id));
@@ -118,4 +116,3 @@ export class ToastService {
     }
   }
 }
-

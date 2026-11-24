@@ -84,7 +84,9 @@
         {{
           data.unreadCount === 1
             ? ('notifications.unreadCountOne' | translate: '1 unread notification')
-            : data.unreadCount + ' ' + ('notifications.unreadCountMany' | translate: 'unread notifications')
+            : data.unreadCount +
+              ' ' +
+              ('notifications.unreadCountMany' | translate: 'unread notifications')
         }}
       </p>
       @if (data.items.length === 0) {
@@ -110,16 +112,27 @@
                 <p class="notification-meta">{{ displayType(row.type) }}</p>
                 @if (row.objectType) {
                   <p class="notification-meta">
-                    {{ 'notifications.related' | translate: 'Related:' }} {{ displayObjectType(row.objectType) }}
+                    {{ 'notifications.related' | translate: 'Related:' }}
+                    {{ displayObjectType(row.objectType) }}
                   </p>
                 }
                 <div class="notification-actions">
                   @if (row.objectType === 'Task' && row.objectId) {
-                    <a mat-stroked-button color="primary" class="action-btn open-btn" [routerLink]="['/tasks', row.objectId]">
+                    <a
+                      mat-stroked-button
+                      color="primary"
+                      class="action-btn open-btn"
+                      [routerLink]="['/tasks', row.objectId]"
+                    >
                       {{ 'notifications.openTask' | translate: 'Mở nhiệm vụ' }}
                     </a>
                   } @else if (row.objectType === 'Request' && row.objectId) {
-                    <a mat-stroked-button color="primary" class="action-btn open-btn" [routerLink]="['/requests', row.objectId]">
+                    <a
+                      mat-stroked-button
+                      color="primary"
+                      class="action-btn open-btn"
+                      [routerLink]="['/requests', row.objectId]"
+                    >
                       {{ 'notifications.openRequest' | translate: 'Mở yêu cầu' }}
                     </a>
                   }

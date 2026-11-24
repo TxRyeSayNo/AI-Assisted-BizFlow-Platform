@@ -10,6 +10,15 @@ export const routes: Routes = [
     loadComponent: () => import('./features/requests/request-create').then((m) => m.RequestCreate),
   },
   {
+    // Must stay ahead of 'requests/:id', which would otherwise match 'board' as a request id.
+    path: 'requests/board',
+    canActivate: [tenantGuard, permissionGuard],
+    data: {
+      anyPermissions: ['requests.read.tenant', 'requests.read.managed', 'requests.read.own'],
+    },
+    loadComponent: () => import('./features/requests/request-board').then((m) => m.RequestBoard),
+  },
+  {
     path: 'requests/:id',
     canActivate: [tenantGuard, permissionGuard],
     data: {
@@ -36,6 +45,36 @@ export const routes: Routes = [
     canActivate: [tenantGuard, permissionGuard],
     data: { permission: 'tasks.create' },
     loadComponent: () => import('./features/tasks/task-create').then((m) => m.TaskCreate),
+  },
+  {
+    // Must stay ahead of 'tasks/:id', which would otherwise match 'board' as a task id.
+    // Guarded exactly like the task list: the board is the same data in another shape, and the
+    // server answers 404 when the Kanban feature flag is off.
+    path: 'tasks/board',
+    canActivate: [tenantGuard, permissionGuard],
+    data: {
+      anyPermissions: [
+        'tasks.read.tenant',
+        'tasks.read.managed',
+        'tasks.read.own',
+        'tasks.read.assigned',
+      ],
+    },
+    loadComponent: () => import('./features/tasks/task-board').then((m) => m.TaskBoard),
+  },
+  {
+    // Must stay ahead of 'tasks/:id' for the same reason as 'tasks/board'.
+    path: 'tasks/calendar',
+    canActivate: [tenantGuard, permissionGuard],
+    data: {
+      anyPermissions: [
+        'tasks.read.tenant',
+        'tasks.read.managed',
+        'tasks.read.own',
+        'tasks.read.assigned',
+      ],
+    },
+    loadComponent: () => import('./features/tasks/task-calendar').then((m) => m.TaskCalendar),
   },
   {
     path: 'tasks/ai-decomposition',
@@ -94,6 +133,57 @@ export const routes: Routes = [
     path: 'sla-monitor',
     canActivate: [tenantGuard],
     loadComponent: () => import('./features/sla/sla-monitor').then((m) => m.SlaMonitor),
+  },
+  // Project / role dashboards. These are additive siblings of the existing 'dashboard' redirect,
+  // which keeps matching only the exact '/dashboard' path because of its pathMatch: 'full'.
+  {
+    path: 'dashboard/projects/:id',
+    canActivate: [tenantGuard, permissionGuard],
+    data: {
+      anyPermissions: [
+        'tasks.read.tenant',
+        'tasks.read.managed',
+        'tasks.read.own',
+        'tasks.read.assigned',
+      ],
+    },
+    loadComponent: () =>
+      import('./features/dashboard/project-dashboard-detail').then((m) => m.ProjectDashboardDetail),
+  },
+  {
+    path: 'dashboard/projects',
+    canActivate: [tenantGuard, permissionGuard],
+    data: {
+      anyPermissions: [
+        'tasks.read.tenant',
+        'tasks.read.managed',
+        'tasks.read.own',
+        'tasks.read.assigned',
+      ],
+    },
+    loadComponent: () =>
+      import('./features/dashboard/project-dashboard').then((m) => m.ProjectDashboard),
+  },
+  {
+    path: 'dashboard/my-work',
+    canActivate: [tenantGuard, permissionGuard],
+    data: {
+      anyPermissions: [
+        'tasks.read.tenant',
+        'tasks.read.managed',
+        'tasks.read.own',
+        'tasks.read.assigned',
+      ],
+    },
+    loadComponent: () =>
+      import('./features/dashboard/my-work-dashboard').then((m) => m.MyWorkDashboard),
+  },
+  {
+    // Reading other people is a management capability; the backend refuses it as well.
+    path: 'dashboard/team',
+    canActivate: [tenantGuard, permissionGuard],
+    data: { anyPermissions: ['tasks.read.tenant', 'tasks.read.managed'] },
+    loadComponent: () => import('./features/dashboard/team-dashboard').then((m) => m.TeamDashboard),
   },
   {
     path: 'dashboard',
@@ -168,6 +258,13 @@ export const routes: Routes = [
       ],
     },
     loadComponent: () => import('./features/organization/settings').then((m) => m.Settings),
+  },
+  {
+    // F6. The server enforces roles.configure on every mutation; this guard is a convenience,
+    // and reading the catalogue needs only tenant membership.
+    path: 'settings/labels',
+    canActivate: [tenantGuard],
+    loadComponent: () => import('./features/organization/labels').then((m) => m.Labels),
   },
   {
     path: 'settings/organization/roles',

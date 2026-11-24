@@ -49,7 +49,10 @@ describe('password recovery', () => {
     component.form.setValue({ identifier: 'EMP1', tenantKey: 'valid-key' });
     component.submit();
     const request = TestBed.inject(HttpTestingController).expectOne('/api/v1/auth/forgot-password');
-    request.flush({ message: 'server error' }, { status: 500, statusText: 'Internal Server Error' });
+    request.flush(
+      { message: 'server error' },
+      { status: 500, statusText: 'Internal Server Error' },
+    );
     expect(component.error()).toContain('Tính năng đặt lại mật khẩu tạm thời chưa khả dụng');
     expect(component.toast()?.title).toBe('Dịch vụ tạm thời gián đoạn');
   });

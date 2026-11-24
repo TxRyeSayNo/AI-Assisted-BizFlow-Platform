@@ -190,3 +190,57 @@
   justify-content: flex-end;
   gap: var(--tp-space-2);
 }
+
+// F3: "@" mention picker. Only rendered when the Mentions feature is enabled.
+.mention-suggestions {
+  list-style: none;
+  margin: 0 0 0.5rem;
+  padding: 0.25rem;
+  border: 1px solid rgb(0 0 0 / 12%);
+  border-radius: 0.375rem;
+  max-height: 12rem;
+  overflow-y: auto;
+
+  li button {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.75rem;
+    width: 100%;
+    padding: 0.35rem 0.5rem;
+    border: 0;
+    border-radius: 0.25rem;
+    background: transparent;
+    text-align: left;
+    cursor: pointer;
+    font: inherit;
+
+    &:hover,
+    &:focus-visible {
+      background: rgb(0 0 0 / 6%);
+    }
+  }
+}
+
+.mention-code {
+  opacity: 0.6;
+  font-variant-numeric: tabular-nums;
+}
+
+.mention-picked {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0 0 0.5rem;
+  font-size: 0.8125rem;
+}
+
+.mention-chip {
+  border: 1px solid rgb(0 0 0 / 15%);
+  border-radius: 999px;
+  padding: 0.1rem 0.5rem;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.75rem;
+}

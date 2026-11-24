@@ -52,12 +52,14 @@ import { TranslatePipe } from '../i18n/translate.pipe';
         border-radius: 12px !important;
         border: 1px solid #e2e8f0;
         box-shadow:
-          0 10px 25px -5px rgba(15, 23, 42, 0.10),
+          0 10px 25px -5px rgba(15, 23, 42, 0.1),
           0 8px 10px -6px rgba(15, 23, 42, 0.05);
         overflow: hidden;
         animation: toast-slide-in 240ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
         transform-origin: top right;
-        transition: opacity 180ms ease, transform 180ms ease;
+        transition:
+          opacity 180ms ease,
+          transform 180ms ease;
       }
 
       .toast-card.leaving {
@@ -336,10 +338,7 @@ import { TranslatePipe } from '../i18n/translate.pipe';
           <!-- Auto-drain progress indicator -->
           @if (toast.duration > 0) {
             <div class="toast-progress" aria-hidden="true">
-              <div
-                class="toast-progress-bar"
-                [style.animationDuration.ms]="toast.duration"
-              ></div>
+              <div class="toast-progress-bar" [style.animationDuration.ms]="toast.duration"></div>
             </div>
           }
         </div>
@@ -365,4 +364,3 @@ export class ToastContainerComponent {
     }
   }
 }
-

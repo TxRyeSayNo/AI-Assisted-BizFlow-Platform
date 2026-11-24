@@ -79,14 +79,7 @@ export interface WorkflowDraftGraphDto {
 @Component({
   selector: 'bf-workflow-version',
   standalone: true,
-  imports: [
-    CommonModule,
-    RouterLink,
-    MatButtonModule,
-    DatePipe,
-    FormsModule,
-    WorkflowDesigner,
-  ],
+  imports: [CommonModule, RouterLink, MatButtonModule, DatePipe, FormsModule, WorkflowDesigner],
   templateUrl: './workflow-version.html',
   styleUrls: ['../organization/departments.scss', './workflows.scss'],
 })
@@ -158,7 +151,9 @@ export class WorkflowVersion {
     this.aiDocFile.set(file);
 
     if (file.name.endsWith('.docx')) {
-      this.aiDocText.set(`[Tệp tin Word: ${file.name} (${(file.size / 1024).toFixed(1)} KB)]\nNhấn "Phân tích tài liệu" để hệ thống trích xuất và thiết kế quy trình.`);
+      this.aiDocText.set(
+        `[Tệp tin Word: ${file.name} (${(file.size / 1024).toFixed(1)} KB)]\nNhấn "Phân tích tài liệu" để hệ thống trích xuất và thiết kế quy trình.`,
+      );
     } else {
       const reader = new FileReader();
       reader.onload = (e) => {
@@ -180,17 +175,22 @@ export class WorkflowVersion {
       formData.append('file', file);
       formData.append('businessType', bType);
 
-      this.http.post<WorkflowDraftGraphDto>('/api/v1/workflows/analyze-document', formData).subscribe({
-        next: (res) => {
-          this.aiAnalyzing.set(false);
-          this.aiAnalysisResult.set(res);
-          this.showToast('Phân tích tài liệu thành công! Hãy xem trước sơ đồ trước khi nạp vào Canvas.', 'success');
-        },
-        error: (err) => {
-          this.aiAnalyzing.set(false);
-          this.showToast(err?.error?.message || 'Không thể phân tích tệp tin Word.', 'error');
-        }
-      });
+      this.http
+        .post<WorkflowDraftGraphDto>('/api/v1/workflows/analyze-document', formData)
+        .subscribe({
+          next: (res) => {
+            this.aiAnalyzing.set(false);
+            this.aiAnalysisResult.set(res);
+            this.showToast(
+              'Phân tích tài liệu thành công! Hãy xem trước sơ đồ trước khi nạp vào Canvas.',
+              'success',
+            );
+          },
+          error: (err) => {
+            this.aiAnalyzing.set(false);
+            this.showToast(err?.error?.message || 'Không thể phân tích tệp tin Word.', 'error');
+          },
+        });
       return;
     }
 
@@ -201,20 +201,28 @@ export class WorkflowVersion {
       return;
     }
 
-    this.http.post<WorkflowDraftGraphDto>('/api/v1/workflows/analyze-text', {
-      textContent: text,
-      businessType: bType
-    }).subscribe({
-      next: (res) => {
-        this.aiAnalyzing.set(false);
-        this.aiAnalysisResult.set(res);
-        this.showToast('Phân tích tài liệu thành công! Hãy xem trước sơ đồ trước khi nạp vào Canvas.', 'success');
-      },
-      error: (err) => {
-        this.aiAnalyzing.set(false);
-        this.showToast(err?.error?.message || 'Không thể phân tích quy trình từ văn bản.', 'error');
-      }
-    });
+    this.http
+      .post<WorkflowDraftGraphDto>('/api/v1/workflows/analyze-text', {
+        textContent: text,
+        businessType: bType,
+      })
+      .subscribe({
+        next: (res) => {
+          this.aiAnalyzing.set(false);
+          this.aiAnalysisResult.set(res);
+          this.showToast(
+            'Phân tích tài liệu thành công! Hãy xem trước sơ đồ trước khi nạp vào Canvas.',
+            'success',
+          );
+        },
+        error: (err) => {
+          this.aiAnalyzing.set(false);
+          this.showToast(
+            err?.error?.message || 'Không thể phân tích quy trình từ văn bản.',
+            'error',
+          );
+        },
+      });
   }
 
   applyAiWorkflowToCanvas() {
@@ -224,7 +232,10 @@ export class WorkflowVersion {
     this.designer.nodes.set(res.nodes as any);
     this.designer.edges.set(res.edges as any);
     this.closeAiModal();
-    this.showToast('Đã nạp sơ đồ quy trình AI vào Canvas! Bạn có thể chỉnh sửa inline và bấm "Lưu bản nháp".', 'success');
+    this.showToast(
+      'Đã nạp sơ đồ quy trình AI vào Canvas! Bạn có thể chỉnh sửa inline và bấm "Lưu bản nháp".',
+      'success',
+    );
   }
 
   constructor() {
@@ -285,7 +296,7 @@ export class WorkflowVersion {
               ? 'Bạn không có quyền truy cập hoặc cấu hình quy trình này (yêu cầu quyền Quản trị viên Công ty).'
               : failure.status === 404
                 ? 'Không tìm thấy phiên bản quy trình này.'
-                : 'Không thể tải phiên bản quy trình. Vui lòng thử lại sau.'
+                : 'Không thể tải phiên bản quy trình. Vui lòng thử lại sau.',
           );
         },
       });
@@ -353,11 +364,7 @@ export class WorkflowVersion {
       .filter((n) => n.type === 'DEPARTMENT' || n.type === 'APPROVAL' || n.type === 'CONFIRMATION')
       .map((n, idx) => {
         const stepType =
-          n.type === 'DEPARTMENT'
-            ? 'Action'
-            : n.type === 'APPROVAL'
-              ? 'Approval'
-              : 'Confirmation';
+          n.type === 'DEPARTMENT' ? 'Action' : n.type === 'APPROVAL' ? 'Approval' : 'Confirmation';
 
         const stepCode = `STEP_${n.id.replace(/[^a-zA-Z0-9]/g, '_').toUpperCase()}`;
         return {
@@ -420,7 +427,7 @@ export class WorkflowVersion {
           this.savingDraft.set(false);
           this.showToast(
             err.error?.message || 'Không thể lưu bản nháp quy trình. Vui lòng kiểm tra lại.',
-            'error'
+            'error',
           );
           callback?.();
         },
@@ -457,7 +464,7 @@ export class WorkflowVersion {
       this.http
         .post<{ isValid: boolean; errors: string[]; warnings: string[] }>(
           `/api/v1/workflow-versions/${v.versionId}/validate`,
-          {}
+          {},
         )
         .pipe(takeUntilDestroyed(this.destroy))
         .subscribe({
@@ -524,7 +531,7 @@ export class WorkflowVersion {
           this.version.set(published);
           this.showToast(
             `Đã xuất bản thành công phiên bản v${published.versionNo}! Quy trình hiện đang áp dụng chính thức.`,
-            'success'
+            'success',
           );
           this.loadHistory(v.workflowId);
         },
@@ -559,7 +566,12 @@ export class WorkflowVersion {
           this.created.set(row);
           this.showToast(`Đã tạo bản nháp phiên bản mới v${row.latestVersionNo}!`, 'success');
           if (row.latestVersionId) {
-            this.router.navigate(['/settings/workflows', row.workflowId, 'versions', row.latestVersionId]);
+            this.router.navigate([
+              '/settings/workflows',
+              row.workflowId,
+              'versions',
+              row.latestVersionId,
+            ]);
           }
         },
         error: (failure: HttpErrorResponse) => {
@@ -569,7 +581,7 @@ export class WorkflowVersion {
               ? 'Bạn không có quyền khởi tạo phiên bản quy trình mới.'
               : failure.status === 404
                 ? 'Không tìm thấy quy trình tương ứng.'
-                : 'Không thể tạo phiên bản mới. Vui lòng thử lại sau.'
+                : 'Không thể tạo phiên bản mới. Vui lòng thử lại sau.',
           );
         },
       });

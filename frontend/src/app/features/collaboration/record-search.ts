@@ -212,7 +212,9 @@ export class RecordSearch implements OnInit {
           this.busy.set(false);
         },
         error: (err) => {
-          this.error.set(err?.error?.message ?? this.i18n.t('search.errLoad', 'Failed to load records.'));
+          this.error.set(
+            err?.error?.message ?? this.i18n.t('search.errLoad', 'Failed to load records.'),
+          );
           this.busy.set(false);
         },
       });

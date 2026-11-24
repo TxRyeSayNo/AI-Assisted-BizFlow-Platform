@@ -77,7 +77,8 @@ import { ToastService } from '../../core/toast/toast.service';
                   [readonly]="busy()"
                 />
                 <mat-error>{{
-                  'forgot.identifierReq' | translate: 'Vui lòng nhập mã nhân viên hoặc email công ty.'
+                  'forgot.identifierReq'
+                    | translate: 'Vui lòng nhập mã nhân viên hoặc email công ty.'
                 }}</mat-error></mat-form-field
               >
               <mat-form-field appearance="outline" subscriptSizing="dynamic"
@@ -95,7 +96,8 @@ import { ToastService } from '../../core/toast/toast.service';
                     | translate: 'Không bắt buộc; liên kết khôi phục đã gắn với tài khoản của bạn.'
                 }}</mat-hint
                 ><mat-error>{{
-                  'forgot.workspaceKeyInvalid' | translate: 'Vui lòng nhập mã không gian làm việc hợp lệ.'
+                  'forgot.workspaceKeyInvalid'
+                    | translate: 'Vui lòng nhập mã không gian làm việc hợp lệ.'
                 }}</mat-error></mat-form-field
               >
               <mat-form-field appearance="outline"

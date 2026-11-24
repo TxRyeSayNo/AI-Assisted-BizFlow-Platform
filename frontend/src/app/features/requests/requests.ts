@@ -10,6 +10,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { RouterLink } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { SessionService } from '../../core/auth/session';
+import { FeatureFlagsService } from '../../core/features/feature-flags.service';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
 
 export const requestStates = {
@@ -85,6 +86,8 @@ export class Requests implements OnInit {
   private pendingRequest?: Subscription;
 
   readonly session = inject(SessionService);
+  // Read-only: the shell loads the flags once, so the list issues no extra request.
+  readonly features = inject(FeatureFlagsService);
   readonly identity = this.session.identity;
 
   readonly stateOptions = Object.entries(requestStates);

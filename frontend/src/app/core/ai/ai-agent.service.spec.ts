@@ -209,7 +209,9 @@ describe('AiAgentService - Unified AI Agent Workspace', () => {
 
     service.branches.set(branches);
 
-    const handled = service.handleInPlaceMutation('Đổi tiêu đề nhánh 1 thành Kiểm thử bảo mật toàn diện');
+    const handled = service.handleInPlaceMutation(
+      'Đổi tiêu đề nhánh 1 thành Kiểm thử bảo mật toàn diện',
+    );
     expect(handled).toBe(true);
     expect(service.branches()[0].title).toBe('Kiểm thử bảo mật toàn diện');
   });
@@ -286,4 +288,3 @@ describe('AiAgentService - Unified AI Agent Workspace', () => {
     expect(service.chatSessions().length).toBe(0);
   });
 });
-

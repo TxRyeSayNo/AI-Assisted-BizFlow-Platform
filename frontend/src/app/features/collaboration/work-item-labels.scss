@@ -1,0 +1,82 @@
+// F6: label chips on a task or request. The colour comes from the catalogue, so only the shape is
+// styled here; the dot keeps the colour legible without relying on it alone to convey meaning.
+.work-item-labels {
+  margin: 0.75rem 0;
+
+  h3 {
+    font-size: 0.9375rem;
+    margin: 0 0 0.35rem;
+  }
+}
+
+.label-chips,
+.label-picker {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.label-picker {
+  margin-top: 0.4rem;
+}
+
+.label-picker-title {
+  font-size: 0.75rem;
+  opacity: 0.75;
+}
+
+.label-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  border: 1px solid rgb(0 0 0 / 20%);
+  border-left-width: 3px;
+  border-radius: 999px;
+  padding: 0.1rem 0.5rem;
+  background: transparent;
+  font: inherit;
+  font-size: 0.75rem;
+  overflow-wrap: anywhere;
+}
+
+.label-chip-add {
+  cursor: pointer;
+  opacity: 0.8;
+
+  &:hover:not(:disabled),
+  &:focus-visible {
+    opacity: 1;
+  }
+
+  &:disabled {
+    cursor: default;
+  }
+}
+
+.label-dot {
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 50%;
+  flex: 0 0 auto;
+}
+
+.label-remove {
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  line-height: 1;
+  padding: 0 0 0 0.15rem;
+  opacity: 0.6;
+
+  &:hover:not(:disabled),
+  &:focus-visible {
+    opacity: 1;
+  }
+}
+
+.label-none {
+  font-size: 0.75rem;
+  opacity: 0.6;
+}

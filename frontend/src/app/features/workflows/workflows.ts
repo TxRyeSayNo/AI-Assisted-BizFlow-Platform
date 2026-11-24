@@ -35,11 +35,7 @@ interface WorkflowPage {
 
 @Component({
   selector: 'bf-workflows',
-  imports: [
-    RouterLink,
-    ReactiveFormsModule,
-    DatePipe,
-  ],
+  imports: [RouterLink, ReactiveFormsModule, DatePipe],
   templateUrl: './workflows.html',
   styleUrls: ['../organization/departments.scss', './workflows.scss'],
 })
@@ -49,7 +45,7 @@ export class Workflows {
   private readonly destroy = inject(DestroyRef);
   private request?: Subscription;
   private applied = { search: '', businessType: '', status: '' };
-  
+
   readonly session = inject(SessionService);
   private readonly fb = inject(FormBuilder);
 
@@ -160,7 +156,11 @@ export class Workflows {
 
   createAndDesign() {
     this.createForm.markAllAsTouched();
-    if (!this.session.hasPermission('workflows.configure') || this.createForm.invalid || this.saving()) {
+    if (
+      !this.session.hasPermission('workflows.configure') ||
+      this.createForm.invalid ||
+      this.saving()
+    ) {
       return;
     }
     const val = this.createForm.getRawValue();
@@ -177,7 +177,12 @@ export class Workflows {
           this.showCreateModal.set(false);
           this.showToast('Khởi tạo quy trình bản thảo thành công!', 'success');
           if (row.latestVersionId) {
-            this.router.navigate(['/settings/workflows', row.workflowId, 'versions', row.latestVersionId]);
+            this.router.navigate([
+              '/settings/workflows',
+              row.workflowId,
+              'versions',
+              row.latestVersionId,
+            ]);
           } else {
             this.load(1);
           }
@@ -188,7 +193,11 @@ export class Workflows {
             this.denied.set(true);
             return;
           }
-          this.showToast('Không thể tạo quy trình: ' + (failure.error?.error || failure.error?.title || 'Lỗi hệ thống'), 'error');
+          this.showToast(
+            'Không thể tạo quy trình: ' +
+              (failure.error?.error || failure.error?.title || 'Lỗi hệ thống'),
+            'error',
+          );
         },
       });
   }
@@ -201,11 +210,17 @@ export class Workflows {
       .pipe(takeUntilDestroyed(this.destroy))
       .subscribe({
         next: () => {
-          this.showToast(`Đã chuyển trạng thái quy trình sang "${this.labels[nextStatus]}".`, 'success');
+          this.showToast(
+            `Đã chuyển trạng thái quy trình sang "${this.labels[nextStatus]}".`,
+            'success',
+          );
           this.load(this.page());
         },
         error: (err: HttpErrorResponse) => {
-          this.showToast('Cập nhật trạng thái thất bại: ' + (err.error?.error || 'Có lỗi xảy ra'), 'error');
+          this.showToast(
+            'Cập nhật trạng thái thất bại: ' + (err.error?.error || 'Có lỗi xảy ra'),
+            'error',
+          );
         },
       });
   }
@@ -261,7 +276,11 @@ export class Workflows {
         },
         error: (err: HttpErrorResponse) => {
           this.deleting.set(false);
-          this.showToast('Không thể xóa quy trình: ' + (err.error?.error || 'Chỉ có thể xóa quy trình chưa có bản ban hành chính thức.'), 'error');
+          this.showToast(
+            'Không thể xóa quy trình: ' +
+              (err.error?.error || 'Chỉ có thể xóa quy trình chưa có bản ban hành chính thức.'),
+            'error',
+          );
         },
       });
   }

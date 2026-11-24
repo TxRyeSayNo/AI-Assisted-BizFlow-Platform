@@ -57,6 +57,16 @@ import { TranslatePipe } from '../../core/i18n/translate.pipe';
             }}</a>
           }
           @if (
+            session.hasPermission('tasks.read.tenant') ||
+            session.hasPermission('tasks.read.managed') ||
+            session.hasPermission('tasks.read.own') ||
+            session.hasPermission('tasks.read.assigned')
+          ) {
+            <a routerLink="/dashboard/projects" class="nav-link">{{
+              'projectDashboard.breadcrumb' | translate: 'Dashboard dự án'
+            }}</a>
+          }
+          @if (
             session.hasPermission('reports.manager') ||
             session.hasPermission('reports.company') ||
             session.hasPermission('reports.workload') ||
@@ -112,7 +122,12 @@ import { TranslatePipe } from '../../core/i18n/translate.pipe';
 
         <div class="user-chip">
           @if (profilePhotoUrl() && !avatarFailed()) {
-            <img [src]="profilePhotoUrl()" [alt]="identity()?.fullName || 'User avatar'" class="user-avatar-img" (error)="onAvatarError()" />
+            <img
+              [src]="profilePhotoUrl()"
+              [alt]="identity()?.fullName || 'User avatar'"
+              class="user-avatar-img"
+              (error)="onAvatarError()"
+            />
           } @else {
             <span class="user-avatar">{{ userInitials() }}</span>
           }
@@ -152,8 +167,6 @@ import { TranslatePipe } from '../../core/i18n/translate.pipe';
             @if (
               session.hasPermission('tasks.confirm') ||
               session.hasPermission('tasks.read.managed') ||
-
-
               session.hasPermission('roles.configure')
             ) {
               <a routerLink="/approvals" class="btn-hero-ghost">
@@ -219,13 +232,15 @@ import { TranslatePipe } from '../../core/i18n/translate.pipe';
           {{ 'workspace.sectionExecution' | translate: 'Phân hệ chức năng doanh nghiệp' }}
         </h2>
         <div class="modules-grid">
-
           <!-- Platform Admin Modules -->
           @if (!identity()?.tenantId) {
             <article class="module-card">
               <div class="module-icon">🏢</div>
               <h3>Quản lý doanh nghiệp & Cung cấp workspace</h3>
-              <p>Phê duyệt hồ sơ đăng ký doanh nghiệp, cấp phát tenant key và quản lý trạng thái tài khoản công ty.</p>
+              <p>
+                Phê duyệt hồ sơ đăng ký doanh nghiệp, cấp phát tenant key và quản lý trạng thái tài
+                khoản công ty.
+              </p>
               <div class="module-link-wrap">
                 <p><a routerLink="/platform/companies">Quản lý doanh nghiệp</a></p>
               </div>
@@ -234,7 +249,10 @@ import { TranslatePipe } from '../../core/i18n/translate.pipe';
             <article class="module-card">
               <div class="module-icon">🛡️</div>
               <h3>Kiểm toán hệ thống nền tảng</h3>
-              <p>Truy vết toàn diện nhật ký bảo mật, định tuyến xác thực và truy cập tài nguyên toàn hệ thống.</p>
+              <p>
+                Truy vết toàn diện nhật ký bảo mật, định tuyến xác thực và truy cập tài nguyên toàn
+                hệ thống.
+              </p>
               <div class="module-link-wrap">
                 <p><a routerLink="/platform/audit">Xem nhật ký kiểm toán</a></p>
               </div>
@@ -261,7 +279,9 @@ import { TranslatePipe } from '../../core/i18n/translate.pipe';
               </p>
               <div class="module-link-wrap">
                 <p>
-                  <a routerLink="/tasks">{{ 'workspace.viewTasks' | translate: 'Xem danh sách công việc' }}</a>
+                  <a routerLink="/tasks">{{
+                    'workspace.viewTasks' | translate: 'Xem danh sách công việc'
+                  }}</a>
                 </p>
               </div>
             </article>
@@ -348,6 +368,50 @@ import { TranslatePipe } from '../../core/i18n/translate.pipe';
             </article>
           }
 
+          <!-- 4b. Dashboard dự án theo vai trò (bổ sung, không thay thế Báo cáo) -->
+          @if (
+            (session.hasPermission('tasks.read.tenant') ||
+              session.hasPermission('tasks.read.managed') ||
+              session.hasPermission('tasks.read.own') ||
+              session.hasPermission('tasks.read.assigned')) &&
+            identity()?.tenantId
+          ) {
+            <article class="module-card">
+              <div class="module-icon">📈</div>
+              <h3>{{ 'workspace.cardProjectsTitle' | translate: 'Dashboard dự án & tiến độ' }}</h3>
+              <p>
+                {{
+                  'workspace.cardProjectsDesc'
+                    | translate
+                      : 'Phân loại dự án lớn/nhỏ, ai phụ trách phần việc nào, tiến độ từng phần và phần trăm trách nhiệm của mỗi người.'
+                }}
+              </p>
+              <div class="module-link-wrap">
+                <p>
+                  <a routerLink="/dashboard/projects">{{
+                    'workspace.viewProjectDashboard' | translate: 'Xem dashboard dự án'
+                  }}</a>
+                </p>
+                @if (
+                  session.hasPermission('tasks.read.tenant') ||
+                  session.hasPermission('tasks.read.managed')
+                ) {
+                  <p>
+                    <a routerLink="/dashboard/team">{{
+                      'workspace.viewTeamDashboard' | translate: 'Quản lý cấp dưới của tôi'
+                    }}</a>
+                  </p>
+                } @else {
+                  <p>
+                    <a routerLink="/dashboard/my-work">{{
+                      'workspace.viewMyWork' | translate: 'Bảng công việc của tôi'
+                    }}</a>
+                  </p>
+                }
+              </div>
+            </article>
+          }
+
           <!-- 5. Báo cáo & Phân tích thông minh -->
           @if (
             session.hasPermission('reports.manager') ||
@@ -358,7 +422,9 @@ import { TranslatePipe } from '../../core/i18n/translate.pipe';
           ) {
             <article class="module-card">
               <div class="module-icon">📊</div>
-              <h3>{{ 'workspace.cardReportsTitle' | translate: 'Báo cáo & Phân tích thông minh' }}</h3>
+              <h3>
+                {{ 'workspace.cardReportsTitle' | translate: 'Báo cáo & Phân tích thông minh' }}
+              </h3>
               <p>
                 {{
                   'workspace.cardReportsDesc'
@@ -441,7 +507,9 @@ import { TranslatePipe } from '../../core/i18n/translate.pipe';
               </p>
               <div class="module-link-wrap">
                 <p>
-                  <a routerLink="/settings">{{ 'workspace.settings' | translate: 'Cài đặt hệ thống' }}</a>
+                  <a routerLink="/settings">{{
+                    'workspace.settings' | translate: 'Cài đặt hệ thống'
+                  }}</a>
                 </p>
               </div>
             </article>
@@ -461,23 +529,30 @@ import { TranslatePipe } from '../../core/i18n/translate.pipe';
               </p>
               <div class="module-link-wrap">
                 <p>
-                  <a routerLink="/audit">{{ 'workspace.audit' | translate: 'Xem nhật ký kiểm toán' }}</a>
+                  <a routerLink="/audit">{{
+                    'workspace.audit' | translate: 'Xem nhật ký kiểm toán'
+                  }}</a>
                 </p>
               </div>
             </article>
           }
 
           <!-- 10. Quản lý Công ty Nền tảng -->
-          @if (!identity()?.tenantId && session.hasPermission('platform.company-registrations.read')) {
+          @if (
+            !identity()?.tenantId && session.hasPermission('platform.company-registrations.read')
+          ) {
             <article class="module-card platform-card">
               <div class="module-icon">🌐</div>
               <h3>
-                {{ 'workspace.cardPlatformCompaniesTitle' | translate: 'Công ty & Thuê bao Nền tảng' }}
+                {{
+                  'workspace.cardPlatformCompaniesTitle' | translate: 'Công ty & Thuê bao Nền tảng'
+                }}
               </h3>
               <p>
                 {{
                   'workspace.cardPlatformCompaniesDesc'
-                    | translate: 'Duyệt hồ sơ đăng ký doanh nghiệp mới và quản trị vòng đời các đơn vị khách thuê.'
+                    | translate
+                      : 'Duyệt hồ sơ đăng ký doanh nghiệp mới và quản trị vòng đời các đơn vị khách thuê.'
                 }}
               </p>
               <div class="module-link-wrap">
@@ -490,7 +565,9 @@ import { TranslatePipe } from '../../core/i18n/translate.pipe';
           @if (!identity()?.tenantId && session.hasPermission('platform.audit.read')) {
             <article class="module-card platform-card">
               <div class="module-icon">🏛</div>
-              <h3>{{ 'workspace.cardPlatformAuditTitle' | translate: 'Kiểm toán Nền tảng Toàn cầu' }}</h3>
+              <h3>
+                {{ 'workspace.cardPlatformAuditTitle' | translate: 'Kiểm toán Nền tảng Toàn cầu' }}
+              </h3>
               <p>
                 {{
                   'workspace.cardPlatformAuditDesc'
@@ -508,7 +585,6 @@ import { TranslatePipe } from '../../core/i18n/translate.pipe';
     </main>
 
     <!-- Shared AI Assistant Drawer -->
-
   `,
   styles: [
     `
@@ -653,7 +729,7 @@ import { TranslatePipe } from '../../core/i18n/translate.pipe';
       }
       .hero-command-card {
         position: relative;
-        background: 
+        background:
           radial-gradient(circle at 85% 15%, rgba(56, 189, 248, 0.16) 0%, transparent 45%),
           radial-gradient(circle at 12% 85%, rgba(99, 102, 241, 0.14) 0%, transparent 48%),
           radial-gradient(ellipse at 50% 50%, rgba(14, 165, 233, 0.08) 0%, transparent 60%),
@@ -664,7 +740,7 @@ import { TranslatePipe } from '../../core/i18n/translate.pipe';
         margin-bottom: 1.85rem;
         overflow: hidden;
         border: 1px solid rgba(255, 255, 255, 0.1);
-        box-shadow: 
+        box-shadow:
           0 20px 45px -15px rgba(2, 6, 23, 0.45),
           0 0 0 1px rgba(255, 255, 255, 0.05),
           inset 0 1px 0 rgba(255, 255, 255, 0.14);
@@ -730,12 +806,15 @@ import { TranslatePipe } from '../../core/i18n/translate.pipe';
         color: #ffffff;
         background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
         border: 1px solid rgba(255, 255, 255, 0.28);
-        box-shadow: 
+        box-shadow:
           0 4px 16px rgba(37, 99, 235, 0.38),
           inset 0 1px 0 rgba(255, 255, 255, 0.32);
         text-decoration: none !important;
         cursor: pointer;
-        transition: transform 160ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 180ms ease, border-color 180ms ease;
+        transition:
+          transform 160ms cubic-bezier(0.16, 1, 0.3, 1),
+          box-shadow 180ms ease,
+          border-color 180ms ease;
 
         &:hover {
           transform: translateY(-2px);
@@ -767,7 +846,11 @@ import { TranslatePipe } from '../../core/i18n/translate.pipe';
         box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
         text-decoration: none !important;
         cursor: pointer;
-        transition: transform 160ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 180ms ease, background 180ms ease, border-color 180ms ease;
+        transition:
+          transform 160ms cubic-bezier(0.16, 1, 0.3, 1),
+          box-shadow 180ms ease,
+          background 180ms ease,
+          border-color 180ms ease;
 
         &:hover {
           background: rgba(255, 255, 255, 0.16);
@@ -982,7 +1065,6 @@ import { TranslatePipe } from '../../core/i18n/translate.pipe';
       }
     `,
   ],
-
 })
 export class Workspace implements OnInit {
   readonly session = inject(SessionService);
@@ -1140,7 +1222,7 @@ export class Workspace implements OnInit {
 
   readonly kpiData = computed(() => {
     switch (this.userRole()) {
-          case 'SUPERADMIN':
+      case 'SUPERADMIN':
         return {
           box1: {
             title: 'Hồ sơ đăng ký',
@@ -1245,7 +1327,8 @@ export class Workspace implements OnInit {
             label: 'Xem thông báo',
           },
         };
-      default: { // EMPLOYEE
+      default: {
+        // EMPLOYEE
         const total = this.tasksTotalCount();
         const active = this.tasksActiveCount();
         const empRate = total > 0 ? `${Math.round(((total - active) / total) * 100)}%` : '100%';

@@ -120,13 +120,14 @@ export class WorkItemAttachments implements OnInit {
           this.loading.set(false);
         },
         error: (err) => {
-          const msg =
-            err?.status === 403
-              ? 'Bạn không có quyền xem tệp đính kèm của mục này.'
-              : err?.error?.message ??
-                this.i18n.t('attachments.errLoad', 'Không thể tải danh sách tệp đính kèm.');
-          this.error.set(msg);
-          this.toast.error(msg, 'Lỗi tải đính kèm');
+<<<<<<<< <Temporary merge branch 1
+          this.error.set(err?.error?.message ?? this.i18n.t('attachments.errLoad', 'Failed to load attachments.'));
+=========
+          this.error.set(
+            err?.error?.message ??
+              this.i18n.t('attachments.errLoad', 'Failed to load attachments.'),
+          );
+>>>>>>>>> Temporary merge branch 2
           this.loading.set(false);
         },
       });
@@ -234,13 +235,14 @@ export class WorkItemAttachments implements OnInit {
         this.toast.success('Đã xóa tệp đính kèm thành công.', 'Đã xóa');
       },
       error: (err) => {
-        const msg =
-          err?.status === 403
-            ? 'Bạn không có quyền xóa tệp đính kèm này.'
-            : err?.error?.message ??
-              this.i18n.t('attachments.errDelete', 'Không thể xóa tệp đính kèm.');
-        this.error.set(msg);
-        this.toast.error(msg, 'Lỗi xóa tệp');
+<<<<<<<<< Temporary merge branch 1
+        this.error.set(err?.error?.message ?? this.i18n.t('attachments.errDelete', 'Failed to delete attachment.'));
+=========
+        this.error.set(
+          err?.error?.message ??
+            this.i18n.t('attachments.errDelete', 'Failed to delete attachment.'),
+        );
+>>>>>>>>> Temporary merge branch 2
       },
     });
   }

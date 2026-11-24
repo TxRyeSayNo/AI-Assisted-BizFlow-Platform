@@ -46,7 +46,8 @@
     white-space: nowrap;
   }
 
-  th, td {
+  th,
+  td {
     padding: 12px 16px;
     border-bottom: 1px solid #f1f5f9;
     vertical-align: middle;
@@ -226,8 +227,14 @@
 }
 
 @keyframes modal-pop {
-  from { opacity: 0; transform: scale(0.96) translateY(-8px); }
-  to { opacity: 1; transform: scale(1) translateY(0); }
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
 }
 
 .modal-head {
@@ -250,7 +257,9 @@
     font-size: 1.15rem;
     color: #94a3b8;
     cursor: pointer;
-    &:hover { color: #0f172a; }
+    &:hover {
+      color: #0f172a;
+    }
   }
 }
 
@@ -355,7 +364,9 @@
     font-size: 0.84rem;
     font-weight: 600;
     cursor: pointer;
-    &:hover { background: #f1f5f9; }
+    &:hover {
+      background: #f1f5f9;
+    }
   }
 
   .btn-danger-confirm {
@@ -500,12 +511,16 @@
     &.valid {
       background: #f0fdf4;
       border-color: #bbf7d0;
-      .val-num { color: #16a34a; }
+      .val-num {
+        color: #16a34a;
+      }
     }
     &.error {
       background: #fef2f2;
       border-color: #fecaca;
-      .val-num { color: #dc2626; }
+      .val-num {
+        color: #dc2626;
+      }
     }
   }
 }
@@ -522,7 +537,8 @@
     border-collapse: collapse;
     font-size: 0.78rem;
 
-    th, td {
+    th,
+    td {
       padding: 6px 10px;
       text-align: left;
       border-bottom: 1px solid #f1f5f9;
@@ -541,8 +557,14 @@
       font-weight: 700;
       padding: 2px 6px;
       border-radius: 4px;
-      &.ok { background: #dcfce7; color: #15803d; }
-      &.fail { background: #fee2e2; color: #b91c1c; }
+      &.ok {
+        background: #dcfce7;
+        color: #15803d;
+      }
+      &.fail {
+        background: #fee2e2;
+        color: #b91c1c;
+      }
     }
   }
 }

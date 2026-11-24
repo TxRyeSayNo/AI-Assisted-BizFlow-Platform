@@ -9,4 +9,3 @@ export interface ToastItem {
   createdAt: number;
   leaving?: boolean;
 }
-

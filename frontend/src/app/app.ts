@@ -7,6 +7,7 @@ import { TranslatePipe } from './core/i18n/translate.pipe';
 import { RobotWidgetComponent } from './shared/ai/robot-widget';
 import { ToastContainerComponent } from './core/toast/toast-container.component';
 import { AiAgentService } from './core/ai/ai-agent.service';
+import { FeatureFlagsService } from './core/features/feature-flags.service';
 import { NotificationCountService } from './core/notifications/notification-count.service';
 
 @Component({
@@ -29,6 +30,7 @@ export class App {
   readonly i18n = inject(I18nService);
   readonly aiAgent = inject(AiAgentService);
   readonly notifCount = inject(NotificationCountService);
+  private readonly features = inject(FeatureFlagsService);
   readonly unreadNotifications = computed(() => this.notifCount.unreadCount());
   private readonly router = inject(Router);
 
@@ -41,6 +43,8 @@ export class App {
       effect(() => {
         if (this.signedIn()) {
           this.notifCount.refresh();
+          // Deployment feature flags, loaded once so feature pages need no request of their own.
+          this.features.load();
         }
       });
     } catch {}
@@ -112,7 +116,11 @@ export class App {
   welcomeName(): string {
     const raw = this.identity()?.fullName?.trim();
     if (!raw) return 'Quản trị viên Hệ thống';
-    if (raw === 'Platform Administrator' || raw === 'superadmin' || raw.toLowerCase().includes('platform admin')) {
+    if (
+      raw === 'Platform Administrator' ||
+      raw === 'superadmin' ||
+      raw.toLowerCase().includes('platform admin')
+    ) {
       return 'Quản trị viên Hệ thống';
     }
     if (raw === 'Company Administrator') {

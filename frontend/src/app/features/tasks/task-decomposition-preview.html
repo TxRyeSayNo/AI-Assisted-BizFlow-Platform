@@ -10,7 +10,9 @@
       <span class="sep" aria-hidden="true">/</span>
       <a routerLink="/tasks">{{ 'tasks.title' | translate: 'Tasks' }}</a>
       <span class="sep" aria-hidden="true">/</span>
-      <span class="breadcrumb-current">{{ 'taskDecomp.breadcrumb' | translate: 'AI Decomposition' }}</span>
+      <span class="breadcrumb-current">{{
+        'taskDecomp.breadcrumb' | translate: 'AI Decomposition'
+      }}</span>
     </nav>
     <div class="task-header-row">
       <div class="header-titles">
@@ -26,7 +28,11 @@
         </p>
       </div>
       <div class="task-nav-container" aria-label="Task navigation">
-        <a routerLink="/tasks" class="task-nav-btn" [title]="'taskCreate.backToTasks' | translate: 'Quay lại danh sách'">
+        <a
+          routerLink="/tasks"
+          class="task-nav-btn"
+          [title]="'taskCreate.backToTasks' | translate: 'Quay lại danh sách'"
+        >
           <span>← {{ 'taskCreate.backToTasks' | translate: 'Quay lại danh sách' }}</span>
         </a>
       </div>

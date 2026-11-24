@@ -1,0 +1,224 @@
+<main id="main-content" class="page-content reports-container" tabindex="-1">
+  <nav aria-label="Breadcrumb">
+    <a routerLink="/workspace">{{ 'common.workspace' | translate: 'Không gian làm việc' }}</a>
+    <span aria-hidden="true"> / </span>
+    <span>{{ 'myWork.breadcrumb' | translate: 'Việc của tôi' }}</span>
+  </nav>
+
+  <div class="page-header">
+    <div class="header-titles">
+      <h2>{{ 'myWork.title' | translate: 'Bảng công việc của tôi' }}</h2>
+      <p class="subtitle">
+        {{
+          'myWork.subtitle'
+            | translate: 'Phần việc bạn đang giữ, tiến độ của chính bạn và các dự án bạn tham gia.'
+        }}
+      </p>
+    </div>
+  </div>
+
+  <div class="tabs-bar">
+    <a routerLink="/dashboard/projects" class="tab-btn">
+      {{ 'projectDashboard.tab.projects' | translate: 'Dự án' }}
+    </a>
+    <a routerLink="/dashboard/my-work" class="tab-btn active">
+      {{ 'projectDashboard.tab.myWork' | translate: 'Việc của tôi' }}
+    </a>
+    @if (canSeeTeam()) {
+      <a routerLink="/dashboard/team" class="tab-btn">
+        {{ 'projectDashboard.tab.team' | translate: 'Cấp dưới của tôi' }}
+      </a>
+    }
+  </div>
+
+  @if (error()) {
+    <div class="error-banner" role="alert">{{ error() }}</div>
+    <button mat-stroked-button type="button" (click)="load()">
+      {{ 'common.retry' | translate: 'Thử lại' }}
+    </button>
+  }
+
+  @if (busy()) {
+    <div class="loading-state">{{ 'common.loading' | translate: 'Đang tải…' }}</div>
+  }
+
+  @if (data(); as view) {
+    <div class="kpi-grid">
+      <div class="kpi-card accent-blue">
+        <div class="kpi-title">{{ 'myWork.myProgress' | translate: 'Tiến độ của tôi' }}</div>
+        <div class="kpi-value">{{ view.myProgressPercent }}%</div>
+        <div class="progress-row">
+          <div class="progress-track">
+            <div
+              class="progress-fill"
+              [class]="tone(view.myProgressPercent)"
+              [style.width.%]="view.myProgressPercent"
+            ></div>
+          </div>
+        </div>
+        <div class="kpi-sub">
+          {{
+            'projectDashboard.weightedNote' | translate: 'Trung bình có trọng số theo độ ưu tiên'
+          }}
+        </div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-title">{{ 'myWork.active' | translate: 'Đang làm' }}</div>
+        <div class="kpi-value">{{ view.activeWorkItems }}</div>
+        <div class="kpi-sub">
+          {{ 'myWork.totalAssigned' | translate: 'Tổng phần việc được giao' }}: {{ view.total }}
+        </div>
+      </div>
+
+      <div class="kpi-card accent-green">
+        <div class="kpi-title">{{ 'myWork.completed' | translate: 'Đã hoàn thành' }}</div>
+        <div class="kpi-value">{{ view.completedWorkItems }}</div>
+        <div class="kpi-sub">
+          {{ 'myWork.pendingClaims' | translate: 'Chờ bạn nhận' }}:
+          {{ view.pendingDepartmentClaims }}
+        </div>
+      </div>
+
+      <div class="kpi-card accent-red">
+        <div class="kpi-title">{{ 'projectDashboard.overdue' | translate: 'Trễ hạn' }}</div>
+        <div class="kpi-value">{{ view.overdueWorkItems }}</div>
+        <div class="kpi-sub">
+          {{ 'myWork.projects' | translate: 'Dự án tham gia' }}: {{ view.projects.length }}
+        </div>
+      </div>
+    </div>
+
+    <div class="section-heading">
+      <h3>{{ 'myWork.itemsSection' | translate: 'Phần việc của tôi' }}</h3>
+    </div>
+    <div class="table-card">
+      <table class="report-table">
+        <thead>
+          <tr>
+            <th>{{ 'projectDashboard.workItem' | translate: 'Phần việc' }}</th>
+            <th>{{ 'myWork.project' | translate: 'Thuộc dự án' }}</th>
+            <th>{{ 'common.status' | translate: 'Trạng thái' }}</th>
+            <th>{{ 'projectDashboard.checklist' | translate: 'Danh mục kiểm tra' }}</th>
+            <th class="cell-progress">
+              {{ 'projectDashboard.itemProgress' | translate: 'Tiến độ' }}
+            </th>
+            <th>{{ 'projectDashboard.deadline' | translate: 'Hạn' }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of view.items; track row.workItem.taskId) {
+            <tr>
+              <td class="font-medium">
+                <a [routerLink]="['/tasks', row.workItem.taskId]">{{ row.workItem.title }}</a>
+              </td>
+              <td>
+                @if (row.projectId) {
+                  <a [routerLink]="['/dashboard/projects', row.projectId]">{{
+                    row.projectTitle
+                  }}</a>
+                } @else {
+                  —
+                }
+              </td>
+              <td>
+                <span [class]="'badge ' + badge(row.workItem.status)">{{
+                  row.workItem.status
+                }}</span>
+              </td>
+              <td>
+                @if (row.workItem.checklistTotal) {
+                  {{ row.workItem.checklistDone }}/{{ row.workItem.checklistTotal }}
+                } @else {
+                  —
+                }
+              </td>
+              <td class="cell-progress">
+                <div class="progress-row">
+                  <div class="progress-track">
+                    <div
+                      class="progress-fill"
+                      [class]="tone(row.workItem.progressPercent)"
+                      [style.width.%]="row.workItem.progressPercent"
+                    ></div>
+                  </div>
+                  <span class="progress-value">{{ row.workItem.progressPercent }}%</span>
+                </div>
+              </td>
+              <td>
+                @if (row.workItem.deadline) {
+                  <span
+                    [class.badge]="row.workItem.isOverdue"
+                    [class.badge-danger]="row.workItem.isOverdue"
+                  >
+                    {{ row.workItem.deadline | date: 'dd/MM/yyyy' }}
+                  </span>
+                } @else {
+                  —
+                }
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="6" class="empty-cell">
+                {{ 'myWork.noItems' | translate: 'Bạn chưa được giao phần việc nào.' }}
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <div class="pagination">
+      <button mat-stroked-button type="button" [disabled]="view.page <= 1" (click)="previousPage()">
+        {{ 'common.previous' | translate: 'Trang trước' }}
+      </button>
+      <span>{{ 'common.page' | translate: 'Trang' }} {{ view.page }} / {{ view.total }}</span>
+      <button
+        mat-stroked-button
+        type="button"
+        [disabled]="view.page * view.pageSize >= view.total"
+        (click)="nextPage()"
+      >
+        {{ 'common.next' | translate: 'Trang sau' }}
+      </button>
+    </div>
+
+    @if (view.projects.length) {
+      <div class="section-heading">
+        <h3>{{ 'myWork.projectsSection' | translate: 'Dự án tôi tham gia' }}</h3>
+      </div>
+      <div class="project-grid">
+        @for (project of view.projects; track project.projectId) {
+          <article class="project-card">
+            <div class="project-card-head">
+              <h4 class="project-title">
+                <a [routerLink]="['/dashboard/projects', project.projectId]">{{ project.title }}</a>
+              </h4>
+            </div>
+            <div class="progress-row">
+              <div class="progress-track">
+                <div
+                  class="progress-fill"
+                  [class]="tone(project.progressPercent)"
+                  [style.width.%]="project.progressPercent"
+                ></div>
+              </div>
+              <span class="progress-value">{{ project.progressPercent }}%</span>
+            </div>
+            <div class="project-stats">
+              <span>
+                {{ 'projectDashboard.workItems' | translate: 'Phần việc' }}:
+                <strong>{{ project.completedWorkItemCount }}/{{ project.workItemCount }}</strong>
+              </span>
+              <span>
+                {{ 'projectDashboard.participants' | translate: 'Người tham gia' }}:
+                <strong>{{ project.participantCount }}</strong>
+              </span>
+            </div>
+          </article>
+        }
+      </div>
+    }
+  }
+</main>

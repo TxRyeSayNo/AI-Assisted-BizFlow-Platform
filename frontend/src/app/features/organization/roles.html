@@ -70,64 +70,64 @@
         </p>
       } @else {
         <div class="table-scroll">
-        <table>
-          <caption>
-            {{
-              'roles.tableCaption' | translate: 'Workspace role configurations'
-            }}
-          </caption>
-          <thead>
-            <tr>
-              <th scope="col">{{ 'roles.col.role' | translate: 'Role' }}</th>
-              <th scope="col">{{ 'roles.col.action' | translate: 'Action' }}</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (role of data.items; track role.roleId) {
+          <table>
+            <caption>
+              {{
+                'roles.tableCaption' | translate: 'Workspace role configurations'
+              }}
+            </caption>
+            <thead>
               <tr>
-                <th scope="row">
-                  {{ role.name
-                  }}<span class="role-meta"
-                    >{{
-                      role.isSystem
-                        ? ('roles.system' | translate: 'System')
-                        : ('roles.custom' | translate: 'Custom')
-                    }}
-                    ·
-                    {{
-                      role.status === 'ACTIVE'
-                        ? ('departments.active' | translate: 'Active')
-                        : ('departments.inactive' | translate: 'Inactive')
-                    }}
-                    · {{ role.permissionIds.length }}
-                    {{
-                      role.permissionIds.length === 1
-                        ? ('roles.permission' | translate: 'permission')
-                        : ('roles.permissions' | translate: 'permissions')
-                    }}</span
-                  >
-                </th>
-                <td>
-                  @if (role.isSystem) {
-                    <span class="status-label">{{
-                      'roles.protected' | translate: 'Protected'
-                    }}</span>
-                  } @else {
-                    <button
-                      mat-stroked-button
-                      type="button"
-                      [attr.aria-label]="'Configure ' + role.name"
-                      [disabled]="saving()"
-                      (click)="select(role)"
-                    >
-                      {{ 'roles.configure' | translate: 'Configure' }}
-                    </button>
-                  }
-                </td>
+                <th scope="col">{{ 'roles.col.role' | translate: 'Role' }}</th>
+                <th scope="col">{{ 'roles.col.action' | translate: 'Action' }}</th>
               </tr>
-            }
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              @for (role of data.items; track role.roleId) {
+                <tr>
+                  <th scope="row">
+                    {{ role.name
+                    }}<span class="role-meta"
+                      >{{
+                        role.isSystem
+                          ? ('roles.system' | translate: 'System')
+                          : ('roles.custom' | translate: 'Custom')
+                      }}
+                      ·
+                      {{
+                        role.status === 'ACTIVE'
+                          ? ('departments.active' | translate: 'Active')
+                          : ('departments.inactive' | translate: 'Inactive')
+                      }}
+                      · {{ role.permissionIds.length }}
+                      {{
+                        role.permissionIds.length === 1
+                          ? ('roles.permission' | translate: 'permission')
+                          : ('roles.permissions' | translate: 'permissions')
+                      }}</span
+                    >
+                  </th>
+                  <td>
+                    @if (role.isSystem) {
+                      <span class="status-label">{{
+                        'roles.protected' | translate: 'Protected'
+                      }}</span>
+                    } @else {
+                      <button
+                        mat-stroked-button
+                        type="button"
+                        [attr.aria-label]="'Configure ' + role.name"
+                        [disabled]="saving()"
+                        (click)="select(role)"
+                      >
+                        {{ 'roles.configure' | translate: 'Configure' }}
+                      </button>
+                    }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
         </div>
       }
       <nav class="pagination" aria-label="Role pages">

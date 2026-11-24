@@ -55,6 +55,26 @@ builder.Services.AddScoped<BizFlow.Application.Tasks.ITaskCreationStore, BizFlow
 builder.Services.AddScoped<BizFlow.Application.Tasks.TaskDetailQuery>();
 builder.Services.AddScoped<BizFlow.Application.Tasks.ITaskDetailReader, BizFlow.Infrastructure.Tasks.TaskDetailReader>();
 builder.Services.AddScoped<BizFlow.Application.Tasks.ITaskListReader, BizFlow.Infrastructure.Tasks.TaskListReader>();
+// Kanban board (F1). Read-only projection over the existing task storage behind the same
+// TaskReadPolicy gate; it adds no entity, no migration and no permission.
+builder.Services.Configure<BizFlow.Api.Configuration.FeatureFlagOptions>(
+    builder.Configuration.GetSection(BizFlow.Api.Configuration.FeatureFlagOptions.SectionName));
+builder.Services.AddScoped<BizFlow.Application.Tasks.TaskBoardQuery>();
+builder.Services.AddScoped<BizFlow.Application.Tasks.ITaskBoardReader, BizFlow.Infrastructure.Tasks.TaskBoardReader>();
+builder.Services.AddScoped<BizFlow.Application.Requests.RequestBoardQuery>();
+builder.Services.AddScoped<BizFlow.Application.Requests.IRequestBoardReader, BizFlow.Infrastructure.Requests.RequestBoardReader>();
+// Deadline calendar (F2). Read-only projection over the same task storage and read policy.
+builder.Services.AddScoped<BizFlow.Application.Tasks.TaskCalendarQuery>();
+builder.Services.AddScoped<BizFlow.Application.Tasks.ITaskCalendarReader, BizFlow.Infrastructure.Tasks.TaskCalendarReader>();
+// Watchers and mentions (F3). New tables only; the comment command and its endpoint are untouched.
+builder.Services.AddScoped<BizFlow.Application.Collaboration.WorkItemWatchService>();
+builder.Services.AddScoped<BizFlow.Application.Collaboration.IWorkItemWatchStore, BizFlow.Infrastructure.Collaboration.WorkItemWatchStore>();
+// Labels (F6). New tables only; task and request storage is untouched.
+builder.Services.AddScoped<BizFlow.Application.Collaboration.LabelService>();
+builder.Services.AddScoped<BizFlow.Application.Collaboration.ILabelStore, BizFlow.Infrastructure.Collaboration.LabelStore>();
+// Recurring jobs (F3 watcher activity, F4 deadline reminders). Registers nothing when the
+// Features:BackgroundJobs flag is off.
+BizFlow.Api.Configuration.BackgroundJobRegistration.AddBizFlowBackgroundJobs(builder.Services, builder.Configuration);
 builder.Services.AddScoped<BizFlow.Application.Requests.RequestListQuery>();
 builder.Services.AddScoped<BizFlow.Application.Requests.RequestCreation>();
 builder.Services.AddScoped<BizFlow.Application.Requests.RequestSubmissionCommand>();
@@ -130,6 +150,19 @@ builder.Services.AddScoped<BizFlow.Application.Collaboration.IRecordSearchReader
 builder.Services.AddScoped<BizFlow.Application.Collaboration.RecordService>();
 builder.Services.AddScoped<BizFlow.Application.Reports.IReportingReader, BizFlow.Infrastructure.Reports.ReportingReader>();
 builder.Services.AddScoped<BizFlow.Application.Reports.ReportingService>();
+// Report downloads (F5). Reuses ReportingService, so a download carries the same permission as
+// the matching view endpoint.
+builder.Services.AddSingleton<BizFlow.Application.Reports.IReportExportWriter,
+    BizFlow.Infrastructure.Reports.ReportExportWriter>();
+builder.Services.AddScoped<BizFlow.Application.Reports.ReportExportService>();
+// Project / role dashboards. Read-only projections over existing Task storage; they add no
+// entity, no migration and no permission, and reuse TaskReadPolicy for visibility.
+builder.Services.AddScoped<BizFlow.Application.Dashboard.IProjectDashboardReader, BizFlow.Infrastructure.Dashboard.ProjectDashboardReader>();
+builder.Services.AddScoped<BizFlow.Application.Dashboard.IMyWorkDashboardReader, BizFlow.Infrastructure.Dashboard.MyWorkDashboardReader>();
+builder.Services.AddScoped<BizFlow.Application.Dashboard.ITeamDashboardReader, BizFlow.Infrastructure.Dashboard.TeamDashboardReader>();
+builder.Services.AddScoped<BizFlow.Application.Dashboard.ProjectDashboardQuery>();
+builder.Services.AddScoped<BizFlow.Application.Dashboard.MyWorkDashboardQuery>();
+builder.Services.AddScoped<BizFlow.Application.Dashboard.TeamDashboardQuery>();
 builder.Services.AddHttpClient<BizFlow.Application.AI.IAiModelClient, BizFlow.Infrastructure.AI.OpenAiModelClient>();
 builder.Services.AddHttpClient<BizFlow.Application.AI.IAiEmbeddingService, BizFlow.Infrastructure.AI.AiEmbeddingService>();
 builder.Services.AddScoped<BizFlow.Application.AI.IAiVectorMemoryStore, BizFlow.Infrastructure.AI.AiVectorMemoryStore>();
@@ -176,6 +209,9 @@ builder.Services.ConfigureHttpJsonOptions(options =>
 builder.Services.AddAuthorization();
 builder.Services.AddSignalR(options => options.EnableDetailedErrors = false);
 builder.Services.AddSingleton<BizFlow.Api.Realtime.NotificationConnections>();
+// F4: lets the reminder dispatcher skip the noisier channels for a connected recipient.
+builder.Services.AddSingleton<BizFlow.Application.Notifications.IRealtimePresenceChecker,
+    BizFlow.Api.Realtime.RealtimePresenceChecker>();
 builder.Services.AddScoped<BizFlow.Application.Notifications.INotificationUpdates, BizFlow.Api.Realtime.SignalRNotificationUpdates>();
 builder.Services.AddOpenApi();
 
@@ -197,6 +233,7 @@ if (app.Environment.IsDevelopment()) app.MapOpenApi();
 app.MapControllers();
 app.MapHub<BizFlow.Api.Realtime.NotificationHub>(BizFlow.Api.Realtime.NotificationHub.Path,
     options => options.CloseOnAuthenticationExpiration = true);
+BizFlow.Api.Configuration.BackgroundJobRegistration.UseBizFlowBackgroundJobs(app);
 
 // Pre-warm database connection, EF Core model compilation, and password hasher asynchronously
 _ = Task.Run(async () =>

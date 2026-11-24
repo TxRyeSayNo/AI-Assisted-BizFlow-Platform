@@ -1205,7 +1205,10 @@ export class AiAssistantComponent {
           },
           error: () => {
             this.loading.set(false);
-            this.intentResult.set(this.generateRequestFallback(this.promptText));
+            this.intentResult.set(null);
+            this.errorMsg.set(
+              err?.error?.message || 'Không thể phân tích yêu cầu bằng AI. Vui lòng kiểm tra lại dịch vụ máy chủ.',
+            );
           },
         });
     } else if (this.mode() === 'branching') {
@@ -1223,7 +1226,10 @@ export class AiAssistantComponent {
           },
           error: () => {
             this.loading.set(false);
-            this.branchingResult.set(this.generateBranchingFallback(this.promptText));
+            this.branchingResult.set(null);
+            this.errorMsg.set(
+              err?.error?.message || 'Không thể phân tích phân nhánh đa luồng bằng AI. Vui lòng thử lại.',
+            );
           },
         });
     } else if (this.mode() === 'summarizer') {
@@ -1301,7 +1307,8 @@ export class AiAssistantComponent {
           this.planExecutedSuccess.set(false);
           this.executedPlanResult.set(null);
           this.errorMsg.set(
-            err?.error?.message || 'Không thể thực thi kế hoạch phân nhánh vào hệ thống. Vui lòng kiểm tra lại dịch vụ máy chủ.',
+            err?.error?.message ||
+            'Không thể thực thi kế hoạch phân nhánh vào hệ thống. Vui lòng kiểm tra lại dịch vụ máy chủ.',
           );
         },
       });
@@ -1406,7 +1413,8 @@ export class AiAssistantComponent {
           branchIndex: 2,
           branchType: 'SupportRequest',
           title: 'Phê duyệt & nghiệm thu kết quả: ' + title,
-          description: 'Trình lãnh đạo kiểm duyệt, đối chiếu tiêu chí chất lượng và hoàn tất nhiệm vụ.',
+          description:
+            'Trình lãnh đạo kiểm duyệt, đối chiếu tiêu chí chất lượng và hoàn tất nhiệm vụ.',
           priority: 'MEDIUM',
           executionPhase: 3,
           dependsOnBranchIndexes: [1],
@@ -1435,7 +1443,8 @@ export class AiAssistantComponent {
         {
           orderIndex: 0,
           title: 'Rà soát và phổ biến nội dung tài liệu đến nhân sự phụ trách',
-          description: 'Tổ chức họp ngắn hoặc gửi thông báo triển khai nội dung cho các chuyên viên.',
+          description:
+            'Tổ chức họp ngắn hoặc gửi thông báo triển khai nội dung cho các chuyên viên.',
           suggestedDepartment: 'Phòng Công nghệ & Chuyển đổi số',
           suggestedPriority: 'HIGH',
           suggestedDurationDays: 1,
@@ -1495,30 +1504,30 @@ export class AiAssistantComponent {
         : 'Xác định một yêu cầu nghiệp vụ thống nhất.',
       intents: hasAnd
         ? [
-            {
-              intentIndex: 0,
-              title: 'Yêu cầu dịch vụ chính',
-              description: prompt.split(/ và | and |, /)[0] || prompt,
-              suggestedServiceName: 'Dịch vụ doanh nghiệp tổng hợp',
-              confidence: 0.9,
-            },
-            {
-              intentIndex: 1,
-              title: 'Yêu cầu dịch vụ bổ sung',
-              description: prompt.split(/ và | and |, /)[1] || 'Hạng mục phối hợp tiếp theo',
-              suggestedServiceName: 'Hỗ trợ kỹ thuật & hạ tầng',
-              confidence: 0.85,
-            },
-          ]
+          {
+            intentIndex: 0,
+            title: 'Yêu cầu dịch vụ chính',
+            description: prompt.split(/ và | and |, /)[0] || prompt,
+            suggestedServiceName: 'Dịch vụ doanh nghiệp tổng hợp',
+            confidence: 0.9,
+          },
+          {
+            intentIndex: 1,
+            title: 'Yêu cầu dịch vụ bổ sung',
+            description: prompt.split(/ và | and |, /)[1] || 'Hạng mục phối hợp tiếp theo',
+            suggestedServiceName: 'Hỗ trợ kỹ thuật & hạ tầng',
+            confidence: 0.85,
+          },
+        ]
         : [
-            {
-              intentIndex: 0,
-              title: 'Yêu cầu dịch vụ',
-              description: prompt,
-              suggestedServiceName: 'Vận hành doanh nghiệp',
-              confidence: 0.94,
-            },
-          ],
+          {
+            intentIndex: 0,
+            title: 'Yêu cầu dịch vụ',
+            description: prompt,
+            suggestedServiceName: 'Vận hành doanh nghiệp',
+            confidence: 0.94,
+          },
+        ],
     };
   }
 

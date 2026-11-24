@@ -28,7 +28,9 @@ import { SessionService } from '../../core/auth/session';
     <mat-dialog-actions align="end">
       <button mat-stroked-button type="button" [disabled]="busy()" (click)="close()">Đóng</button>
       <button mat-flat-button type="button" [disabled]="busy() || terminal()" (click)="save()">
-        {{ uncertain() ? 'Thử lại thao tác' : data.resume ? 'Xác nhận tiếp tục' : 'Xác nhận bắt đầu' }}
+        {{
+          uncertain() ? 'Thử lại thao tác' : data.resume ? 'Xác nhận tiếp tục' : 'Xác nhận bắt đầu'
+        }}
       </button>
     </mat-dialog-actions>
   `,

@@ -283,10 +283,7 @@ export class Services {
     const input = { code: raw.code.trim(), name: raw.name.trim(), active: raw.active };
     if (!input.code || !input.name) {
       this.categoryError.set(
-        this.i18n.t(
-          'services.errCategoryCodeName',
-          'Enter a code and name for the category.',
-        ),
+        this.i18n.t('services.errCategoryCodeName', 'Enter a code and name for the category.'),
       );
       return;
     }

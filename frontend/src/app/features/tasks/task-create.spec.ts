@@ -108,7 +108,11 @@ describe('task creation replay safety', () => {
       title: 'Tích hợp cổng thanh toán VNPay Sandbox',
       description: 'Cấu hình Merchant ID, Secret Key và URL IPN',
       priority: 'HIGH',
-      checklistItems: ['Đăng ký Sandbox Merchant', 'Code webhook callback', 'Kiểm thử thanh toán QR code'],
+      checklistItems: [
+        'Đăng ký Sandbox Merchant',
+        'Code webhook callback',
+        'Kiểm thử thanh toán QR code',
+      ],
       confidence: 0.96,
       reasoning: 'Giao dịch thanh toán là luồng xử lý critical yêu cầu bảo mật cao',
     });
@@ -117,7 +121,9 @@ describe('task creation replay safety', () => {
     expect(component.form.value.title).toBe('Tích hợp cổng thanh toán VNPay Sandbox');
     expect(component.form.value.description).toBe('Cấu hình Merchant ID, Secret Key và URL IPN');
     expect(component.form.value.priority).toBe('HIGH');
-    expect(component.form.value.checklist).toBe('Đăng ký Sandbox Merchant\nCode webhook callback\nKiểm thử thanh toán QR code');
+    expect(component.form.value.checklist).toBe(
+      'Đăng ký Sandbox Merchant\nCode webhook callback\nKiểm thử thanh toán QR code',
+    );
     expect(component.aiMessage()).toContain('AI đã tạo bản thảo');
   });
 

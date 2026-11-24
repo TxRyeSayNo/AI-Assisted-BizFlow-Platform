@@ -317,6 +317,11 @@
           "Npgsql": "10.0.3"
         }
       },
+      "QuestPDF": {
+        "type": "Transitive",
+        "resolved": "2026.9.2",
+        "contentHash": "Nc7nvV/CmL/lonuw1mTQbiETfU7EZoM2kZ9YRgdbC5VivVjxsMHPJ18g4t5FMx/jUGh6XpJXFfW1rFWvAYOeTg=="
+      },
       "Serilog": {
         "type": "Transitive",
         "resolved": "4.3.0",
@@ -464,6 +469,7 @@
           "Microsoft.IdentityModel.JsonWebTokens": "[8.23.0, )",
           "Newtonsoft.Json": "[13.0.4, )",
           "Npgsql.EntityFrameworkCore.PostgreSQL": "[10.0.3, )",
+          "QuestPDF": "[2026.9.2, )",
           "System.Security.Cryptography.Pkcs": "[10.0.13, )"
         }
       }

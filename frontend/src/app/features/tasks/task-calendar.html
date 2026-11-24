@@ -1,0 +1,198 @@
+<header class="public-header directory-header">
+  <a class="wordmark" routerLink="/workspace">
+    <span class="brand-mark" aria-hidden="true"></span> BizFlow
+  </a>
+  <span class="tenant-badge">{{ identity()?.tenantName }}</span>
+</header>
+<main id="main-content" class="page-content" tabindex="-1">
+  <div class="task-page-header">
+    <nav class="compact-breadcrumb" aria-label="Breadcrumb">
+      <a routerLink="/workspace">{{ 'common.workspace' | translate: 'Workspace' }}</a>
+      <span class="sep" aria-hidden="true">/</span>
+      <a routerLink="/tasks">{{ 'tasks.title' | translate: 'Tasks' }}</a>
+      <span class="sep" aria-hidden="true">/</span>
+      <span class="breadcrumb-current">{{
+        'taskCalendar.title' | translate: 'Deadline calendar'
+      }}</span>
+    </nav>
+    <div class="task-header-row">
+      <div class="header-titles">
+        <h1 class="task-header-title">
+          {{ 'taskCalendar.title' | translate: 'Deadline calendar' }}
+        </h1>
+        <p class="task-header-subtitle">
+          {{
+            'taskCalendar.subtitle'
+              | translate: 'Tasks that carry a deadline, shown in your own time zone. Read-only.'
+          }}
+        </p>
+      </div>
+      <div class="task-nav-container" aria-label="Task view switch">
+        <a class="task-nav-btn" routerLink="/tasks">
+          <span class="nav-btn-icon" aria-hidden="true">≡</span>
+          <span>{{ 'taskBoard.viewList' | translate: 'List' }}</span>
+        </a>
+        <span class="task-nav-btn primary-nav-btn is-current" aria-current="page">
+          <span class="nav-btn-icon" aria-hidden="true">▤</span>
+          <span>{{ 'taskCalendar.viewCalendar' | translate: 'Calendar' }}</span>
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <section aria-label="Deadline calendar" class="directory-panel" [attr.aria-busy]="busy()">
+    <div class="calendar-toolbar">
+      <div class="calendar-nav">
+        <button
+          mat-stroked-button
+          type="button"
+          [disabled]="busy()"
+          (click)="step(-1)"
+          [attr.aria-label]="'taskCalendar.previous' | translate: 'Previous period'"
+        >
+          ‹
+        </button>
+        <button mat-stroked-button type="button" [disabled]="busy()" (click)="today()">
+          {{ 'taskCalendar.today' | translate: 'Today' }}
+        </button>
+        <button
+          mat-stroked-button
+          type="button"
+          [disabled]="busy()"
+          (click)="step(1)"
+          [attr.aria-label]="'taskCalendar.next' | translate: 'Next period'"
+        >
+          ›
+        </button>
+        <strong class="calendar-heading" role="status">{{ heading() }}</strong>
+      </div>
+      <div
+        class="calendar-modes"
+        role="group"
+        [attr.aria-label]="'taskCalendar.mode' | translate: 'View mode'"
+      >
+        <button
+          mat-stroked-button
+          type="button"
+          [disabled]="busy()"
+          [attr.aria-pressed]="mode() === 'month'"
+          (click)="setMode('month')"
+        >
+          {{ 'taskCalendar.month' | translate: 'Month' }}
+        </button>
+        <button
+          mat-stroked-button
+          type="button"
+          [disabled]="busy()"
+          [attr.aria-pressed]="mode() === 'week'"
+          (click)="setMode('week')"
+        >
+          {{ 'taskCalendar.week' | translate: 'Week' }}
+        </button>
+      </div>
+    </div>
+
+    <form [formGroup]="filters" (ngSubmit)="apply()" class="filters">
+      <mat-form-field appearance="outline" subscriptSizing="dynamic"
+        ><mat-label>{{ 'common.status' | translate: 'Task status' }}</mat-label
+        ><mat-select formControlName="status"
+          ><mat-option value="">{{ 'common.allStatuses' | translate: 'All statuses' }}</mat-option>
+          @for (option of stateOptions; track option[0]) {
+            <mat-option [value]="option[0]">{{
+              'status.' + option[0] | translate: option[1]
+            }}</mat-option>
+          }
+        </mat-select></mat-form-field
+      >
+      <mat-form-field appearance="outline" subscriptSizing="dynamic"
+        ><mat-label>{{ 'common.priority' | translate: 'Priority' }}</mat-label
+        ><mat-select formControlName="priority"
+          ><mat-option value="">{{
+            'common.allPriorities' | translate: 'All priorities'
+          }}</mat-option>
+          @for (option of priorityOptions; track option[0]) {
+            <mat-option [value]="option[0]">{{
+              'priority.' + option[0] | translate: option[1]
+            }}</mat-option>
+          }
+        </mat-select></mat-form-field
+      >
+      <button mat-flat-button type="submit" [disabled]="busy()">
+        {{ 'common.applyFilters' | translate: 'Apply filters' }}
+      </button>
+    </form>
+
+    @if (busy()) {
+      <p role="status" class="directory-feedback">
+        {{ 'taskCalendar.loading' | translate: 'Loading calendar…' }}
+      </p>
+    } @else if (denied()) {
+      <p role="alert" class="directory-feedback">
+        {{ 'tasks.denied' | translate: 'You no longer have access to this task list.' }}
+      </p>
+    } @else if (unavailable()) {
+      <p role="status" class="directory-feedback">
+        {{
+          'taskCalendar.unavailable' | translate: 'The calendar is not enabled on this deployment.'
+        }}
+        <a routerLink="/tasks">{{ 'taskBoard.viewList' | translate: 'List' }}</a>
+      </p>
+    } @else if (error()) {
+      <div class="directory-feedback">
+        <p role="alert">
+          {{
+            'taskCalendar.loadError'
+              | translate: 'The calendar could not be loaded. Please try again.'
+          }}
+        </p>
+        <button mat-stroked-button type="button" (click)="load()">
+          {{ 'common.retry' | translate: 'Retry' }}
+        </button>
+      </div>
+    } @else if (result(); as data) {
+      @if (data.truncated) {
+        <p role="alert" class="directory-feedback">
+          {{
+            'taskCalendar.truncated'
+              | translate: 'This period holds more deadlines than can be shown. Narrow the filters.'
+          }}
+        </p>
+      }
+      <div class="calendar-grid" role="grid" [attr.aria-label]="heading()">
+        <div class="calendar-weekdays" role="row">
+          @for (label of weekdayLabels; track label) {
+            <span class="calendar-weekday" role="columnheader">{{ label }}</span>
+          }
+        </div>
+        <div class="calendar-days">
+          @for (cell of cells(); track cell.key) {
+            <div
+              class="calendar-cell"
+              role="gridcell"
+              [class.out-of-focus]="!cell.inFocus"
+              [class.is-today]="cell.isToday"
+            >
+              <time class="calendar-day-number" [attr.datetime]="cell.key">{{ cell.day }}</time>
+              @for (item of cell.items; track item.taskId) {
+                <a
+                  class="calendar-entry"
+                  [attr.data-priority]="item.priority"
+                  [routerLink]="['/tasks', item.taskId]"
+                  [title]="item.title"
+                >
+                  <span class="calendar-entry-title">{{ item.title }}</span>
+                  <span class="calendar-entry-meta">
+                    {{ 'status.' + item.status | translate: states[item.status] }}
+                    @if (item.deadline) {
+                      · {{ item.deadline | date: 'shortTime' }}
+                    }
+                  </span>
+                </a>
+              }
+            </div>
+          }
+        </div>
+      </div>
+    }
+  </section>
+</main>

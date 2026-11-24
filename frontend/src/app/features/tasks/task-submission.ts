@@ -22,7 +22,8 @@ import { SessionService } from '../../core/auth/session';
     <mat-dialog-content>
       <p>{{ data.title }}</p>
       <p>
-        Gửi kết quả hoàn thành để người quản lý xem xét, xác nhận hoàn tất hoặc yêu cầu chỉnh sửa bổ sung.
+        Gửi kết quả hoàn thành để người quản lý xem xét, xác nhận hoàn tất hoặc yêu cầu chỉnh sửa bổ
+        sung.
       </p>
       @if (error()) {
         <p role="alert">{{ error() }}</p>

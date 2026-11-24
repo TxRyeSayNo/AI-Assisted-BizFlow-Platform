@@ -1,0 +1,190 @@
+<main id="main-content" class="page-content reports-container" tabindex="-1">
+  <nav aria-label="Breadcrumb">
+    <a routerLink="/workspace">{{ 'common.workspace' | translate: 'Không gian làm việc' }}</a>
+    <span aria-hidden="true"> / </span>
+    <span>{{ 'team.breadcrumb' | translate: 'Cấp dưới của tôi' }}</span>
+  </nav>
+
+  <div class="page-header">
+    <div class="header-titles">
+      <h2>{{ 'team.title' | translate: 'Quản lý cấp dưới' }}</h2>
+      <p class="subtitle">
+        {{
+          'team.subtitle'
+            | translate
+              : 'Nhân sự và công việc thuộc phạm vi quản lý của bạn. Phòng ban ngoài phạm vi sẽ bị từ chối.'
+        }}
+      </p>
+    </div>
+  </div>
+
+  <div class="tabs-bar">
+    <a routerLink="/dashboard/projects" class="tab-btn">
+      {{ 'projectDashboard.tab.projects' | translate: 'Dự án' }}
+    </a>
+    <a routerLink="/dashboard/my-work" class="tab-btn">
+      {{ 'projectDashboard.tab.myWork' | translate: 'Việc của tôi' }}
+    </a>
+    <a routerLink="/dashboard/team" class="tab-btn active">
+      {{ 'projectDashboard.tab.team' | translate: 'Cấp dưới của tôi' }}
+    </a>
+  </div>
+
+  @if (data(); as view) {
+    <div class="filter-panel" [formGroup]="filters">
+      <div class="filter-group">
+        <mat-form-field appearance="outline" subscriptSizing="dynamic" class="filter-field">
+          <mat-label>{{ 'reports.department' | translate: 'Phòng ban' }}</mat-label>
+          <mat-select formControlName="departmentId" (selectionChange)="load()">
+            <mat-option value="">
+              @if (view.tenantWide) {
+                {{ 'reports.allDepartments' | translate: 'Tất cả phòng ban' }}
+              } @else {
+                {{ 'team.myScope' | translate: 'Toàn bộ phạm vi quản lý' }}
+              }
+            </mat-option>
+            @for (department of view.departments; track department.departmentId) {
+              <mat-option [value]="department.departmentId">{{ department.name }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+        <button mat-stroked-button class="apply-btn" type="button" (click)="resetFilter()">
+          {{ 'common.reset' | translate: 'Đặt lại' }}
+        </button>
+      </div>
+    </div>
+  }
+
+  @if (error()) {
+    <div class="error-banner" role="alert">{{ error() }}</div>
+    <button mat-stroked-button type="button" (click)="resetFilter()">
+      {{ 'common.retry' | translate: 'Thử lại' }}
+    </button>
+  }
+
+  @if (busy()) {
+    <div class="loading-state">{{ 'common.loading' | translate: 'Đang tải…' }}</div>
+  }
+
+  @if (data(); as view) {
+    @if (view.truncated) {
+      <p class="scope-note">
+        {{ 'team.truncated' | translate: 'Chỉ hiển thị số nhân sự tối đa cho mỗi lần xem' }}:
+        {{ view.memberLimit }}
+      </p>
+    }
+
+    <div class="section-heading">
+      <h3>{{ 'team.departmentsSection' | translate: 'Phòng ban trong phạm vi' }}</h3>
+    </div>
+    <div class="table-card">
+      <table class="report-table">
+        <thead>
+          <tr>
+            <th>{{ 'team.department' | translate: 'Phòng ban' }}</th>
+            <th>{{ 'team.members' | translate: 'Nhân sự' }}</th>
+            <th>{{ 'myWork.active' | translate: 'Đang làm' }}</th>
+            <th>{{ 'projectDashboard.overdue' | translate: 'Trễ hạn' }}</th>
+            <th class="cell-progress">{{ 'team.avgProgress' | translate: 'Tiến độ TB' }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (department of view.departments; track department.departmentId) {
+            <tr>
+              <td class="font-medium">{{ department.name }}</td>
+              <td>{{ department.memberCount }}</td>
+              <td>{{ department.activeWorkItems }}</td>
+              <td>
+                @if (department.overdueWorkItems) {
+                  <span class="badge badge-danger">{{ department.overdueWorkItems }}</span>
+                } @else {
+                  0
+                }
+              </td>
+              <td class="cell-progress">
+                <div class="progress-row">
+                  <div class="progress-track">
+                    <div
+                      class="progress-fill"
+                      [class]="tone(department.avgProgressPercent)"
+                      [style.width.%]="department.avgProgressPercent"
+                    ></div>
+                  </div>
+                  <span class="progress-value">{{ department.avgProgressPercent }}%</span>
+                </div>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="5" class="empty-cell">
+                {{
+                  'team.noScope'
+                    | translate
+                      : 'Bạn chưa được cấu hình phạm vi quản lý phòng ban nào. Hãy liên hệ quản trị viên doanh nghiệp.'
+                }}
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <div class="section-heading">
+      <h3>{{ 'team.membersSection' | translate: 'Nhân sự cấp dưới' }}</h3>
+    </div>
+    <div class="table-card">
+      <table class="report-table">
+        <thead>
+          <tr>
+            <th>{{ 'team.member' | translate: 'Nhân viên' }}</th>
+            <th>{{ 'reports.department' | translate: 'Phòng ban' }}</th>
+            <th>{{ 'myWork.active' | translate: 'Đang làm' }}</th>
+            <th>{{ 'myWork.completed' | translate: 'Đã hoàn thành' }}</th>
+            <th>{{ 'projectDashboard.overdue' | translate: 'Trễ hạn' }}</th>
+            <th class="cell-progress">{{ 'team.avgProgress' | translate: 'Tiến độ TB' }}</th>
+            <th>{{ 'team.share' | translate: 'Tỉ trọng trách nhiệm' }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (member of view.members; track member.userId) {
+            <tr>
+              <td class="font-medium">
+                {{ member.fullName }}
+                <span class="department-code">{{ member.employeeCode }}</span>
+              </td>
+              <td>{{ member.departmentName || '—' }}</td>
+              <td>{{ member.activeWorkItems }}</td>
+              <td>{{ member.completedWorkItems }}/{{ member.totalAssigned }}</td>
+              <td>
+                @if (member.overdueWorkItems) {
+                  <span class="badge badge-danger">{{ member.overdueWorkItems }}</span>
+                } @else {
+                  0
+                }
+              </td>
+              <td class="cell-progress">
+                <div class="progress-row">
+                  <div class="progress-track">
+                    <div
+                      class="progress-fill"
+                      [class]="tone(member.avgProgressPercent)"
+                      [style.width.%]="member.avgProgressPercent"
+                    ></div>
+                  </div>
+                  <span class="progress-value">{{ member.avgProgressPercent }}%</span>
+                </div>
+              </td>
+              <td class="font-medium">{{ member.responsibilitySharePercent }}%</td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="7" class="empty-cell">
+                {{ 'team.noMembers' | translate: 'Không có nhân sự nào trong phạm vi này.' }}
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</main>

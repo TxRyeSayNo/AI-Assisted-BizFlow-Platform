@@ -10,6 +10,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { RouterLink } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { SessionService } from '../../core/auth/session';
+import { FeatureFlagsService } from '../../core/features/feature-flags.service';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
 
 const states = {
@@ -68,6 +69,9 @@ export class Tasks {
   private request?: Subscription;
   private applied = { search: '', status: '', priority: '' };
   readonly session = inject(SessionService);
+  // Read-only: the flags are fetched once by the application shell, so opening the list issues
+  // no extra request and renders exactly as before when the board is disabled.
+  readonly features = inject(FeatureFlagsService);
   readonly identity = this.session.identity;
   readonly filters = inject(FormBuilder).nonNullable.group(this.applied);
   readonly result = signal<TaskPage | null>(null);

@@ -1,6 +1,6 @@
 <a class="skip-link" href="#main-content">{{
   'app.skipToMain' | translate: 'Skip to main content'
-  }}</a>
+}}</a>
 
 <!-- Global Floating Pop-up Toast Container -->
 <bf-toast-container />
@@ -9,58 +9,82 @@
 <bf-robot-widget />
 
 @if (signedIn()) {
-<div class="app-authenticated-shell">
-  <!-- Top Horizontal Utility Header -->
-  <header class="app-topbar" role="banner">
-    <div class="topbar-left">
-      <a class="wordmark" routerLink="/workspace" title="Trang chủ BizFlow">
-        <img src="/assets/brand/bizflow-logo.png" [alt]="'app.logoAlt' | translate: 'Biểu trưng BizFlow'" class="brand-mark brand-logo-img" width="34"
-          height="34" />
-        <span class="brand-name">BizFlow</span>
-      </a>
-      <span class="tenant-badge">
-        {{ identity()?.tenantName ?? 'BizFlow Corporation' }}
-      </span>
-    </div>
-
-    <div class="topbar-right">
-      <!-- Notification Bell -->
-      <a routerLink="/notifications" class="notify-btn" title="Thông báo" aria-label="Thông báo">
-        <span class="bell-icon" aria-hidden="true">🔔</span>
-        @if (unreadNotifications() > 0) {
-          <span class="unread-badge">{{ unreadNotifications() > 99 ? '99+' : unreadNotifications() }}</span>
-        }
-      </a>
-
-      <!-- Current User Profile / Avatar -->
-      <div class="user-chip" [title]="(identity()?.fullName || 'User') + ' (' + currentRoleLabel() + ')'">
-        @if (profilePhotoUrl() && !avatarFailed()) {
-        <img [src]="profilePhotoUrl()" [alt]="identity()?.fullName || 'User avatar'" class="user-avatar-img"
-          (error)="onAvatarError()" />
-        } @else {
-        <span class="user-avatar" aria-hidden="true">{{ userInitials() }}</span>
-        }
-        <div class="user-meta">
-          <span class="user-name">{{ welcomeName() }}</span>
-          <span class="user-role">{{ currentRoleLabel() }}</span>
-        </div>
+  <div class="app-authenticated-shell">
+    <!-- Top Horizontal Utility Header -->
+    <header class="app-topbar" role="banner">
+      <div class="topbar-left">
+        <a class="wordmark" routerLink="/workspace" title="Trang chủ BizFlow">
+          <img
+            src="/assets/brand/bizflow-logo.png"
+            [alt]="'app.logoAlt' | translate: 'Biểu trưng BizFlow'"
+            class="brand-mark brand-logo-img"
+            width="34"
+            height="34"
+          />
+          <span class="brand-name">BizFlow</span>
+        </a>
+        <span class="tenant-badge">
+          {{ identity()?.tenantName ?? 'BizFlow Corporation' }}
+        </span>
       </div>
 
-      <!-- Sign Out Action -->
-      <button type="button" class="btn-signout" (click)="signOut()" title="Đăng xuất" aria-label="Đăng xuất khỏi BizFlow">
-        {{ 'common.signOut' | translate: 'Sign out' }}
-      </button>
-    </div>
-  </header>
+      <div class="topbar-right">
+        <!-- Notification Bell -->
+        <a routerLink="/notifications" class="notify-btn" title="Thông báo" aria-label="Thông báo">
+          <span class="bell-icon" aria-hidden="true">🔔</span>
+          @if (unreadNotifications() > 0) {
+            <span class="unread-badge">{{
+              unreadNotifications() > 99 ? '99+' : unreadNotifications()
+            }}</span>
+          }
+        </a>
 
-  <!-- Main Shell with Left Sidebar & Viewport -->
-  <div class="app-body-layout">
-    <!-- Left Distinct Light-Ocean Sidebar with Resizable Width and Luminous Moving Border -->
-    <aside class="app-sidebar" [style.width.px]="sidebarWidth()" aria-label="Primary navigation">
-      <!-- Interactive Resizer Handle (Allows adjusting between 230px and 320px) -->
-      <div class="sidebar-resizer" (mousedown)="onStartResize($event)"
-        title="Kéo sang trái/phải để điều chỉnh độ rộng menu" aria-hidden="true"></div>
-              <nav class="sidebar-nav" aria-label="Main application">
+        <!-- Current User Profile / Avatar -->
+        <div
+          class="user-chip"
+          [title]="(identity()?.fullName || 'User') + ' (' + currentRoleLabel() + ')'"
+        >
+          @if (profilePhotoUrl() && !avatarFailed()) {
+            <img
+              [src]="profilePhotoUrl()"
+              [alt]="identity()?.fullName || 'User avatar'"
+              class="user-avatar-img"
+              (error)="onAvatarError()"
+            />
+          } @else {
+            <span class="user-avatar" aria-hidden="true">{{ userInitials() }}</span>
+          }
+          <div class="user-meta">
+            <span class="user-name">{{ welcomeName() }}</span>
+            <span class="user-role">{{ currentRoleLabel() }}</span>
+          </div>
+        </div>
+
+        <!-- Sign Out Action -->
+        <button
+          type="button"
+          class="btn-signout"
+          (click)="signOut()"
+          title="Đăng xuất"
+          aria-label="Đăng xuất khỏi BizFlow"
+        >
+          {{ 'common.signOut' | translate: 'Sign out' }}
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Shell with Left Sidebar & Viewport -->
+    <div class="app-body-layout">
+      <!-- Left Distinct Light-Ocean Sidebar with Resizable Width and Luminous Moving Border -->
+      <aside class="app-sidebar" [style.width.px]="sidebarWidth()" aria-label="Primary navigation">
+        <!-- Interactive Resizer Handle (Allows adjusting between 230px and 320px) -->
+        <div
+          class="sidebar-resizer"
+          (mousedown)="onStartResize($event)"
+          title="Kéo sang trái/phải để điều chỉnh độ rộng menu"
+          aria-hidden="true"
+        ></div>
+        <nav class="sidebar-nav" aria-label="Main application">
           @if (identity()?.tenantId) {
             <!-- 1. Home / Dashboard -->
             <a
@@ -71,9 +95,20 @@
               title="Trang chủ"
               aria-label="Trang chủ"
             >
-              <svg class="nav-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-                <polyline points="9 22 9 12 15 12 15 22"/>
+              <svg
+                class="nav-icon"
+                viewBox="0 0 24 24"
+                width="20"
+                height="20"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                <polyline points="9 22 9 12 15 12 15 22" />
               </svg>
               <span class="nav-label">{{ 'nav.home' | translate: 'Home' }}</span>
             </a>
@@ -92,9 +127,20 @@
                 title="Nhiệm vụ"
                 aria-label="Nhiệm vụ"
               >
-                <svg class="nav-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                  <path d="M9 11l3 3L22 4"/>
-                  <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+                <svg
+                  class="nav-icon"
+                  viewBox="0 0 24 24"
+                  width="20"
+                  height="20"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M9 11l3 3L22 4" />
+                  <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
                 </svg>
                 <span class="nav-label">{{ 'nav.tasks' | translate: 'Tasks' }}</span>
               </a>
@@ -113,9 +159,22 @@
                 title="Yêu cầu"
                 aria-label="Yêu cầu"
               >
-                <svg class="nav-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
-                  <polyline points="22,6 12,13 2,6"/>
+                <svg
+                  class="nav-icon"
+                  viewBox="0 0 24 24"
+                  width="20"
+                  height="20"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"
+                  />
+                  <polyline points="22,6 12,13 2,6" />
                 </svg>
                 <span class="nav-label">{{ 'nav.requests' | translate: 'Requests' }}</span>
               </a>
@@ -134,9 +193,20 @@
                 title="Phê duyệt"
                 aria-label="Phê duyệt"
               >
-                <svg class="nav-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                  <circle cx="12" cy="12" r="10"/>
-                  <path d="m9 12 2 2 4-4"/>
+                <svg
+                  class="nav-icon"
+                  viewBox="0 0 24 24"
+                  width="20"
+                  height="20"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <circle cx="12" cy="12" r="10" />
+                  <path d="m9 12 2 2 4-4" />
                 </svg>
                 <span class="nav-label">{{ 'nav.approvals' | translate: 'Approvals' }}</span>
               </a>
@@ -156,10 +226,21 @@
                 title="Báo cáo"
                 aria-label="Báo cáo"
               >
-                <svg class="nav-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                  <line x1="18" y1="20" x2="18" y2="10"/>
-                  <line x1="12" y1="20" x2="12" y2="4"/>
-                  <line x1="6" y1="20" x2="6" y2="14"/>
+                <svg
+                  class="nav-icon"
+                  viewBox="0 0 24 24"
+                  width="20"
+                  height="20"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <line x1="18" y1="20" x2="18" y2="10" />
+                  <line x1="12" y1="20" x2="12" y2="4" />
+                  <line x1="6" y1="20" x2="6" y2="14" />
                 </svg>
                 <span class="nav-label">{{ 'nav.reports' | translate: 'Reports' }}</span>
               </a>
@@ -179,9 +260,20 @@
                 title="Giám sát SLA"
                 aria-label="Giám sát SLA"
               >
-                <svg class="nav-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                  <circle cx="12" cy="12" r="10"/>
-                  <polyline points="12 6 12 12 16 14"/>
+                <svg
+                  class="nav-icon"
+                  viewBox="0 0 24 24"
+                  width="20"
+                  height="20"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <circle cx="12" cy="12" r="10" />
+                  <polyline points="12 6 12 12 16 14" />
                 </svg>
                 <span class="nav-label">{{ 'nav.slaMonitor' | translate: 'SLA Monitor' }}</span>
               </a>
@@ -196,9 +288,20 @@
                 title="Tra cứu"
                 aria-label="Tra cứu hồ sơ"
               >
-                <svg class="nav-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                  <circle cx="11" cy="11" r="8"/>
-                  <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                <svg
+                  class="nav-icon"
+                  viewBox="0 0 24 24"
+                  width="20"
+                  height="20"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <circle cx="11" cy="11" r="8" />
+                  <line x1="21" y1="21" x2="16.65" y2="16.65" />
                 </svg>
                 <span class="nav-label">{{ 'nav.search' | translate: 'Search' }}</span>
               </a>
@@ -220,9 +323,22 @@
                 title="Cài đặt hệ thống"
                 aria-label="Cài đặt hệ thống"
               >
-                <svg class="nav-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                  <circle cx="12" cy="12" r="3"/>
-                  <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                <svg
+                  class="nav-icon"
+                  viewBox="0 0 24 24"
+                  width="20"
+                  height="20"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <circle cx="12" cy="12" r="3" />
+                  <path
+                    d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"
+                  />
                 </svg>
                 <span class="nav-label">{{ 'nav.settings' | translate: 'Settings' }}</span>
               </a>
@@ -237,9 +353,20 @@
               title="Trang chủ"
               aria-label="Trang chủ"
             >
-              <svg class="nav-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-                <polyline points="9 22 9 12 15 12 15 22"/>
+              <svg
+                class="nav-icon"
+                viewBox="0 0 24 24"
+                width="20"
+                height="20"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                <polyline points="9 22 9 12 15 12 15 22" />
               </svg>
               <span class="nav-label">{{ 'nav.home' | translate: 'Home' }}</span>
             </a>
@@ -250,9 +377,20 @@
               title="Quản lý Doanh nghiệp"
               aria-label="Quản lý Doanh nghiệp"
             >
-              <svg class="nav-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
-                <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
+              <svg
+                class="nav-icon"
+                viewBox="0 0 24 24"
+                width="20"
+                height="20"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <rect x="2" y="7" width="20" height="14" rx="2" ry="2" />
+                <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
               </svg>
               <span class="nav-label">{{ 'nav.companies' | translate: 'Companies' }}</span>
             </a>
@@ -263,25 +401,36 @@
               title="Kiểm toán Hệ thống"
               aria-label="Kiểm toán Hệ thống"
             >
-              <svg class="nav-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                <polyline points="14 2 14 8 20 8"/>
-                <line x1="16" y1="13" x2="8" y2="13"/>
-                <line x1="16" y1="17" x2="8" y2="17"/>
+              <svg
+                class="nav-icon"
+                viewBox="0 0 24 24"
+                width="20"
+                height="20"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                <polyline points="14 2 14 8 20 8" />
+                <line x1="16" y1="13" x2="8" y2="13" />
+                <line x1="16" y1="17" x2="8" y2="17" />
               </svg>
               <span class="nav-label">{{ 'nav.platformAudit' | translate: 'Platform Audit' }}</span>
             </a>
           }
         </nav>
-    </aside>
+      </aside>
 
-    <!-- Main Content Viewport -->
-    <div class="app-main-viewport">
-      <router-outlet />
+      <!-- Main Content Viewport -->
+      <div class="app-main-viewport">
+        <router-outlet />
+      </div>
     </div>
   </div>
-</div>
 } @else {
-<!-- Unauthenticated Views (Login, Forgot Password, Register Company, Reset Password) -->
-<router-outlet />
+  <!-- Unauthenticated Views (Login, Forgot Password, Register Company, Reset Password) -->
+  <router-outlet />
 }

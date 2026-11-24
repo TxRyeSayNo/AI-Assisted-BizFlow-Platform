@@ -8,16 +8,25 @@ import type { SlaHistoryRow } from './sla-version-history';
   selector: 'bf-sla-version-detail',
   imports: [MatButtonModule, MatDialogModule, TranslatePipe],
   template: `
-    <h2 mat-dialog-title id="sla-detail-title">{{ 'slaDetail.title' | translate: 'SLA version' }} {{ data.versionNo }}</h2>
+    <h2 mat-dialog-title id="sla-detail-title">
+      {{ 'slaDetail.title' | translate: 'SLA version' }} {{ data.versionNo }}
+    </h2>
     <mat-dialog-content>
-      <p>{{ 'sla.immutableSnapshot' | translate: 'Immutable snapshot' }} · {{ 'audit.readOnly' | translate: 'Read-only' }}</p>
+      <p>
+        {{ 'sla.immutableSnapshot' | translate: 'Immutable snapshot' }} ·
+        {{ 'audit.readOnly' | translate: 'Read-only' }}
+      </p>
       <dl>
         <dt>{{ 'slaDetail.versionId' | translate: 'Version ID' }}</dt>
         <dd>{{ data.slaVersionId }}</dd>
         <dt>{{ 'sla.col.target' | translate: 'Target' }}</dt>
-        <dd>{{ data.targetMinutes }} {{ 'slaDetail.workingMinutes' | translate: 'working minutes' }}</dd>
+        <dd>
+          {{ data.targetMinutes }} {{ 'slaDetail.workingMinutes' | translate: 'working minutes' }}
+        </dd>
         <dt>{{ 'sla.col.warning' | translate: 'Warning from start' }}</dt>
-        <dd>{{ data.warningMinutes }} {{ 'slaDetail.workingMinutes' | translate: 'working minutes' }}</dd>
+        <dd>
+          {{ data.warningMinutes }} {{ 'slaDetail.workingMinutes' | translate: 'working minutes' }}
+        </dd>
       </dl>
       <h3>{{ 'slaDetail.frozenCalendar' | translate: 'Frozen business calendar' }}</h3>
       <dl>
@@ -51,7 +60,10 @@ import type { SlaHistoryRow } from './sla-version-history';
       }
       <h3>{{ 'slaDetail.escalationPolicy' | translate: 'Escalation policy' }}</h3>
       @for (level of data.escalationConfig?.levels ?? []; track level.level) {
-        <h4>{{ 'slaDetail.level' | translate: 'Level' }} {{ level.level }} · {{ level.afterMinutes }} {{ 'sla.zeroBreachSuffix' | translate: 'working minutes after breach' }}</h4>
+        <h4>
+          {{ 'slaDetail.level' | translate: 'Level' }} {{ level.level }} · {{ level.afterMinutes }}
+          {{ 'sla.zeroBreachSuffix' | translate: 'working minutes after breach' }}
+        </h4>
         <p>{{ 'slaDetail.recipients' | translate: 'Recipient user IDs' }}</p>
         <ul>
           @for (id of level.recipientUserIds; track id) {
