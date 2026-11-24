@@ -115,6 +115,7 @@ public sealed class RequestReviseCommand(
         var now = RequestCreationRules.DatabaseTime(clock.GetUtcNow());
 
         var revision = WorkRequest.ReviseRejected(source, actorId, source.ServiceId, source.CategoryId, title, description, now, priority);
+        revision.SetFormData(source.FormDataJson);
         if (input.SubmitImmediately)
         {
             revision.ApplySubmissionTransition(new RequestWorkflowMutation(actorId, RequestState.Draft, RequestState.Submitted, revision.UpdatedAt), now);
@@ -128,7 +129,7 @@ public sealed class RequestReviseCommand(
             revision.Id,
             source.Id,
             revision.Title,
-            revision.Status.ToString().ToUpperInvariant(),
+            input.SubmitImmediately ? "SUBMITTED" : "DRAFT",
             now);
     }
 }

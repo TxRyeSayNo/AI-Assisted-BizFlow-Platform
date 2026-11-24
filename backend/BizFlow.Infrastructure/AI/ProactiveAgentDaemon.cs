@@ -14,6 +14,10 @@ namespace BizFlow.Infrastructure.AI;
 
 public sealed class ProactiveAgentDaemon : BackgroundService
 {
+    private sealed record DaemonContext(Guid? TenantId) : BizFlow.Application.Security.ITenantContext
+    {
+        public Guid? UserId => new Guid("00000000-0000-0000-0000-000000000001");
+    }
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly IConfiguration _configuration;
     private readonly ILogger<ProactiveAgentDaemon> _logger;
@@ -76,12 +80,11 @@ public sealed class ProactiveAgentDaemon : BackgroundService
     {
         using var scope = _scopeFactory.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<BizFlowDbContext>();
-        var scanner = scope.ServiceProvider.GetRequiredService<IProactiveAgentScanner>();
 
         // Query active tenants (bypass tenant query filters since daemon runs at system level)
         var tenants = await dbContext.Tenants
             .IgnoreQueryFilters()
-            .Where(t => t.Status == Domain.Tenancy.TenantStatus.Active)
+            .Where(t => t.Status == Domain.Tenancy.TenantStatus.Active && dbContext.Companies.IgnoreQueryFilters().Any(c => c.Id == t.CompanyId && c.Status == Domain.Tenancy.CompanyStatus.Active))
             .Select(t => t.Id)
             .ToListAsync(cancellationToken);
 
@@ -91,17 +94,37 @@ public sealed class ProactiveAgentDaemon : BackgroundService
         {
             try
             {
-                var result = await scanner.RunProactiveScanAsync(tenantId, cancellationToken);
+                cancellationToken.ThrowIfCancellationRequested();
+                var result = await RunTenantScanAsync(tenantId, cancellationToken);
                 if (result.RecommendationsCreated > 0)
                 {
                     _logger.LogInformation("[ProactiveAgentDaemon] Tenant {TenantId}: Generated {Count} proactive recommendations.", tenantId, result.RecommendationsCreated);
                 }
             }
-            catch (Exception ex)
+            catch (Exception ex) when (ex is not OperationCanceledException)
             {
                 _logger.LogWarning(ex, "[ProactiveAgentDaemon] Failed scanning tenant {TenantId}.", tenantId);
             }
         }
+    }
+
+    public async Task<ProactiveScanResult> RunTenantScanAsync(Guid tenantId, CancellationToken ct)
+    {
+        using var scope = _scopeFactory.CreateScope();
+        await using var db = new BizFlowDbContext(scope.ServiceProvider.GetRequiredService<DbContextOptions<BizFlowDbContext>>(), new DaemonContext(tenantId));
+        if (!await db.Tenants.AnyAsync(t => t.Id == tenantId && t.Status == Domain.Tenancy.TenantStatus.Active &&
+            db.Companies.Any(c => c.Id == t.CompanyId && c.Status == Domain.Tenancy.CompanyStatus.Active), ct))
+            return new(0, 0, 0, DateTimeOffset.UtcNow, "Doanh nghiệp không hoạt động.");
+        await using var tx = await db.Database.BeginTransactionAsync(ct);
+        // The background scope has no HTTP claims. Pin both scanner and store to this tenant,
+        // and serialize instances so a multi-replica deployment does not duplicate recommendations.
+        var key = $"proactive-agent:{tenantId:N}";
+        var acquired = await db.Database.SqlQuery<bool>($"SELECT pg_try_advisory_xact_lock(hashtextextended({key},0)) AS \"Value\"").SingleAsync(ct);
+        if (!acquired) return new(0, 0, 0, DateTimeOffset.UtcNow, "Đã có một lượt quét đang chạy.");
+        var scanner = new ProactiveAgentScanner(db, new AiStore(db), scope.ServiceProvider.GetRequiredService<TimeProvider>(), scope.ServiceProvider.GetRequiredService<ILogger<ProactiveAgentScanner>>());
+        var result = await scanner.RunProactiveScanAsync(tenantId, ct);
+        await tx.CommitAsync(ct);
+        return result;
     }
 }
 

@@ -21,7 +21,7 @@ public sealed class UserDirectoryTests(PostgresFixture database)
     [Fact]
     public async Task Directory_requires_explicit_live_permission_and_never_role_name_authority()
     {
-        var account = await SeedAsync();
+        var account = await SeedAsync(withDepartment: true);
         await using var factory = new AuthenticationFactory(database);
         using var client = factory.CreateClient();
         Assert.Equal(HttpStatusCode.Unauthorized, (await client.GetAsync(Endpoint)).StatusCode);
@@ -43,9 +43,9 @@ public sealed class UserDirectoryTests(PostgresFixture database)
     [Theory]
     [InlineData("MANAGER")]
     [InlineData("EMPLOYEE")]
-    public async Task Approved_system_roles_have_explicit_tenant_directory_read_not_user_mutation(string roleName)
+    public async Task Approved_system_roles_have_explicit_scoped_directory_read_not_user_mutation(string roleName)
     {
-        var account = await SeedAsync(roleName);
+        var account = await SeedAsync(roleName, withDepartment: true);
         await using var factory = new AuthenticationFactory(database);
         using var client = factory.CreateClient();
         await LoginAsync(client, account);
@@ -81,7 +81,7 @@ public sealed class UserDirectoryTests(PostgresFixture database)
     [Fact]
     public async Task Tenant_and_soft_delete_filters_cover_rows_department_names_counts_and_search_and_never_return_credentials()
     {
-        var account = await SeedAsync("EMPLOYEE"); var foreign = await SeedAsync("EMPLOYEE");
+        var account = await SeedAsync("COMPANY_ADMIN"); var foreign = await SeedAsync("EMPLOYEE");
         await using var db = database.Create(account.UserId, account.TenantId);
         var department = Department.Create(account.TenantId, "OPS", "Workspace operations", null, DateTimeOffset.UtcNow);
         db.Departments.Add(department); await db.SaveChangesAsync();
@@ -155,11 +155,28 @@ public sealed class UserDirectoryTests(PostgresFixture database)
         Assert.Equal(HttpStatusCode.Unauthorized, (await client.GetAsync(Endpoint)).StatusCode);
     }
 
-    private async Task<Account> SeedAsync(string? roleName = null)
+    [Theory]
+    [InlineData("EMPLOYEE")]
+    [InlineData("MANAGER")]
+    public async Task Directory_denies_accounts_without_a_department_even_with_read_permission(string roleName)
+    {
+        var account = await SeedAsync(roleName);
+        await using var factory = new AuthenticationFactory(database);
+        using var client = factory.CreateClient(); await LoginAsync(client, account);
+        Assert.Equal(HttpStatusCode.Forbidden, (await client.GetAsync(Endpoint)).StatusCode);
+    }
+
+    private async Task<Account> SeedAsync(string? roleName = null, bool withDepartment = false)
     {
         var seed = await database.SeedTenantAsync();
         await using var db = database.Create(seed.UserId, seed.TenantId);
         var user = await db.Users.SingleAsync(); var tenant = await db.Tenants.SingleAsync();
+        if (withDepartment)
+        {
+            var department = Department.Create(tenant.Id, "OWN", "Phòng ban của tài khoản", null, DateTimeOffset.UtcNow);
+            db.Departments.Add(department); await db.SaveChangesAsync();
+            await db.Database.ExecuteSqlInterpolatedAsync($"UPDATE \"User\" SET \"DepartmentId\"={department.Id} WHERE \"UserId\"={user.Id}");
+        }
         var hash = new PasswordHasher<UserAccount>().HashPassword(user, Password);
         await db.Database.ExecuteSqlInterpolatedAsync($"""
             UPDATE "User" SET "PasswordHash" = {hash} WHERE "UserId" = {user.Id};

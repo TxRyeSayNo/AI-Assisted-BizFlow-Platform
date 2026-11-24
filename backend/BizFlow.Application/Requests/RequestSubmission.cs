@@ -84,6 +84,6 @@ public sealed class RequestSubmissionCommand(
         await transaction.CommitAsync(audit, notification, cancellationToken);
         await updates.PublishAsync(tenantId, [notification.RecipientId], cancellationToken);
 
-        return new(request.Id, RequestListCodes.State(request.Status), now);
+        return new(request.Id, "SUBMITTED", now);
     }
 }

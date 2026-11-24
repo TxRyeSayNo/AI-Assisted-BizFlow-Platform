@@ -227,10 +227,10 @@ export class Users {
     if (newId === (user.departmentId ?? null) || this.deptSaving()) return;
     this.deptSaving.set(user.userId);
     this.http
-      .put<{ departmentId: string | null; departmentName: string | null }>(
-        `/api/v1/users/${user.userId}`,
-        { fullName: user.fullName, departmentId: newId },
-      )
+      .put<{
+        departmentId: string | null;
+        departmentName: string | null;
+      }>(`/api/v1/users/${user.userId}`, { fullName: user.fullName, departmentId: newId })
       .subscribe({
         next: (res) => {
           this.deptSaving.set(null);
@@ -454,16 +454,6 @@ export class Users {
     this.selectedImportFile.set(null);
   }
 
-  // Initial password applied to every imported employee so they can sign in immediately.
-  // Pre-filled with a sensible default; the admin shares it and asks staff to change it later.
-  readonly initialPassword = signal('Welcome@123');
-
-  get initialPasswordError(): string {
-    const pwd = this.initialPassword();
-    if (pwd && pwd.length < 8) return 'Mật khẩu khởi tạo phải từ 8 ký tự trở lên.';
-    return '';
-  }
-
   // Explains why the confirm button is disabled; empty string means it is enabled.
   get batchConfirmHint(): string {
     if (this.batchExecuting()) return '';
@@ -590,17 +580,12 @@ export class Users {
   }
 
   runDryRunValidation(): void {
-    if (this.initialPasswordError) {
-      this.toast.error(this.initialPasswordError);
-      return;
-    }
     const file = this.selectedImportFile();
     if (file && (file.name.endsWith('.xlsx') || file.name.endsWith('.xls'))) {
       this.batchExecuting.set(true);
       const formData = new FormData();
       formData.append('file', file);
       formData.append('dryRun', 'true');
-      if (this.initialPassword().trim()) formData.append('initialPassword', this.initialPassword().trim());
 
       this.http.post<any>('/api/v1/users/upload-import', formData).subscribe({
         next: (raw) => {
@@ -644,7 +629,6 @@ export class Users {
           email: r.email,
           departmentCode: r.departmentCode,
           role: r.roleCode,
-          password: this.initialPassword().trim() || undefined,
         })),
       })
       .subscribe({
@@ -671,17 +655,12 @@ export class Users {
   }
 
   commitBatchImport(): void {
-    if (this.initialPasswordError) {
-      this.toast.error(this.initialPasswordError);
-      return;
-    }
     const file = this.selectedImportFile();
     if (file && (file.name.endsWith('.xlsx') || file.name.endsWith('.xls'))) {
       this.batchExecuting.set(true);
       const formData = new FormData();
       formData.append('file', file);
       formData.append('dryRun', 'false');
-      if (this.initialPassword().trim()) formData.append('initialPassword', this.initialPassword().trim());
 
       this.http.post<any>('/api/v1/users/upload-import', formData).subscribe({
         next: (raw) => {
@@ -713,7 +692,6 @@ export class Users {
           email: r.email,
           departmentCode: r.departmentCode,
           role: r.roleCode,
-          password: this.initialPassword().trim() || undefined,
         })),
       })
       .subscribe({

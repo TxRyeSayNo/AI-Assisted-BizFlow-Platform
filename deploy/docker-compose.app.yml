@@ -21,6 +21,15 @@ services:
       ResetEmail__FromName: ${ResetEmail__FromName:-BizFlow}
       ResetEmail__FromAddress: ${ResetEmail__FromAddress:-}
       ResetEmail__FrontendOrigin: ${ResetEmail__FrontendOrigin:-}
+      NotificationEmail__Enabled: ${NotificationEmail__Enabled:-${ResetEmail__Enabled:-false}}
+      OpenAI__ApiKey: ${OpenAI__ApiKey:-}
+      OpenAI__Model: ${OpenAI__Model:-gpt-6.2-sol}
+      OpenAI__BaseUrl: ${OpenAI__BaseUrl:-https://api.openai.com/v1}
+      OpenAI__TimeoutSeconds: ${OpenAI__TimeoutSeconds:-90}
+      OpenAI__ApiMode: ${OpenAI__ApiMode:-responses}
+      OpenAI__ReasoningEffort: ${OpenAI__ReasoningEffort:-medium}
+      AI__WorkflowAgent__Enabled: ${AI__WorkflowAgent__Enabled:-true}
+      AI__WorkflowAgent__MaxConcurrency: ${AI__WorkflowAgent__MaxConcurrency:-2}
     depends_on:
       postgres:
         condition: service_healthy

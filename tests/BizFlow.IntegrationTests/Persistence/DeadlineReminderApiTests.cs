@@ -154,6 +154,12 @@ public sealed class DeadlineReminderApiTests(PostgresFixture database)
         var marks = (await created.Content.ReadFromJsonAsync<DeadlineReminderDto[]>())!;
         Assert.Equal([30, 120], marks.Select(m => m.LeadTimeMinutes).Order().ToArray());
         Assert.All(marks, m => Assert.Equal(a.User, m.UserId));
+        Assert.Equal(["Custom:120", "Custom:30"], marks.Select(m => m.TriggerType).Order().ToArray());
+        await using (var verify = database.Create(a.User, a.Tenant))
+        {
+            var deadline = (await verify.WorkTasks.SingleAsync(t => t.Id == a.FutureTaskId)).Deadline!.Value;
+            Assert.All(marks, m => Assert.Equal(deadline.AddMinutes(-m.LeadTimeMinutes), m.RemindAt));
+        }
 
         var read = (await client.GetFromJsonAsync<DeadlineReminderDto[]>($"{Config}?taskId={a.FutureTaskId}"))!;
         Assert.Equal(marks.Length, read.Length);

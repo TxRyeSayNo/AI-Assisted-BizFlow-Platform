@@ -131,6 +131,10 @@ public sealed partial class RobotChatService
                                 result = await taskDetailQuery.GetAsync(ReadId(args, "taskId")!.Value, new(), cancellationToken); break;
                             case "request_details" when requestDetailQuery != null:
                                 result = await requestDetailQuery.GetAsync(ReadId(args, "requestId")!.Value, cancellationToken); break;
+                            case "workflow_status" when workflowRuntime != null:
+                                result = await workflowRuntime.GetAsync(ReadId(args, "requestId")!.Value, cancellationToken); break;
+                            case "workflow_inbox" when workflowRuntime != null:
+                                result = await workflowRuntime.InboxAsync(ReadPage(args), 25, cancellationToken); break;
                             case "notifications": result = await notificationInbox.ListAsync(new NotificationFilter(1, 10), cancellationToken); break;
                             case "profile": result = workspace == null ? null : new { user = CurrentAgentUser(workspace, userId), workspace.Departments, workspace.TimeZone }; break;
                             case "search_memory" when vectorMemoryStore != null: result = await vectorMemoryStore.SearchMemoriesAsync(tenantId, RequiredString(args, "query"), maxResults: 5, cancellationToken: cancellationToken); break;

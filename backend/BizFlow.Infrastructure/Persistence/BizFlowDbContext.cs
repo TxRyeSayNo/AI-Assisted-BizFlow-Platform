@@ -59,6 +59,12 @@ public sealed class BizFlowDbContext(DbContextOptions<BizFlowDbContext> options,
     public DbSet<WebPushSubscription> WebPushSubscriptions => Set<WebPushSubscription>();
     public DbSet<NotificationLog> NotificationLogs => Set<NotificationLog>();
     public DbSet<WorkflowDefinition> Workflows => Set<WorkflowDefinition>();
+    public DbSet<WorkflowInstance> WorkflowInstances => Set<WorkflowInstance>();
+    public DbSet<WorkflowStepExecution> WorkflowExecutions => Set<WorkflowStepExecution>();
+    public DbSet<WorkflowDecision> WorkflowDecisions => Set<WorkflowDecision>();
+    public DbSet<WorkflowParticipant> WorkflowParticipants => Set<WorkflowParticipant>();
+    public DbSet<WorkflowDelegation> WorkflowDelegations => Set<WorkflowDelegation>();
+    public DbSet<WorkflowSlaPause> WorkflowSlaPauses => Set<WorkflowSlaPause>();
     public DbSet<WorkflowVersion> WorkflowVersions => Set<WorkflowVersion>();
     public DbSet<WorkflowStep> WorkflowSteps => Set<WorkflowStep>();
     public DbSet<WorkflowTransition> WorkflowTransitions => Set<WorkflowTransition>();
@@ -73,6 +79,12 @@ public sealed class BizFlowDbContext(DbContextOptions<BizFlowDbContext> options,
     protected override void OnModelCreating(ModelBuilder model)
     {
         model.ApplyConfigurationsFromAssembly(typeof(BizFlowDbContext).Assembly);
+        model.Entity<WorkflowInstance>().HasQueryFilter(x => CurrentUserId != null && CurrentTenantId != null && x.TenantId == CurrentTenantId);
+        model.Entity<WorkflowStepExecution>().HasQueryFilter(x => CurrentUserId != null && CurrentTenantId != null && x.TenantId == CurrentTenantId);
+        model.Entity<WorkflowDecision>().HasQueryFilter(x => CurrentUserId != null && CurrentTenantId != null && x.TenantId == CurrentTenantId);
+        model.Entity<WorkflowParticipant>().HasQueryFilter(x => CurrentUserId != null && CurrentTenantId != null && x.TenantId == CurrentTenantId);
+        model.Entity<WorkflowDelegation>().HasQueryFilter(x => CurrentUserId != null && CurrentTenantId != null && x.TenantId == CurrentTenantId);
+        model.Entity<WorkflowSlaPause>().HasQueryFilter(x => CurrentUserId != null && CurrentTenantId != null && x.TenantId == CurrentTenantId);
         // Default queries fail closed without both authenticated user and tenant context.
         model.Entity<Tenant>().HasQueryFilter(x => CurrentUserId != null && CurrentTenantId != null && x.Id == CurrentTenantId);
         model.Entity<TenantSetting>().HasQueryFilter(x => CurrentUserId != null && CurrentTenantId != null && x.TenantId == CurrentTenantId);
@@ -135,14 +147,15 @@ public sealed class BizFlowDbContext(DbContextOptions<BizFlowDbContext> options,
 
         foreach (var entry in entries)
         {
-            if (entry.State == EntityState.Deleted && entry.Entity is not UserRole and not RolePermission and not ManagementScope and not WorkflowStep and not WorkflowTransition and not WorkflowVersion and not WorkflowDefinition)
+            if (entry.State == EntityState.Deleted && entry.Entity is not UserRole and not RolePermission and not ManagementScope and not WorkflowStep and not WorkflowTransition and not WorkflowVersion and not WorkflowDefinition and not WebPushSubscription)
                 throw new ApplicationFault(FaultKind.Conflict, "PERSISTENCE.HARD_DELETE_DENIED", "Không thể xóa các bản ghi lịch sử trong hệ thống.");
 
             if (entry.State == EntityState.Modified)
             {
                 foreach (var property in new[] { "TenantId", "UserId", "FamilyId", "TokenHash", "CreatedAt", "IsPlatformAdministrator", "IsSystem", "WorkflowId", "WorkflowVersionId", "VersionNo", "BusinessType", "ObjectType", "ObjectId", "AuthorId", "UploadedBy", "ObjectKey" })
                 {
-                    if (entry.Metadata.FindProperty(property) is not null && entry.Property(property).IsModified)
+                    if (entry.Metadata.FindProperty(property) is not null && entry.Property(property).IsModified &&
+                        !(property == "WorkflowVersionId" && entry.Entity is WorkRequest { RuntimeMutation: not null }))
                         throw new ApplicationFault(FaultKind.Conflict, "PERSISTENCE.IMMUTABLE_FIELD", "Không được phép thay đổi thông tin định danh và sở hữu bản ghi.");
                 }
             }
@@ -150,10 +163,13 @@ public sealed class BizFlowDbContext(DbContextOptions<BizFlowDbContext> options,
             switch (entry.Entity)
             {
                 case AuditLog audit:
+                    var workflowAgentEvent = context is IWorkflowAgentContext && audit.ActorType == AuditActorType.AiAgent &&
+                        audit.ActorId is null && audit.Action == "WORKFLOW.AGENT_FINISHED" && audit.ObjectType == "Request" &&
+                        await Requests.AnyAsync(r => r.Id == audit.ObjectId, cancellationToken);
                     var authenticationEvent = audit.ActorType == AuditActorType.System && audit.ActorId is null &&
                         CurrentUserId is not null && audit.ObjectType == "User" && audit.ObjectId == CurrentUserId &&
                         audit.Action is "AUTH.LOGIN_SUCCEEDED" or "AUTH.LOGIN_FAILED" or "AUTH.REFRESH_SUCCEEDED" or "AUTH.REFRESH_DENIED" or "AUTH.REPLAY_DETECTED" or "AUTH.PASSWORD_RESET_REQUESTED" or "AUTH.PASSWORD_RESET_SUCCEEDED" or "AUTH.PROFILE_UPDATED" or "AUTH.PASSWORD_CHANGED" or "AUTH.PASSWORD_CHANGE_FAILED";
-                    if (entry.State != EntityState.Added || audit.TenantId != CurrentTenantId || (audit.ActorId != CurrentUserId && !authenticationEvent))
+                    if (entry.State != EntityState.Added || audit.TenantId != CurrentTenantId || (audit.ActorId != CurrentUserId && !authenticationEvent && !workflowAgentEvent))
                         throw Denied();
                     break;
                 case Department department:
@@ -182,7 +198,9 @@ public sealed class BizFlowDbContext(DbContextOptions<BizFlowDbContext> options,
                     break;
                 case WebPushSubscription sub:
                     AssertTenant(sub.TenantId);
-                    if (sub.UserId != CurrentUserId) throw Denied();
+                    if (sub.UserId != CurrentUserId || !await Users.AnyAsync(u => u.Id == sub.UserId, cancellationToken)) throw Denied();
+                    if (entry.State != EntityState.Added && !await WebPushSubscriptions.AsNoTracking().AnyAsync(s => s.Id == sub.Id && s.UserId == CurrentUserId, cancellationToken)) throw Denied();
+                    if (entry.State == EntityState.Modified && entry.Properties.Any(p => p.IsModified && p.Metadata.Name is not (nameof(WebPushSubscription.P256dh) or nameof(WebPushSubscription.Auth) or nameof(WebPushSubscription.LastActiveAt)))) throw Denied();
                     break;
                 case NotificationLog log:
                     if (CurrentUserId is not null) AssertTenant(log.TenantId);
@@ -432,6 +450,15 @@ public sealed class BizFlowDbContext(DbContextOptions<BizFlowDbContext> options,
                     AssertTenant(request.TenantId);
                     if (entry.State == EntityState.Modified)
                     {
+                        if (request.RuntimeMutation is { } runtime)
+                        {
+                            var runtimeEntry = Entry(runtime);
+                            if (runtime.TenantId != request.TenantId || runtime.RequestId != request.Id ||
+                                runtime.WorkflowVersionId != request.WorkflowVersionId ||
+                                runtimeEntry.State is not (EntityState.Added or EntityState.Modified) ||
+                                entry.Properties.Any(p => p.IsModified && p.Metadata.Name is not (nameof(WorkRequest.Status) or nameof(WorkRequest.WorkflowVersionId) or nameof(WorkRequest.UpdatedAt) or nameof(WorkRequest.ResolvedAt) or nameof(WorkRequest.ClosedAt)))) throw Denied();
+                            break;
+                        }
                         if (request.DeletedAt is not null &&
                             (request.Status is RequestState.Closed or RequestState.Cancelled) &&
                             request.WorkflowMutation is null)
@@ -614,6 +641,52 @@ public sealed class BizFlowDbContext(DbContextOptions<BizFlowDbContext> options,
                     AssertTenant(action.TenantId);
                     if (entry.State != EntityState.Added ||
                         !await AIInteractions.AnyAsync(i => i.Id == action.AIInteractionId, cancellationToken)) throw Denied();
+                    break;
+                case WorkflowInstance instance:
+                    AssertTenant(instance.TenantId);
+                    if (entry.State is not (EntityState.Added or EntityState.Modified) ||
+                        entry.State == EntityState.Modified && entry.Properties.Any(p => p.IsModified && p.Metadata.Name is not ("Status" or "Revision" or "UpdatedAt" or "CompletedAt")) ||
+                        !await Requests.AnyAsync(r => r.Id == instance.RequestId && r.RequesterId == instance.RequesterId, cancellationToken) ||
+                        !await WorkflowVersions.AnyAsync(v => v.Id == instance.WorkflowVersionId, cancellationToken)) throw Denied();
+                    break;
+                case WorkflowStepExecution execution:
+                    AssertTenant(execution.TenantId);
+                    if (entry.State is not (EntityState.Added or EntityState.Modified) ||
+                        entry.State == EntityState.Modified && entry.Properties.Any(p => p.IsModified && p.Metadata.Name is not ("Status" or "Outcome" or "CompletedAt" or "PausedAt" or "DueAt")) ||
+                        !WorkflowInstances.Local.Any(i => i.Id == execution.InstanceId && i.TenantId == execution.TenantId) &&
+                        !await WorkflowInstances.AnyAsync(i => i.Id == execution.InstanceId, cancellationToken)) throw Denied();
+                    break;
+                case WorkflowDecision decision:
+                    AssertTenant(decision.TenantId);
+                    if (entry.State != EntityState.Added || decision.ActorId != CurrentUserId ||
+                        !await WorkflowParticipants.AnyAsync(p => p.StepExecutionId == decision.StepExecutionId && p.UserId == CurrentUserId && p.InstanceId == decision.InstanceId, cancellationToken)) throw Denied();
+                    break;
+                case WorkflowDelegation delegation:
+                    AssertTenant(delegation.TenantId);
+                    if (entry.State is not (EntityState.Added or EntityState.Modified) ||
+                        entry.State == EntityState.Added && delegation.CreatedBy != CurrentUserId ||
+                        entry.State == EntityState.Modified && (delegation.RevokedBy != CurrentUserId || delegation.RevokedAt is null ||
+                            entry.Properties.Any(p => p.IsModified && p.Metadata.Name is not ("RevokedAt" or "RevokedBy"))) ||
+                        !await WorkflowExecutions.AnyAsync(s => s.Id == delegation.StepExecutionId && s.InstanceId == delegation.InstanceId, cancellationToken) ||
+                        !await Users.AnyAsync(u => u.Id == delegation.DelegateId && (entry.State != EntityState.Added || u.Status == UserStatus.Active), cancellationToken)) throw Denied();
+                    break;
+                case WorkflowSlaPause pause:
+                    AssertTenant(pause.TenantId);
+                    if (entry.State is not (EntityState.Added or EntityState.Modified) ||
+                        entry.State == EntityState.Added && pause.PausedBy != CurrentUserId ||
+                        entry.State == EntityState.Modified && (pause.ResumedBy != CurrentUserId || pause.ResumedAt is null ||
+                            entry.Properties.Any(p => p.IsModified && p.Metadata.Name is not ("ResumedAt" or "ResumedBy" or "DueAtAfter"))) ||
+                        !await WorkflowExecutions.AnyAsync(s => s.Id == pause.StepExecutionId && s.InstanceId == pause.InstanceId, cancellationToken)) throw Denied();
+                    break;
+                case WorkflowParticipant participant:
+                    AssertTenant(participant.TenantId);
+                    var parentExecution = WorkflowExecutions.Local.FirstOrDefault(e => e.Id == participant.StepExecutionId) ??
+                        await WorkflowExecutions.SingleOrDefaultAsync(e => e.Id == participant.StepExecutionId, cancellationToken);
+                    if (entry.State != EntityState.Added || parentExecution is null || parentExecution.InstanceId != participant.InstanceId ||
+                        parentExecution.TenantId != participant.TenantId ||
+                        (!parentExecution.Candidates().Contains(participant.UserId) &&
+                         !await WorkflowDelegations.AnyAsync(d => d.StepExecutionId == participant.StepExecutionId && d.DelegateId == participant.UserId, cancellationToken)) ||
+                        !await Users.AnyAsync(u => u.Id == participant.UserId && u.Status == UserStatus.Active, cancellationToken)) throw Denied();
                     break;
                 case AiVectorMemory memory:
                     AssertTenant(memory.TenantId);

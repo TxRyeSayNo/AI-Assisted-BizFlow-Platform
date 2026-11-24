@@ -54,6 +54,7 @@ public interface IWorkflowRuntimeEngine
 
 public sealed class WorkflowExecutionEngine(IWorkflowLibraryStore store) : IWorkflowRuntimeEngine
 {
+    public static WorkflowStepResolution DescribeNode(JsonElement node, Guid? requesterId, Guid? departmentId) => BuildResolution(node, requesterId, departmentId);
     public async Task<WorkflowStepResolution> StartWorkflowAsync(
         Guid tenantId,
         Guid workflowVersionId,
@@ -244,7 +245,7 @@ public sealed class WorkflowExecutionEngine(IWorkflowLibraryStore store) : IWork
             }
 
             // Arrived at operational node or END
-            return BuildResolution(targetNode, requesterUserId, requesterDepartmentId);
+            return BuildResolution(WorkflowApprovalMatrix.Resolve(targetNode, contextPayload), requesterUserId, requesterDepartmentId);
         }
 
         throw new ApplicationFault(FaultKind.Conflict, "WORKFLOW.MAX_HOPS_EXCEEDED", "Vượt quá số lượt chuyển tiếp tối đa cho phép trên quy trình.");

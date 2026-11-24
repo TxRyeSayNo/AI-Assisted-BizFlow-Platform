@@ -16,7 +16,8 @@ public sealed record SubmitCompanyRegistrationRequest(
     string ContactEmail,
     string ContactPhone,
     string? EvidenceDocumentKey = null,
-    string? EvidenceDocumentFileName = null);
+    string? EvidenceDocumentFileName = null,
+    string? ResubmissionToken = null);
 
 public sealed record SubmitCompanyRegistrationResult(
     Guid CompanyId,
@@ -36,7 +37,7 @@ public sealed record ApproveCompanyRegistrationRequest(
     string AdminEmployeeCode,
     string AdminEmail,
     string AdminFullName,
-    string AdminPassword,
+    string? AdminPassword = null,
     string TimeZone = "UTC");
 
 public sealed record ApproveCompanyRegistrationResult(
@@ -54,6 +55,8 @@ public sealed record UpdateCompanyStatusResult(Guid CompanyId, string Status);
 
 public interface ICompanyProvisioningStore
 {
+    Task<SubmitCompanyRegistrationResult> ResubmitRegistrationAsync(Company company, string token, CancellationToken ct) => throw new NotSupportedException();
+    Task<SubmitCompanyRegistrationResult> GetResubmissionAsync(string token, CancellationToken ct) => throw new NotSupportedException();
     Task<bool> CompanyCodeExistsAsync(string code, CancellationToken cancellationToken);
     Task<bool> CompanyEmailExistsAsync(string email, CancellationToken cancellationToken);
     Task<bool> TenantKeyExistsAsync(string tenantKey, CancellationToken cancellationToken);
@@ -108,9 +111,9 @@ public sealed class CompanyRegistrationManagement(
         var normalizedCode = request.Code.Trim().ToUpperInvariant();
         var normalizedEmail = request.ContactEmail.Trim().ToUpperInvariant();
 
-        if (await store.CompanyCodeExistsAsync(normalizedCode, cancellationToken))
+        if (request.ResubmissionToken is null && await store.CompanyCodeExistsAsync(normalizedCode, cancellationToken))
             throw new ApplicationFault(FaultKind.Conflict, "TENANT.CODE_IN_USE", "A company registration with this code already exists.");
-        if (await store.CompanyEmailExistsAsync(normalizedEmail, cancellationToken))
+        if (request.ResubmissionToken is null && await store.CompanyEmailExistsAsync(normalizedEmail, cancellationToken))
             throw new ApplicationFault(FaultKind.Conflict, "TENANT.EMAIL_IN_USE", "A company registration with this contact email already exists.");
 
         var now = clock.GetUtcNow();
@@ -124,7 +127,9 @@ public sealed class CompanyRegistrationManagement(
             now,
             request.EvidenceDocumentKey,
             request.EvidenceDocumentFileName);
-        return await store.SubmitRegistrationAsync(company, cancellationToken);
+        return request.ResubmissionToken is null
+            ? await store.SubmitRegistrationAsync(company, cancellationToken)
+            : await store.ResubmitRegistrationAsync(company, request.ResubmissionToken, cancellationToken);
     }
 
     public async Task<ApproveCompanyRegistrationResult> ApproveAsync(Guid companyId, ApproveCompanyRegistrationRequest request, CancellationToken cancellationToken)
@@ -144,8 +149,6 @@ public sealed class CompanyRegistrationManagement(
             throw new ApplicationFault(FaultKind.Validation, "VALIDATION.FAILED", "A valid admin email is required.");
         if (string.IsNullOrWhiteSpace(request.AdminFullName) || request.AdminFullName.Trim().Length > 200)
             throw new ApplicationFault(FaultKind.Validation, "VALIDATION.FAILED", "Admin full name is required and must not exceed 200 characters.");
-        if (string.IsNullOrWhiteSpace(request.AdminPassword) || request.AdminPassword.Length < 8)
-            throw new ApplicationFault(FaultKind.Validation, "VALIDATION.FAILED", "Admin password must be at least 8 characters long.");
 
         var timeZone = string.IsNullOrWhiteSpace(request.TimeZone) ? "UTC" : request.TimeZone.Trim();
         if (timeZone != "UTC" && !TimeZoneInfo.TryConvertIanaIdToWindowsId(timeZone, out _))
@@ -156,7 +159,8 @@ public sealed class CompanyRegistrationManagement(
             throw new ApplicationFault(FaultKind.Conflict, "TENANT.KEY_IN_USE", "This workspace tenant key is already in use.");
 
         var dummyUser = BizFlow.Domain.Organization.UserAccount.CreatePlatformAdministrator("TEMP", "temp@example.invalid", "Temp", "placeholder", clock.GetUtcNow());
-        var passwordHash = credentialVerifier.Hash(dummyUser, request.AdminPassword);
+        // Legacy AdminPassword input is ignored. No administrator knows the initial credential.
+        var passwordHash = credentialVerifier.Hash(dummyUser, Convert.ToBase64String(System.Security.Cryptography.RandomNumberGenerator.GetBytes(48)));
 
         var now = clock.GetUtcNow();
         return await store.ApproveAsync(

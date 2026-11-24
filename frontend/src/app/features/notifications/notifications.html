@@ -10,6 +10,8 @@
     <span>{{ 'notifications.title' | translate: 'Notifications' }}</span>
   </nav>
   <h1>{{ 'notifications.title' | translate: 'Notifications' }}</h1>
+  <bf-browser-push-settings />
+  <bf-notification-preferences />
   <p role="status" aria-label="Live notification connection">
     @switch (updates.status()) {
       @case ('live') {

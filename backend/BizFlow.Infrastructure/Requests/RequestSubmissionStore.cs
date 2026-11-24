@@ -11,7 +11,8 @@ using Microsoft.EntityFrameworkCore.Storage;
 
 namespace BizFlow.Infrastructure.Requests;
 
-public sealed class RequestSubmissionStore(BizFlowDbContext db, ITenantContext context) : IRequestSubmissionStore
+public sealed class RequestSubmissionStore(BizFlowDbContext db, ITenantContext context,
+    BizFlow.Infrastructure.Workflows.WorkflowRuntimeStore? runtime = null) : IRequestSubmissionStore
 {
     public async Task<IRequestSubmissionTransaction> BeginAsync(Guid tenantId, Guid actorId, Guid requestId, string? keyHash, CancellationToken cancellationToken)
     {
@@ -33,7 +34,7 @@ public sealed class RequestSubmissionStore(BizFlowDbContext db, ITenantContext c
                 SELECT *, xmin FROM "Request" WHERE "TenantId"={tenantId} AND "RequestId"={requestId} AND "DeletedAt" IS NULL FOR UPDATE
                 """).SingleOrDefaultAsync(cancellationToken);
 
-            return new SubmissionTransaction(db, transaction, tenantId, actorId, keyHash, request);
+            return new SubmissionTransaction(db, transaction, tenantId, actorId, keyHash, request, runtime);
         }
         catch
         {
@@ -48,7 +49,8 @@ public sealed class RequestSubmissionStore(BizFlowDbContext db, ITenantContext c
         Guid tenantId,
         Guid actorId,
         string? keyHash,
-        WorkRequest? request) : IRequestSubmissionTransaction
+        WorkRequest? request,
+        BizFlow.Infrastructure.Workflows.WorkflowRuntimeStore? runtime) : IRequestSubmissionTransaction
     {
         public WorkRequest? Request => request;
 
@@ -83,7 +85,9 @@ public sealed class RequestSubmissionStore(BizFlowDbContext db, ITenantContext c
             db.AuditLogs.Add(audit);
             db.Notifications.Add(notification);
             await db.SaveChangesAsync(cancellationToken);
+            if (runtime is not null) await runtime.StartSubmittedAsync(request, cancellationToken);
             await transaction.CommitAsync(cancellationToken);
+            if (runtime is not null) await runtime.PublishPendingAsync(request.Id, cancellationToken);
         }
 
         public ValueTask DisposeAsync() => transaction.DisposeAsync();

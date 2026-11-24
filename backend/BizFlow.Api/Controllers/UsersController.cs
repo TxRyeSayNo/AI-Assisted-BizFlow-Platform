@@ -50,10 +50,7 @@ public sealed class UsersController(
 
         using var stream = file.OpenReadStream();
         var rows = EmployeeFileProcessing.ParseFile(stream, file.FileName);
-        // An initial password lets the imported accounts sign in immediately; rows that already
-        // carry their own password keep it. Without a password the account stays pending activation.
-        if (!string.IsNullOrWhiteSpace(initialPassword))
-            rows = rows.Select(r => string.IsNullOrWhiteSpace(r.Password) ? r with { Password = initialPassword } : r).ToList();
+        // Legacy password columns and initialPassword are ignored. Each employee sets their own password by email invitation.
         return await management.BatchImportAsync(new(rows, dryRun), cancellationToken);
     }
 

@@ -101,9 +101,7 @@
 
       @if (recipients(); as rec) {
         <mat-form-field appearance="outline">
-          <mat-label>{{
-            'requestCreate.recipient' | translate: 'Nơi nhận (tùy chọn)'
-          }}</mat-label>
+          <mat-label>{{ 'requestCreate.recipient' | translate: 'Nơi nhận (tùy chọn)' }}</mat-label>
           <mat-select formControlName="recipient">
             <mat-option value="">— Để quản lý định tuyến —</mat-option>
             @if (rec.departments.length) {
@@ -131,6 +129,11 @@
         </p>
       }
 
+      <bf-service-request-form
+        [serviceId]="form.controls.serviceId.value"
+        (valueChanged)="formData = $event"
+        (validChanged)="serviceFormValid.set($event)"
+      />
       <mat-checkbox formControlName="submitImmediately" color="primary">
         {{
           'requestCreate.submitImm'

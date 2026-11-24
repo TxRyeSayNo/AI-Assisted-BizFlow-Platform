@@ -224,7 +224,7 @@ public sealed class BulkEmployeeImportTests
     }
 
     [Fact]
-    public async Task TestB4_MissingPassword_GeneratesSecureActivationTokenAndEnforcesPasswordChange()
+    public async Task TestB4_ImportedAccountsRequirePasswordSetupWithoutReturningCredentials()
     {
         var rows = new List<BatchImportUserRow>
         {
@@ -235,8 +235,7 @@ public sealed class BulkEmployeeImportTests
 
         Assert.Equal(1, result.TotalImported);
         var item = result.Items[0];
-        Assert.NotNull(item.ActivationToken);
-        Assert.True(item.ActivationToken.Length >= 8);
+        Assert.Null(item.ActivationToken);
 
         var created = _store.CreatedUsers[0].user;
         Assert.True(created.MustChangePassword);

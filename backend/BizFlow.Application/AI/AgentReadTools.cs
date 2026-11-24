@@ -21,6 +21,11 @@ public sealed partial class RobotChatService
             tools.Add(new { name, description, parameters = doc.RootElement.Clone() });
         }
         const string search = """{"type":"object","properties":{"page":{"type":"integer","minimum":1},"search":{"type":"string"},"status":{"type":"string"},"priority":{"type":"string","enum":["LOW","MEDIUM","HIGH"]}}}""";
+        if (workflowRuntime != null)
+        {
+            Add("workflow_status", "Read the authorized request's pinned workflow, active steps, responsible people, deadlines, form fields, human decisions and AI step results with grounded evidence. Distinguish queued, completed and human-review AI runs; never claim a recommendation is an approval.", """{"type":"object","properties":{"requestId":{"type":"string","format":"uuid"}},"required":["requestId"]}""");
+            Add("workflow_inbox", "Read a page of workflow steps currently assigned to this user. Never interpret one page as the entire company.", """{"type":"object","properties":{"page":{"type":"integer","minimum":1}}}""");
+        }
         Add("list_tasks", "Search accessible tasks by title; includes actual IDs, deadlines, assignments and pagination. Status is an uppercase state code. Never bypasses user access scope.", search);
         if (requestListQuery != null) Add("list_requests", "Search accessible business requests by title and state; returns real IDs for routing or details. Respects request visibility.", search);
         if (userDirectoryQuery != null) Add("list_people", "Resolve employee names to IDs within the authorized directory scope. For ambiguity return choices. No email addresses are exposed.", """{"type":"object","properties":{"search":{"type":"string"},"departmentId":{"type":"string","format":"uuid"},"page":{"type":"integer","minimum":1}}}""");

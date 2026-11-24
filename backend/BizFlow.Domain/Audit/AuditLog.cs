@@ -26,6 +26,25 @@ public sealed class AuditLog
     public DateTimeOffset CreatedAt { get; private set; }
     private AuditLog() { }
 
+    public static AuditLog WorkflowAgentChanged(Guid tenantId, Guid requestId, string action, object details, DateTimeOffset now) => new()
+    {
+        Id = Guid.CreateVersion7(), TenantId = tenantId, ActorType = AuditActorType.AiAgent,
+        Action = action, ObjectType = "Request", ObjectId = requestId,
+        AfterJson = JsonSerializer.Serialize(details), CreatedAt = now.ToUniversalTime()
+    };
+
+    public static AuditLog WorkflowRuntimeChanged(Guid tenantId, Guid actorId, Guid requestId, string action, object details, DateTimeOffset now) => new()
+    {
+        Id = Guid.CreateVersion7(), TenantId = EntityRules.Id(tenantId, nameof(tenantId)), ActorId = EntityRules.Id(actorId, nameof(actorId)),
+        ActorType = AuditActorType.User, ObjectType = "Request", ObjectId = EntityRules.Id(requestId, nameof(requestId)),
+        Action = action, AfterJson = JsonSerializer.Serialize(details), CreatedAt = now.ToUniversalTime()
+    };
+    public static AuditLog WorkflowDeadlineRaised(Guid tenantId, Guid systemActorId, Guid requestId, object details, DateTimeOffset now) => new()
+    {
+        Id=Guid.CreateVersion7(),TenantId=EntityRules.Id(tenantId,nameof(tenantId)),ActorId=systemActorId,ActorType=AuditActorType.System,
+        Action="WORKFLOW.DEADLINE_RAISED",ObjectType="Request",ObjectId=requestId,AfterJson=JsonSerializer.Serialize(details),CreatedAt=now.ToUniversalTime()
+    };
+
     public static AuditLog TaskResultSubmitted(WorkTask task, TaskAssignment assignment, TaskResult result, string? keyHash, string? fingerprint)
     {
         if (task.Status != TaskState.Submitted || task.WorkflowMutation is not { } mutation ||

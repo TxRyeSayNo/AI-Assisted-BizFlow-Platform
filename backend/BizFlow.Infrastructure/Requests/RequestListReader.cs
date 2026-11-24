@@ -12,6 +12,7 @@ internal static class RequestReadQueries
         var managed = scope.ManagedDepartmentIds.ToArray();
         return db.Requests.AsNoTracking().Where(r => r.TenantId == scope.TenantId &&
             (scope.Tenant ||
+             db.WorkflowInstances.Any(i => i.RequestId == r.Id && db.WorkflowParticipants.Any(p => p.InstanceId == i.Id && p.UserId == scope.UserId)) ||
              (scope.Own && r.RequesterId == scope.UserId) ||
              (scope.Managed && db.Users.Any(u => u.TenantId == scope.TenantId && u.Id == r.RequesterId &&
                  u.DepartmentId != null && managed.Contains(u.DepartmentId.Value)))));

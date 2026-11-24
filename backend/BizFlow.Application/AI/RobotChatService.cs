@@ -31,7 +31,8 @@ public sealed partial class RobotChatService(
     BizFlow.Application.Organization.UserDirectoryQuery? userDirectoryQuery = null,
     BizFlow.Application.Requests.RequestListQuery? requestListQuery = null,
     TaskDetailQuery? taskDetailQuery = null,
-    BizFlow.Application.Requests.RequestDetailQuery? requestDetailQuery = null) : IRobotChatService
+    BizFlow.Application.Requests.RequestDetailQuery? requestDetailQuery = null,
+    BizFlow.Application.Workflows.IWorkflowRuntimeStore? workflowRuntime = null) : IRobotChatService
 {
     public async Task<RobotChatResponse> ProcessMessageAsync(
         RobotChatCommand command,

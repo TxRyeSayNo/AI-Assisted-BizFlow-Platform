@@ -22,6 +22,8 @@ internal sealed class RequestModelConfiguration : IEntityTypeConfiguration<WorkR
         });
         b.HasKey(r => r.Id); b.Property(r => r.Id).HasColumnName("RequestId");
         b.Ignore(r => r.WorkflowMutation);
+        b.Ignore(r => r.RuntimeMutation);
+        b.Property(r => r.FormDataJson).HasColumnType("jsonb").HasDefaultValue("{}");
         b.Property(r => r.TenantId).IsConcurrencyToken(); b.Property(r => r.Title).HasMaxLength(300);
         // LOW is enum zero and must not be mistaken for an unset value.
         b.Property(r => r.Priority).HasDefaultValue(RequestPriority.Medium).HasSentinel(RequestPriority.Medium);

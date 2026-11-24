@@ -12,8 +12,18 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ApprovalMatrix, WorkflowApprovalMatrixEditor } from './workflow-approval-matrix';
+import { WorkflowAgentEditor, WorkflowAgentPolicy } from './workflow-agent-editor';
 
-export type NodeType = 'START' | 'DEPARTMENT' | 'APPROVAL' | 'DECISION' | 'CONFIRMATION' | 'END';
+export type NodeType =
+  | 'START'
+  | 'DEPARTMENT'
+  | 'APPROVAL'
+  | 'DECISION'
+  | 'CONFIRMATION'
+  | 'END'
+  | 'PARALLEL_SPLIT'
+  | 'PARALLEL_JOIN';
 
 export interface DesignerCondition {
   id: string;
@@ -49,7 +59,10 @@ export interface DesignerNode {
     | 'DEPARTMENT_MANAGER'
     | 'DIRECT_MANAGER'
     | 'SPECIFIC_USER'
-    | 'REQUESTER';
+    | 'REQUESTER'
+    | 'MATRIX';
+  approvalMatrix?: ApprovalMatrix;
+  agent?: WorkflowAgentPolicy;
   specificUserId?: string;
   specificUserName?: string;
   description?: string;
@@ -102,7 +115,7 @@ interface HistorySnapshot {
 @Component({
   selector: 'bf-workflow-designer',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, WorkflowApprovalMatrixEditor, WorkflowAgentEditor],
   templateUrl: './workflow-designer.html',
   styleUrls: ['./workflow-designer.scss'],
 })
@@ -118,6 +131,7 @@ export class WorkflowDesigner implements OnInit {
   @Input() departments: LookupItem[] = [];
   @Input() roles: LookupItem[] = [];
   @Input() users: UserLookupItem[] = [];
+  @Input() formFields: { key: string; label: string; type: string; required: boolean }[] = [];
 
   @Input() set initialDefinition(def: Record<string, unknown> | null) {
     if (def && typeof def === 'object') {
@@ -236,6 +250,18 @@ export class WorkflowDesigner implements OnInit {
       updatedAt: new Date().toISOString(),
     });
   }
+  setApprovalMethod(method: DesignerNode['assignmentMethod']) {
+    this.updateSelectedNodeProps({
+      assignmentMethod: method,
+      approvalMatrix:
+        method === 'MATRIX'
+          ? this.selectedNode()?.approvalMatrix || {
+              amountField: '',
+              tiers: [{ upperLimit: null, roleId: '', policy: 'SINGLE' }],
+            }
+          : undefined,
+    });
+  }
 
   private emitChange() {
     this.definitionChange.emit(this.getDefinitionJson());
@@ -310,6 +336,8 @@ export class WorkflowDesigner implements OnInit {
       DECISION: 'Phân loại điều kiện',
       CONFIRMATION: 'Xác nhận kết quả',
       END: 'Kết thúc quy trình',
+      PARALLEL_SPLIT: 'Tách việc song song',
+      PARALLEL_JOIN: 'Chờ đủ các nhánh',
     };
 
     const posX = x ?? Math.round((300 - this.panX()) / this.zoom());

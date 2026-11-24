@@ -355,12 +355,10 @@ interface RegistrationPage {
                 <input matInput formControlName="adminEmployeeCode" />
               </mat-form-field>
 
-              <mat-form-field appearance="outline">
-                <mat-label>{{
-                  'platform.adminPasswordLabel' | translate: 'Mật khẩu Khởi tạo Ban đầu'
-                }}</mat-label>
-                <input matInput formControlName="adminPassword" type="password" />
-              </mat-form-field>
+              <p>
+                Quản trị viên doanh nghiệp sẽ nhận email có workspace-key và liên kết tự đặt mật
+                khẩu. Không cấp mật khẩu mặc định.
+              </p>
 
               <div class="modal-actions">
                 <button
@@ -482,7 +480,6 @@ export class CompanyRegistrations {
     adminEmployeeCode: ['ADMIN01', [Validators.required, Validators.maxLength(50)]],
     adminEmail: ['', [Validators.required, Validators.email]],
     adminFullName: ['', [Validators.required, Validators.maxLength(200)]],
-    adminPassword: ['Password123!', [Validators.required, Validators.minLength(8)]],
     timeZone: ['UTC'],
   });
 
@@ -577,7 +574,6 @@ export class CompanyRegistrations {
       adminEmployeeCode: 'ADMIN01',
       adminEmail: item.contactEmail,
       adminFullName: item.contactPersonName || `${item.name} Administrator`,
-      adminPassword: 'Password123!',
       timeZone: 'UTC',
     });
     this.approvingItem.set(item);

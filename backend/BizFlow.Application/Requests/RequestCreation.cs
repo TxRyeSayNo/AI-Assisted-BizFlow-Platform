@@ -16,7 +16,8 @@ public sealed record CreateRequestCommand(
     string Description,
     string? Priority = null,
     Guid? ParentRequestId = null,
-    bool SubmitImmediately = false);
+    bool SubmitImmediately = false,
+    JsonElement? FormData = null);
 
 public sealed record RequestCreatedView(
     Guid RequestId,
@@ -108,7 +109,8 @@ public sealed class RequestCreation(
             description = prototype.Description,
             priority = priorityCode,
             parentRequestId = prototype.ParentRequestId,
-            submitImmediately = input.SubmitImmediately
+            submitImmediately = input.SubmitImmediately,
+            formData = input.FormData
         }));
 
         await using var transaction = await store.BeginAsync(tenantId, actorId, keyHash, cancellationToken);
@@ -138,10 +140,16 @@ public sealed class RequestCreation(
                 prototype.Title, prototype.Description, now, priority, prototype.ParentRequestId);
         }
 
+        if (input.FormData.HasValue)
+        {
+            if (input.FormData.Value.ValueKind != JsonValueKind.Object || input.FormData.Value.GetRawText().Length > 64000)
+                throw new ApplicationFault(FaultKind.Validation, "WORKFLOW.FORM_INVALID", "Dữ liệu biểu mẫu không hợp lệ.");
+            request.SetFormData(input.FormData.Value.GetRawText());
+        }
         var audit = AuditLog.RequestCreated(request, now, keyHash, keyHash is null ? null : fingerprint);
         await transaction.CommitAsync(request, audit, cancellationToken);
 
-        return new(request.Id, request.Title, RequestListCodes.State(request.Status),
+        return new(request.Id, request.Title, input.SubmitImmediately ? "SUBMITTED" : "DRAFT",
             RequestListCodes.Priority(request.Priority), request.ServiceId, request.CategoryId, request.CreatedAt);
     }
 }

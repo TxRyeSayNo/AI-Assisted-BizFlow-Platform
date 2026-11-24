@@ -12,6 +12,8 @@ import { I18nService } from '../../core/i18n/i18n.service';
 import { InboxUpdates } from '../../core/notifications/inbox-updates';
 import { NotificationCountService } from '../../core/notifications/notification-count.service';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
+import { BrowserPushSettings } from './browser-push-settings';
+import { NotificationPreferences } from './notification-preferences';
 
 export interface NotificationRow {
   notificationId: string;
@@ -35,6 +37,8 @@ export interface NotificationPage {
   selector: 'bf-notifications',
   providers: [InboxUpdates],
   imports: [
+    BrowserPushSettings,
+    NotificationPreferences,
     ReadableDatesPipe,
     RouterLink,
     DatePipe,

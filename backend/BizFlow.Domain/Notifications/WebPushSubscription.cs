@@ -37,4 +37,11 @@ public sealed class WebPushSubscription
     }
 
     public void UpdateActivity(DateTimeOffset now) => LastActiveAt = now.ToUniversalTime();
+
+    public void RefreshKeys(string p256dh, string auth, DateTimeOffset now)
+    {
+        P256dh = EntityRules.Text(p256dh, 250, nameof(p256dh));
+        Auth = EntityRules.Text(auth, 150, nameof(auth));
+        UpdateActivity(now);
+    }
 }

@@ -16,7 +16,6 @@ namespace BizFlow.Infrastructure.AI;
 public sealed class AgentMeetingCoordinator(
     BizFlowDbContext db,
     INotificationUpdates notificationUpdates,
-    IEmailNotificationDispatcher emailDispatcher,
     ILogger<AgentMeetingCoordinator> logger,
     TimeProvider clock) : IAgentMeetingCoordinator
 {
@@ -92,7 +91,9 @@ public sealed class AgentMeetingCoordinator(
         // Tenant admins for ultimate fallback
         var adminUsers = await db.Users
             .AsNoTracking()
-            .Where(u => u.TenantId == tenantId && u.IsPlatformAdministrator && u.Status == UserStatus.Active)
+            .Where(u => u.TenantId == tenantId && u.Status == UserStatus.Active &&
+                db.UserRoles.Any(ur => ur.UserId == u.Id &&
+                    db.Roles.Any(r => r.Id == ur.RoleId && r.IsSystem && r.Name == "COMPANY_ADMIN")))
             .ToListAsync(cancellationToken);
 
         foreach (var dept in matchedDepts)
@@ -139,27 +140,14 @@ public sealed class AgentMeetingCoordinator(
             var notif = Notification.Create(
                 tenantId: tenantId,
                 recipientId: contact.ManagerUserId,
-                type: NotificationEvent.ApprovalRequired,
+                type: NotificationEvent.MeetingInvitation,
                 title: $"[Thư mời họp] {meetingTopic}",
                 content: $"Kính gửi {contact.ManagerName} ({contact.DepartmentName}),\n\nQuản trị viên đã triệu tập cuộc họp doanh nghiệp:\n• Thời gian: {meetingTime}\n• Địa điểm: {meetingLocation}\n• Nội dung: {meetingTopic}{logisticsNote}\n\nYêu cầu Quản lý đơn vị chuẩn bị tài liệu báo cáo và phân công nhân sự tham gia đầy đủ đúng giờ.",
                 idempotencyKey: $"meet-{tenantId:N}-{contact.ManagerUserId:N}-{now.Ticks}");
 
             db.Notifications.Add(notif);
 
-            try
-            {
-                await emailDispatcher.SendDeadlineEmailAsync(
-                    tenantId,
-                    contact.ManagerUserId,
-                    $"[Thư mời họp] {meetingTopic} - {meetingTime} tại {meetingLocation}",
-                    null,
-                    "MEETING_INVITATION",
-                    cancellationToken);
-            }
-            catch (Exception ex)
-            {
-                logger.LogWarning(ex, "Could not send email invitation to {Email}", contact.ManagerEmail);
-            }
+            // Email is enqueued atomically by the Notification trigger and sent only after commit.
         }
 
         await db.SaveChangesAsync(cancellationToken);
@@ -185,8 +173,9 @@ public sealed class AgentMeetingCoordinator(
 
         return new MeetingDispatchResultDto(
             InAppNotificationsSent: uniqueContacts.Count,
-            EmailsSent: uniqueContacts.Count,
-            Recipients: uniqueContacts);
+            EmailsSent: 0,
+            Recipients: uniqueContacts,
+            EmailsQueued: uniqueContacts.Count);
     }
 }
 

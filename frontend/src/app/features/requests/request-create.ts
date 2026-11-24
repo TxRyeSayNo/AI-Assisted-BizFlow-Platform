@@ -10,6 +10,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { Router, RouterLink } from '@angular/router';
 import { SessionService } from '../../core/auth/session';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
+import { ServiceRequestForm } from '../workflows/service-request-form';
 
 interface CategoryOption {
   serviceCategoryId: string;
@@ -18,6 +19,7 @@ interface CategoryOption {
 }
 
 interface ServiceOption {
+  activeWorkflowVersionId?: string | null;
   serviceId: string;
   name: string;
   status: string;
@@ -41,11 +43,14 @@ interface RecipientOptions {
     MatSelectModule,
     RouterLink,
     TranslatePipe,
+    ServiceRequestForm,
   ],
   templateUrl: './request-create.html',
   styleUrls: ['../organization/departments.scss', '../tasks/task-editor.scss'],
 })
 export class RequestCreate implements OnInit {
+  formData: Record<string, string | number> = {};
+  readonly serviceFormValid = signal(false);
   readonly session = inject(SessionService);
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
@@ -165,12 +170,16 @@ export class RequestCreate implements OnInit {
   save() {
     if (this.busy() || this.done() || !this.session.hasPermission('requests.create')) return;
 
-    if (this.form.invalid) {
+    if (this.form.invalid || !this.serviceFormValid()) {
       this.form.markAllAsTouched();
       return;
     }
 
     const value = this.form.getRawValue();
+    if (!this.serviceFormValid()) {
+      this.error.set('Vui lòng điền đủ thông tin biểu mẫu dịch vụ.');
+      return;
+    }
     const payload = {
       serviceId: value.serviceId,
       categoryId: value.categoryId,
@@ -178,6 +187,7 @@ export class RequestCreate implements OnInit {
       description: value.description.trim() || null,
       priority: value.priority,
       submitImmediately: value.submitImmediately,
+      formData: this.formData,
     };
 
     this.busy.set(true);
@@ -198,7 +208,11 @@ export class RequestCreate implements OnInit {
           }
           // Routing to a chosen recipient only applies to a submitted request, not a draft.
           const value = this.form.getRawValue();
-          if (value.submitImmediately && value.recipient) {
+          if (
+            value.submitImmediately &&
+            value.recipient &&
+            !this.services().find((s) => s.serviceId === value.serviceId)?.activeWorkflowVersionId
+          ) {
             this.sendToRecipient(result.requestId);
           } else {
             this.done.set(true);

@@ -28,7 +28,13 @@ import { ToastService } from '../../core/toast/toast.service';
       <main id="main-content" class="reset-content" tabindex="-1">
         <section class="auth-card" aria-labelledby="reset-title">
           <a class="wordmark reset-brand" routerLink="/login" aria-label="BizFlow">
-            <img class="brand-mark" src="/assets/brand/bizflow-logo.png" alt="" width="40" height="40" /><span>BizFlow</span>
+            <img
+              class="brand-mark"
+              src="/assets/brand/bizflow-logo.png"
+              alt=""
+              width="40"
+              height="40"
+            /><span>BizFlow</span>
           </a>
           <h1 id="reset-title">{{ 'reset.title' | translate: 'Đặt lại mật khẩu mới' }}</h1>
           @if (complete()) {
@@ -167,6 +173,11 @@ export class ResetPassword {
     confirmPassword: ['', [Validators.required, Validators.maxLength(1024)]],
   });
   constructor() {
+    const invitation = new URLSearchParams(inject(ActivatedRoute).snapshot.fragment ?? '');
+    this.form.patchValue({
+      tenantKey: invitation.get('tenantKey') ?? '',
+      identifier: invitation.get('identifier') ?? '',
+    });
     // Fragments never reach the server; remove the token from visible browser history immediately.
     inject(Location).replaceState('/reset-password');
 

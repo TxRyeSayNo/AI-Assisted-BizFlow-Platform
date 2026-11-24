@@ -41,7 +41,8 @@ public sealed class RequestsController(
         string Description,
         string? Priority,
         Guid? ParentRequestId,
-        bool? SubmitImmediately);
+        bool? SubmitImmediately,
+        System.Text.Json.JsonElement? FormData = null);
 
     [JsonUnmappedMemberHandling(JsonUnmappedMemberHandling.Disallow)]
     public sealed record RouteRequestDto(
@@ -77,7 +78,7 @@ public sealed class RequestsController(
             throw new ApplicationFault(FaultKind.Validation, "IDEMPOTENCY.INVALID_KEY", "Supply at most one Idempotency-Key header.");
 
         var result = await creation.CreateAsync(
-            new(input.ServiceId, input.CategoryId, input.Title, input.Description, input.Priority, input.ParentRequestId, input.SubmitImmediately ?? false),
+            new(input.ServiceId, input.CategoryId, input.Title, input.Description, input.Priority, input.ParentRequestId, input.SubmitImmediately ?? false, input.FormData),
             keys.Count == 0 ? null : keys[0],
             cancellationToken);
 

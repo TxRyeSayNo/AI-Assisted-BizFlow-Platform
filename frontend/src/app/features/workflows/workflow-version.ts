@@ -9,6 +9,8 @@ import { Subscription } from 'rxjs';
 import { SessionService } from '../../core/auth/session';
 import type { WorkflowRow } from './workflows';
 import { WorkflowDesigner, LookupItem, UserLookupItem } from './workflow-designer';
+import { WorkflowFormEditor } from './workflow-form-editor';
+import { ServiceFormField } from './service-request-form';
 
 export interface WorkflowVersionView {
   workflowId: string;
@@ -79,7 +81,15 @@ export interface WorkflowDraftGraphDto {
 @Component({
   selector: 'bf-workflow-version',
   standalone: true,
-  imports: [CommonModule, RouterLink, MatButtonModule, DatePipe, FormsModule, WorkflowDesigner],
+  imports: [
+    CommonModule,
+    RouterLink,
+    MatButtonModule,
+    DatePipe,
+    FormsModule,
+    WorkflowDesigner,
+    WorkflowFormEditor,
+  ],
   templateUrl: './workflow-version.html',
   styleUrls: ['../organization/departments.scss', './workflows.scss'],
 })
@@ -96,6 +106,10 @@ export class WorkflowVersion {
 
   readonly session = inject(SessionService);
   readonly version = signal<WorkflowVersionView | null>(null);
+  readonly formFields = signal<ServiceFormField[]>([]);
+  readonly calendars = signal<{ id: string; name: string; timeZone: string }[]>([]);
+  readonly calendarId = signal('');
+  readonly escalationAfterHours = signal(24);
   readonly busy = signal(false);
   readonly failure = signal('');
   readonly retryable = signal(false);
@@ -285,6 +299,28 @@ export class WorkflowVersion {
             return;
           }
           this.version.set(version);
+          this.escalationAfterHours.set(
+            typeof version.definition['escalationAfterHours'] === 'number'
+              ? version.definition['escalationAfterHours']
+              : 24,
+          );
+          this.calendarId.set(
+            typeof version.definition['calendarId'] === 'string'
+              ? version.definition['calendarId']
+              : '',
+          );
+          this.http
+            .get<{ id: string; name: string; timeZone: string }[]>('/api/v1/workflow-calendars')
+            .pipe(takeUntilDestroyed(this.destroy))
+            .subscribe({
+              next: (rows) => this.calendars.set(rows),
+              error: () => this.calendars.set([]),
+            });
+          this.formFields.set(
+            Array.isArray(version.definition['formFields'])
+              ? (version.definition['formFields'] as ServiceFormField[])
+              : [],
+          );
           this.workflowNameEdit.set(version.name);
           this.loadHistory(workflowId);
         },
@@ -354,7 +390,13 @@ export class WorkflowVersion {
     }
 
     this.savingDraft.set(true);
-    const definitionJson = this.designer.getDefinitionJson();
+    const definitionJson = JSON.stringify({
+      ...v.definition,
+      ...JSON.parse(this.designer.getDefinitionJson()),
+      formFields: this.formFields(),
+      calendarId: this.calendarId() || null,
+      escalationAfterHours: this.escalationAfterHours(),
+    });
 
     // Map visual nodes & edges to persistence steps & transitions
     const nodes = this.designer.nodes();

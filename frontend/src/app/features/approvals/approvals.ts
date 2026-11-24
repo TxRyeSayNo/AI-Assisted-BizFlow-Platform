@@ -33,6 +33,41 @@ export interface PendingApprovalItem {
     </header>
 
     <main id="main-content" class="page-content" tabindex="-1">
+      <section aria-label="Bước quy trình cần xử lý">
+        <h2>Quy trình đang chờ bạn</h2>
+        @if (workflowError()) {
+          <p role="alert">{{ workflowError() }}</p>
+        }
+        @for (item of workflowInbox(); track item.stepId) {
+          <article class="approval-card">
+            <a [routerLink]="['/requests', item.requestId]"
+              >{{ item.title }} · {{ item.stepName }}</a
+            >
+            @if (item.pausedAt) {
+              <p>SLA đang tạm dừng. Mở yêu cầu để xem lý do và tiếp tục.</p>
+            } @else if (item.dueAt) {
+              <p>Hạn xử lý: {{ item.dueAt | date: 'dd/MM/yyyy HH:mm' }}</p>
+            }
+          </article>
+        } @empty {
+          <p>Không có bước quy trình đang chờ bạn.</p>
+        }
+        <button
+          type="button"
+          [disabled]="workflowPage() <= 1"
+          (click)="loadWorkflowInbox(workflowPage() - 1)"
+        >
+          Trang trước
+        </button>
+        <span>Trang {{ workflowPage() }} · {{ workflowTotal() }} bước</span>
+        <button
+          type="button"
+          [disabled]="workflowPage() * 25 >= workflowTotal()"
+          (click)="loadWorkflowInbox(workflowPage() + 1)"
+        >
+          Trang sau
+        </button>
+      </section>
       <nav aria-label="Breadcrumb">
         <a routerLink="/workspace">{{ 'common.workspace' | translate: 'Workspace' }}</a>
         <span aria-hidden="true"> / </span>
@@ -428,6 +463,42 @@ export interface PendingApprovalItem {
   ],
 })
 export class Approvals implements OnInit {
+  readonly workflowInbox = signal<
+    {
+      requestId: string;
+      stepId: string;
+      title: string;
+      stepName: string;
+      dueAt: string | null;
+      pausedAt?: string | null;
+    }[]
+  >([]);
+  readonly workflowPage = signal(1);
+  readonly workflowTotal = signal(0);
+  readonly workflowError = signal('');
+  loadWorkflowInbox(page = 1) {
+    this.workflowError.set('');
+    this.http
+      .get<{
+        items: {
+          requestId: string;
+          stepId: string;
+          title: string;
+          stepName: string;
+          dueAt: string | null;
+          pausedAt?: string | null;
+        }[];
+        total: number;
+      }>(`/api/v1/workflow-inbox?page=${page}&pageSize=25`)
+      .subscribe({
+        next: (result) => {
+          this.workflowInbox.set(result.items);
+          this.workflowTotal.set(result.total);
+          this.workflowPage.set(page);
+        },
+        error: () => this.workflowError.set('Không tải được hàng đợi quy trình.'),
+      });
+  }
   private readonly http = inject(HttpClient);
   readonly session = inject(SessionService);
 
@@ -436,6 +507,7 @@ export class Approvals implements OnInit {
   searchQuery = '';
 
   ngOnInit(): void {
+    this.loadWorkflowInbox();
     this.loadApprovals();
   }
 

@@ -11,7 +11,8 @@ using Microsoft.EntityFrameworkCore.Storage;
 
 namespace BizFlow.Infrastructure.Requests;
 
-public sealed class RequestReviseStore(BizFlowDbContext db, ITenantContext context) : IRequestReviseStore
+public sealed class RequestReviseStore(BizFlowDbContext db, ITenantContext context,
+    BizFlow.Infrastructure.Workflows.WorkflowRuntimeStore? runtime = null) : IRequestReviseStore
 {
     public async Task<IRequestReviseTransaction> BeginAsync(Guid tenantId, Guid actorId, Guid sourceRequestId, string? keyHash, CancellationToken cancellationToken)
     {
@@ -34,7 +35,7 @@ public sealed class RequestReviseStore(BizFlowDbContext db, ITenantContext conte
             var actor = await db.Users
                 .SingleOrDefaultAsync(u => u.TenantId == tenantId && u.Id == actorId && u.DeletedAt == null, cancellationToken);
 
-            return new ReviseTransaction(db, transaction, tenantId, actorId, keyHash, source, actor);
+            return new ReviseTransaction(db, transaction, tenantId, actorId, keyHash, source, actor, runtime);
         }
         catch
         {
@@ -50,7 +51,8 @@ public sealed class RequestReviseStore(BizFlowDbContext db, ITenantContext conte
         Guid actorId,
         string? keyHash,
         WorkRequest? sourceRequest,
-        UserAccount? actor) : IRequestReviseTransaction
+        UserAccount? actor,
+        BizFlow.Infrastructure.Workflows.WorkflowRuntimeStore? runtime) : IRequestReviseTransaction
     {
         public WorkRequest? SourceRequest => sourceRequest;
         public UserAccount? Actor => actor;
@@ -83,7 +85,9 @@ public sealed class RequestReviseStore(BizFlowDbContext db, ITenantContext conte
             db.Requests.Add(revision);
             db.AuditLogs.Add(audit);
             await db.SaveChangesAsync(cancellationToken);
+            if (runtime is not null && revision.Status == RequestState.Submitted) await runtime.StartSubmittedAsync(revision, cancellationToken);
             await transaction.CommitAsync(cancellationToken);
+            if (runtime is not null) await runtime.PublishPendingAsync(revision.Id, cancellationToken);
         }
 
         public async ValueTask DisposeAsync()

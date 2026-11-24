@@ -2,6 +2,7 @@ using BizFlow.Infrastructure.Collaboration;
 using BizFlow.Infrastructure.Notifications;
 using Hangfire;
 using Hangfire.PostgreSql;
+using BizFlow.Infrastructure.Workflows;
 
 namespace BizFlow.Api.Configuration;
 
@@ -25,6 +26,7 @@ internal static class BackgroundJobRegistration
         // future on-demand endpoint; only the scheduler is conditional.
         services.AddScoped<IWatchedItemActivityNotifier, WatchedItemActivityNotifier>();
         services.AddScoped<IDeadlineReminderDispatcher, DeadlineReminderDispatcher>();
+        services.AddScoped<IWorkflowDeadlineDispatcher, WorkflowDeadlineDispatcher>();
         if (!Enabled(configuration)) return;
         var connection = configuration.GetConnectionString("BizFlow")
             ?? throw new InvalidOperationException("ConnectionStrings:BizFlow is required for background jobs.");
@@ -52,5 +54,9 @@ internal static class BackgroundJobRegistration
             DeadlineReminderJob,
             dispatcher => dispatcher.SweepAsync(CancellationToken.None),
             "*/5 * * * *");
+        jobs.AddOrUpdate<IWorkflowDeadlineDispatcher>("workflow-step-deadlines",
+            dispatcher=>dispatcher.SweepAsync(CancellationToken.None),"*/5 * * * *");
+        jobs.AddOrUpdate<TaskDigestService>("task-daily-digests",
+            service=>service.SweepAsync(CancellationToken.None),"*/5 * * * *");
     }
 }

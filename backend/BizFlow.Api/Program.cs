@@ -106,6 +106,8 @@ builder.Services.AddScoped<BizFlow.Application.Requests.IRequestListReader, BizF
 builder.Services.AddScoped<BizFlow.Application.Requests.IRequestDetailReader, BizFlow.Infrastructure.Requests.RequestDetailReader>();
 builder.Services.AddScoped<BizFlow.Application.Organization.IUserDirectoryReader, BizFlow.Infrastructure.Organization.UserDirectoryReader>();
 builder.Services.AddScoped<BizFlow.Application.Workflows.WorkflowLibrary>();
+builder.Services.AddScoped<BizFlow.Infrastructure.Workflows.WorkflowRuntimeStore>();
+builder.Services.AddScoped<BizFlow.Application.Workflows.IWorkflowRuntimeStore>(sp => sp.GetRequiredService<BizFlow.Infrastructure.Workflows.WorkflowRuntimeStore>());
 builder.Services.AddScoped<BizFlow.Application.Workflows.IWorkflowLibraryStore, BizFlow.Infrastructure.Workflows.WorkflowLibraryStore>();
 builder.Services.AddScoped<BizFlow.Application.Workflows.IWorkflowRuntimeEngine, BizFlow.Application.Workflows.WorkflowExecutionEngine>();
 builder.Services.AddScoped<BizFlow.Application.Audit.AuditQuery>();
@@ -125,7 +127,15 @@ builder.Services.AddScoped<BizFlow.Application.Notifications.INotificationInboxS
 builder.Services.AddScoped<BizFlow.Application.Notifications.IDeadlineReminderStore, BizFlow.Infrastructure.Notifications.DeadlineReminderStore>();
 builder.Services.AddSingleton<BizFlow.Application.Notifications.IVapidKeyProvider, BizFlow.Infrastructure.Notifications.ConfigVapidKeyProvider>();
 builder.Services.AddScoped<BizFlow.Application.Notifications.IEmailNotificationDispatcher, BizFlow.Infrastructure.Notifications.EmailNotificationDispatcher>();
+builder.Services.AddScoped<BizFlow.Infrastructure.Notifications.EmailNotificationDispatcher>();
+builder.Services.AddScoped<BizFlow.Infrastructure.Notifications.NotificationEmailOutboxDispatcher>();
+builder.Services.AddScoped<BizFlow.Infrastructure.Notifications.TaskDigestService>();
+builder.Services.AddSingleton<BizFlow.Application.Tenancy.ICompanyRegistrationLinks, BizFlow.Infrastructure.Tenancy.CompanyRegistrationLinks>();
+builder.Services.AddScoped<BizFlow.Infrastructure.Tenancy.CompanyRegistrationEmailDispatcher>();
+builder.Services.AddHostedService<BizFlow.Infrastructure.Notifications.NotificationEmailWorker>();
 builder.Services.AddScoped<BizFlow.Application.Notifications.IWebPushDispatcher, BizFlow.Infrastructure.Notifications.WebPushDispatcher>();
+builder.Services.AddHttpClient(BizFlow.Infrastructure.Notifications.WebPushDispatcher.ClientName,client=>client.Timeout=TimeSpan.FromSeconds(15))
+    .ConfigurePrimaryHttpMessageHandler(()=>new HttpClientHandler{AllowAutoRedirect=false,UseCookies=false});
 builder.Services.AddScoped<BizFlow.Application.Notifications.IDeadlineReminderService, BizFlow.Application.Notifications.DeadlineReminderService>();
 builder.Services.AddScoped<BizFlow.Application.Collaboration.CommentService>();
 builder.Services.AddScoped<BizFlow.Application.Collaboration.ICommentStore, BizFlow.Infrastructure.Collaboration.CommentStore>();
@@ -164,6 +174,9 @@ builder.Services.AddScoped<BizFlow.Application.Dashboard.ProjectDashboardQuery>(
 builder.Services.AddScoped<BizFlow.Application.Dashboard.MyWorkDashboardQuery>();
 builder.Services.AddScoped<BizFlow.Application.Dashboard.TeamDashboardQuery>();
 builder.Services.AddHttpClient<BizFlow.Application.AI.IAiModelClient, BizFlow.Infrastructure.AI.OpenAiModelClient>();
+builder.Services.AddScoped<BizFlow.Infrastructure.Workflows.WorkflowAgentReasoner>();
+builder.Services.AddScoped<BizFlow.Infrastructure.Workflows.WorkflowAgentDispatcher>();
+builder.Services.AddHostedService<BizFlow.Infrastructure.Workflows.WorkflowAgentWorker>();
 builder.Services.AddHttpClient<BizFlow.Application.AI.IAiEmbeddingService, BizFlow.Infrastructure.AI.AiEmbeddingService>();
 builder.Services.AddScoped<BizFlow.Application.AI.IAiVectorMemoryStore, BizFlow.Infrastructure.AI.AiVectorMemoryStore>();
 builder.Services.AddScoped<BizFlow.Application.AI.IProactiveAgentScanner, BizFlow.Infrastructure.AI.ProactiveAgentScanner>();

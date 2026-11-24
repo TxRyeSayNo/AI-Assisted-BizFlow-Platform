@@ -150,6 +150,12 @@ public sealed class WorkflowLibraryStore(BizFlowDbContext db, ITenantContext con
         if (version.Status != WorkflowVersionStatus.Draft)
             throw new ApplicationFault(FaultKind.Conflict, "WORKFLOW.VERSION_ALREADY_PUBLISHED", "Phiên bản này đã được xuất bản.");
 
+        using var definition = JsonDocument.Parse(version.DefinitionJson);
+        _ = WorkflowForm.Fields(definition.RootElement);
+        if (definition.RootElement.TryGetProperty("calendarId", out var calendar) && calendar.ValueKind != JsonValueKind.Null &&
+            (calendar.ValueKind != JsonValueKind.String || !Guid.TryParse(calendar.GetString(), out var calendarId) ||
+             !await db.BusinessCalendars.AnyAsync(c => c.Id == calendarId, cancellationToken)))
+            throw new ApplicationFault(FaultKind.Validation, "WORKFLOW.INVALID_CALENDAR", "Lịch làm việc không thuộc công ty hiện tại.");
         var now = clock.GetUtcNow();
         version.Publish(now);
         workflow.Activate(now);

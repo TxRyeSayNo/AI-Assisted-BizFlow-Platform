@@ -130,6 +130,26 @@ public sealed class ReportExportApiTests(PostgresFixture database)
         }
     }
 
+    [Fact]
+    public async Task Revoked_report_permissions_deny_views_and_exports_even_after_a_successful_read()
+    {
+        var a = await SeedAsync();
+        await using var factory = new AuthenticationFactory(database);
+        using var client = factory.CreateClient();
+        await LoginAsync(client, a);
+        foreach (var report in new[] { "company", "workload", "sla" })
+            Assert.Equal(HttpStatusCode.OK, (await client.GetAsync($"/api/v1/reports/{report}")).StatusCode);
+        await using var db = database.Create(a.User, a.Tenant);
+        var assignments = await db.UserRoles.Where(r => r.UserId == a.User).ToListAsync();
+        db.UserRoles.RemoveRange(assignments);
+        await db.SaveChangesAsync();
+        foreach (var report in new[] { "company", "workload", "sla" })
+        {
+            Assert.Equal(HttpStatusCode.Forbidden, (await client.GetAsync($"/api/v1/reports/{report}")).StatusCode);
+            Assert.Equal(HttpStatusCode.Forbidden, (await client.GetAsync($"/api/v1/reports/{report}/export?format=csv")).StatusCode);
+        }
+    }
+
     // -------------------------------------------------------------------------------------------
     // Fixture
     // -------------------------------------------------------------------------------------------

@@ -1,4 +1,5 @@
 using BizFlow.Domain.Common;
+using BizFlow.Domain.Workflows;
 
 namespace BizFlow.Domain.Requests;
 
@@ -17,6 +18,16 @@ public sealed class WorkRequest
     public Guid? RevisedFromRequestId { get; private set; }
     public string Title { get; private set; } = "";
     public string Description { get; private set; } = "";
+    public string FormDataJson { get; private set; } = "{}";
+    public void SetFormData(string json)
+    {
+        if (Status is not (RequestState.Draft or RequestState.Submitted) || WorkflowVersionId is not null)
+            throw new InvalidOperationException("Chỉ có thể nhập biểu mẫu trước khi chạy quy trình.");
+        using var document = System.Text.Json.JsonDocument.Parse(json);
+        if (document.RootElement.ValueKind != System.Text.Json.JsonValueKind.Object || json.Length > 64000)
+            throw new ArgumentException("Dữ liệu biểu mẫu không hợp lệ.");
+        FormDataJson = document.RootElement.GetRawText();
+    }
     public RequestPriority Priority { get; private set; }
     public RequestState Status { get; private set; }
     public Guid? WorkflowVersionId { get; private set; }
@@ -27,6 +38,22 @@ public sealed class WorkRequest
     public DateTimeOffset UpdatedAt { get; private set; }
     public DateTimeOffset? DeletedAt { get; private set; }
     public RequestWorkflowMutation? WorkflowMutation { get; private set; }
+    public WorkflowInstance? RuntimeMutation { get; private set; }
+
+    public void ApplyRuntime(WorkflowInstance instance, DateTimeOffset now)
+    {
+        if (instance.RequestId != Id || instance.TenantId != TenantId || instance.RequesterId != RequesterId ||
+            (WorkflowVersionId is not null && WorkflowVersionId != instance.WorkflowVersionId) ||
+            Status is not (RequestState.Submitted or RequestState.InProgress) || now < UpdatedAt)
+            throw new InvalidOperationException("Quy trình không khớp yêu cầu đang xử lý.");
+        RuntimeMutation = instance;
+        WorkflowVersionId = instance.WorkflowVersionId;
+        Status = instance.Status switch { "RUNNING" => RequestState.InProgress, "COMPLETED" => RequestState.Closed,
+            "REJECTED" => RequestState.Rejected, "CANCELLED" or "FAILED" => RequestState.Cancelled,
+            _ => throw new InvalidOperationException("Trạng thái quy trình không hợp lệ.") };
+        UpdatedAt = now.ToUniversalTime();
+        if (Status == RequestState.Closed) { ResolvedAt = UpdatedAt; ClosedAt = UpdatedAt; }
+    }
     public void ResetWorkflowMutation() => WorkflowMutation = null;
     private WorkRequest() { }
 

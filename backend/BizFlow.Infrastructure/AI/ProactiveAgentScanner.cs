@@ -127,12 +127,12 @@ public sealed class ProactiveAgentScanner : IProactiveAgentScanner
                     if (recipientId != Guid.Empty)
                     {
                         var eventType = isOverdue ? NotificationEvent.Overdue : NotificationEvent.DeadlineWarning;
-                        var idempotencyKey = $"ai-alert-{task.Id}-{now:yyyyMMdd-HH}";
+                        var idempotencyKey = $"ai-alert-{task.Id}-{interaction.Id}";
                         var notification = Notification.Create(
                             tenantId: tenantId,
                             recipientId: recipientId,
                             type: eventType,
-                            title: $"⚡ AI Chủ động: Nguy cơ trễ hạn [{task.Title}]",
+                            title: $"⚡ AI Chủ động: Nguy cơ trễ hạn [{task.Title}]"[..Math.Min(200, $"⚡ AI Chủ động: Nguy cơ trễ hạn [{task.Title}]".Length)],
                             content: rationale,
                             idempotencyKey: idempotencyKey,
                             objectType: "Task",

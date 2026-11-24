@@ -1,7 +1,8 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { ActivatedRoute, provideRouter } from '@angular/router';
+import { Location } from '@angular/common';
 import { RegisterCompany } from './register-company';
 
 describe('RegisterCompany', () => {
@@ -17,6 +18,59 @@ describe('RegisterCompany', () => {
   );
 
   afterEach(() => TestBed.inject(HttpTestingController).verify());
+
+  it('opens a signed correction link, preserves company identity and submits the token with corrections', () => {
+    TestBed.overrideProvider(ActivatedRoute, {
+      useValue: { snapshot: { fragment: 'resubmit=signed-link' } },
+    });
+    const replace = vi.spyOn(TestBed.inject(Location), 'replaceState');
+    const fixture = TestBed.createComponent(RegisterCompany);
+    const component = fixture.componentInstance;
+    component.ngOnInit();
+    const http = TestBed.inject(HttpTestingController);
+    const resolve = http.expectOne('/api/v1/company-registrations/resubmission');
+    expect(resolve.request.body).toEqual({ token: 'signed-link' });
+    resolve.flush({
+      companyId: 'company',
+      code: 'ACME',
+      name: 'Acme',
+      taxId: '0101234567',
+      contactPersonName: 'Owner',
+      contactEmail: 'owner@example.test',
+      contactPhone: '0901234567',
+      status: 'INACTIVE',
+      evidenceDocumentKey: 'old-document',
+      evidenceDocumentFileName: 'old.pdf',
+    });
+    expect(replace).toHaveBeenCalledWith('/register-company');
+    expect(component.form.controls.code.disabled).toBe(true);
+    expect(component.form.controls.contactEmail.disabled).toBe(true);
+    component.form.controls.contactPhone.setValue('0912345678');
+    component.submit();
+    const request = http.expectOne('/api/v1/company-registrations');
+    expect(request.request.body.resubmissionToken).toBe('signed-link');
+    expect(request.request.body.code).toBe('ACME');
+    expect(request.request.body.contactPhone).toBe('0912345678');
+    expect(request.request.body.evidenceDocumentKey).toBe('old-document');
+    request.flush({ status: 'PENDING' });
+    expect(component.submittedResult()?.status).toBe('PENDING');
+  });
+
+  it('does not submit when the correction link is invalid or consumed', () => {
+    TestBed.overrideProvider(ActivatedRoute, {
+      useValue: { snapshot: { fragment: 'resubmit=expired' } },
+    });
+    const component = TestBed.createComponent(RegisterCompany).componentInstance;
+    component.ngOnInit();
+    const http = TestBed.inject(HttpTestingController);
+    http
+      .expectOne('/api/v1/company-registrations/resubmission')
+      .flush({}, { status: 404, statusText: 'Not Found' });
+    component.submit();
+    http.expectNone('/api/v1/company-registrations');
+    expect(component.form.disabled).toBe(true);
+    expect(component.error()).toContain('Liên kết bổ sung');
+  });
 
   it('initializes form with 6 mandatory fields and rejects submission when empty', () => {
     const fixture = TestBed.createComponent(RegisterCompany);

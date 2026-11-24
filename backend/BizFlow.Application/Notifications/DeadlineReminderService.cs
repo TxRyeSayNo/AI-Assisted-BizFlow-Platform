@@ -29,16 +29,19 @@ public sealed class DeadlineReminderService(
 
         var now = clock.GetUtcNow();
         var leadTimes = input.LeadTimeMinutes.Count > 0 ? input.LeadTimeMinutes : [1440, 240, 60, 0];
+        if(leadTimes.Count>20 || leadTimes.Any(m=>m<0||m>43200) || leadTimes.Distinct().Count()!=leadTimes.Count)
+            throw new ApplicationFault(FaultKind.Validation,"REMINDER.INVALID_MARKS","Chọn tối đa 20 mốc khác nhau, từ 0 đến 43200 phút trước hạn.");
         var createdList = new List<DeadlineReminderDto>();
 
         foreach (var minutes in leadTimes)
         {
             var triggerType = minutes switch
             {
-                >= 1440 => "24h",
-                >= 240 => "4h",
-                >= 60 => "1h",
-                _ => "Overdue"
+                1440 => "24h",
+                240 => "4h",
+                60 => "1h",
+                0 => "Overdue",
+                _ => "Custom:"+minutes.ToString(System.Globalization.CultureInfo.InvariantCulture)
             };
 
             // The store returns the row that now holds this mark, which is the existing one when
@@ -113,7 +116,7 @@ public sealed class DeadlineReminderService(
 
         if (existing is not null)
         {
-            existing.UpdateActivity(now);
+            existing.RefreshKeys(input.P256dh, input.Auth, now);
         }
         else
         {

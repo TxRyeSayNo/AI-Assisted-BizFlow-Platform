@@ -9,6 +9,7 @@ namespace BizFlow.Application.Reports;
 public sealed class ReportingService(
     IReportingReader reader,
     ITenantContext tenantContext,
+    IResourceAuthorizer authorizer,
     IBizFlowCacheService? cache = null)
 {
     private const int MaxWorkloadRangeDays = 366;
@@ -21,6 +22,7 @@ public sealed class ReportingService(
         CancellationToken ct = default)
     {
         var tenantId = GetRequiredTenantId();
+        await authorizer.AuthorizeAsync("reports.manager", new(tenantId), cancellationToken: ct);
         ValidateDateRange(from, to);
 
         if (cache is not null)
@@ -44,6 +46,7 @@ public sealed class ReportingService(
         CancellationToken ct = default)
     {
         var tenantId = GetRequiredTenantId();
+        await authorizer.AuthorizeAsync("reports.company", new(tenantId), cancellationToken: ct);
         ValidateDateRange(from, to);
 
         if (cache is not null)
@@ -68,6 +71,7 @@ public sealed class ReportingService(
         CancellationToken ct = default)
     {
         var tenantId = GetRequiredTenantId();
+        await authorizer.AuthorizeAsync("reports.workload", new(tenantId), cancellationToken: ct);
         ValidateDateRange(from, to);
 
         if (from.HasValue && to.HasValue && (to.Value - from.Value).TotalDays > MaxWorkloadRangeDays)
@@ -100,6 +104,7 @@ public sealed class ReportingService(
         CancellationToken ct = default)
     {
         var tenantId = GetRequiredTenantId();
+        await authorizer.AuthorizeAsync("reports.sla", new(tenantId), cancellationToken: ct);
         ValidateDateRange(from, to);
 
         if (cache is not null)

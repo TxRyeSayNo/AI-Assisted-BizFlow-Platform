@@ -10,7 +10,8 @@ using Microsoft.EntityFrameworkCore.Storage;
 
 namespace BizFlow.Infrastructure.Requests;
 
-public sealed class RequestCreationStore(BizFlowDbContext db, ITenantContext context) : IRequestCreationStore
+public sealed class RequestCreationStore(BizFlowDbContext db, ITenantContext context,
+    BizFlow.Infrastructure.Workflows.WorkflowRuntimeStore? runtime = null) : IRequestCreationStore
 {
     public async Task<IRequestCreationTransaction> BeginAsync(Guid tenantId, Guid actorId, string? keyHash, CancellationToken cancellationToken)
     {
@@ -25,7 +26,7 @@ public sealed class RequestCreationStore(BizFlowDbContext db, ITenantContext con
                 var lockKey = $"{tenantId:N}/{actorId:N}/REQUEST.CREATE/{keyHash}";
                 await db.Database.ExecuteSqlInterpolatedAsync($"SELECT pg_advisory_xact_lock(hashtextextended({lockKey}, 0))", cancellationToken);
             }
-            return new CreationTransaction(db, transaction, tenantId, actorId, keyHash);
+            return new CreationTransaction(db, transaction, tenantId, actorId, keyHash, runtime);
         }
         catch
         {
@@ -39,7 +40,8 @@ public sealed class RequestCreationStore(BizFlowDbContext db, ITenantContext con
         IDbContextTransaction transaction,
         Guid tenantId,
         Guid actorId,
-        string? keyHash) : IRequestCreationTransaction
+        string? keyHash,
+        BizFlow.Infrastructure.Workflows.WorkflowRuntimeStore? runtime) : IRequestCreationTransaction
     {
         public async Task<StoredRequestCreation?> FindReplayAsync(CancellationToken cancellationToken)
         {
@@ -75,7 +77,9 @@ public sealed class RequestCreationStore(BizFlowDbContext db, ITenantContext con
             db.Requests.Add(request);
             db.AuditLogs.Add(audit);
             await db.SaveChangesAsync(cancellationToken);
+            if (runtime is not null && request.Status == RequestState.Submitted) await runtime.StartSubmittedAsync(request, cancellationToken);
             await transaction.CommitAsync(cancellationToken);
+            if (runtime is not null) await runtime.PublishPendingAsync(request.Id, cancellationToken);
         }
 
         public ValueTask DisposeAsync() => transaction.DisposeAsync();

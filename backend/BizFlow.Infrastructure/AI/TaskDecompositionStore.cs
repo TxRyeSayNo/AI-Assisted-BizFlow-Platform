@@ -25,7 +25,8 @@ public sealed class TaskDecompositionStore(
     ITenantContext context,
     IResourceAuthorizer authorizer,
     IAccessSnapshotProvider snapshots,
-    IWorkflowEngine workflow) : ITaskDecompositionStore
+    IWorkflowEngine workflow,
+    BizFlow.Infrastructure.Workflows.WorkflowRuntimeStore? runtime = null) : ITaskDecompositionStore
 {
     public async Task<IReadOnlyList<CreatedDecompositionItemDto>> PersistDecompositionBatchAsync(
         Guid tenantId,
@@ -104,6 +105,8 @@ public sealed class TaskDecompositionStore(
 
                         var audit = AuditLog.RequestCreated(request, now);
                         dbContext.AuditLogs.Add(audit);
+                        await dbContext.SaveChangesAsync(cancellationToken);
+                        if (runtime is not null) await runtime.StartSubmittedAsync(request, cancellationToken);
 
                         created.Add(new CreatedDecompositionItemDto(
                             request.Id,

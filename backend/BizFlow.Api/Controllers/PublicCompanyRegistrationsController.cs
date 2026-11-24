@@ -31,6 +31,10 @@ public sealed class PublicCompanyRegistrationsController(
     public Task<SubmitCompanyRegistrationResult> Submit([FromBody] SubmitCompanyRegistrationRequest request, CancellationToken cancellationToken) =>
         management.SubmitAsync(request, cancellationToken);
 
+    public sealed record ResubmissionLinkInput(string Token);
+    [HttpPost("resubmission")]
+    public Task<SubmitCompanyRegistrationResult> Resubmission(ResubmissionLinkInput input, CancellationToken ct) => store.GetResubmissionAsync(input.Token, ct);
+
     [HttpGet("check-code")]
     public async Task<ActionResult<CheckCodeResponse>> CheckCode([FromQuery] string? code, CancellationToken cancellationToken)
     {

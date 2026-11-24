@@ -71,7 +71,8 @@ public sealed record DepartmentManagerContactDto(
 public sealed record MeetingDispatchResultDto(
     int InAppNotificationsSent,
     int EmailsSent,
-    IReadOnlyList<DepartmentManagerContactDto> Recipients);
+    IReadOnlyList<DepartmentManagerContactDto> Recipients,
+    int EmailsQueued = 0);
 
 public interface IAgentMeetingCoordinator
 {

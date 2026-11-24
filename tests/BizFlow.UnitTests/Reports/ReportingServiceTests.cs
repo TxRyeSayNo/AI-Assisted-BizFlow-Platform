@@ -11,6 +11,10 @@ namespace BizFlow.UnitTests.Reports;
 
 public sealed class ReportingServiceTests
 {
+    private sealed class ReportAuthorizer : IResourceAuthorizer
+    {
+        public Task AuthorizeAsync(string permission, BizFlow.Domain.Security.ResourceScope resource, Guid? managementTargetDepartmentId = null, CancellationToken cancellationToken = default) => Task.CompletedTask;
+    }
     private sealed class FakeTenantContext(Guid? tenantId) : ITenantContext
     {
         public Guid? UserId => Guid.NewGuid();
@@ -49,7 +53,7 @@ public sealed class ReportingServiceTests
     public async Task ReportingService_requires_tenant_context()
     {
         var reader = new FakeReportingReader();
-        var service = new ReportingService(reader, new FakeTenantContext(null));
+        var service = new ReportingService(reader, new FakeTenantContext(null), new ReportAuthorizer());
 
         var ex = await Assert.ThrowsAsync<ApplicationFault>(() => service.GetManagerDashboardAsync(null, null, null));
         Assert.Equal("TENANT.REQUIRED", ex.Code);
@@ -61,7 +65,7 @@ public sealed class ReportingServiceTests
     {
         var tenantId = Guid.NewGuid();
         var reader = new FakeReportingReader();
-        var service = new ReportingService(reader, new FakeTenantContext(tenantId));
+        var service = new ReportingService(reader, new FakeTenantContext(tenantId), new ReportAuthorizer());
 
         var from = DateTimeOffset.UtcNow;
         var to = from.AddDays(-1);
@@ -76,7 +80,7 @@ public sealed class ReportingServiceTests
     {
         var tenantId = Guid.NewGuid();
         var reader = new FakeReportingReader();
-        var service = new ReportingService(reader, new FakeTenantContext(tenantId));
+        var service = new ReportingService(reader, new FakeTenantContext(tenantId), new ReportAuthorizer());
 
         var from = DateTimeOffset.UtcNow.AddDays(-400);
         var to = DateTimeOffset.UtcNow;
@@ -92,7 +96,7 @@ public sealed class ReportingServiceTests
     {
         var tenantId = Guid.NewGuid();
         var reader = new FakeReportingReader();
-        var service = new ReportingService(reader, new FakeTenantContext(tenantId));
+        var service = new ReportingService(reader, new FakeTenantContext(tenantId), new ReportAuthorizer());
 
         var result = await service.GetManagerDashboardAsync(null, null, null);
         Assert.NotNull(result);
@@ -105,7 +109,7 @@ public sealed class ReportingServiceTests
     {
         var tenantId = Guid.NewGuid();
         var reader = new FakeReportingReader();
-        var service = new ReportingService(reader, new FakeTenantContext(tenantId));
+        var service = new ReportingService(reader, new FakeTenantContext(tenantId), new ReportAuthorizer());
 
         var result = await service.GetCompanyReportAsync(null, null);
         Assert.NotNull(result);
@@ -118,7 +122,7 @@ public sealed class ReportingServiceTests
     {
         var tenantId = Guid.NewGuid();
         var reader = new FakeReportingReader();
-        var service = new ReportingService(reader, new FakeTenantContext(tenantId));
+        var service = new ReportingService(reader, new FakeTenantContext(tenantId), new ReportAuthorizer());
 
         var from = DateTimeOffset.UtcNow.AddDays(-30);
         var to = DateTimeOffset.UtcNow;
@@ -132,7 +136,7 @@ public sealed class ReportingServiceTests
     {
         var tenantId = Guid.NewGuid();
         var reader = new FakeReportingReader();
-        var service = new ReportingService(reader, new FakeTenantContext(tenantId));
+        var service = new ReportingService(reader, new FakeTenantContext(tenantId), new ReportAuthorizer());
 
         var result = await service.GetSlaPerformanceReportAsync(null, null, null);
         Assert.NotNull(result);
@@ -174,7 +178,7 @@ public sealed class ReportingServiceTests
         var tenantId = Guid.NewGuid();
         var reader = new FakeReportingReader();
         var cache = new FakeCacheService();
-        var service = new ReportingService(reader, new FakeTenantContext(tenantId), cache);
+        var service = new ReportingService(reader, new FakeTenantContext(tenantId), new ReportAuthorizer(), cache);
 
         var first = await service.GetCompanyReportAsync(null, null);
         Assert.NotNull(first);

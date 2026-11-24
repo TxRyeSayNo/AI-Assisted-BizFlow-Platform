@@ -159,6 +159,12 @@
           <!-- GROUP 3: LOGIC -->
           <div class="palette-group">
             <h4>Điều hướng & Logic</h4>
+            <button type="button" class="palette-item" (click)="addNode('PARALLEL_SPLIT')">
+              ＋ Tách việc song song
+            </button>
+            <button type="button" class="palette-item" (click)="addNode('PARALLEL_JOIN')">
+              ＋ Chờ đủ các nhánh
+            </button>
             <div class="palette-items">
               <div
                 class="palette-item"
@@ -304,6 +310,12 @@
                   @case ('DECISION') {
                     <span>🔀</span>
                   }
+                  @case ('PARALLEL_SPLIT') {
+                    <span>＋</span>
+                  }
+                  @case ('PARALLEL_JOIN') {
+                    <span>＋</span>
+                  }
                   @case ('CONFIRMATION') {
                     <span>✓</span>
                   }
@@ -324,6 +336,12 @@
                     }
                     @case ('DECISION') {
                       Rẽ nhánh
+                    }
+                    @case ('PARALLEL_SPLIT') {
+                      Tách song song
+                    }
+                    @case ('PARALLEL_JOIN') {
+                      Chờ đủ các nhánh
                     }
                     @case ('CONFIRMATION') {
                       Xác nhận
@@ -474,6 +492,14 @@
 
           <!-- DEPARTMENT NODE PROPERTIES -->
           @if (node.type === 'DEPARTMENT') {
+            @if (businessType === 'REQUEST') {
+              <bf-workflow-agent-editor
+                [value]="node.agent"
+                [fields]="formFields"
+                [readonly]="readonly"
+                (valueChange)="updateSelectedNodeProps({ agent: $event })"
+              />
+            }
             <div class="form-group">
               <label for="prop-dept-assign-method">Phương thức phân công *:</label>
               <select
@@ -606,16 +632,28 @@
                 id="prop-appr-method"
                 class="form-select"
                 [ngModel]="node.assignmentMethod || 'BUSINESS_ROLE'"
-                (ngModelChange)="updateSelectedNodeProps({ assignmentMethod: $event })"
+                (ngModelChange)="setApprovalMethod($event)"
                 [disabled]="readonly"
               >
                 <option value="BUSINESS_ROLE">Theo chức vụ / Vai trò</option>
                 <option value="DEPARTMENT_MANAGER">Trưởng phòng ban</option>
                 <option value="DIRECT_MANAGER">Quản lý trực tiếp</option>
                 <option value="SPECIFIC_USER">Chỉ định đích danh người duyệt</option>
+                @if (businessType === 'REQUEST') {
+                  <option value="MATRIX">Ma trận theo hạn mức</option>
+                }
               </select>
             </div>
 
+            @if (node.assignmentMethod === 'MATRIX' && node.approvalMatrix) {
+              <bf-workflow-approval-matrix
+                [matrix]="node.approvalMatrix"
+                [fields]="formFields"
+                [roles]="roles"
+                [readonly]="readonly"
+                (changed)="updateSelectedNodeProps({ approvalMatrix: $event })"
+              />
+            }
             @if (node.assignmentMethod === 'BUSINESS_ROLE') {
               <div class="form-group">
                 <label for="prop-appr-role">Vai trò người duyệt *:</label>
@@ -657,20 +695,22 @@
               </div>
             }
 
-            <div class="form-group">
-              <label for="prop-appr-policy">Chính sách phê duyệt:</label>
-              <select
-                id="prop-appr-policy"
-                class="form-select"
-                [ngModel]="node.approvalCountPolicy || 'SINGLE'"
-                (ngModelChange)="updateSelectedNodeProps({ approvalCountPolicy: $event })"
-                [disabled]="readonly"
-              >
-                <option value="SINGLE">Chỉ cần 1 người duyệt chấp thuận (SINGLE)</option>
-                <option value="ALL">Tất cả người có thẩm quyền đồng thuận (ALL)</option>
-                <option value="ANY">Bất kỳ ai trong nhóm duyệt (ANY)</option>
-              </select>
-            </div>
+            @if (node.assignmentMethod !== 'MATRIX') {
+              <div class="form-group">
+                <label for="prop-appr-policy">Chính sách phê duyệt:</label>
+                <select
+                  id="prop-appr-policy"
+                  class="form-select"
+                  [ngModel]="node.approvalCountPolicy || 'SINGLE'"
+                  (ngModelChange)="updateSelectedNodeProps({ approvalCountPolicy: $event })"
+                  [disabled]="readonly"
+                >
+                  <option value="SINGLE">Chỉ cần 1 người duyệt chấp thuận (SINGLE)</option>
+                  <option value="ALL">Tất cả người có thẩm quyền đồng thuận (ALL)</option>
+                  <option value="ANY">Bất kỳ ai trong nhóm duyệt (ANY)</option>
+                </select>
+              </div>
+            }
 
             <div class="form-group">
               <label for="prop-appr-sla">Thời hạn phê duyệt (giờ):</label>

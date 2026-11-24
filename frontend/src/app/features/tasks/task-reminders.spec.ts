@@ -67,6 +67,24 @@ describe('task deadline reminders', () => {
     expect([...fixture.componentInstance.selected()].sort()).toEqual(['1h', '24h']);
   });
 
+  it('restores and saves precise custom minute marks without turning them into overdue alerts', () => {
+    enable();
+    const http = TestBed.inject(HttpTestingController);
+    const fixture = create();
+    http.expectOne((r) => r.url === config).flush([mark('Custom:30', 30)]);
+    const component = fixture.componentInstance;
+    component.customMinutes = 90;
+    component.addCustom();
+    component.customMinutes = 0;
+    component.addCustom();
+    expect(component.customError()).toBeTruthy();
+    component.save();
+    const request = http.expectOne((r) => r.method === 'POST' && r.url === config);
+    expect(request.request.body.leadTimeMinutes).toEqual([30, 90]);
+    request.flush([mark('Custom:30', 30), mark('Custom:90', 90)]);
+    expect([...component.selected()]).toEqual(['Custom:30', 'Custom:90']);
+  });
+
   it('posts the chosen lead times and cancels the marks that were cleared', () => {
     enable();
     const http = TestBed.inject(HttpTestingController);

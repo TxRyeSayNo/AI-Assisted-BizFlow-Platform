@@ -24,203 +24,217 @@
   }
 
   @if (data(); as detail) {
+    @if (detail.workflowVersionId) {
+      <bf-workflow-runtime [requestId]="detail.requestId" (changed)="load()" />
+    }
     <div class="detail-header">
       <div>
         <h1>{{ detail.title }}</h1>
       </div>
-      <div class="detail-actions">
-        @if (canSubmit()) {
-          <button
-            mat-flat-button
-            color="primary"
-            type="button"
-            [disabled]="actionInProgress()"
-            (click)="submit()"
-          >
-            {{ 'requestDetail.submit' | translate: 'Submit request' }}
-          </button>
-        }
-        @if (canRoute()) {
-          <button
-            mat-flat-button
-            color="primary"
-            type="button"
-            [disabled]="actionInProgress()"
-            (click)="openModal('route')"
-          >
-            {{
-              detail.status === 'ROUTED'
-                ? ('requestDetail.reroute' | translate: 'Re-route')
-                : ('requestDetail.route' | translate: 'Route request')
-            }}
-          </button>
-          <button
-            mat-stroked-button
-            color="accent"
-            type="button"
-            [disabled]="aiBusy() || actionInProgress()"
-            (click)="recommendRouting()"
-          >
-            {{ 'requestDetail.aiRoute' | translate: '✨ AI Route' }}
-          </button>
-        }
-        @if (
-          detail.status === 'SUBMITTED' ||
-          detail.status === 'ROUTED' ||
-          detail.status === 'RECEIVED' ||
-          detail.status === 'IN_PROGRESS'
-        ) {
-          <button
-            mat-stroked-button
-            type="button"
-            [disabled]="aiBusy() || actionInProgress()"
-            (click)="analyzeMultiIntent()"
-          >
-            {{ 'requestDetail.aiSplit' | translate: '✨ AI Split' }}
-          </button>
-          <button
-            mat-stroked-button
-            type="button"
-            [disabled]="aiBusy() || actionInProgress()"
-            (click)="planBranching()"
-          >
-            ✦ {{ 'ai.tabBranching' | translate: 'Phân nhánh DAG' }}
-          </button>
-        }
-        @if (canReceive()) {
-          <button
-            mat-flat-button
-            color="accent"
-            type="button"
-            [disabled]="actionInProgress()"
-            (click)="openModal('receive')"
-          >
-            {{ 'requestDetail.receive' | translate: 'Receive request' }}
-          </button>
-        }
-        @if (canStart()) {
-          <button
-            mat-flat-button
-            color="primary"
-            type="button"
-            [disabled]="actionInProgress()"
-            (click)="executeStartWork()"
-          >
-            {{ 'requestDetail.startWork' | translate: 'Start work' }}
-          </button>
-        }
-        @if (canResolve()) {
-          <button
-            mat-flat-button
-            color="primary"
-            type="button"
-            [disabled]="actionInProgress()"
-            (click)="openModal('resolve')"
-          >
-            {{ 'requestDetail.resolve' | translate: 'Resolve request' }}
-          </button>
-        }
-        @if (canConfirm()) {
-          <button
-            mat-flat-button
-            color="primary"
-            type="button"
-            [disabled]="actionInProgress()"
-            (click)="openModal('confirm')"
-          >
-            {{ 'requestDetail.reviewConfirm' | translate: 'Review & confirm' }}
-          </button>
-        }
-        @if (canRevise()) {
-          <button
-            mat-flat-button
-            color="primary"
-            type="button"
-            [disabled]="actionInProgress()"
-            (click)="openModal('revise')"
-          >
-            {{ 'requestDetail.revise' | translate: 'Revise request' }}
-          </button>
-        }
-        @if (canReject()) {
-          <button
-            mat-stroked-button
-            color="warn"
-            type="button"
-            [disabled]="actionInProgress()"
-            (click)="openModal('reject')"
-          >
-            {{ 'requestDetail.reject' | translate: 'Reject' }}
-          </button>
-        }
-        @if (canCancel()) {
-          <button
-            mat-stroked-button
-            type="button"
-            [disabled]="actionInProgress()"
-            (click)="openModal('cancel')"
-          >
-            {{ 'common.cancel' | translate: 'Cancel' }}
-          </button>
-        }
-        @if (canEscalate()) {
-          <button
-            mat-stroked-button
-            color="accent"
-            type="button"
-            [disabled]="actionInProgress()"
-            (click)="openModal('escalate')"
-            title="Chuyển yêu cầu lên cấp trên (Giám đốc) để phê duyệt"
-          >
-            ⬆️ {{ 'requestDetail.escalate' | translate: 'Chuyển lên cấp trên duyệt' }}
-          </button>
-        }
-        @if (canDecideElevated()) {
-          <button
-            mat-flat-button
-            color="primary"
-            type="button"
-            [disabled]="actionInProgress()"
-            (click)="executeElevatedDecision(true)"
-          >
-            ✓ {{ 'requestDetail.approveElevated' | translate: 'Duyệt (cấp trên)' }}
-          </button>
-          <button
-            mat-stroked-button
-            color="warn"
-            type="button"
-            [disabled]="actionInProgress()"
-            (click)="executeElevatedDecision(false)"
-          >
-            ✕ {{ 'requestDetail.rejectElevated' | translate: 'Từ chối (cấp trên)' }}
-          </button>
-        }
-        @if (canArchive()) {
-          <button
-            mat-stroked-button
-            color="warn"
-            type="button"
-            [disabled]="actionInProgress()"
-            (click)="executeArchive()"
-          >
-            {{ 'requestDetail.archive' | translate: 'Archive request' }}
-          </button>
-        }
-        @if (canCreateTask()) {
-          <button
-            mat-flat-button
-            color="accent"
-            type="button"
-            [disabled]="actionInProgress()"
-            (click)="openModal('create-task')"
-          >
-            {{ 'requestDetail.createTask' | translate: '+ Create task' }}
-          </button>
-        }
-        <a mat-stroked-button routerLink="/requests">{{
-          'requestDetail.backToRequests' | translate: 'Back to requests'
-        }}</a>
-      </div>
+      @if (!detail.workflowVersionId) {
+        <div class="detail-actions">
+          @if (canSubmit()) {
+            <button
+              mat-flat-button
+              color="primary"
+              type="button"
+              [disabled]="actionInProgress()"
+              (click)="submit()"
+            >
+              {{ 'requestDetail.submit' | translate: 'Submit request' }}
+            </button>
+          }
+          @if (canRoute()) {
+            <button
+              mat-flat-button
+              color="primary"
+              type="button"
+              [disabled]="actionInProgress()"
+              (click)="openModal('route')"
+            >
+              {{
+                detail.status === 'ROUTED'
+                  ? ('requestDetail.reroute' | translate: 'Re-route')
+                  : ('requestDetail.route' | translate: 'Route request')
+              }}
+            </button>
+            <button
+              mat-stroked-button
+              color="accent"
+              type="button"
+              [disabled]="aiBusy() || actionInProgress()"
+              (click)="recommendRouting()"
+            >
+              {{ 'requestDetail.aiRoute' | translate: '✨ AI Route' }}
+            </button>
+          }
+          @if (
+            detail.status === 'SUBMITTED' ||
+            detail.status === 'ROUTED' ||
+            detail.status === 'RECEIVED' ||
+            detail.status === 'IN_PROGRESS'
+          ) {
+            <button
+              mat-stroked-button
+              type="button"
+              [disabled]="aiBusy() || actionInProgress()"
+              (click)="analyzeMultiIntent()"
+            >
+              {{ 'requestDetail.aiSplit' | translate: '✨ AI Split' }}
+            </button>
+            <button
+              mat-stroked-button
+              type="button"
+              [disabled]="aiBusy() || actionInProgress()"
+              (click)="planBranching()"
+            >
+              ✦ {{ 'ai.tabBranching' | translate: 'Phân nhánh DAG' }}
+            </button>
+          }
+          @if (canReceive()) {
+            <button
+              mat-flat-button
+              color="accent"
+              type="button"
+              [disabled]="actionInProgress()"
+              (click)="openModal('receive')"
+            >
+              {{ 'requestDetail.receive' | translate: 'Receive request' }}
+            </button>
+          }
+          @if (canStart()) {
+            <button
+              mat-flat-button
+              color="primary"
+              type="button"
+              [disabled]="actionInProgress()"
+              (click)="executeStartWork()"
+            >
+              {{ 'requestDetail.startWork' | translate: 'Start work' }}
+            </button>
+          }
+          @if (canResolve()) {
+            <button
+              mat-flat-button
+              color="primary"
+              type="button"
+              [disabled]="actionInProgress()"
+              (click)="openModal('resolve')"
+            >
+              {{ 'requestDetail.resolve' | translate: 'Resolve request' }}
+            </button>
+          }
+          @if (canConfirm()) {
+            <button
+              mat-flat-button
+              color="primary"
+              type="button"
+              [disabled]="actionInProgress()"
+              (click)="openModal('confirm')"
+            >
+              {{ 'requestDetail.reviewConfirm' | translate: 'Review & confirm' }}
+            </button>
+          }
+          @if (canRevise()) {
+            <button
+              mat-flat-button
+              color="primary"
+              type="button"
+              [disabled]="actionInProgress()"
+              (click)="openModal('revise')"
+            >
+              {{ 'requestDetail.revise' | translate: 'Revise request' }}
+            </button>
+          }
+          @if (canReject()) {
+            <button
+              mat-stroked-button
+              color="warn"
+              type="button"
+              [disabled]="actionInProgress()"
+              (click)="openModal('reject')"
+            >
+              {{ 'requestDetail.reject' | translate: 'Reject' }}
+            </button>
+          }
+          @if (canCancel()) {
+            <button
+              mat-stroked-button
+              type="button"
+              [disabled]="actionInProgress()"
+              (click)="openModal('cancel')"
+            >
+              {{ 'common.cancel' | translate: 'Cancel' }}
+            </button>
+          }
+          @if (canEscalate()) {
+            <button
+              mat-stroked-button
+              color="accent"
+              type="button"
+              [disabled]="actionInProgress()"
+              (click)="openModal('escalate')"
+              title="Chuyển yêu cầu lên cấp trên (Giám đốc) để phê duyệt"
+            >
+              ⬆️ {{ 'requestDetail.escalate' | translate: 'Chuyển lên cấp trên duyệt' }}
+            </button>
+          }
+          @if (canDecideElevated()) {
+            <button
+              mat-flat-button
+              color="primary"
+              type="button"
+              [disabled]="actionInProgress()"
+              (click)="executeElevatedDecision(true)"
+            >
+              ✓ {{ 'requestDetail.approveElevated' | translate: 'Duyệt (cấp trên)' }}
+            </button>
+            <button
+              mat-stroked-button
+              color="warn"
+              type="button"
+              [disabled]="actionInProgress()"
+              (click)="executeElevatedDecision(false)"
+            >
+              ✕ {{ 'requestDetail.rejectElevated' | translate: 'Từ chối (cấp trên)' }}
+            </button>
+          }
+          @if (canArchive()) {
+            <button
+              mat-stroked-button
+              color="warn"
+              type="button"
+              [disabled]="actionInProgress()"
+              (click)="executeArchive()"
+            >
+              {{ 'requestDetail.archive' | translate: 'Archive request' }}
+            </button>
+          }
+          @if (canCreateTask()) {
+            <button
+              mat-flat-button
+              color="accent"
+              type="button"
+              [disabled]="actionInProgress()"
+              (click)="openModal('create-task')"
+            >
+              {{ 'requestDetail.createTask' | translate: '+ Create task' }}
+            </button>
+          }
+          <a mat-stroked-button routerLink="/requests">{{
+            'requestDetail.backToRequests' | translate: 'Back to requests'
+          }}</a>
+        </div>
+      } @else if (canRevise()) {
+        <button
+          mat-flat-button
+          type="button"
+          [disabled]="actionInProgress()"
+          (click)="openModal('revise')"
+        >
+          {{ 'requestDetail.revise' | translate: 'Revise request' }}
+        </button>
+      }
     </div>
 
     @if (actionSuccess()) {
@@ -1174,7 +1188,8 @@
         }}</span>
         <div class="description-box">
           {{
-            (detail.description || ('requestDetail.noDesc' | translate: 'No description provided.')) | readableDates
+            detail.description || ('requestDetail.noDesc' | translate: 'No description provided.')
+              | readableDates
           }}
         </div>
       </div>

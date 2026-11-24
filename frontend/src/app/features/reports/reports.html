@@ -17,6 +17,9 @@
   </div>
 
   <!-- Navigation Tabs -->
+  @if (canViewManager()) {
+    <p><a routerLink="/reports/workflows">Xem điểm nghẽn và thời gian từng bước quy trình</a></p>
+  }
   <div class="tabs-bar">
     <button
       *ngIf="canViewManager()"

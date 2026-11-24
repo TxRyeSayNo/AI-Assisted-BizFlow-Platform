@@ -203,14 +203,21 @@ public sealed class DeadlineReminderDispatcher(
             // escalation it went through in the message.
             string channel = "InApp", status = "Sent";
             string? detail = null;
-            if (!SafePresence(tenantId, schedule.UserId))
+            var preference=await NotificationPreferenceStore.ReadAsync(db,tenantId,schedule.UserId,cancellationToken);
+            var online=SafePresence(tenantId,schedule.UserId);
+            if (preference.EmailEnabled && preference.DeadlineEmailMode=="Always")
+            {
+                var (delivered,error)=await TryEmailAsync(tenantId,schedule,task.Title,task.Deadline,cancellationToken);
+                channel="Email";status=delivered?"Sent":"Failed";detail=error;
+            }
+            else if (!online)
             {
                 var push = await TryPushAsync(tenantId, schedule, title, body, cancellationToken);
                 if (push.Delivered)
                 {
                     channel = "WebPush";
                 }
-                else
+                else if (preference.EmailEnabled && preference.DeadlineEmailMode=="AwayOnly")
                 {
                     var (delivered, error) = await TryEmailAsync(tenantId, schedule, task.Title, task.Deadline, cancellationToken);
                     channel = "Email";

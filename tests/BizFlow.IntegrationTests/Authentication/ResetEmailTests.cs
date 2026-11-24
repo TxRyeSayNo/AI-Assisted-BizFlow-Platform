@@ -41,7 +41,7 @@ public sealed class ResetEmailTests
         { Enabled = true, Host = host, FrontendOrigin = frontend, FromAddress = "no-reply@example.test", AllowInsecureLoopback = insecure }.IsValid);
     }
 
-    private static async Task<MimeMessage> ReceiveAsync(TcpListener listener, CancellationToken cancellationToken)
+    internal static async Task<MimeMessage> ReceiveAsync(TcpListener listener, CancellationToken cancellationToken)
     {
         using var connection = await listener.AcceptTcpClientAsync(cancellationToken);
         await using var stream = connection.GetStream();

@@ -4,7 +4,8 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
+import { Location } from '@angular/common';
 import { Subject, Subscription, debounceTime, distinctUntilChanged, filter, switchMap } from 'rxjs';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
@@ -407,6 +408,15 @@ interface UploadDocumentResponse {
             </div>
           }
 
+          @if (isResubmission) {
+            <p role="status">
+              Bổ sung hồ sơ đã đăng ký. Mã doanh nghiệp và email liên hệ được giữ nguyên; bạn có thể
+              sửa thông tin và thay tài liệu trước khi gửi lại để xét duyệt.
+            </p>
+          }
+          @if (loadingResubmission()) {
+            <p role="status">Đang tải hồ sơ cần bổ sung…</p>
+          }
           <form [formGroup]="form" (ngSubmit)="submit()" class="form-grid">
             <!-- 1. Tax ID & 2. Company Name -->
             <div class="field-row-split">
@@ -479,7 +489,7 @@ interface UploadDocumentResponse {
                   type="button"
                   mat-stroked-button
                   class="btn-random-code"
-                  [disabled]="generatingCode()"
+                  [disabled]="generatingCode() || isResubmission"
                   (click)="generateRandomCode()"
                 >
                   {{
@@ -496,7 +506,7 @@ interface UploadDocumentResponse {
                     'register.checkingCode' | translate: 'Checking code availability…'
                   }}</span>
                 </div>
-              } @else if (codeAvailable() === true) {
+              } @else if (codeAvailable() === true && !isResubmission) {
                 <div class="code-feedback code-available">
                   <span>✓ {{ 'register.codeAvailable' | translate: 'Code is available!' }}</span>
                 </div>
@@ -627,10 +637,18 @@ interface UploadDocumentResponse {
               mat-flat-button
               class="submit-button"
               type="submit"
-              [disabled]="submitting() || form.invalid || codeAvailable() === false"
+              [disabled]="
+                submitting() ||
+                loadingResubmission() ||
+                form.disabled ||
+                form.invalid ||
+                codeAvailable() === false
+              "
             >
               @if (submitting()) {
                 <span>{{ 'register.submitting' | translate: 'Submitting registration…' }}</span>
+              } @else if (isResubmission) {
+                <span>Gửi hồ sơ bổ sung</span>
               } @else {
                 <span>{{ 'register.submit' | translate: 'Register company workspace' }}</span>
               }
@@ -703,6 +721,12 @@ interface UploadDocumentResponse {
   `,
 })
 export class RegisterCompany implements OnInit, OnDestroy {
+  private readonly resubmissionToken = new URLSearchParams(
+    inject(ActivatedRoute).snapshot.fragment ?? '',
+  ).get('resubmit');
+  private readonly location = inject(Location);
+  readonly isResubmission = !!this.resubmissionToken;
+  readonly loadingResubmission = signal(false);
   private readonly http = inject(HttpClient);
   private readonly fb = inject(FormBuilder);
   private readonly i18n = inject(I18nService);
@@ -758,6 +782,33 @@ export class RegisterCompany implements OnInit, OnDestroy {
   private codeSub?: Subscription;
 
   ngOnInit(): void {
+    if (this.resubmissionToken) {
+      this.location.replaceState('/register-company');
+      this.loadingResubmission.set(true);
+      this.http
+        .post<SubmitRegistrationResponse>('/api/v1/company-registrations/resubmission', {
+          token: this.resubmissionToken,
+        })
+        .subscribe({
+          next: (data) => {
+            this.form.patchValue(data);
+            this.form.controls.code.disable();
+            this.form.controls.contactEmail.disable();
+            this.uploadedDocumentKey.set(data.evidenceDocumentKey ?? null);
+            this.uploadedFileName.set(data.evidenceDocumentFileName ?? null);
+            this.codeAvailable.set(true);
+            this.loadingResubmission.set(false);
+          },
+          error: () => {
+            this.form.disable();
+            this.loadingResubmission.set(false);
+            this.error.set(
+              'Liên kết bổ sung không hợp lệ, đã hết hạn hoặc hồ sơ đã được gửi lại. Vui lòng liên hệ quản trị viên nền tảng.',
+            );
+          },
+        });
+      return;
+    }
     this.codeSub = this.codeSubject
       .pipe(
         debounceTime(400),
@@ -788,6 +839,7 @@ export class RegisterCompany implements OnInit, OnDestroy {
   }
 
   onCodeInput(event: Event): void {
+    if (this.resubmissionToken) return;
     const input = event.target as HTMLInputElement;
     const value = input.value.trim().toLowerCase();
     this.codeAvailable.set(null);
@@ -798,6 +850,7 @@ export class RegisterCompany implements OnInit, OnDestroy {
   }
 
   generateRandomCode(): void {
+    if (this.resubmissionToken) return;
     if (this.generatingCode()) return;
     this.generatingCode.set(true);
     const companyName = this.form.controls.name.value;
@@ -874,7 +927,14 @@ export class RegisterCompany implements OnInit, OnDestroy {
 
   submit() {
     this.form.markAllAsTouched();
-    if (this.form.invalid || this.codeAvailable() === false) return;
+    if (
+      this.submitting() ||
+      this.loadingResubmission() ||
+      this.form.disabled ||
+      this.form.invalid ||
+      this.codeAvailable() === false
+    )
+      return;
 
     this.submitting.set(true);
     this.error.set(null);
@@ -889,6 +949,7 @@ export class RegisterCompany implements OnInit, OnDestroy {
       contactPhone: raw.contactPhone.trim(),
       evidenceDocumentKey: this.uploadedDocumentKey(),
       evidenceDocumentFileName: this.uploadedFileName(),
+      ...(this.resubmissionToken ? { resubmissionToken: this.resubmissionToken } : {}),
     };
 
     this.http.post<SubmitRegistrationResponse>('/api/v1/company-registrations', payload).subscribe({

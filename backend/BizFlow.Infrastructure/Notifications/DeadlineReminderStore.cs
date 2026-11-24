@@ -7,12 +7,13 @@ using Microsoft.EntityFrameworkCore;
 
 namespace BizFlow.Infrastructure.Notifications;
 
-public sealed class DeadlineReminderStore(BizFlowDbContext db) : IDeadlineReminderStore
+public sealed class DeadlineReminderStore(BizFlowDbContext db, BizFlow.Application.Security.ITenantContext context) : IDeadlineReminderStore
 {
     public Task<WorkTask?> GetTaskAsync(Guid tenantId, Guid taskId, CancellationToken cancellationToken)
     {
         return db.WorkTasks
-            .SingleOrDefaultAsync(t => t.Id == taskId && t.TenantId == tenantId && t.DeletedAt == null, cancellationToken);
+            .SingleOrDefaultAsync(t => t.Id == taskId && t.TenantId == tenantId && t.DeletedAt == null &&
+                (t.CreatorId==context.UserId || db.TaskAssignments.Any(a=>a.TaskId==t.Id&&a.UserId==context.UserId&&a.EndedAt==null)), cancellationToken);
     }
 
     public async Task<IReadOnlyList<DeadlineReminderSchedule>> GetSchedulesForTaskAsync(
@@ -21,7 +22,7 @@ public sealed class DeadlineReminderStore(BizFlowDbContext db) : IDeadlineRemind
         CancellationToken cancellationToken)
     {
         return await db.DeadlineReminderSchedules
-            .Where(s => s.TaskId == taskId && s.TenantId == tenantId)
+            .Where(s => s.TaskId == taskId && s.TenantId == tenantId && s.UserId == context.UserId)
             .OrderBy(s => s.RemindAt)
             .ToListAsync(cancellationToken);
     }
@@ -32,7 +33,7 @@ public sealed class DeadlineReminderStore(BizFlowDbContext db) : IDeadlineRemind
         CancellationToken cancellationToken)
     {
         return db.DeadlineReminderSchedules
-            .SingleOrDefaultAsync(s => s.Id == reminderId && s.TenantId == tenantId, cancellationToken);
+            .SingleOrDefaultAsync(s => s.Id == reminderId && s.TenantId == tenantId && s.UserId == context.UserId, cancellationToken);
     }
 
     public async Task<DeadlineReminderSchedule> SaveScheduleAsync(DeadlineReminderSchedule schedule, CancellationToken cancellationToken)
@@ -86,7 +87,10 @@ public sealed class DeadlineReminderStore(BizFlowDbContext db) : IDeadlineRemind
 
 public sealed class ConfigVapidKeyProvider(Microsoft.Extensions.Configuration.IConfiguration configuration) : IVapidKeyProvider
 {
-    public string GetVapidPublicKey() =>
-        configuration["WebPush:VapidPublicKey"] ?? "BEl62iUYgUivxIkv69yViEuiBIa-Ib9-SkvMeAtA3LFgDzkrxZJjSgSnfckjBJuBKr3qBUYIHBQFLXYp5Nksh8U";
+    public string GetVapidPublicKey()
+    {
+        var settings=Microsoft.Extensions.Configuration.ConfigurationBinder.Get<WebPushSettings>(configuration.GetSection("WebPush"));
+        return settings is {Enabled:true,IsValid:true}?settings.VapidPublicKey:"";
+    }
 }
 

@@ -18,6 +18,7 @@ import { WorkItemAttachments } from '../collaboration/work-item-attachments';
 import { WorkItemWatch } from '../collaboration/work-item-watch';
 import { WorkItemLabels } from '../collaboration/work-item-labels';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
+import { WorkflowRuntime } from '../workflows/workflow-runtime';
 
 export interface RequestResolutionItemView {
   resolutionId: string;
@@ -52,6 +53,7 @@ export interface RequestLinkedTaskItemView {
 }
 
 export interface RequestDetailView {
+  workflowVersionId?: string | null;
   requestId: string;
   title: string;
   description: string | null;
@@ -127,6 +129,7 @@ export interface UserOption {
     WorkItemWatch,
     WorkItemLabels,
     TranslatePipe,
+    WorkflowRuntime,
   ],
   templateUrl: './request-detail.html',
   styleUrls: ['../organization/departments.scss', './requests.scss', './request-detail.scss'],

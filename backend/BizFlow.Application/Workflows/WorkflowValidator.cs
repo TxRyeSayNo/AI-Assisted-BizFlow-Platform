@@ -301,6 +301,7 @@ public static class WorkflowValidator
                             errors.Add($"Bước phê duyệt '{name}' chưa có nhánh chuyển tiếp.");
 
                         var apprMethod = assignmentMethod ?? "ROLE";
+                        if (apprMethod == "MATRIX") break; // The complete matrix and every referenced role are checked below.
                         if (apprMethod is "ROLE" or "BUSINESS_ROLE")
                         {
                             if (!roleId.HasValue || roleId.Value == Guid.Empty)
@@ -416,6 +417,10 @@ public static class WorkflowValidator
                         }
                         break;
 
+                    case "PARALLEL_SPLIT":
+                    case "PARALLEL_JOIN":
+                        if (incoming[nid].Count == 0 || outgoing[nid].Count == 0) errors.Add($"Cổng song song '{name}' thiếu liên kết.");
+                        break;
                     default:
                         warnings.Add($"Phát hiện loại nút tùy biến: '{type}' tại '{name}'.");
                         break;
@@ -520,6 +525,21 @@ public static class WorkflowValidator
             }
         }
 
+        if (errors.Count == 0)
+        {
+            try { using var parallel = JsonDocument.Parse(definitionJson); WorkflowParallelGraph.Validate(parallel.RootElement); }
+            catch (BizFlow.Application.Common.ApplicationFault fault) { errors.Add(fault.Message); }
+            try
+            {
+                using var matrix = JsonDocument.Parse(definitionJson);
+                WorkflowApprovalMatrix.Validate(matrix.RootElement, validRoleIds);
+                WorkflowAgentContract.Validate(matrix.RootElement, businessType == WorkflowBusinessType.Request);
+                _ = WorkflowDeadlinePolicy.EscalationHours(matrix.RootElement);
+                if (businessType != WorkflowBusinessType.Request && matrix.RootElement.GetProperty("nodes").EnumerateArray().Any(n => n.TryGetProperty("assignmentMethod", out var m) && m.GetString() == "MATRIX"))
+                    errors.Add("Ma trận hạn mức hiện chỉ hỗ trợ quy trình yêu cầu dịch vụ.");
+            }
+            catch (BizFlow.Application.Common.ApplicationFault fault) { errors.Add(fault.Message); }
+        }
         return new(errors.Count == 0, errors, warnings);
     }
 }

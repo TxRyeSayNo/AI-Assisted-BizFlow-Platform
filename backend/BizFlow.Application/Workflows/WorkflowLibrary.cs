@@ -119,6 +119,16 @@ public sealed class WorkflowLibrary(ITenantContext context, IResourceAuthorizer 
     public async Task<WorkflowVersionView> SaveDraftAsync(Guid versionId, WorkflowSaveDraftInput input, CancellationToken cancellationToken)
     {
         var tenantId = await AuthorizeAsync(ConfigurePermission, cancellationToken);
+        try
+        {
+            using var formDefinition = System.Text.Json.JsonDocument.Parse(input.DefinitionJson);
+            if (formDefinition.RootElement.ValueKind != JsonValueKind.Object) throw Validation();
+            _ = WorkflowForm.Fields(formDefinition.RootElement);
+            WorkflowApprovalMatrix.Validate(formDefinition.RootElement);
+            WorkflowAgentContract.Validate(formDefinition.RootElement);
+            _ = WorkflowDeadlinePolicy.EscalationHours(formDefinition.RootElement);
+        }
+        catch (JsonException) { throw Validation(); }
         var existing = await store.ReadVersionAsync(tenantId, versionId, cancellationToken);
         if (existing is null)
         {

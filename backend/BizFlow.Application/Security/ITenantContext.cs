@@ -6,3 +6,6 @@ public interface ITenantContext
     Guid? UserId { get; }
     Guid? TenantId { get; }
 }
+
+/// <summary>Only an internal workflow worker supplies this capability; HTTP claims never do.</summary>
+public interface IWorkflowAgentContext : ITenantContext;

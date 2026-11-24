@@ -474,43 +474,11 @@
               border-radius: 8px;
             "
           >
-            <label
-              style="
-                display: block;
-                font-size: 0.82rem;
-                font-weight: 600;
-                color: #075985;
-                margin-bottom: 4px;
-              "
-            >
-              🔑 Mật khẩu khởi tạo (cấp cho tất cả nhân sự trong lần nhập này)
-            </label>
-            <input
-              type="text"
-              [ngModel]="initialPassword()"
-              (ngModelChange)="initialPassword.set($event)"
-              [disabled]="batchExecuting()"
-              placeholder="Tối thiểu 8 ký tự"
-              style="
-                width: 100%;
-                box-sizing: border-box;
-                padding: 8px 10px;
-                border: 1px solid #cbd5e1;
-                border-radius: 6px;
-                font-size: 0.85rem;
-              "
-            />
-            @if (initialPasswordError) {
-              <p style="margin: 6px 0 0; font-size: 0.78rem; color: #dc2626">
-                {{ initialPasswordError }}
-              </p>
-            } @else {
-              <p style="margin: 6px 0 0; font-size: 0.75rem; color: #64748b">
-                Nhân viên dùng mật khẩu này để đăng nhập lần đầu (cùng mã công ty và mã nhân
-                viên). Hãy thông báo cho họ và nhắc đổi mật khẩu sau khi đăng nhập. Để trống nếu
-                muốn tạo tài khoản chờ kích hoạt (nhân viên sẽ chưa đăng nhập được).
-              </p>
-            }
+            <p>
+              Nhân viên sẽ nhận email có workspace-key, thông tin tài khoản và liên kết tự đặt mật
+              khẩu. Tài khoản chỉ đăng nhập được sau khi đặt mật khẩu; không dùng mật khẩu chung hay
+              mật khẩu từ file nhập.
+            </p>
           </div>
         </div>
 

@@ -20,6 +20,11 @@ describe('request creation component', () => {
   afterEach(() => {
     const http = TestBed.inject(HttpTestingController);
     http
+      .match((r) => r.url.endsWith('/form'))
+      .forEach((r) => {
+        if (!r.cancelled) r.flush([]);
+      });
+    http
       .match((r) => r.url === '/api/v1/requests/recipient-options')
       .forEach((r) => {
         if (!r.cancelled) r.flush({ myLevel: 0, departments: [], users: [] });
@@ -55,6 +60,7 @@ describe('request creation component', () => {
     );
     catalogReq.flush({ items: mockServices });
     fixture.detectChanges();
+    TestBed.inject(HttpTestingController).expectOne('/api/v1/services/srv-1/form').flush([]);
 
     expect(fixture.componentInstance.services().length).toBe(2);
     expect(fixture.componentInstance.availableCategories().length).toBe(2); // Only ACTIVE categories
@@ -75,6 +81,9 @@ describe('request creation component', () => {
       .expectOne((r) => r.url === '/api/v1/services')
       .flush({ items: mockServices });
 
+    fixture.detectChanges();
+    TestBed.inject(HttpTestingController).expectOne('/api/v1/services/srv-1/form').flush([]);
+
     const router = TestBed.inject(Router);
     const navSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
 
@@ -90,6 +99,7 @@ describe('request creation component', () => {
     const postReq = TestBed.inject(HttpTestingController).expectOne('/api/v1/requests');
     expect(postReq.request.headers.has('Idempotency-Key')).toBe(true);
     expect(postReq.request.body).toEqual({
+      formData: {},
       serviceId: 'srv-1',
       categoryId: 'cat-1',
       title: 'Need new laptop monitor',
@@ -110,6 +120,9 @@ describe('request creation component', () => {
     TestBed.inject(HttpTestingController)
       .expectOne((r) => r.url === '/api/v1/services')
       .flush({ items: mockServices });
+
+    fixture.detectChanges();
+    TestBed.inject(HttpTestingController).expectOne('/api/v1/services/srv-1/form').flush([]);
 
     fixture.componentInstance.form.patchValue({
       title: 'Valid title',

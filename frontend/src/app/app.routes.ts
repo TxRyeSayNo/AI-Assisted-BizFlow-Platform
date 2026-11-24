@@ -130,6 +130,13 @@ export const routes: Routes = [
     loadComponent: () => import('./features/reports/reports').then((m) => m.Reports),
   },
   {
+    path: 'reports/workflows',
+    canActivate: [tenantGuard, permissionGuard],
+    data: { permission: 'reports.manager' },
+    loadComponent: () =>
+      import('./features/workflows/workflow-metrics').then((m) => m.WorkflowMetrics),
+  },
+  {
     path: 'approvals',
     canActivate: [tenantGuard],
     loadComponent: () => import('./features/approvals/approvals').then((m) => m.Approvals),

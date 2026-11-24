@@ -11,7 +11,7 @@ public sealed record CreateUserRequest(
     string EmployeeCode,
     string Email,
     string FullName,
-    string Password,
+    string? Password = null,
     Guid? DepartmentId = null,
     IReadOnlyList<Guid>? RoleIds = null);
 
@@ -176,8 +176,6 @@ public sealed class UserManagement(
             throw new ApplicationFault(FaultKind.Validation, "VALIDATION.FAILED", "A valid email address is required.");
         if (string.IsNullOrWhiteSpace(request.FullName) || request.FullName.Trim().Length > 200)
             throw new ApplicationFault(FaultKind.Validation, "VALIDATION.FAILED", "Full name is required and must not exceed 200 characters.");
-        if (string.IsNullOrWhiteSpace(request.Password) || request.Password.Length < 8)
-            throw new ApplicationFault(FaultKind.Validation, "VALIDATION.FAILED", "Password must be at least 8 characters long.");
 
         var normalizedCode = request.EmployeeCode.Trim().ToUpperInvariant();
         var normalizedEmail = request.Email.Trim().ToUpperInvariant();
@@ -192,9 +190,10 @@ public sealed class UserManagement(
 
         var now = clock.GetUtcNow();
         var dummyUser = UserAccount.CreatePlatformAdministrator("TEMP", "temp@example.invalid", "Temp", "placeholder", now);
-        var passwordHash = credentialVerifier.Hash(dummyUser, request.Password);
+        var passwordHash = credentialVerifier.Hash(dummyUser, Convert.ToBase64String(System.Security.Cryptography.RandomNumberGenerator.GetBytes(48)));
 
         var user = UserAccount.CreateTenantUser(tenantId, normalizedCode, request.Email.Trim(), request.FullName.Trim(), passwordHash, now, request.DepartmentId);
+        user.RequirePasswordChange();
         var audit = AuditLog.UserCreated(tenantId, context.UserId!.Value, user.Id, user.EmployeeCode, user.Email, now);
 
         return await store.CreateUserAsync(user, request.RoleIds ?? [], audit, cancellationToken);
@@ -362,10 +361,8 @@ public sealed class UserManagement(
             else if (employeeRole != null)
                 roleIds.Add(employeeRole.Id);
 
-            var activationToken = string.IsNullOrWhiteSpace(row.Password) ? Guid.NewGuid().ToString("N")[..12] : null;
-            var rawPassword = activationToken ?? row.Password!;
-            if (rawPassword.Length < 8)
-                errors.Add("Mật khẩu tối thiểu 8 ký tự.");
+            string? activationToken = null;
+            var rawPassword = Convert.ToBase64String(System.Security.Cryptography.RandomNumberGenerator.GetBytes(48));
 
             var isValid = errors.Count == 0;
             items.Add(new BatchImportValidationItem(i + 1, row.EmployeeCode ?? "", row.Email ?? "", row.FullName ?? "", row.DepartmentCode, row.Role, isValid, errors, activationToken));
@@ -374,7 +371,7 @@ public sealed class UserManagement(
             {
                 var dummyUser = UserAccount.CreatePlatformAdministrator("TEMP", "temp@example.invalid", "Temp", "placeholder", clock.GetUtcNow());
                 var hash = credentialVerifier.Hash(dummyUser, rawPassword);
-                validUsers.Add((row, deptId, roleIds, hash, activationToken != null));
+                validUsers.Add((row, deptId, roleIds, hash, true));
             }
         }
 

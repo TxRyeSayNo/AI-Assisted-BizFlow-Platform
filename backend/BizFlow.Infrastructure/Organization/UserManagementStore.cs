@@ -4,6 +4,7 @@ using BizFlow.Domain.Audit;
 using BizFlow.Domain.Organization;
 using BizFlow.Domain.Security;
 using BizFlow.Domain.Tasks;
+using BizFlow.Domain.Notifications;
 using BizFlow.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
@@ -34,6 +35,7 @@ public sealed class UserManagementStore(BizFlowDbContext db) : IUserManagementSt
 
     public async Task<int> BatchCreateUsersAsync(IReadOnlyList<(UserAccount user, IReadOnlyList<Guid> roleIds, AuditLog audit)> users, CancellationToken cancellationToken)
     {
+        await using var tx=await db.Database.BeginTransactionAsync(cancellationToken);
         var defaultEmployeeRole = await db.Roles.IgnoreQueryFilters()
             .FirstOrDefaultAsync(r => r.Name == "EMPLOYEE" && r.IsSystem, cancellationToken);
 
@@ -55,11 +57,15 @@ public sealed class UserManagementStore(BizFlowDbContext db) : IUserManagementSt
         }
 
         await db.SaveChangesAsync(cancellationToken);
+        foreach(var entry in users) await Welcome(entry.user,cancellationToken);
+        await db.SaveChangesAsync(cancellationToken);
+        await tx.CommitAsync(cancellationToken);
         return users.Count;
     }
 
     public async Task<UserOperationResult> CreateUserAsync(UserAccount user, IReadOnlyList<Guid> roleIds, AuditLog audit, CancellationToken cancellationToken)
     {
+        await using var tx=await db.Database.BeginTransactionAsync(cancellationToken);
         db.Users.Add(user);
 
         var assignedRoleIds = new List<Guid>();
@@ -87,8 +93,19 @@ public sealed class UserManagementStore(BizFlowDbContext db) : IUserManagementSt
 
         db.AuditLogs.Add(audit);
         await db.SaveChangesAsync(cancellationToken);
+        await Welcome(user,cancellationToken);
+        await db.SaveChangesAsync(cancellationToken);
+        await tx.CommitAsync(cancellationToken);
 
         return new(user.Id, user.EmployeeCode, user.Email, user.FullName, user.DepartmentId, user.Status.ToString().ToUpperInvariant(), assignedRoleIds, user.CreatedAt);
+    }
+
+    private async Task Welcome(UserAccount user,CancellationToken ct)
+    {
+        var tenant=await db.Tenants.SingleAsync(t=>t.Id==user.TenantId,ct);
+        db.Notifications.Add(Notification.Create(tenant.Id,user.Id,NotificationEvent.Announcement,"Tài khoản BizFlow đã được cấp",
+            $"Doanh nghiệp: {tenant.Name}\nWorkspace-key: {tenant.TenantKey}\nHọ tên: {user.FullName}\nMã tài khoản: {user.EmployeeCode}\nEmail: {user.Email}\nBạn sẽ nhận liên kết tự đặt mật khẩu qua email. Nếu liên kết hết hạn, chọn Quên mật khẩu với thông tin trên.",
+            $"account-invitation:{user.Id:N}"));
     }
 
     public async Task<UserOperationResult> UpdateUserAsync(Guid tenantId, Guid userId, string fullName, Guid? departmentId, IReadOnlyList<Guid>? roleIds, Guid actorId, DateTimeOffset now, CancellationToken cancellationToken)

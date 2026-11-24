@@ -7,6 +7,7 @@ import { FeatureFlagsService } from '../../core/features/feature-flags.service';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { ToastService } from '../../core/toast/toast.service';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
+import { FormsModule } from '@angular/forms';
 
 export interface ReminderMark {
   id: string;
@@ -32,12 +33,11 @@ const marks: { minutes: number; trigger: string; labelKey: string; fallback: str
  * reminder feature is known to be on, so pages whose existing specs assert that no unexpected
  * request was made stay unaffected, and a deployment with the flag off looks untouched.
  *
- * Browser push registration is deliberately absent: it needs a service worker, and PWA work is
- * outside this scope. The server still escalates to web push for subscriptions it already holds.
+ * Browser push subscriptions and email preferences are managed in notification settings.
  */
 @Component({
   selector: 'bf-task-reminders',
-  imports: [MatButtonModule, MatCheckboxModule, TranslatePipe],
+  imports: [MatButtonModule, MatCheckboxModule, TranslatePipe, FormsModule],
   template: `
     @if (features.deadlineReminders() && available()) {
       <section class="task-reminders" [attr.aria-busy]="busy()">
@@ -50,7 +50,7 @@ const marks: { minutes: number; trigger: string; labelKey: string; fallback: str
           }}
         </p>
         <div class="reminders-marks">
-          @for (mark of marks; track mark.trigger) {
+          @for (mark of allMarks(); track mark.trigger) {
             <mat-checkbox
               [checked]="selected().has(mark.trigger)"
               [disabled]="busy()"
@@ -60,6 +60,18 @@ const marks: { minutes: number; trigger: string; labelKey: string; fallback: str
             </mat-checkbox>
           }
         </div>
+        <label
+          >Mốc tùy chọn (phút trước hạn, 1–43200)
+          <input
+            type="number"
+            min="1"
+            max="43200"
+            [(ngModel)]="customMinutes"
+            [disabled]="busy()"
+          />
+        </label>
+        <button type="button" [disabled]="busy()" (click)="addCustom()">Thêm mốc</button>
+        <p role="status">{{ customError() }}</p>
         <button mat-stroked-button type="button" [disabled]="busy()" (click)="save()">
           {{ 'common.save' | translate: 'Save' }}
         </button>
@@ -97,6 +109,38 @@ export class TaskReminders implements OnInit {
 
   readonly features = inject(FeatureFlagsService);
   readonly marks = marks;
+  readonly customMarks = signal<
+    { minutes: number; trigger: string; labelKey: string; fallback: string }[]
+  >([]);
+  customMinutes: number | null = null;
+  readonly customError = signal('');
+  allMarks() {
+    return [...marks, ...this.customMarks()];
+  }
+  addCustom() {
+    const minutes = Number(this.customMinutes);
+    if (
+      !Number.isInteger(minutes) ||
+      minutes < 1 ||
+      minutes > 43200 ||
+      this.allMarks().length >= 20
+    ) {
+      this.customError.set('Chọn số phút nguyên 1–43200, tối đa 20 mốc.');
+      return;
+    }
+    let mark = this.allMarks().find((m) => m.minutes === minutes);
+    if (!mark) {
+      mark = {
+        minutes,
+        trigger: `Custom:${minutes}`,
+        labelKey: `custom.${minutes}`,
+        fallback: `Trước ${minutes} phút`,
+      };
+      this.customMarks.update((items) => [...items, mark!]);
+    }
+    this.selected.update((items) => new Set([...items, mark!.trigger]));
+    this.customError.set('');
+  }
   readonly selected = signal<Set<string>>(new Set());
   readonly busy = signal(false);
   readonly available = signal(false);
@@ -113,6 +157,16 @@ export class TaskReminders implements OnInit {
       .subscribe({
         next: (items) => {
           this.current = items ?? [];
+          this.customMarks.set(
+            this.current
+              .filter((m) => m.triggerType.startsWith('Custom:'))
+              .map((m) => ({
+                minutes: m.leadTimeMinutes,
+                trigger: m.triggerType,
+                labelKey: `custom.${m.leadTimeMinutes}`,
+                fallback: `Trước ${m.leadTimeMinutes} phút`,
+              })),
+          );
           this.selected.set(
             new Set(this.current.filter((m) => m.status === 'Scheduled').map((m) => m.triggerType)),
           );
@@ -134,7 +188,7 @@ export class TaskReminders implements OnInit {
 
   save() {
     if (this.busy()) return;
-    const chosen = marks.filter((mark) => this.selected().has(mark.trigger));
+    const chosen = this.allMarks().filter((mark) => this.selected().has(mark.trigger));
     // An empty list means "use the defaults" to the configuration endpoint, so clearing every box
     // has to cancel the existing marks instead of posting nothing.
     const toCancel = this.current.filter(

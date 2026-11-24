@@ -19,6 +19,18 @@ describe('password recovery', () => {
   );
   afterEach(() => TestBed.inject(HttpTestingController).verify());
 
+  it('prefills workspace and account from the invitation fragment and removes it from history', () => {
+    TestBed.overrideProvider(ActivatedRoute, {
+      useValue: { snapshot: { fragment: 'token=invite-token&tenantKey=acme&identifier=ADMIN01' } },
+    });
+    const replace = vi.spyOn(TestBed.inject(Location), 'replaceState');
+    const component = TestBed.createComponent(ResetPassword).componentInstance;
+    expect(component.form.controls.tenantKey.value).toBe('acme');
+    expect(component.form.controls.identifier.value).toBe('ADMIN01');
+    expect(component.hasToken()).toBe(true);
+    expect(replace).toHaveBeenCalledWith('/reset-password');
+  });
+
   it('does not disclose account existence in the forgot-password confirmation', () => {
     const component = TestBed.createComponent(ForgotPassword).componentInstance;
     component.form.setValue({ identifier: ' EMP1 ', tenantKey: 'company-a' });

@@ -1353,6 +1353,12 @@ namespace BizFlow.Infrastructure.Persistence.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<string>("FormDataJson")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("jsonb")
+                        .HasDefaultValue("{}");
+
                     b.Property<Guid?>("ParentRequestId")
                         .HasColumnType("uuid");
 
@@ -2269,6 +2275,54 @@ namespace BizFlow.Infrastructure.Persistence.Migrations
                         });
                 });
 
+            modelBuilder.Entity("BizFlow.Domain.Workflows.WorkflowDecision", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ActorId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("DecidedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("InstanceId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)");
+
+                    b.Property<string>("Outcome")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<Guid>("PrincipalId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("StepExecutionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ActorId");
+
+                    b.HasIndex("PrincipalId");
+
+                    b.HasIndex("StepExecutionId", "ActorId")
+                        .IsUnique();
+
+                    b.HasIndex("StepExecutionId", "PrincipalId")
+                        .IsUnique();
+
+                    b.ToTable("WorkflowDecision", (string)null);
+                });
+
             modelBuilder.Entity("BizFlow.Domain.Workflows.WorkflowDefinition", b =>
                 {
                     b.Property<Guid>("Id")
@@ -2308,6 +2362,208 @@ namespace BizFlow.Infrastructure.Persistence.Migrations
                     b.HasIndex("TenantId");
 
                     b.ToTable("Workflow", (string)null);
+                });
+
+            modelBuilder.Entity("BizFlow.Domain.Workflows.WorkflowDelegation", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("DelegateId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("InstanceId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("PrincipalId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<DateTimeOffset?>("RevokedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("RevokedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("StepExecutionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedBy");
+
+                    b.HasIndex("DelegateId");
+
+                    b.HasIndex("PrincipalId");
+
+                    b.HasIndex("RevokedBy");
+
+                    b.HasIndex("StepExecutionId", "DelegateId")
+                        .IsUnique()
+                        .HasFilter("\"RevokedAt\" IS NULL");
+
+                    b.HasIndex("StepExecutionId", "PrincipalId")
+                        .IsUnique()
+                        .HasFilter("\"RevokedAt\" IS NULL");
+
+                    b.HasIndex("TenantId", "DelegateId", "ExpiresAt");
+
+                    b.ToTable("WorkflowDelegation", (string)null);
+                });
+
+            modelBuilder.Entity("BizFlow.Domain.Workflows.WorkflowInstance", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("CompletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("PayloadJson")
+                        .IsRequired()
+                        .HasColumnType("jsonb");
+
+                    b.Property<Guid>("RequestId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("RequesterId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Revision")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset>("StartedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.Property<Guid>("WorkflowVersionId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RequestId");
+
+                    b.HasIndex("RequesterId");
+
+                    b.HasIndex("WorkflowVersionId");
+
+                    b.HasIndex("TenantId", "RequestId")
+                        .IsUnique();
+
+                    b.ToTable("WorkflowInstance", (string)null);
+                });
+
+            modelBuilder.Entity("BizFlow.Domain.Workflows.WorkflowParticipant", b =>
+                {
+                    b.Property<Guid>("StepExecutionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("InstanceId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("StepExecutionId", "UserId");
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("TenantId", "UserId", "InstanceId");
+
+                    b.ToTable("WorkflowParticipant", (string)null);
+                });
+
+            modelBuilder.Entity("BizFlow.Domain.Workflows.WorkflowSlaPause", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("CalendarSnapshotJson")
+                        .HasColumnType("jsonb");
+
+                    b.Property<DateTimeOffset?>("DueAtAfter")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset>("DueAtBefore")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("InstanceId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("PausedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("PausedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<DateTimeOffset?>("ResumedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ResumedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("StepExecutionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PausedBy");
+
+                    b.HasIndex("ResumedBy");
+
+                    b.HasIndex("StepExecutionId")
+                        .IsUnique()
+                        .HasFilter("\"ResumedAt\" IS NULL");
+
+                    b.HasIndex("TenantId", "InstanceId", "PausedAt");
+
+                    b.ToTable("WorkflowSlaPause", (string)null);
                 });
 
             modelBuilder.Entity("BizFlow.Domain.Workflows.WorkflowStep", b =>
@@ -2363,6 +2619,78 @@ namespace BizFlow.Infrastructure.Persistence.Migrations
 
                             t.HasCheckConstraint("CK_WorkflowStep_Order", "\"OrderNo\" > 0");
                         });
+                });
+
+            modelBuilder.Entity("BizFlow.Domain.Workflows.WorkflowStepExecution", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("CandidatesJson")
+                        .IsRequired()
+                        .HasColumnType("jsonb");
+
+                    b.Property<DateTimeOffset?>("CompletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset?>("DueAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("InstanceId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("NodeId")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("NodeType")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<string>("Outcome")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<DateTimeOffset?>("PausedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Policy")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<DateTimeOffset>("StartedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("InstanceId");
+
+                    b.HasIndex("TenantId", "InstanceId", "StartedAt");
+
+                    b.ToTable("WorkflowStepExecution", (string)null);
                 });
 
             modelBuilder.Entity("BizFlow.Domain.Workflows.WorkflowTransition", b =>
@@ -3147,6 +3475,27 @@ namespace BizFlow.Infrastructure.Persistence.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("BizFlow.Domain.Workflows.WorkflowDecision", b =>
+                {
+                    b.HasOne("BizFlow.Domain.Organization.UserAccount", null)
+                        .WithMany()
+                        .HasForeignKey("ActorId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("BizFlow.Domain.Organization.UserAccount", null)
+                        .WithMany()
+                        .HasForeignKey("PrincipalId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("BizFlow.Domain.Workflows.WorkflowStepExecution", null)
+                        .WithMany()
+                        .HasForeignKey("StepExecutionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("BizFlow.Domain.Workflows.WorkflowDefinition", b =>
                 {
                     b.HasOne("BizFlow.Domain.Tenancy.Tenant", null)
@@ -3156,11 +3505,108 @@ namespace BizFlow.Infrastructure.Persistence.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("BizFlow.Domain.Workflows.WorkflowDelegation", b =>
+                {
+                    b.HasOne("BizFlow.Domain.Organization.UserAccount", null)
+                        .WithMany()
+                        .HasForeignKey("CreatedBy")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("BizFlow.Domain.Organization.UserAccount", null)
+                        .WithMany()
+                        .HasForeignKey("DelegateId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("BizFlow.Domain.Organization.UserAccount", null)
+                        .WithMany()
+                        .HasForeignKey("PrincipalId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("BizFlow.Domain.Organization.UserAccount", null)
+                        .WithMany()
+                        .HasForeignKey("RevokedBy")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("BizFlow.Domain.Workflows.WorkflowStepExecution", null)
+                        .WithMany()
+                        .HasForeignKey("StepExecutionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("BizFlow.Domain.Workflows.WorkflowInstance", b =>
+                {
+                    b.HasOne("BizFlow.Domain.Requests.WorkRequest", null)
+                        .WithMany()
+                        .HasForeignKey("RequestId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("BizFlow.Domain.Organization.UserAccount", null)
+                        .WithMany()
+                        .HasForeignKey("RequesterId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("BizFlow.Domain.Workflows.WorkflowVersion", null)
+                        .WithMany()
+                        .HasForeignKey("WorkflowVersionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("BizFlow.Domain.Workflows.WorkflowParticipant", b =>
+                {
+                    b.HasOne("BizFlow.Domain.Workflows.WorkflowStepExecution", null)
+                        .WithMany()
+                        .HasForeignKey("StepExecutionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("BizFlow.Domain.Organization.UserAccount", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("BizFlow.Domain.Workflows.WorkflowSlaPause", b =>
+                {
+                    b.HasOne("BizFlow.Domain.Organization.UserAccount", null)
+                        .WithMany()
+                        .HasForeignKey("PausedBy")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("BizFlow.Domain.Organization.UserAccount", null)
+                        .WithMany()
+                        .HasForeignKey("ResumedBy")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("BizFlow.Domain.Workflows.WorkflowStepExecution", null)
+                        .WithMany()
+                        .HasForeignKey("StepExecutionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("BizFlow.Domain.Workflows.WorkflowStep", b =>
                 {
                     b.HasOne("BizFlow.Domain.Workflows.WorkflowVersion", null)
                         .WithMany()
                         .HasForeignKey("WorkflowVersionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("BizFlow.Domain.Workflows.WorkflowStepExecution", b =>
+                {
+                    b.HasOne("BizFlow.Domain.Workflows.WorkflowInstance", null)
+                        .WithMany()
+                        .HasForeignKey("InstanceId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });

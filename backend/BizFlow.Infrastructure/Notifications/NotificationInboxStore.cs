@@ -63,7 +63,7 @@ public sealed class NotificationInboxStore(BizFlowDbContext db, ITenantContext c
         var existing = await db.WebPushSubscriptions.FirstOrDefaultAsync(s => s.TenantId == tenantId && s.UserId == userId && s.Endpoint == endpoint, cancellationToken);
         if (existing is not null)
         {
-            existing.UpdateActivity(DateTimeOffset.UtcNow);
+            existing.RefreshKeys(p256dh, auth, DateTimeOffset.UtcNow);
         }
         else
         {
